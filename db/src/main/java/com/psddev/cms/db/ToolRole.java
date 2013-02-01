@@ -12,6 +12,10 @@ public class ToolRole extends Record {
 
     @ToolUi.FieldDisplayType("permissions")
     private String permissions;
+    
+    @Indexed
+    @ToolUi.Hidden
+    private boolean defaultRole = false;
 
     private transient SparseSet permissionsCache;
 
@@ -45,5 +49,20 @@ public class ToolRole extends Record {
             permissionsCache = new SparseSet(ObjectUtils.isBlank(permissions) ? "+/" : permissions);
         }
         return permissionsCache.contains(permissionId);
+    }
+
+    
+    /**
+     * Returns {@true} if this role is the default for new user creation. 
+     */
+    public boolean getDefaultRole() {
+        return defaultRole;
+    }
+
+    /**
+     * Make this the default role (or not) for new user creation.
+     */
+    public void setDefaultRole(boolean defaultRole) {
+        this.defaultRole = defaultRole;
     }
 }

@@ -7,7 +7,8 @@ com.psddev.cms.tool.ToolPageContext,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
 
-java.util.UUID
+java.util.UUID,
+java.util.List
 " %><%
 
 // --- Logic ---
@@ -20,6 +21,12 @@ if (wp.requirePermission("area/admin/adminUsers")) {
 String queryString = wp.param("query");
 Object selected = wp.findOrReserve(ToolUser.class, ToolRole.class);
 State selectedState = State.getInstance(selected);
+
+if(selected instanceof ToolUser && selectedState.isNew()) {
+    ToolRole defaultRole = Query.from(ToolRole.class).where("defaultRole = ?", true).first();
+    ((ToolUser)selected).setRole(defaultRole);
+}
+
 if (wp.include("/WEB-INF/updateObject.jsp", "object", selected)) {
     return;
 }
@@ -59,7 +66,7 @@ if (wp.include("/WEB-INF/updateObject.jsp", "object", selected)) {
             <ul class="links">
                 <li class="new<%= selected.getClass() == ToolRole.class && selectedState.isNew() ? " selected" : "" %>">
                     <a href="<%= wp.typeUrl(null, ToolRole.class) %>">New Role</a>
-                </li>
+                </li>                
                 <% for (ToolRole role : Query
                         .from(ToolRole.class)
                         .sortAscending("name")
@@ -69,6 +76,7 @@ if (wp.include("/WEB-INF/updateObject.jsp", "object", selected)) {
                     </li>
                 <% } %>
             </ul>
+            <% wp.include("/admin/defaultRole.jsp"); %>
         </div>
 
     </div>

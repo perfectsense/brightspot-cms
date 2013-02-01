@@ -64,7 +64,7 @@ public class AuthenticationFilter extends AbstractFilter {
             Cookie cookie = new Cookie(USER_COOKIE, user.getId().toString());
 
             cookie.setPath("/");
-            cookie.setSecure(request.isSecure());
+            cookie.setSecure(JspUtils.isSecureRequest(request));
             JspUtils.setSignedCookie(response, cookie);
 
             request.setAttribute(USER_ATTRIBUTE, user);

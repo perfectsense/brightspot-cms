@@ -878,6 +878,9 @@ public class ToolPageContext extends WebPageContext {
         write("</span>");
 
         write("</div>");
+        
+        // Display html if we're not in an iframe; or redirect to self if we are
+        write("<script>if (self == top) {document.documentElement.style.display = 'block';} else {top.location = self.location;}</script>");        
 
         write("</div></body></html>");
     }
