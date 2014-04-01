@@ -505,6 +505,8 @@ public class PageFilter extends AbstractFilter {
             PageStage stage = new PageStage(getServletContext(), request);
 
             request.setAttribute("stage", stage);
+            // update main object first so that SEO values are honored.
+            stage.update(mainObject);
             stage.setTitle(seoTitle);
             stage.setDescription(seoDescription);
             stage.setMetaName("robots", seoRobots);
@@ -521,8 +523,6 @@ public class PageFilter extends AbstractFilter {
                                 "_embed", true,
                                 "_format", "oembed"));
             }
-
-            stage.update(mainObject);
 
             // Try to set the right content type based on the extension.
             String contentType = URLConnection.getFileNameMap().getContentTypeFor(servletPath);
