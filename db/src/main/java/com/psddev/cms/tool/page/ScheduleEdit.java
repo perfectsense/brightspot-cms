@@ -7,6 +7,7 @@ import javax.servlet.ServletException;
 
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Schedule;
+import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
@@ -30,12 +31,15 @@ public class ScheduleEdit extends PageServlet {
             try {
                 if (page.param(String.class, "action-save") != null) {
                     page.include("/WEB-INF/objectPost.jsp", "object", schedule);
-                    schedule.save();
 
                     if (newSchedule) {
-                        page.getUser().setCurrentSchedule(schedule);
-                        page.getUser().save();
+                        ToolUser toolUser = page.getUser();
+                        schedule.setTriggerUser(toolUser);
+                        schedule.setTriggerSite(page.getSite());
+                        toolUser.setCurrentSchedule(schedule);
+                        toolUser.save();
                     }
+                    schedule.save();
 
                 } else if (page.param(String.class, "action-delete") != null) {
                     try {
