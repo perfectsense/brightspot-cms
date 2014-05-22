@@ -5,7 +5,10 @@ import com.psddev.dari.util.ImageEditor;
 public enum CropOption {
 
     NONE("None", ImageEditor.CROP_OPTION_NONE),
-    AUTOMATIC("Automatic", ImageEditor.CROP_OPTION_AUTOMATIC);
+    AUTOMATIC("Automatic", ImageEditor.CROP_OPTION_AUTOMATIC),
+    CIRCLE("Circle", ImageEditor.CROP_OPTION_CIRCLE),
+    STAR("Star", ImageEditor.CROP_OPTION_STAR),
+    STARBURST("Starburst", ImageEditor.CROP_OPTION_STARBURST);
 
     private final String displayName;
     private final String imageEditorOption;
