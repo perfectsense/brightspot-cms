@@ -669,9 +669,10 @@ public class ToolPageContext extends WebPageContext {
         UUID draftId = param(UUID.class, DRAFT_ID_PARAMETER);
 
         if (object == null) {
-            Draft draft = Query.findById(Draft.class, draftId);
+            Object draftObject = Query.fromAll().where("_id = ?", draftId).first();
 
-            if (draft != null) {
+            if (draftObject instanceof Draft) {
+                Draft draft = (Draft) draftObject;
                 object = draft.getObject();
 
                 State.getInstance(object).getExtras().put(OVERLAID_DRAFT_EXTRA, draft);
@@ -692,13 +693,15 @@ public class ToolPageContext extends WebPageContext {
                 state.setStatus(StateStatus.SAVED);
 
             } else if (objectId != null) {
-                Draft draft = Query.
-                        from(Draft.class).
+                Object draftObject = Query.
+                        fromAll().
                         where("id = ?", draftId).
-                        and("objectId = ?", objectId).
+                        and("com.psddev.cms.db.Draft/objectId = ?", objectId).
                         first();
 
-                if (draft != null) {
+                if (draftObject instanceof Draft) {
+                    Draft draft = (Draft) draftObject;
+
                     state.getExtras().put(OVERLAID_DRAFT_EXTRA, draft);
                     state.getValues().putAll(draft.getObjectChanges());
                 }
@@ -2613,6 +2616,7 @@ public class ToolPageContext extends WebPageContext {
         setContentFormScheduleDate(object);
 
         State state = State.getInstance(object);
+        Draft draft = getOverlaidDraft(object);
         Workflow.Data workflowData = state.as(Workflow.Data.class);
         String oldWorkflowState = workflowData.getCurrentState();
 
@@ -2633,7 +2637,16 @@ public class ToolPageContext extends WebPageContext {
                     log.getState().setId(param(UUID.class, "workflowLogId"));
                     updateUsingParameters(log);
                     workflowData.changeState(transition, getUser(), log);
-                    publish(object);
+
+                    if (draft == null) {
+                        publish(object);
+
+                    } else {
+                        draft.as(Workflow.Data.class).changeState(transition, getUser(), log);
+                        draft.setObject(object);
+                        publish(draft);
+                    }
+
                     state.commitWrites();
                 }
             }
@@ -2642,6 +2655,10 @@ public class ToolPageContext extends WebPageContext {
             return true;
 
         } catch (Exception error) {
+            if (draft != null) {
+                draft.as(Workflow.Data.class).revertState(oldWorkflowState);
+            }
+
             workflowData.revertState(oldWorkflowState);
             getErrors().add(error);
             return false;

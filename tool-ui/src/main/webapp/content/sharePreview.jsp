@@ -40,5 +40,6 @@ if (ObjectUtils.isBlank(host)) {
 }
 response.sendRedirect(StringUtils.addQueryParameters(
         wp.getCmsTool().getPreviewUrl(),
-        PageFilter.PREVIEW_ID_PARAMETER, preview.getId()));
+        PageFilter.PREVIEW_ID_PARAMETER, preview.getId(),
+        "_date", request.getParameter("previewDate")));
 %>

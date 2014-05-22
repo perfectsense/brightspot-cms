@@ -187,7 +187,9 @@ $.plugin2('dropDown', {
         // Detect clicks within the window to toggle the list properly.
         $doc.mousedown(function(event) {
             if ($listContainer.is(':visible') &&
-                    !$.contains($listContainer[0], event.target)) {
+                    !$.contains($listContainer[0], event.target) &&
+                    $input[0] !== event.target &&
+                    !$.contains($input[0], event.target)) {
                 $list.trigger('dropDown-close');
             }
         });

@@ -47,12 +47,16 @@ public class PreviewDatabase extends ForwardingDatabase {
                 Draft draft = null;
                 Date draftDate = null;
 
-                for (Draft d : Query.
-                        from(Draft.class).
-                        and("schedule != missing").
-                        and("objectId = ?", object).
+                for (Object dObject : Query.
+                        fromAll().
+                        and("com.psddev.cms.db.Draft/schedule != missing").
+                        and("com.psddev.cms.db.Draft/objectId = ?", object).
                         iterable(0)) {
+                    if (!(dObject instanceof Draft)) {
+                        continue;
+                    }
 
+                    Draft d = (Draft) dObject;
                     Date triggerDate = d.getSchedule().getTriggerDate();
 
                     if (triggerDate != null &&

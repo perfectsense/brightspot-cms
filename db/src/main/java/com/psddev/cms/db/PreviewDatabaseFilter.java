@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.dari.db.ApplicationFilter;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.AbstractFilter;
 import com.psddev.dari.util.ObjectUtils;
 
@@ -54,6 +55,11 @@ public class PreviewDatabaseFilter extends AbstractFilter implements AbstractFil
                     }
 
                     Database.Static.overrideDefault(pd);
+
+                    State mainState = State.getInstance(PageFilter.Static.getMainObject(request));
+
+                    mainState.setDatabase(null);
+                    mainState.setValues(mainState.getSimpleValues());
                     chain.doFilter(request, response);
 
                 } finally {

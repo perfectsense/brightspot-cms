@@ -11,6 +11,9 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.dari.db.QueryFilter;
+import com.psddev.dari.db.Record;
+import com.psddev.dari.db.SqlDatabase;
 import org.joda.time.DateTime;
 
 import com.psddev.cms.db.Directory;
@@ -143,13 +146,27 @@ public class SearchResultRenderer {
             int nextLevel = level + 1;
             Collection<Taxon> taxonResults = null;
             UUID taxonParentUuid = page.paramOrDefault(UUID.class, TAXON_PARENT_ID_PARAMETER, null);
+            Site site = page.getSite();
 
             if (!ObjectUtils.isBlank(taxonParentUuid)) {
+
                 Taxon parent = Query.findById(Taxon.class, taxonParentUuid);
                 taxonResults = (Collection<Taxon>) parent.getChildren();
 
+                if (site != null && !ObjectUtils.isBlank(taxonResults)) {
+
+                    Collection<Taxon> siteTaxons = new ArrayList<Taxon>();
+
+                    for (Taxon taxon : taxonResults) {
+                        if (taxon.as(Record.class).is(site.itemsPredicate())) {
+                            siteTaxons.add(taxon);
+                        }
+                    }
+                    taxonResults = siteTaxons;
+                }
+
             } else {
-                taxonResults = Taxon.Static.getRoots((Class<Taxon>) search.getSelectedType().getObjectClass());
+                taxonResults = Taxon.Static.getRoots((Class<Taxon>) search.getSelectedType().getObjectClass(), site);
             }
 
             if (!ObjectUtils.isBlank(taxonResults)) {

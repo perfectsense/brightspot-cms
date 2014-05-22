@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
-import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.Workflow;
@@ -46,6 +45,7 @@ import com.psddev.dari.util.HuslColorSpace;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.StringUtils;
+import com.psddev.dari.util.UuidUtils;
 
 public class Search extends Record {
 
@@ -445,6 +445,7 @@ public class Search extends Record {
         Set<ObjectType> types = getTypes();
         ObjectType selectedType = getSelectedType();
         Set<ObjectType> validTypes = findValidTypes();
+        Set<UUID> validTypeIds = null;
         boolean isAllSearchable = true;
 
         if (selectedType != null) {
@@ -468,7 +469,11 @@ public class Search extends Record {
                 query = isAllSearchable ? Query.fromGroup(Content.SEARCHABLE_GROUP) : Query.fromAll();
 
                 if (!validTypes.isEmpty()) {
-                    query.where("_type = ?", validTypes);
+                    validTypeIds = new HashSet<UUID>();
+
+                    for (ObjectType t : validTypes) {
+                        validTypeIds.add(t.getId());
+                    }
                 }
             }
         }
@@ -718,6 +723,7 @@ public class Search extends Record {
 
         if (!visibilities.isEmpty()) {
             Predicate visibilitiesPredicate = null;
+            Set<UUID> visibilityTypeIds = new HashSet<UUID>();
 
             for (String visibility : visibilities) {
                 if ("p".equals(visibility)) {
@@ -753,7 +759,10 @@ public class Search extends Record {
                             Query.from(Workflow.class).where("contentTypes = ?", selectedType)).
                             selectAll()) {
                         for (WorkflowState s : w.getStates()) {
-                            ss.add(s.getName());
+                            String value = s.getName();
+
+                            ss.add(value);
+                            addVisibilityTypeIds(visibilityTypeIds, validTypeIds, "cms.workflow.currentState", value);
                         }
                     }
 
@@ -763,33 +772,45 @@ public class Search extends Record {
                             PredicateParser.Static.parse("cms.workflow.currentState = ?", ss));
 
                 } else if (visibility.startsWith("w.")) {
+                    String value = visibility.substring(2);
                     visibilitiesPredicate = CompoundPredicate.combine(
                             PredicateParser.OR_OPERATOR,
                             visibilitiesPredicate,
-                            PredicateParser.Static.parse("cms.workflow.currentState = ?", visibility.substring(2)));
+                            PredicateParser.Static.parse("cms.workflow.currentState = ?", value));
+
+                    addVisibilityTypeIds(visibilityTypeIds, validTypeIds, "cms.workflow.currentState", value);
 
                 } else if (visibility.startsWith("b.")) {
+                    String field = visibility.substring(2);
                     visibilitiesPredicate = CompoundPredicate.combine(
                             PredicateParser.OR_OPERATOR,
                             visibilitiesPredicate,
-                            PredicateParser.Static.parse(visibility.substring(2) + " = true"));
+                            PredicateParser.Static.parse(field + " = true"));
+
+                    addVisibilityTypeIds(visibilityTypeIds, validTypeIds, field, "true");
 
                 } else if (visibility.startsWith("t.")) {
                     visibility = visibility.substring(2);
                     int equalAt = visibility.indexOf('=');
 
                     if (equalAt > -1) {
+                        String field = visibility.substring(0, equalAt);
+                        String value = visibility.substring(equalAt + 1);
                         visibilitiesPredicate = CompoundPredicate.combine(
                                 PredicateParser.OR_OPERATOR,
                                 visibilitiesPredicate,
-                                PredicateParser.Static.parse(
-                                    visibility.substring(0, equalAt) + " = ?",
-                                    visibility.substring(equalAt + 1)));
+                                PredicateParser.Static.parse(field + " = ?", value));
+
+                        addVisibilityTypeIds(visibilityTypeIds, validTypeIds, field, value);
                     }
                 }
             }
 
             query.and(visibilitiesPredicate);
+
+            if (validTypeIds != null) {
+                validTypeIds.addAll(visibilityTypeIds);
+            }
 
         } else if (selectedType == null &&
                 isAllSearchable) {
@@ -823,7 +844,9 @@ public class Search extends Record {
             }
         }
 
-        query.and("_type != ?", ObjectType.getInstance(Draft.class));
+        if (validTypeIds != null) {
+            query.and("_type = ?", validTypeIds);
+        }
 
         String color = getColor();
 
@@ -885,6 +908,24 @@ public class Search extends Record {
         }
 
         return query;
+    }
+
+    private void addVisibilityTypeIds(Set<UUID> visibilityTypeIds, Set<UUID> validTypeIds, String field, String value) {
+        if (validTypeIds == null) {
+            return;
+        }
+
+        byte[] md5 = StringUtils.md5(field + "/" + value.toString().trim().toLowerCase(Locale.ENGLISH));
+
+        for (UUID validTypeId : validTypeIds) {
+            byte[] typeId = UuidUtils.toBytes(validTypeId);
+
+            for (int i = 0, length = typeId.length; i < length; ++ i) {
+                typeId[i] ^= md5[i];
+            }
+
+            visibilityTypeIds.add(UuidUtils.fromBytes(typeId));
+        }
     }
 
     private void addGlobalTypes(Set<ObjectType> globalTypes, ObjectType type) {

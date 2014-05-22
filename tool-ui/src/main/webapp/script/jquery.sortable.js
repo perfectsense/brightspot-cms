@@ -97,10 +97,42 @@ $.plugin2('sortable', {
                     $selected.removeAttr('style');
                 }
 
+                $selected.find('.richtext').each(function() {
+                    var $rte = $(this);
+                    var $rteIframe = $rte.closest('.inputContainer').find('.rte-container iframe');
+
+                    if ($rteIframe.length === 0) {
+                        return;
+                    }
+
+                    $rte.val($($rteIframe[0].contentDocument.body).html());
+                });
+
                 if (data.$placeholder.next()[0] !== $selected[0]) {
                     data.$placeholder.after($selected);
                 }
                 data.$placeholder.remove();
+
+                $selected.find('.richtext').each(function() {
+                    var $rte = $(this);
+                    var $rteIframe = $rte.closest('.inputContainer').find('.rte-container iframe');
+
+                    if ($rteIframe.length === 0) {
+                        return;
+                    }
+
+                    var rteValue = $rte.val();
+                    var $inputContainer = $rte.closest('.inputContainer');
+                    $rte = $rte.clone();
+                    var $rteContainer = $inputContainer.find('.rte-container');
+
+                    $rte.val(rteValue);
+                    $rteContainer.after($rte);
+                    $rteContainer.remove();
+                    $rte.removeClass('plugin-expandable plugin-rte rte-textarea rte-source');
+                    $rte.show();
+                    $inputContainer.trigger('create');
+                });
             });
         });
     }

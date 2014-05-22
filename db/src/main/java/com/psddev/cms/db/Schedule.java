@@ -86,16 +86,21 @@ public class Schedule extends Record {
         try {
             beginWrites();
 
-            for (Draft draft : Query.
-                    from(Draft.class).
-                    where("schedule = ?", this).
+            for (Object draftObject : Query.
+                    fromAll().
+                    where("com.psddev.cms.db.Draft/schedule = ?", this).
                     master().
                     noCache().
                     resolveInvisible().
                     selectAll()) {
-                LOGGER.debug("Processing [{}] draft in [{}] schedule", draft.getLabel(), getLabel());
+                if (!(draftObject instanceof Draft)) {
+                    continue;
+                }
 
+                Draft draft = (Draft) draftObject;
                 Object object = draft.getObject();
+
+                LOGGER.debug("Processing [{}] draft in [{}] schedule", draft.getLabel(), getLabel());
 
                 if (object != null) {
                     ToolUser triggerUser = getTriggerUser();

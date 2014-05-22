@@ -203,7 +203,7 @@ public class ScheduledEvents extends PageServlet {
                             page.writeStart("div", "class", "calendarCell").writeStart("table", "class", "links table-striped pageThumbnails").writeStart("tbody");
                                 for (Schedule schedule : schedules) {
                                     DateTime triggerDate = page.toUserDateTime(schedule.getTriggerDate());
-                                    List<Draft> drafts = Query.from(Draft.class).where("schedule = ?", schedule).selectAll();
+                                    List<Object> drafts = Query.fromAll().where("com.psddev.cms.db.Draft/schedule = ?", schedule).selectAll();
 
                                     if (drafts.isEmpty()) {
                                         continue;
@@ -211,7 +211,12 @@ public class ScheduledEvents extends PageServlet {
 
                                     boolean first = true;
 
-                                    for (Draft draft : drafts) {
+                                    for (Object d : drafts) {
+                                        if (!(d instanceof Draft)) {
+                                            continue;
+                                        }
+
+                                        Draft draft = (Draft) d;
                                         Object draftObject = draft.getObject();
 
                                         page.writeStart("tr", "data-preview-url", "/_preview?_cms.db.previewId=" + draft.getId());

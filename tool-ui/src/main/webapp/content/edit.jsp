@@ -566,6 +566,7 @@ if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
                         if (!isTrash &&
                                 (editingState.isNew() ||
                                 !editingState.isVisible() ||
+                                draft != null ||
                                 editingState.as(Workflow.Data.class).getCurrentState() != null)) {
                             Workflow workflow = Query.from(Workflow.class).where("contentTypes = ?", editingState.getType()).first();
 
@@ -784,6 +785,7 @@ if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
                             <input name="<%= PageFilter.PREVIEW_SITE_ID_PARAMETER %>" type="hidden" value="<%= site.getId() %>">
                         <% } %>
                         <input name="<%= PageFilter.PREVIEW_OBJECT_PARAMETER %>" type="hidden">
+                        <input name="previewDate" type="hidden">
                         <button class="action-share">Share</button>
                     </form>
                 </li>
@@ -808,7 +810,8 @@ if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
                                 "data-bsp-autosubmit", "",
                                 "class", "date",
                                 "name", "_date",
-                                "placeholder", "Now");
+                                "placeholder", "Now",
+                                "onchange", "$('.widget-preview_controls').find('form').eq(0).find(':input[name=\"previewDate\"]').val($(this).val());");
 
                         wp.writeHtml(" ");
                         wp.writeStart("select", "onchange",

@@ -14,6 +14,7 @@ import com.psddev.dari.util.ErrorUtils;
 import com.psddev.dari.util.ObjectUtils;
 
 /** Unpublished object or unsaved changes to an existing object. */
+@Draft.DisplayName("Content Update")
 @ToolUi.Hidden
 public class Draft extends Content {
 
@@ -190,6 +191,22 @@ public class Draft extends Content {
     @Override
     public String getLabel() {
         Object object = getObject();
-        return object != null ? State.getInstance(object).getLabel() : getLabel();
+
+        if (object != null) {
+            State state = State.getInstance(object);
+            ObjectType type = state.getType();
+            StringBuilder label = new StringBuilder();
+
+            if (type != null) {
+                label.append(type.getLabel());
+                label.append(": ");
+            }
+
+            label.append(state.getLabel());
+            return label.toString();
+
+        } else {
+            return super.getLabel();
+        }
     }
 }

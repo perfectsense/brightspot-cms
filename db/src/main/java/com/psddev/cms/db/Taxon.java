@@ -33,11 +33,23 @@ public interface Taxon extends Recordable {
         }
     }
 
-    /** {@link Taxon} utility methods. */
+    /**
+     * {@link Taxon} utility methods.
+     */
     public static final class Static {
 
         public static <T extends Taxon> List<T> getRoots(Class<T> taxonClass) {
             return Query.from(taxonClass).where("cms.taxon.root = true").selectAll();
+        }
+
+        public static <T extends Taxon> List<T> getRoots(Class<T> taxonClass, Site site) {
+            Query query = Query.from(taxonClass).where("cms.taxon.root = true");
+
+            if (site != null) {
+                query.and(site.itemsPredicate());
+            }
+
+            return query.selectAll();
         }
     }
 }
