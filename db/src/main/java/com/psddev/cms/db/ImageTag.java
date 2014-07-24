@@ -3,6 +3,7 @@ package com.psddev.cms.db;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,20 +23,27 @@ import org.slf4j.LoggerFactory;
 
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.dari.db.Application;
+import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ImageResizeStorageItemListener;
+import com.psddev.dari.util.JavaImageEditor;
 import com.psddev.dari.util.JspUtils;
 import com.psddev.dari.util.ObjectMap;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeReference;
 import com.psddev.dari.util.WebPageContext;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Equivalent to the HTML {@code img} tag where its {@code src} attribute
@@ -88,9 +96,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
     /**
      * Sets the field that contains the image. If not set, the first
      * field with {@value ObjectField.FILE_TYPE} type is used.
-     * @deprecated No replacement
      */
-    @Deprecated
     public void setField(String field) {
         tagBuilder.setField(field);
     }
@@ -375,11 +381,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 .toAttributes();
     }
 
-    /**
-     * @deprecated No replacement
-     */
-    @Deprecated
-    private static String findStorageItemField(State state) {
+    protected static String findStorageItemField(State state) {
         String field = null;
         ObjectType objectType = state.getType();
         if (objectType != null) {
@@ -393,10 +395,6 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         return field;
     }
 
-    /**
-     * @deprecated No replacement
-     */
-    @Deprecated
     private static StorageItem findStorageItem(State state, String field) {
         StorageItem item = null;
         if (field != null) {
@@ -488,7 +486,6 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
     public static final class Builder {
 
         private StorageItem item;
-        @Deprecated
         private String field;
         private ImageEditor editor;
 
@@ -547,9 +544,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         /**
          * Sets the field that contains the image. If not set, the first
          * field with {@value ObjectField.FILE_TYPE} type is used.
-         * @deprecated No replacement
          */
-        @Deprecated
         private Builder setField(String field) {
             this.field = field;
             return this;
@@ -674,9 +669,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         /**
          * For backwards compatibility
          *
-         * @deprecated
          */
-        @Deprecated
         private Builder setState(State state) {
             this.state = state;
             return this;
@@ -834,9 +827,10 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             Integer originalHeight = null;
             Map<String, ImageCrop> crops = null;
 
+            String field = null;
             if (this.state != null) { // backwards compatibility path
                 State objectState = this.state;
-                String field = this.field;
+                field = this.field;
 
                 if (ObjectUtils.isBlank(field)) {
                     field = findStorageItemField(objectState);
@@ -990,6 +984,26 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 }
 
                 String url = item.getPublicUrl();
+
+                if (editor == null) {
+                    editor = ImageEditor.Static.getDefault();
+                }
+
+                HttpServletRequest request = PageContextFilter.Static.getRequestOrNull();
+                if (request != null &&
+                        !PageFilter.Static.isPreview(request) &&
+                        !StringUtils.isBlank(url) &&
+                        standardImageSize != null &&
+                        this.state != null &&
+                        field != null &&
+                        editor instanceof JavaImageEditor &&
+                        this.state.getOriginalObject() instanceof ImageTag.Item)  {
+
+                    String extension = url.substring(url.lastIndexOf("/")).contains(".") ? url.substring(url.lastIndexOf(".") + 1) : item.getContentType().substring(item.getContentType().lastIndexOf("/" + 1)).toLowerCase();
+                    ImageTag.Item imageTagItem = (ImageTag.Item) this.state.getOriginalObject();
+                    url = imageTagItem.as(ImageTag.Item.Data.class).buildFriendlyUrl((JavaImageEditor) editor, url, extension, standardImageSize.getInternalName(), field);
+                }
+
                 if (url != null) {
                     attributes.put(srcAttr != null ? srcAttr : "src", url);
                 }
@@ -1239,5 +1253,228 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         Map<String, String> attributes = getAttributes(new WebPageContext(pageContext),
                 object, field, imageEditor, standardImageSize, width, height, null, null, null, null);
         return attributes.get("src");
+    }
+
+    public static interface Item extends Recordable {
+
+        /** Modification that adds image path information. */
+        @Modification.FieldInternalNamePrefix("cms.imageTag.")
+        @Renderer.BeanProperty("cmsImageTag")
+        public static final class Data extends Modification<ImageTag.Item> {
+            private static final Pattern VERSION_PATTERN = Pattern.compile("^.*-v\\d+$");
+
+            @ToolUi.Hidden
+            private List<ImageFieldPath> imageFieldPaths;
+            @ToolUi.Heading("Image Tag")
+            @ToolUi.NoteHtml("<span data-dynamic-html='${content.cmsImageTag.imagePath}'></span>")
+            @Indexed(unique = true)
+            private String urlFriendlyName;
+
+            public List<ImageFieldPath> getImageFieldPaths() {
+                return imageFieldPaths;
+            }
+
+            public void setImageFieldPaths(List<ImageFieldPath> imageFieldPaths) {
+                this.imageFieldPaths = imageFieldPaths;
+            }
+
+            public String getImagePath() {
+                if (ImageEditor.Static.getDefault() instanceof JavaImageEditor) {
+                    StringBuilder imagePath = new StringBuilder();
+                    imagePath.append(((JavaImageEditor) ImageEditor.Static.getDefault()).getBaseUrl())
+                             .append("size/");
+                    if (!StringUtils.isBlank(urlFriendlyName)) {
+                        imagePath.append(StringUtils.toNormalized(urlFriendlyName));
+                    } else if (this.getOriginalObject() != null &&
+                               this.getOriginalObject().getState() != null &&
+                               this.getOriginalObject().getState().getId() != null) {
+                        imagePath.append(this.getOriginalObject().getState().getId().toString());
+                    } else {
+                        imagePath.append("id");
+                    }
+                    imagePath.append(".ext");
+                    return imagePath.toString();
+                }
+                return  "";
+            }
+
+            @Override
+            public void beforeSave() {
+                if (!StringUtils.isBlank(urlFriendlyName)) {
+                    urlFriendlyName = StringUtils.toNormalized(urlFriendlyName);
+                    Matcher rawPathMatcher = VERSION_PATTERN.matcher(urlFriendlyName);
+                    if (rawPathMatcher.matches()) {
+                        this.getState().addError(this.getState().getField("cms.imageTag.urlFriendlyName"), "Cannot end with -v##");
+                    }
+                }
+            }
+
+            public String buildFriendlyUrl(JavaImageEditor imageEditor, String url, String extension, String imageSize , String field) {
+
+                String localUrl = url;
+                if (localUrl.startsWith("http")) {
+                    localUrl = localUrl.substring(localUrl.indexOf("//") + 2);
+                    localUrl = localUrl.substring(localUrl.indexOf("/"));
+                }
+
+                StringBuilder friendlyUrl = new StringBuilder(imageEditor.getBaseUrl());
+                friendlyUrl.append(imageSize)
+                           .append("/");
+
+                Integer offset = null;
+                int imageFieldPathIndex = -1;
+
+                boolean firstField = true;
+                if (imageFieldPaths == null) {
+                    imageFieldPaths = new ArrayList<ImageFieldPath>();
+                } else if (this.getImageFieldPaths().size() > 0) {
+                    findOffset : for (int i = 0; i < this.getImageFieldPaths().size(); i++) {
+                        ImageTag.Item.ImageFieldPath fieldPath = this.getImageFieldPaths().get(i);
+                        if (fieldPath.getField().equals(field)) {
+                            imageFieldPathIndex = i;
+                            for (ImageTag.Item.ImageSizePath imageSizePath : fieldPath.getImageSizePaths()) {
+                                if (imageSizePath.getSize().equals(imageSize) && imageSizePath.getPaths().contains(localUrl)) {
+                                    offset =  imageSizePath.getPaths().indexOf(localUrl);
+                                    break findOffset;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //new image size/url combination
+                if (offset == null) {
+                    ImageFieldPath updatedImageFieldPath = null;
+
+                    if (imageFieldPaths == null) {
+                        imageFieldPaths = new ArrayList<ImageFieldPath>();
+                    }
+
+                    for (int i = 0; i < imageFieldPaths.size(); i++) {
+                        if (imageFieldPaths.get(i).getField().equals(field)) {
+                            imageFieldPathIndex = i;
+                            updatedImageFieldPath = this.getImageFieldPaths().get(i);
+                            break;
+                        }
+
+                    }
+                    if (updatedImageFieldPath == null) {
+                        updatedImageFieldPath = new ImageTag.Item.ImageFieldPath();
+                        updatedImageFieldPath.setField(field);
+                    }
+
+                    boolean found = false;
+                    if (updatedImageFieldPath.getImageSizePaths() == null) {
+                        updatedImageFieldPath.setImageSizePaths(new ArrayList<ImageSizePath>());
+                    } else {
+                        for (ImageSizePath imageSizePath : updatedImageFieldPath.getImageSizePaths()) {
+                            if (imageSizePath.getSize().equals(imageSize)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        ImageSizePath imageSizePath = new ImageSizePath();
+                        imageSizePath.setSize(imageSize);
+                        List<ImageSizePath> imageSizePaths = updatedImageFieldPath.getImageSizePaths();
+                        imageSizePaths.add(imageSizePath);
+                        updatedImageFieldPath.setImageSizePaths(imageSizePaths);
+                    }
+
+                    offset = 0;
+                    for (ImageTag.Item.ImageSizePath imageSizePath : updatedImageFieldPath.getImageSizePaths()) {
+                        if (imageSizePath.getSize().equals(imageSize)) {
+                            ImageSizePath newImageSizePath = imageSizePath;
+                            List<String> paths = newImageSizePath.getPaths();
+                            if (paths == null) {
+                                paths = new ArrayList<String>();
+                            }
+
+                            if (!paths.contains(localUrl)) {
+                                paths.add(localUrl);
+                                newImageSizePath.setPaths(paths);
+                            }
+                            offset = paths.size() - 1;
+                            break;
+                        }
+                    }
+
+                    if (imageFieldPathIndex == -1) {
+                        imageFieldPaths.add(updatedImageFieldPath);
+                        imageFieldPathIndex = imageFieldPaths.size() - 1;
+                    } else {
+                        imageFieldPaths.get(imageFieldPathIndex).setImageSizePaths(updatedImageFieldPath.getImageSizePaths());
+                    }
+                    this.getState().saveUnsafely();
+                }
+
+                if (imageFieldPathIndex > 0) {
+                    friendlyUrl.append(StringUtils.encodeUri(field))
+                               .append("/");
+                }
+
+                if (!StringUtils.isBlank(urlFriendlyName)) {
+                    friendlyUrl.append(urlFriendlyName);
+                } else {
+                    friendlyUrl.append(this.getId());
+                }
+
+                if (offset > 0) {
+                     friendlyUrl.append("-v")
+                                .append(offset);
+                }
+                friendlyUrl.append(".")
+                           .append(extension);
+
+                return friendlyUrl.toString();
+
+            }
+        }
+
+        @Recordable.Embedded
+        public static final class ImageFieldPath extends Record {
+            private String field;
+            private List<ImageSizePath> imageSizePaths;
+
+            public String getField() {
+                return field;
+            }
+
+            public void setField(String field) {
+                this.field = field;
+            }
+
+            public List<ImageSizePath> getImageSizePaths() {
+                return imageSizePaths;
+            }
+
+            public void setImageSizePaths(List<ImageSizePath> imageSizePaths) {
+                this.imageSizePaths = imageSizePaths;
+            }
+        }
+
+        @Recordable.Embedded
+        public static final class ImageSizePath extends Record {
+            private String size;
+            private List<String> paths;
+
+            public String getSize() {
+                return size;
+            }
+
+            public void setSize(String size) {
+                this.size = size;
+            }
+
+            public List<String> getPaths() {
+                return paths;
+            }
+
+            public void setPaths(List<String> paths) {
+                this.paths = paths;
+            }
+        }
+
     }
 }
