@@ -29,6 +29,7 @@ import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
+import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ImageResizeStorageItemListener;
 import com.psddev.dari.util.JspUtils;
@@ -46,10 +47,25 @@ import com.psddev.dari.util.WebPageContext;
  */
 @SuppressWarnings("serial")
 public class ImageTag extends TagSupport implements DynamicAttributes {
+    public static final String HOTSPOT_CLASS = "com.psddev.image.HotSpots";
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(ImageTag.class);
+    protected static final String ORIGINAL_WIDTH_METADATA_PATH = "image/originalWidth";
+    protected static final String ORIGINAL_HEIGHT_METADATA_PATH = "image/originalHeight";
 
     protected Builder tagBuilder = new Builder();
+    private static Boolean useHotSpotCrop;
+
+    private static boolean useHotSpotCrop() {
+        if (useHotSpotCrop == null) {
+            if (ObjectUtils.getClassByName(HOTSPOT_CLASS) != null) {
+                useHotSpotCrop = Settings.getOrDefault(Boolean.class, "cms/image/useHotSpotCrop", Boolean.TRUE);
+            } else {
+                useHotSpotCrop = false;
+            }
+        }
+        return useHotSpotCrop;
+    }
 
     /**
      * Sets the source object, which may be either a URL or a Dari
@@ -72,7 +88,15 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             tagBuilder.setItem(pathItem);
 
         } else if (src instanceof StorageItem) {
-            tagBuilder.setItem((StorageItem) src);
+            StorageItem item = (StorageItem) src;
+            //Resets StorageItem's MetaData size on subsequent calls to the same storage Item
+            if (CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH) != null) {
+                item.getMetadata().put("height", CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH));
+            }
+            if (CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH) != null) {
+                item.getMetadata().put("width", CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH));
+            }
+            tagBuilder.setItem(item);
 
         } else if (src instanceof State || src instanceof Recordable) {
 
@@ -204,6 +228,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         tagBuilder.setOverlay(ObjectUtils.to(boolean.class, overlay));
     }
 
+    /**
+     * When set to {@code true}, suppresses automatic cropping using hot spots
+     * @param disableHotSpotCrop
+     */
+    public void setDisableHotSpotCrop(Object disableHotSpotCrop) {
+        tagBuilder.setDisableHotSpotCrop(ObjectUtils.to(boolean.class, disableHotSpotCrop));
+    }
+
     // --- DynamicAttribute support ---
 
     @Override
@@ -271,7 +303,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
      * Finds the dimension {@code name} ("width", or "height") for the given
      * StorageItem {@code item}.
      */
-    private static Integer findDimension(StorageItem item, String name) {
+    protected static Integer findDimension(StorageItem item, String name) {
         if (item == null) {
             return null;
         }
@@ -289,7 +321,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
     /**
      * Finds the crop information for the StorageItem {@code item}.
      */
-    private static Map<String, ImageCrop> findImageCrops(StorageItem item) {
+    protected static Map<String, ImageCrop> findImageCrops(StorageItem item) {
         if (item == null) {
             return null;
         }
@@ -317,6 +349,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         StorageItem override = StorageItem.Static.createIn(item.getStorage());
                 new ObjectMap(override).putAll(new ObjectMap(item));
+        CollectionUtils.putByPath(override.getMetadata(), ORIGINAL_WIDTH_METADATA_PATH, ImageTag.findDimension(item, "width"));
+        CollectionUtils.putByPath(override.getMetadata(), ORIGINAL_HEIGHT_METADATA_PATH, ImageTag.findDimension(item, "height"));
 
         boolean overridden = ImageResizeStorageItemListener.overridePathWithNearestSize(override,
                 width, height);
@@ -458,7 +492,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         return dimension;
     }
 
-    private static StandardImageSize getStandardImageSizeByName(String size) {
+    protected static StandardImageSize getStandardImageSizeByName(String size) {
         StandardImageSize standardImageSize = null;
         for (StandardImageSize standardSize : StandardImageSize.findAll()) {
             if (standardSize.getInternalName().equals(size)) {
@@ -510,6 +544,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         private String srcAttribute;
         private boolean hideDimensions;
         private boolean overlay;
+        private boolean disableHotSpotCrop;
         private boolean edits = true;
 
         private final Map<String, String> attributes = new LinkedHashMap<String, String>();
@@ -546,6 +581,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             tagName = null;
             srcAttribute = null;
             hideDimensions = false;
+            disableHotSpotCrop = false;
             attributes.clear();
 
             state = null;
@@ -647,6 +683,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         public void setOverlay(boolean overlay) {
             this.overlay = overlay;
+        }
+
+        public boolean isDisableHotSpotCrop() {
+            return disableHotSpotCrop;
+        }
+
+        public void setDisableHotSpotCrop(boolean disableHotSpotCrop) {
+            this.disableHotSpotCrop = disableHotSpotCrop;
         }
 
         public boolean isEdits() {
@@ -988,6 +1032,22 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                 // Requires at least the width and height to perform a crop
                 if (cropWidth != null && cropHeight != null) {
+                    if (!disableHotSpotCrop &&
+                            useHotSpotCrop() &&
+                            (standardImageSize.getCropOption() == null || standardImageSize.getCropOption().equals(CropOption.AUTOMATIC)) &&
+                            cropX == null &&
+                            cropY == null) {
+
+                        List<Integer> hotSpotCrop = ImageHotSpot.crop(item, cropWidth, cropHeight);
+                        if (!ObjectUtils.isBlank(hotSpotCrop) &&
+                                hotSpotCrop.size() == 4) {
+                            cropX = hotSpotCrop.get(0);
+                            cropY = hotSpotCrop.get(1);
+                            cropWidth = hotSpotCrop.get(2);
+                            cropHeight = hotSpotCrop.get(3);
+                        }
+                    }
+
                     item = ImageEditor.Static.crop(editor, item, options, cropX, cropY, cropWidth, cropHeight);
                 }
 

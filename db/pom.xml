@@ -42,6 +42,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.psddev</groupId>
+            <artifactId>image</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <scope>provided</scope>

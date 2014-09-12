@@ -40,6 +40,50 @@
     }
 }
 
+.imageEditor-hotSpotPopup.popup {
+    width: 250px;
+
+    > .content {
+        left: 75px;
+        position: relative;
+
+        > .marker {
+            left: 50px !important;
+        }
+    }
+}
+
+.imageEditor-addHotSpotOverlay {
+    .icon;
+    .icon-plus-sign;
+}
+
+.imageEditor-removeHotSpotOverlay {
+    .icon;
+    .icon-minus-sign;
+    color: @color-alert;
+}
+
+.imageEditor-hotSpotOverlayBox {
+    outline: 1px dashed #fff;
+}
+
+.imageEditor-hotSpotOverlay.selected {
+    .imageEditor-hotSpotOverlayBox {
+        outline: 1px dashed #83cbea;
+    }
+    .imageEditor-textOverlayLabel {
+        color: #83cbea;
+    }
+    .imageEditor-textOverlayRemove {
+        color: #83cbea;
+    }
+    .imageEditor-resizer {
+        background-color : #fff;
+        border-color: #29c;
+    }
+}
+
 .imageEditor-image {
     margin-right: 160px;
     min-height: 150px;

@@ -36,6 +36,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.psddev</groupId>
+            <artifactId>image</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>

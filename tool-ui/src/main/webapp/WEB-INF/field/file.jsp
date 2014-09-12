@@ -14,6 +14,8 @@ com.psddev.dari.db.ReferentialText,
 com.psddev.dari.db.State,
 com.psddev.dari.util.AggregateException,
 com.psddev.dari.util.BrightcoveStorageItem,
+com.psddev.dari.util.ClassFinder,
+com.psddev.dari.util.CollectionUtils,
 com.psddev.dari.util.MultipartRequest,
 com.psddev.dari.util.ImageEditor,
 com.psddev.dari.util.ImageMetadataMap,
@@ -154,6 +156,9 @@ for (StandardImageSize size : StandardImageSize.findAll()) {
         crops.put(sizeId, new ImageCrop());
     }
 }
+
+Class HotSpotClass = ObjectUtils.getClassByName(ImageTag.HOTSPOT_CLASS);
+boolean projectUsingBrightSpotImage = HotSpotClass != null && !ObjectUtils.isBlank(ClassFinder.Static.findClasses(HotSpotClass));
 
 if ((Boolean) request.getAttribute("isFormPost")) {
     File file = null;
@@ -507,6 +512,10 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         }
 
         state.putValue(fieldName, newItem);
+
+        if (projectUsingBrightSpotImage) {
+            JspUtils.include(request, response, out, "set/hotSpot.jsp");
+        }
         return;
 
     } finally {
@@ -681,17 +690,31 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                     <div class="imageEditor-image">
                         <%
                         String fieldValueUrl;
+                        String resizeScale = "";
                         if (ImageEditor.Static.getDefault() != null) {
-                            fieldValueUrl = new ImageTag.Builder(fieldValue).
+                            ImageTag.Builder imageTagBuilder = new ImageTag.Builder(fieldValue).
                                     setWidth(1000).
                                     setResizeOption(ResizeOption.ONLY_SHRINK_LARGER).
-                                    setEdits(false).
-                                    toUrl();
+                                    setEdits(false);
+                            Number originalWidth = null;
+                            if (!ObjectUtils.isBlank(CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "image/originalWidth"))) {
+                                originalWidth = (Number) CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "image/originalWidth");
+                            } else if (!ObjectUtils.isBlank(CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "dims/originalWidth"))) {
+                                originalWidth = (Number) CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "dims/originalWidth");
+                            } else if (!ObjectUtils.isBlank(CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "width"))) {
+                                originalWidth = (Number) CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "width");
+                            }
+                            if (originalWidth != null) {
+                                if (originalWidth.intValue() > 1000) {
+                                    resizeScale = String.format("%.2f", (double) 1000 /originalWidth.intValue());
+                                }
+                            }
+                            fieldValueUrl = imageTagBuilder.toUrl();
                         } else {
                             fieldValueUrl = fieldValue.getPublicUrl();
                         }
                         %>
-                        <img alt="" src="<%= wp.url("/misc/proxy.jsp",
+                        <img alt="" data-scale="<%=resizeScale%>" src="<%= wp.url("/misc/proxy.jsp",
                                 "url", fieldValueUrl,
                                 "hash", StringUtils.hex(StringUtils.hmacSha1(Settings.getSecret(), fieldValueUrl))) %>">
                     </div>
@@ -794,3 +817,8 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         </div>
     <% } %>
 </div>
+<%
+    if (projectUsingBrightSpotImage) {
+        JspUtils.include(request, response, out, "set/hotSpot.jsp");
+    }
+%>
