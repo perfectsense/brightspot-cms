@@ -55,7 +55,7 @@ org.apache.commons.fileupload.FileItem,
 
 org.slf4j.Logger,
 org.slf4j.LoggerFactory
-" %><%!
+, com.psddev.cms.tool.CmsTool" %><%!
 
 private static final Logger LOGGER = LoggerFactory.getLogger(ToolPageContext.class);
 %><%
@@ -515,7 +515,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         state.putValue(fieldName, newItem);
 
         if (projectUsingBrightSpotImage) {
-            JspUtils.include(request, response, out, "set/hotSpot.jsp");
+            JspUtils.include(request, response, out, wp.toolUrl(CmsTool.class, "/WEB-INF/field/set/hotSpot.jsp"));
         }
         return;
 
@@ -583,10 +583,10 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                             <h2>Tools</h2>
                             <ul>
                                 <% if (state.as(ColorDistribution.Data.class).getDistribution() != null) { %>
-                                    <li><a class="icon icon-tint" href="<%= wp.h(wp.cmsUrl("/contentColors", "id", state.getId())) %>" target="contentColors">Colors</a></li>
+                                    <li><a class="icon icon-tint" href="<%= wp.h(wp.toolUrl(CmsTool.class, "/contentColors", "id", state.getId())) %>" target="contentColors">Colors</a></li>
                                 <% } %>
                                 <li><a class="action-preview" href="<%= wp.h(fieldValue.getPublicUrl()) %>" target="_blank">View Original</a></li>
-                                <li><a class="icon icon-crop" href="<%= wp.h(wp.url("/contentImages", "id", id, "field", fieldName)) %>" target="contentImages">View Resized</a></li>
+                                <li><a class="icon icon-crop" href="<%= wp.h(wp.toolUrl(CmsTool.class, "/contentImages", "id", id, "field", fieldName)) %>" target="contentImages">View Resized</a></li>
                             </ul>
                         </div>
 
@@ -715,10 +715,16 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                             fieldValueUrl = fieldValue.getPublicUrl();
                         }
                         %>
-                        <img alt="" data-scale="<%=resizeScale%>" src="<%= wp.url("/misc/proxy.jsp",
+                        <img alt="" data-scale="<%=resizeScale%>" src="<%= wp.toolUrl(CmsTool.class, "/misc/proxy.jsp",
                                 "url", fieldValueUrl,
                                 "hash", StringUtils.hex(StringUtils.hmacSha1(Settings.getSecret(), fieldValueUrl))) %>">
                     </div>
+
+                    <%
+                        if (projectUsingBrightSpotImage) {
+                            JspUtils.include(request, response, out, wp.toolUrl(CmsTool.class, "/WEB-INF/field/set/hotSpot.jsp"));
+                        }
+                    %>
 
                 </div>
 
@@ -818,8 +824,3 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         </div>
     <% } %>
 </div>
-<%
-    if (projectUsingBrightSpotImage) {
-        JspUtils.include(request, response, out, "set/hotSpot.jsp");
-    }
-%>

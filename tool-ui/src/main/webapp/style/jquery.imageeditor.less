@@ -68,29 +68,33 @@
     outline: 1px dashed #fff;
 }
 
-.imageEditor-hotSpotOverlay.selected {
-    .imageEditor-hotSpotOverlayBox {
-        outline: 1px dashed #83cbea;
-    }
-    .imageEditor-textOverlayLabel {
-        color: #83cbea;
-    }
-    .imageEditor-textOverlayRemove {
-        color: #83cbea;
-    }
-    .imageEditor-resizer {
-        background-color : #fff;
-        border-color: #29c;
+.hotSpot-inputContainer {
+
+    > .inputSmall {
+
+        margin-left: 0;
+
+        .inputLarge {
+
+            > ul {
+                display: none;
+            }
+        }
     }
 }
 
 .imageEditor-image {
+
+    @max-image-height: 800px;
     margin-right: 160px;
     min-height: 150px;
+    max-height: @max-image-height;
 
     canvas,
     img {
-        width: 100%;
+        max-width: 100%;
+        max-height: @max-image-height;
+        display: block;
     }
 }
 

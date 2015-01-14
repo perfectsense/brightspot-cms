@@ -10,9 +10,10 @@ $.plugin2('popup', {
             'left': 35,
             'right': 35,
             'top': 20
-        }
+        },
+        'parent': null
     },
-    
+
     '_create': function(element) {
         var $inner = $(element);
         var options = this.option();
@@ -65,7 +66,7 @@ $.plugin2('popup', {
             $(this).popup('close');
         });
 
-        var $body = $(doc.body);
+        var $body = options.parent ? $(options.parent) : $('body');
         $content.append($inner);
         $content.append($closeButton);
         $container.append($content);
@@ -123,14 +124,39 @@ $.plugin2('popup', {
 
             // Change position.
             var sourceOffset = $newSource.offset();
+            var $offsetParent = $container.offsetParent();
+
+
+            var popupOffsetParentOffset = $container.offsetParent().offset();
+
+            if($offsetParent.is('body')) {
+
+                var marginLeft = parseInt($offsetParent.css('margin-left'), 10);
+                var marginTop = parseInt($offsetParent.css('margin-top'), 10);
+
+                if(!isNaN(marginLeft) && marginLeft > 0) {
+                    popupOffsetParentOffset.left -= marginLeft;
+                }
+
+                if(!isNaN(marginTop) && marginTop > 0) {
+                    popupOffsetParentOffset.top -= marginTop;
+                }
+            }
+
+            sourceOffset = {
+                'left': sourceOffset.left - popupOffsetParentOffset.left,
+                'top': sourceOffset.top - popupOffsetParentOffset.top
+            };
+            var paddingLeft = options.padding.left - popupOffsetParentOffset.left;
+
             var popupWidth = $container.outerWidth();
 
             // Make sure left is within bounds.
             var markerDelta = 0;
             var left = event ? event.pageX - popupWidth / 2 : sourceOffset.left + ($newSource.outerWidth() - popupWidth) / 2;
-            if (left < options.padding.left) {
-                markerDelta = left - options.padding.left;
-                left = options.padding.left;
+            if (left < paddingLeft) {
+                markerDelta = left - paddingLeft;
+                left = paddingLeft;
             } else {
                 var leftDelta = left + popupWidth - $(doc).width() + options.padding.right;
                 if (leftDelta > 0) {

@@ -30,6 +30,31 @@ $.plugin2('toggleable', {
 
         if (selector) {
             $matching = $root.find(selector);
+
+            if (!disable) {
+                $matching.find('[data-form-fields-url]').each(function() {
+                    var $div = $(this);
+                    var url = $div.attr('data-form-fields-url');
+                    var data = $div.attr('data-form-fields-data');
+
+                    $div.removeAttr('data-form-fields-url');
+                    $div.removeAttr('data-form-fields-data');
+
+                    $.ajax({
+                        'type': 'POST',
+                        'cache': false,
+                        'url': url,
+                        'data': { 'data': data },
+                        'complete': function(response) {
+                            $div.append(response.responseText);
+                            $div.trigger('create');
+                            $div.trigger('load');
+                            $div.resize();
+                        }
+                    });
+                })
+            }
+
             $inputs = $matching.find(':input');
 
             if ($matching.is(':input')) {

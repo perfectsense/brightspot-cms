@@ -108,10 +108,18 @@ $.plugin2('sortable', {
                     $rte.val($($rteIframe[0].contentDocument.body).html());
                 });
 
+                var isReorder = false;
                 if (data.$placeholder.next()[0] !== $selected[0]) {
                     data.$placeholder.after($selected);
+                    isReorder = true;
+
                 }
                 data.$placeholder.remove();
+
+                if(isReorder) {
+                    $selected.trigger('reorder');
+                }
+
 
                 $selected.find('.richtext').each(function() {
                     var $rte = $(this);

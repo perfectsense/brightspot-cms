@@ -118,6 +118,7 @@
 }
 
 .popup[data-popup-source-class~='objectId-edit'],
+.popup[data-popup-source-class~='embedded-object-edit-popup'],
 .popup[name='contentEdit'] {
   left: 0 !important;
   right: 0 !important;
@@ -135,6 +136,10 @@
       display: none;
     }
   }
+}
+
+.popup[data-popup-source-class~='embedded-object-edit-popup'] {
+  position: absolute;
 }
 
 .popup[name='miscSearch'],

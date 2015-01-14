@@ -24,6 +24,16 @@ function($, bsp_utils) {
                 $(window.document.body).append($frames);
             }
 
+            var search = inputValue ? JSON.parse(inputValue)['cms.ui.search'] : null;
+
+            if (search) {
+                var types = $field.closest('.inputLarge').attr('data-generic-arguments');
+
+                if (types) {
+                    search.types = types.split('\\s*,\\s*');
+                }
+            }
+
             $frame = $('<div/>', {
                 'class': 'frame',
                 'html': $('<form/>', {
@@ -32,7 +42,7 @@ function($, bsp_utils) {
                     'html': $('<input/>', {
                         'type': 'hidden',
                         'name': 'search',
-                        'value': inputValue ? JSON.stringify(JSON.parse(inputValue)['cms.ui.search']) : ''
+                        'value': search ? JSON.stringify(search) : ''
                     })
                 })
             });

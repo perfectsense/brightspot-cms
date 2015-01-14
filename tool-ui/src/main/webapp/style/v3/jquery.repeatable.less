@@ -1,3 +1,16 @@
+
+.embedded-object-preview {
+    &:extend(.objectId-select all);
+}
+
+.embedded-object-edit {
+    &:extend(.objectId-edit all);
+}
+
+.embedded-object-clear {
+    &:extend(.objectId-clear all);
+}
+
 .repeatableForm {
   > ol,
   > ul {
@@ -137,6 +150,9 @@
   }
 
   &.repeatableForm-previewable {
+
+    @listItem-margin: 10px;
+    @listItem-markerSize: 20px;
     > ol,
     > ul {
       overflow: hidden;
@@ -217,6 +233,194 @@
       float: left;
       margin: 0 10px 0 0;
     }
+
+    &.repeatableForm-popup {
+
+      @size-input-border: 0;
+      @listItem-margin: 6px;
+
+      .objectInputs {
+        display: none;
+      }
+      > ol, > ul {
+        > li {
+          &[data-embedded-popup][data-preview] {
+
+            @img-height: 150px;
+            @preview-width: 270px;
+
+            max-width: @preview-width;
+
+            > .removeButton {
+
+              position: static;
+              .icon;
+              .link;
+              .icon-minus-sign;
+              color: @color-remove;
+              margin-left: 10px;
+
+              @media @media-tablet {
+                  .icon-only;
+                  margin-left: 5px;
+              }
+            }
+
+            > .embedded-object-preview {
+
+              display: inline-block;
+              width: 100%;
+                height: auto;
+
+              &:before {
+                display: none;
+              }
+
+              > figure {
+                height: @img-height;
+                display: inline-block;
+                min-width: 0;
+                width: 100%;
+                overflow: hidden;
+                text-align: center;
+
+                > img {
+                  height: @img-height;
+                  display: inline-block;
+                  max-width: 100%;
+                }
+              }
+            }
+
+            // empty preview display for embedded object preview
+            &[data-preview=""] {
+                > .embedded-object-preview {
+                    > figure {
+                        > img {
+                            width: @img-height;
+                            visibility: hidden;
+                        }
+                    }
+                }
+            }
+            > .embedded-object-edit {
+              &:extend(.link all);
+            }
+            &:nth-child(4n+1) {
+              clear: none;
+            }
+
+            // .toBeRemoved from .repeatable-form li and .objectId-select
+            &.toBeRemoved {
+
+              // similar to .objectId-select
+              > .embedded-object-preview {
+                background-color: #fdd;
+                color: @color-remove;
+                text-decoration: line-through;
+
+                &:before,
+                &:after {
+                  visibility: hidden !important;
+                }
+
+                img {
+                  opacity: 0.5;
+                }
+              }
+
+              .embedded-object-edit {
+                color: @color-remove;
+                text-decoration: line-through;
+              }
+
+              > .removeButton {
+                .icon-plus-sign;
+                color: @color-link-dark;
+              }
+            }
+          }
+        }
+      }
+        > ol {
+
+            list-style-type: none;
+            margin-left: 0;
+            overflow: hidden;
+            counter-reset: listItem;
+
+            > li {
+
+                > .repeatableLabel {
+                    &:before {
+                        display: none;
+                    }
+                    &:after {
+                        content: counter(listItem);
+                        counter-increment: listItem;
+                        left: 10px;
+                    }
+                    padding-left: 35px;
+                }
+
+                &[data-preview] {
+                    &:extend(.repeatableObjectId.repeatableObjectId-previewable > ol > li all);
+                }
+            }
+        }
+    }
+  }
+}
+
+.popup[data-popup-source-class~="embedded-object-edit-popup"] {
+
+  @nav-width: 60px;
+
+  > .content {
+    padding-left: @nav-width + 10px;
+    padding-right: @nav-width + 10px;
+  }
+
+  .objectInputs {
+      > .nextObject, > .previousObject {
+          .link;
+          .icon;
+          height: 100%;
+          position: absolute;
+          top: 0;
+          display: none;
+          font-size: 80px;
+          color: white;
+          background-color: @color-link-dark;
+          width: @nav-width;
+          &:hover {
+              color: white;
+              background-color: @color-link-dark;
+          }
+          &:before {
+              padding: 0;
+              line-height: 1em;
+              position: relative;
+              top: 44%;
+              width: 100%;
+              transform: scaleY(2.0);
+          }
+      }
+      > .nextObject {
+          right: 0;
+          .icon-angle-right;
+      }
+
+      > .previousObject {
+          left: 0;
+          .icon-angle-left;
+      }
+  }
+
+  &.hasNext .objectInputs > .nextObject,
+  &.hasPrevious .objectInputs > .previousObject {
+
+      display: inline-block;
   }
 }
 

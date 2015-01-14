@@ -555,6 +555,8 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 if (!isValueExternal) {
     Set<ObjectType> bulkUploadTypes = new HashSet<ObjectType>();
 
+    boolean hasPreview = false;
+
     for (ObjectType t : validTypes) {
         for (ObjectField f : t.getFields()) {
             if (f.as(ToolUi.class).isBulkUpload()) {
@@ -562,6 +564,10 @@ if (!isValueExternal) {
                     bulkUploadTypes.add(ft);
                 }
             }
+        }
+
+        if(!ObjectUtils.isBlank(t.getPreviewField())) {
+            hasPreview = true;
         }
     }
 
@@ -578,76 +584,111 @@ if (!isValueExternal) {
     }
 
     wp.writeStart("div",
-            "class", "inputLarge repeatableForm" + (!bulkUploadTypes.isEmpty() ? " repeatableForm-previewable" : ""),
+            "class", "inputLarge repeatableForm" + (!bulkUploadTypes.isEmpty() ? " repeatableForm-previewable" : "") + (!bulkUploadTypes.isEmpty() ? " repeatableForm-popup" : ""),
             "foo", "bar",
             "data-generic-arguments", genericArgumentsString);
+
         wp.writeStart("ol");
-            for (Object item : fieldValue) {
-                State itemState = State.getInstance(item);
-                ObjectType itemType = itemState.getType();
-                Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
-                wp.writeStart("li",
-                        "data-type", wp.getObjectLabel(itemType),
-                        "data-label", wp.getObjectLabel(item),
-                        "data-preview", wp.getPreviewThumbnailUrl(item));
-                    wp.writeElement("input",
-                            "type", "hidden",
-                            "name", idName,
-                            "value", itemState.getId());
+        for (Object item : fieldValue) {
+            State itemState = State.getInstance(item);
+            ObjectType itemType = itemState.getType();
+            Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
-                    wp.writeElement("input",
-                            "type", "hidden",
-                            "name", typeIdName,
-                            "value", itemType.getId());
+            List<Object> attributes = new ArrayList<Object>();
+            attributes.add("data-type");
+            attributes.add(wp.getObjectLabel(itemType));
+            attributes.add("data-label");
+            attributes.add(wp.getObjectLabel(item));
 
-                    wp.writeElement("input",
-                            "type", "hidden",
-                            "name", publishDateName,
-                            "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
+            if (!bulkUploadTypes.isEmpty()) {
 
-                    wp.writeElement("input",
-                            "type", "hidden",
-                            "name", dataName,
-                            "value", ObjectUtils.toJson(itemState.getSimpleValues()),
-                            "data-form-fields-url", wp.cmsUrl(
-                                    "/contentFormFields",
-                                    "typeId", itemType.getId(),
-                                    "id", itemState.getId()));
-                wp.writeEnd();
+                attributes.add("data-embedded-popup");
+                attributes.add("");
+
+                if(hasPreview) {
+                    String previewThumbnailUrl = wp.getPreviewThumbnailUrl(item);
+                    attributes.add("data-preview");
+                    attributes.add(previewThumbnailUrl != null ? previewThumbnailUrl : "");
+                    attributes.add("data-preview-field");
+                    attributes.add(itemType.getPreviewField());
+                }
             }
 
-            for (ObjectType type : validTypes) {
-                wp.writeStart("script", "type", "text/template");
-                    wp.writeStart("li",
-                            "class", !bulkUploadTypes.isEmpty() ? "collapsed" : null,
-                            "data-type", wp.getObjectLabel(type));
-                        wp.writeStart("a",
-                                "href", wp.cmsUrl("/content/repeatableObject.jsp",
-                                        "inputName", inputName,
-                                        "typeId", type.getId()));
-                        wp.writeEnd();
-                    wp.writeEnd();
-                wp.writeEnd();
-            }
+            wp.writeStart("li", attributes.toArray());
+
+            wp.writeElement("input",
+                    "type", "hidden",
+                    "name", idName,
+                    "value", itemState.getId());
+
+            wp.writeElement("input",
+                    "type", "hidden",
+                    "name", typeIdName,
+                    "value", itemType.getId());
+
+            wp.writeElement("input",
+                    "type", "hidden",
+                    "name", publishDateName,
+                    "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
+
+            wp.writeElement("input",
+                                "type", "hidden",
+                                "name", dataName,
+                                "value", ObjectUtils.toJson(itemState.getSimpleValues()),
+                                "data-form-fields-url", wp.cmsUrl(
+                                        "/contentFormFields",
+                                        "typeId", itemType.getId(),
+                                        "id", itemState.getId()));
         wp.writeEnd();
+    }
+
+    for (ObjectType type : validTypes) {
+        wp.writeStart("script", "type", "text/template");
+
+        List<Object> attributes = new ArrayList<Object>();
+        attributes.add("class");
+        attributes.add(!bulkUploadTypes.isEmpty() ? "collapsed" : null);
+        attributes.add("data-type");
+        attributes.add(wp.getObjectLabel(type));
 
         if (!bulkUploadTypes.isEmpty()) {
-            StringBuilder typeIdsQuery = new StringBuilder();
-
-            for (ObjectType type : bulkUploadTypes) {
-                typeIdsQuery.append("typeId=").append(type.getId()).append("&");
+            attributes.add("data-embedded-popup");
+            attributes.add("");
+            if(hasPreview) {
+                attributes.add("data-preview");
+                attributes.add("");
+                attributes.add("data-preview-field");
+                attributes.add(type.getPreviewField());
             }
-
-            typeIdsQuery.setLength(typeIdsQuery.length() - 1);
-
-            wp.writeStart("a",
-                    "class", "action-upload",
-                    "href", wp.url("/content/uploadFiles?" + typeIdsQuery, "containerId", containerObjectId),
-                    "target", "uploadFiles");
-                wp.writeHtml("Upload Files");
-            wp.writeEnd();
         }
+        wp.writeStart("li", attributes.toArray());
+        wp.writeStart("a",
+                "href", wp.cmsUrl("/content/repeatableObject.jsp",
+                "inputName", inputName,
+                "typeId", type.getId()));
+        wp.writeEnd();
+        wp.writeEnd();
+        wp.writeEnd();
+    }
+    wp.writeEnd();
+
+    if (!bulkUploadTypes.isEmpty()) {
+        StringBuilder typeIdsQuery = new StringBuilder();
+
+        for (ObjectType type : bulkUploadTypes) {
+            typeIdsQuery.append("typeId=").append(type.getId()).append("&");
+        }
+
+        typeIdsQuery.setLength(typeIdsQuery.length() - 1);
+
+        wp.writeStart("a",
+                "class", "action-upload",
+                "href", wp.url("/content/uploadFiles?" + typeIdsQuery, "containerId", containerObjectId),
+                "target", "uploadFiles");
+        wp.writeHtml("Upload Files");
+        wp.writeEnd();
+    }
     wp.writeEnd();
 
 } else {

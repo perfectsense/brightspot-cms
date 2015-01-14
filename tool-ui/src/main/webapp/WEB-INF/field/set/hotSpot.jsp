@@ -120,9 +120,9 @@ if (state.getOriginalObject() instanceof HotSpots) {
         // --- Presentation ---
 
         %>
-        <div class="inputContainer" data-field="<%=hotSpotsList%>"  data-name="<%=hotSpotsName%>">
+        <div class="inputContainer hotSpot-inputContainer" data-field="<%=hotSpotsList%>"  data-name="<%=hotSpotsName%>">
             <div class="inputSmall">
-                <div class="inputLarge repeatableForm hotSpots">
+                <div class="inputLarge repeatableForm repeatableForm-previewable repeatableForm-popup hotSpots">
                     <ul>
                         <%
                         if (!ObjectUtils.isBlank(hotspotList)) {
@@ -131,7 +131,7 @@ if (state.getOriginalObject() instanceof HotSpots) {
                                 ObjectType itemType = itemState.getType();
                                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
                                 %>
-                                <li data-type="<%= wp.objectLabel(itemType) %>" data-label="<%= wp.objectLabel(item) %>">
+                                <li data-type="<%= wp.objectLabel(itemType) %>" data-label="<%= wp.objectLabel(item) %>" data-embedded-popup>
                                     <input name="<%= wp.h(idName) %>" type="hidden" value="<%= itemState.getId() %>">
                                     <input name="<%= wp.h(typeIdName) %>" type="hidden" value="<%= itemType.getId() %>">
                                     <% wp.writeFormFields(item); %>

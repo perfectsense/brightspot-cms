@@ -115,6 +115,7 @@
 }
 
 .popup[data-popup-source-class~='objectId-edit'],
+.popup[data-popup-source-class~='embedded-object-edit-popup'],
 .popup[name='contentEdit'] {
     max-width: 1200px;
     width: 90%;
@@ -128,4 +129,8 @@
             border-bottom-color: @bc;
         }
     }
+}
+
+.popup[data-popup-source-class~='embedded-object-edit-popup'] {
+  position: absolute;
 }
