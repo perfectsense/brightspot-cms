@@ -12,13 +12,9 @@ import com.psddev.dari.db.ReferentialText;
 public class GuideSection extends Record {
 
     @Required
-    @ToolUi.Note("Section name in template definition")
+    @ToolUi.Note("Name of the page section to be described")
+    @Indexed
     private String sectionName;
-
-    // Would rather use this for uniqueness, but at this time, the sectionId can change anytime
-    // a template is saved.
-    //@Required
-    //private UUID sectionId;
 
     @ToolUi.Note("Production Guide description for this section")
     private ReferentialText description;
@@ -33,14 +29,6 @@ public class GuideSection extends Record {
     public void setSectionName(String sectionName) {
         this.sectionName = sectionName;
     }
-
-//    public UUID getSectionId() {
-//        return sectionId;
-//    }
-//
-//    public void setSectionId(UUID sectionId) {
-//        this.sectionId = sectionId;
-//    }
 
     public ReferentialText getDescription() {
         return description;

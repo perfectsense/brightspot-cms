@@ -257,9 +257,9 @@ if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
                         <a class="icon icon-beaker" href="<%= wp.url("", "ab", !wp.param(boolean.class, "ab")) %>">A/B</a>
                     <% } %>
                     <%
-                    GuidePage guide = Guide.Static.getPageProductionGuide(template);
+                    GuidePage guide = Guide.Static.getPageProductionGuide(state.getType());
                     if (guide != null && guide.getDescription() != null && !guide.getDescription().isEmpty()) {
-                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "templateId", template.getId(), "variationId", wp.uuidParam("variationId"), "popup", true), "\">PG</a>");
+                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "pageGuideId", guide.getId(),  "popup", true), "\">PG</a>");
                     }
                     %>
                 </div>
