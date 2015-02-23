@@ -6,6 +6,10 @@ import java.util.Set;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement. Create your own.
+ */
+@Deprecated
 @GridContext.Embedded
 public class GridContext extends Record {
 

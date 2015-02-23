@@ -1,0 +1,270 @@
+.popup {
+  display: none;
+  left: 50%;
+  margin-left: -20%;
+  max-width: 600px;
+  position: fixed;
+  top: 95px;
+  width: 40%;
+  z-index: 50;
+
+  &.popup-show {
+    display: block;
+  }
+
+  > .popup-content > .frame > .widget,
+  > .content > .frame > .widget {
+    border-style: none;
+    margin: -20px;
+  }
+
+  &:before {
+    background-color: black;
+    bottom: 0;
+    content: '';
+    left: 0;
+    opacity: 0.2;
+    position: fixed;
+    transform: translateZ(0);
+    top: 0;
+    right: 0;
+  }
+}
+
+.popup-content {
+  background-color: white;
+  border: 1px solid white;
+  border-radius: 2px;
+  box-shadow: 0 0 20px fade(black, 10%);
+  padding: 20px;
+  position: relative;
+  top: 10px;
+}
+
+.popup-marker {
+  border-color: transparent transparent white transparent;
+  border-style: solid;
+  border-width: 10px;
+  left: 5px;
+  position: absolute;
+  top: -20px;
+}
+
+.popup-closeButton {
+  &:extend(.widget-controls-button all);
+
+  .icon-remove;
+
+  right: @widget-controlsOffset;
+  position: absolute;
+  top: @widget-controlsOffset;
+  z-index: 1;
+
+  .popup.popup-loading &:not(:hover):after,
+  .popup.loading &:not(:hover):after {
+    content: url(icon/ajax-loader.gif);
+    display: block;
+    height: 16px;
+    margin: 2px 0 0 2px;
+    width: 16px;
+  }
+}
+
+// Preview window should cover most of the window.
+.popup[name^=contentPreview-] {
+  background-color: rgba(0, 0, 0, 0.5);
+  height: 100% !important;
+  left: 0 !important;
+  overflow: auto !important;
+  position: fixed !important;
+  top: 0 !important;
+  width: 100% !important;
+  z-index: 2000 !important;
+
+  > .content {
+    margin: 40px;
+
+    > .marker {
+      display: none;
+    }
+  }
+}
+
+// These contain content forms so make them bigger.
+.popup[name^=contentEnhancement-],
+.popup[name=contentImageMetadata],
+.popup[name=contentRemoteOverlayEdit],
+.popup[name^=objectId-],
+.popup[name=contentRaw],
+.popup[name=contentSectionContent],
+.popup[name=linkById],
+.popup[name=miscSavedSearch],
+.popup[name=searchAdvancedQuery],
+.popup[name=uploadFiles] {
+  max-width: 1000px;
+  width: 70%;
+}
+
+.popup[data-popup-source-class~='objectId-edit'],
+.popup[name='contentEdit'] {
+  left: 0 !important;
+  right: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+
+  > .content {
+    background-color: transparent;
+    border-style: none;
+    box-shadow: none;
+    padding-top: 0;
+
+    > .marker,
+    > .closeButton {
+      display: none;
+    }
+  }
+}
+
+.popup[name='miscSearch'],
+.popup[name='toolUserDashboard'] {
+  left: 0 !important;
+  margin-top: 4px !important;
+  max-width: none !important;
+  right: 0 !important;
+  top: (@toolHeader-height - 14) !important;
+  width: auto !important;
+
+  .hasToolBroadcast & {
+    top: (@toolBroadcast-height + @toolHeader-height - 14) !important;
+  }
+
+  &:before {
+    top: @toolHeader-height;
+
+    .hasToolBroadcast & {
+      top: (@toolBroadcast-height + @toolHeader-height);
+    }
+  }
+
+  > .content {
+    border-radius: 0;
+    border-top: 2px solid @color-separator;
+    box-shadow: 0 40px 80px -40px black;
+
+    > .closeButton {
+      background: transparent;
+      border-color: transparent;
+      right: 5px;
+      top: 4px;
+    }
+
+    > .marker {
+      border-color: transparent transparent @color-separator transparent;
+
+      &:before {
+        border-color: transparent transparent white transparent;
+        border-style: solid;
+        border-width: 8px;
+        content: '';
+        left: -8px;
+        position: absolute;
+        top: -5px;
+      }
+    }
+
+    > .frame {
+      h1 {
+        display: none;
+      }
+
+      > .widget {
+        border-style: none;
+      }
+    }
+  }
+}
+
+.popup[name=miscSearch] {
+  > .content {
+    padding: 20px 20px 20px (@length-toolTitle-width + 60);
+  }
+
+  .searchSaved {
+    display: none;
+  }
+
+  .searchFilters {
+    border-style: none;
+    margin-top: 0;
+    padding-top: 0;
+
+    .action-cancel {
+      top: 0;
+    }
+  }
+
+  .searchInput {
+    display: none;
+  }
+}
+
+.popup[data-popup-source-class~="objectId-edit"] {
+  display: block;
+
+  &.popup-objectId-edit-hiding:before {
+    display: none;
+  }
+
+  &.popup-objectId-edit-hide {
+    display: none;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(359deg);
+  }
+}
+
+.popup-objectId-edit-loading {
+  &:after {
+    @-size: (@iconSize-default * 3);
+    @-offset: (0 - (@-size / 2));
+
+    animation: spin 1s infinite steps(8);
+    content: '\f110';
+    display: inline-block;
+    font-family: 'FontAwesome';
+    -webkit-font-smoothing: antialiased;
+    font-size: @-size;
+    font-weight: normal;
+    height: @-size;
+    left: 50%;
+    line-height: @-size;
+    margin: @-offset 0 0 @-offset;
+    position: fixed;
+    text-align: center;
+    text-decoration: none !important;
+    top: 50%;
+    width: @-size;
+    z-index: 1;
+  }
+}
+
+.popup-objectId-edit-loaded {
+  opacity: 0.1;
+  transition: opacity @time-fast;
+}
+
+.popup-objectId-edit-heading {
+  font-size: 18px;
+  font-weight: normal;
+  height: 50px;
+  line-height: 50px;
+  margin: -20px 0 10px 20px;
+  padding: 0;
+}

@@ -3,11 +3,11 @@
   .message-error;
 
   border-radius: 0;
-  height: @length-toolBroadcast-height;
+  height: @toolBroadcast-height;
   left: 0;
-  line-height: @length-toolBroadcast-height;
+  line-height: @toolBroadcast-height;
   overflow: hidden;
-  padding: 0 20px 0 40px;
+  padding: 0 @toolContent-padding 0 (@toolContent-padding + 20px);
   position: fixed;
   text-overflow: ellipsis;
   top: 0;
@@ -16,18 +16,18 @@
   z-index: 100;
 
   &:before {
-    height: @length-toolBroadcast-height;
-    left: 20px;
-    line-height: @length-toolBroadcast-height;
+    height: @toolBroadcast-height;
+    left: @toolContent-padding;
+    line-height: @toolBroadcast-height;
     top: 0;
   }
 }
 
 .hasToolBroadcast {
-  margin-top: 100px;
+  margin-top: (@toolBroadcast-height + @toolHeader-height);
 
   .toolHeader {
-    top: @length-toolBroadcast-height;
+    top: @toolBroadcast-height;
   }
 
   .contentPreview {
@@ -42,9 +42,9 @@
 .toolHeader {
   background-color: white;
   box-shadow: 0 0 10px fade(black, 20%);
-  height: @length-toolHeader-height;
+  height: @toolHeader-height;
   left: 0;
-  margin-bottom: 20px;
+  margin-bottom: @gap-large;
   position: fixed;
   top: 0;
   width: 100%;
@@ -52,7 +52,7 @@
 }
 
 .toolTitle {
-  @-height: @length-toolHeader-height - 20px;
+  @-height: @toolHeader-height - 20px;
 
   font-size: @-height;
   font-weight: bold;
@@ -61,7 +61,7 @@
   line-height: @-height;
   position: absolute;
   text-transform: uppercase;
-  top: ((@length-toolHeader-height - @-height) / 2);
+  top: ((@toolHeader-height - @-height) / 2);
   width: (@length-toolTitle-width - 40px);
 
   .link {
@@ -109,10 +109,10 @@
 
 .toolUserDisplay {
   @-padding: 10px;
-  @-avatar-size: @length-toolHeader-height - (@-padding * 2);
+  @-avatar-size: @toolHeader-height - (@-padding * 2);
 
   display: block;
-  right: 20px;
+  right: @toolContent-padding;
   padding-right: (@-padding + @-avatar-size);
   position: absolute;
   top: @-padding;
@@ -123,12 +123,12 @@
 
   .toolUserWelcome {
     font-weight: 700;
-    margin-top: floor((@-avatar-size / 2) - @length-lineHeight);
+    margin-top: floor((@-avatar-size / 2) - @lineHeight-default);
     text-align: right;
   }
 
   .toolUserControls {
-    font-size: floor(@length-fontSize * 0.8);
+    font-size: floor(@fontSize-default * 0.8);
     text-align: right;
   }
 
@@ -171,7 +171,7 @@
 .toolSearch {
   position: absolute;
   left: (@length-toolTitle-width + 60);
-  top: ((@length-toolHeader-height - @length-inputHeight) / 2);
+  top: ((@toolHeader-height - @input-height) / 2);
   transition: width @time-fast;
   width: @length-searchControlsWidth;
 
@@ -202,11 +202,11 @@
       color: @color-placeholder;
       font-style: italic;
       left: 0;
-      padding-left: @length-inputHeight;
+      padding-left: @input-height;
     }
 
     input[type='text'] {
-      padding-left: @length-inputHeight;
+      padding-left: @input-height;
       width: 100%;
     }
   }
@@ -317,7 +317,7 @@
   padding: 0;
   position: absolute;
   text-align: center;
-  top: ((@length-toolHeader-height - @-size) / 2);
+  top: ((@toolHeader-height - @-size) / 2);
   user-select: none;
   width: @-size;
 
@@ -332,19 +332,19 @@
   margin: 4px 0 0 0 !important;
   max-width: none !important;
   position: fixed !important;
-  top: (@length-toolHeader-height - 14) !important;
+  top: (@toolHeader-height - 14) !important;
   width: auto !important;
   z-index: 101 !important;
 
   .hasToolBroadcast & {
-    top: (@length-toolBroadcast-height + @length-toolHeader-height - 14) !important;
+    top: (@toolBroadcast-height + @toolHeader-height - 14) !important;
   }
 
   &:before {
-    top: @length-toolHeader-height !important;
+    top: @toolHeader-height !important;
 
     .hasToolBroadcast & {
-      top: (@length-toolBroadcast-height + @length-toolHeader-height) !important;
+      top: (@toolBroadcast-height + @toolHeader-height) !important;
     }
   }
 
@@ -363,11 +363,10 @@
 }
 
 .toolContent {
-  background: darken(white, 20%);
-  margin: (0 - @length-toolHeader-height) -20px 0 -20px;
-  padding: (@length-toolHeader-height + 20px) 20px 20px 20px;
+  background: @color-border;
+  margin: (0 - @toolHeader-height) (0 - @toolContent-padding) 0 (0 - @toolContent-padding);
+  padding: (@toolHeader-height + @toolContent-padding) @toolContent-padding @toolContent-padding @toolContent-padding;
   position: relative;
-  transition: all @time-fast;
   z-index: 0;
 }
 
@@ -389,410 +388,16 @@
 .toolFooter {
   background: white;
   bottom: 0;
-  height: @length-toolFooter-height;
+  height: @toolFooter-height;
   left: 0;
-  line-height: @length-toolFooter-height;
-  padding: 0 20px;
+  line-height: @toolFooter-height;
+  padding: 0 @toolContent-padding;
   position: fixed;
   right: 0;
   z-index: -1;
 
   img {
     vertical-align: middle;
-  }
-}
-
-.searchForm {
-  overflow: hidden;
-  margin: -5px;
-  padding: 5px;
-}
-
-.searchControls {
-  @-borderWidth: 2px;
-  @-padding: 20px;
-
-  border-right: @-borderWidth solid @color-separator;
-  box-sizing: border-box;
-  float: left;
-  padding-right: @-padding;
-  width: (@length-searchControlsWidth + @-padding + @-borderWidth);
-
-  input[type=text],
-  select {
-    width: 100%;
-  }
-}
-
-.searchSaved {
-  display: none;
-}
-
-.searchFilters {
-  @-length-top: @length-inputHeight + 20px;
-
-  border-top: 2px solid @color-separator;
-  margin: @-length-top 0 20px 0;
-  padding: 20px 0 0 0;
-  position: relative;
-
-  form {
-    margin-bottom: 0;
-  }
-
-  .searchInput {
-    left: 0;
-    right: 0;
-    position: absolute;
-    top: (0 - @-length-top);
-  }
-
-  .action-cancel {
-    .small;
-
-    color: @color-remove;
-    left: 50px;
-    position: absolute;
-    top: 20px;
-  }
-}
-
-.searchFiltersRest-single {
-  margin-top: -30px;
-}
-
-.searchMissing {
-  .icon;
-  .icon-share-alt;
-
-  color: @color-note;
-  font-size: 80%;
-  line-height: @length-inputHeight;
-  margin-bottom: -10px;
-  padding-right: 20px;
-  position: relative;
-  text-align: right;
-  text-transform: uppercase;
-
-  &:before {
-    position: absolute;
-    right: 0;
-    top: 6px;
-    transform: rotate(90deg);
-  }
-}
-
-.searchFilter {
-  margin-top: 10px;
-  position: relative;
-
-  .objectId,
-  .objectId-select {
-    display: block;
-    width: 100%;
-  }
-
-  .objectId-clear {
-    .icon-only;
-
-    position: absolute;
-    right: 25px;
-    top: 3px;
-  }
-
-  &.searchFilter-date {
-    position: relative;
-
-    .calendarButton {
-      width: 100%;
-    }
-
-    > input:first-child + .calendarButton {
-      border-bottom-color: transparent;
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-    }
-
-    > input[name$='.x'] + .calendarButton {
-      border-top-color: transparent;
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
-      margin-top: -1px;
-    }
-
-    &:before {
-      border-top: 1px solid @color-separator;
-      content: '';
-      height: 0;
-      left: 10px;
-      position: absolute;
-      top: 29px;
-      right: 35px;
-    }
-  }
-
-  &.searchFilter-number input[type='text'] {
-    width: 50%;
-  }
-
-  &.searchFilter-advancedQuery {
-    position: relative;
-
-    input[type='text'] {
-      padding-right: @length-inputHeight;
-    }
-
-    .icon-action-edit {
-      bottom: ((@length-inputHeight - @length-lineHeight) / 2);
-      position: absolute;
-      right: ((@length-inputHeight - @length-iconSize) / 2);
-    }
-  }
-}
-
-.searchFiltersLocal {
-  position: relative;
-
-  input[type='checkbox'] {
-    position: absolute;
-    right: 0;
-    top: 6px;
-
-    &:checked {
-      background-image: url(icon/x.svg);
-    }
-  }
-
-  .searchFilter {
-    padding-right: 25px;
-  }
-
-  .objectId-clear {
-    right: 45px;
-  }
-}
-
-.searchCreate {
-  border-top: 2px solid @color-separator;
-  padding-top: 20px;
-
-  form {
-    margin-bottom: 0;
-  }
-
-  .select {
-    margin-bottom: 10px;
-  }
-}
-
-.searchResult {
-  margin-left: (@length-searchControlsWidth + 42);
-  position: relative;
-}
-
-.searchSuggestionsForm {
-  display: none;
-}
-
-.searchSuggestions {
-  margin-bottom: 20px;
-}
-
-.searchSorter {
-  margin-bottom: 20px;
-
-  form {
-    display: inline;
-  }
-}
-
-.searchPagination {
-  margin-bottom: 20px;
-  position: absolute;
-  right: 0;
-  top: (@length-lineHeight + 10px);
-}
-
-.searchResultImages {
-  margin-bottom: 10px;
-  overflow: hidden;
-
-  figure {
-    border: 1px solid darken(white, 20%);
-    box-sizing: border-box;
-    float: left;
-    height: 100px;
-    margin: 0 10px 10px 0;
-    padding: 4px;
-    max-width: 150px;
-
-    img {
-      max-height: 100%;
-      max-width: 100%;
-    }
-  }
-}
-
-.dashboard {
-  margin: -10px;
-  overflow: hidden;
-  padding: 10px;
-  width: 100%;
-
-  &[data-columns="1"] {
-    .dashboardColumn { width: 100%; }
-  }
-
-  &[data-columns="2"] {
-    .dashboardColumn:nth-child(1) { width: 60%; }
-    .dashboardColumn:nth-child(2) { width: 40%; }
-  }
-
-  &[data-columns="3"] {
-    .dashboardColumn:nth-child(1) { width: 40%; }
-    .dashboardColumn:nth-child(2) { width: 30%; }
-    .dashboardColumn:nth-child(3) { width: 30%; }
-  }
-
-  &[data-columns="4"] {
-    .dashboardColumn:nth-child(1) { width: 30%; }
-    .dashboardColumn:nth-child(2) { width: 30%; }
-    .dashboardColumn:nth-child(3) { width: 20%; }
-    .dashboardColumn:nth-child(4) { width: 20%; }
-  }
-}
-
-.dashboardColumn {
-  float: left;
-}
-
-.dashboardCell {
-  min-height: 33px;
-  margin-bottom: 10px;
-  padding: 0 5px;
-  position: relative;
-
-  .dashboardColumn:first-child & {
-    padding-left: 0;
-  }
-
-  .dashboardColumn:last-child & {
-    padding-right: 0;
-  }
-
-  .widgetControls {
-    right: 55px;
-  }
-
-  .frame .widget {
-    margin-bottom: 0;
-  }
-}
-
-.dashboardCell-collapse .widget {
-  height: 13px;
-  overflow: hidden;
-}
-
-.dashboardCollapse {
-  .icon;
-  .icon-collapse-top;
-  .icon-only;
-  .link;
-
-  color: @color-note;
-  position: absolute;
-  right: 35px;
-  top: 6px;
-
-  .dashboardColumn:last-child & {
-    right: 30px;
-  }
-
-  .dashboardCell-collapse & {
-    .icon-collapse;
-  }
-
-  &:hover {
-    color: @color-text;
-  }
-}
-
-.dashboardMoveContainer {
-  .icon;
-  .icon-move;
-  .icon-only;
-  .link;
-
-  color: @color-note;
-  position: absolute;
-  right: 15px;
-  top: 6px;
-
-  .dashboardColumn:last-child & {
-    right: 10px;
-  }
-
-  &:hover {
-    color: @color-text;
-    height: 50px;
-    line-height: 50px;
-    font-size: 40px;
-    margin-right: -15px;
-    margin-top: -15px;
-    z-index: 1;
-  }
-}
-
-.dashboardMoveUp,
-.dashboardMoveDown,
-.dashboardMoveLeft,
-.dashboardMoveRight {
-  .link;
-
-  border-radius: 100%;
-  display: none;
-  height: 19px;
-  position: absolute;
-  width: 19px;
-
-  .dashboardMoveContainer:hover & {
-    display: block;
-  }
-}
-
-.dashboardMoveUp {
-  left: 12px;
-  top: 2px;
-}
-
-.dashboardMoveDown {
-  bottom: 2px;
-  left: 12px;
-}
-
-.dashboardMoveLeft {
-  left: 0;
-  top: 15px;
-}
-
-.dashboardMoveRight {
-  top: 15px;
-  right: 0;
-}
-
-.withLeftNav {
-  margin: -10px;
-  overflow: hidden;
-  padding: 10px;
-
-  > .leftNav {
-    float: left;
-    width: 240px;
-  }
-
-  > .main {
-    margin-left: 255px;
   }
 }
 

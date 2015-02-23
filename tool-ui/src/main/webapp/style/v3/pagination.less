@@ -1,0 +1,121 @@
+.pagination {
+  &:extend(.inputLike all);
+
+  display: inline-block;
+  list-style: none;
+  margin-bottom: 20px;
+  margin-left: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.pagination-item {
+  @-item-height: (@input-height - (@input-borderWidth * 2));
+  @-select-paddingTB: @-item-height - @lineHeight-default;
+  @-select-paddingTop: floor(@-select-paddingTB / 2);
+
+  float: left;
+  height: @-item-height;
+  line-height: @-item-height;
+  padding: 0 10px;
+  white-space: nowrap;
+
+  &:not(:last-child) {
+    border-right: 1px solid darken(white, 20%);
+  }
+
+  form {
+    float: left;
+    margin: 0;
+  }
+
+  .select {
+    background-position: right -6px top 5px;
+    border: none;
+    float: left;
+    min-height: @-item-height;
+    padding-left: 0;
+    padding-right: 16px;
+
+    &:focus {
+      background-color: transparent;
+    }
+  }
+}
+
+.pagination-first,
+.pagination-previous,
+.pagination-next,
+.pagination-last {
+  .link {
+    .icon;
+  }
+}
+
+.pagination-first {
+  .link {
+    .icon-double-angle-left;
+  }
+}
+
+.pagination-previous {
+  .link {
+    .icon-angle-left;
+  }
+}
+
+.pagination-next {
+  .link {
+    .icon-angle-right;
+  }
+}
+
+.pagination-last {
+  .link {
+    .icon-double-angle-right;
+  }
+}
+
+.pagination-first,
+.pagination-previous,
+.pagination-next,
+.pagination-last {
+  @-link-width: 25px;
+
+  padding: 0;
+
+  .link {
+    .icon-only;
+
+    width: @-link-width;
+
+    &:before {
+      margin-right: 0;
+      padding-right: 0;
+      text-align: center;
+      width: @-link-width;
+    }
+  }
+}
+
+// Legacy
+.pagination > li,
+.paginationItem {
+  .pagination-item;
+}
+
+.paginationFirst {
+  .pagination-first;
+}
+
+.paginationPrevious {
+  .pagination-previous;
+}
+
+.paginationNext {
+  .pagination-next;
+}
+
+.paginationLast {
+  .pagination-last;
+}

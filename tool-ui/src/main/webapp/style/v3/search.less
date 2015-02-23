@@ -101,3 +101,234 @@
     }
   }
 }
+
+.searchForm {
+  overflow: hidden;
+  margin: -5px;
+  padding: 5px;
+}
+
+.searchControls {
+  @-borderWidth: 2px;
+  @-padding: 20px;
+
+  border-right: @-borderWidth solid @color-separator;
+  box-sizing: border-box;
+  float: left;
+  padding-right: @-padding;
+  width: (@length-searchControlsWidth + @-padding + @-borderWidth);
+
+  input[type=text],
+  select {
+    width: 100%;
+  }
+}
+
+.searchSaved {
+  display: none;
+}
+
+.searchFilters {
+  @-length-top: @input-height + 20px;
+
+  border-top: 2px solid @color-separator;
+  margin: @-length-top 0 20px 0;
+  padding: 20px 0 0 0;
+  position: relative;
+
+  form {
+    margin-bottom: 0;
+  }
+
+  .searchInput {
+    left: 0;
+    right: 0;
+    position: absolute;
+    top: (0 - @-length-top);
+  }
+
+  .action-cancel {
+    .small;
+
+    color: @color-remove;
+    left: 50px;
+    position: absolute;
+    top: 20px;
+  }
+}
+
+.searchFiltersRest-single {
+  margin-top: -30px;
+}
+
+.searchMissing {
+  .icon;
+  .icon-share-alt;
+
+  color: @color-placeholder;
+  font-size: 80%;
+  line-height: @input-height;
+  margin-bottom: -10px;
+  padding-right: 20px;
+  position: relative;
+  text-align: right;
+  text-transform: uppercase;
+
+  &:before {
+    position: absolute;
+    right: 0;
+    top: 6px;
+    transform: rotate(90deg);
+  }
+}
+
+.searchFilter {
+  margin-top: 10px;
+  position: relative;
+
+  .objectId,
+  .objectId-select {
+    display: block;
+    width: 100%;
+  }
+
+  .objectId-clear {
+    .icon-only;
+
+    position: absolute;
+    right: 25px;
+    top: 3px;
+  }
+
+  &.searchFilter-date {
+    position: relative;
+
+    .calendarButton {
+      width: 100%;
+    }
+
+    > input:first-child + .calendarButton {
+      border-bottom-color: transparent;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    > input[name$='.x'] + .calendarButton {
+      border-top-color: transparent;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      margin-top: -1px;
+    }
+
+    &:before {
+      border-top: 1px solid @color-separator;
+      content: '';
+      height: 0;
+      left: 10px;
+      position: absolute;
+      top: 29px;
+      right: 35px;
+    }
+  }
+
+  &.searchFilter-number input[type='text'] {
+    width: 50%;
+  }
+
+  &.searchFilter-advancedQuery {
+    position: relative;
+
+    input[type='text'] {
+      padding-right: @input-height;
+    }
+
+    .icon-action-edit {
+      bottom: ((@input-height - @lineHeight-default) / 2);
+      position: absolute;
+      right: ((@input-height - @iconSize-default) / 2);
+    }
+  }
+}
+
+.searchFiltersLocal {
+  position: relative;
+
+  input[type='checkbox'] {
+    position: absolute;
+    right: 0;
+    top: 6px;
+
+    &:checked {
+      background-image: url(icon/x.svg);
+    }
+  }
+
+  .searchFilter {
+    padding-right: 25px;
+  }
+
+  .objectId-clear {
+    right: 45px;
+  }
+}
+
+.searchCreate {
+  border-top: 2px solid @color-separator;
+  padding-top: 20px;
+
+  form {
+    margin-bottom: 0;
+  }
+
+  .select {
+    margin-bottom: 10px;
+  }
+}
+
+.searchResult {
+  margin-left: (@length-searchControlsWidth + 42);
+  position: relative;
+}
+
+.searchSuggestionsForm {
+  display: none;
+}
+
+.searchSuggestions {
+  margin-bottom: 20px;
+}
+
+.searchSorter {
+  margin-bottom: 20px;
+
+  form {
+    display: inline;
+  }
+}
+
+.searchPagination {
+  margin-bottom: 20px;
+  position: absolute;
+  right: 0;
+  top: (@lineHeight-default + 10px);
+}
+
+.searchResultImages {
+  margin-bottom: 10px;
+  overflow: hidden;
+
+  figure {
+    border: 1px solid darken(white, 20%);
+    box-sizing: border-box;
+    float: left;
+    height: 100px;
+    margin: 0 10px 10px 0;
+    padding: 4px;
+    max-width: 150px;
+
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  }
+}

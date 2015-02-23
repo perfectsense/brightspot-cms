@@ -419,7 +419,7 @@ public class PageFilter extends AbstractFilter {
             // Fake the request path in preview mode in case the servlets
             // depend on it.
             if (Static.isPreview(request)) {
-                final String previewPath = request.getParameter("_previewPath");
+                String previewPath = request.getParameter("_previewPath");
 
                 if (!ObjectUtils.isBlank(previewPath)) {
                     int colonAt = previewPath.indexOf(':');
@@ -433,7 +433,11 @@ public class PageFilter extends AbstractFilter {
                         if (previewSite != null) {
                             Static.setSite(request, previewSite);
                         }
+
+                        previewPath = previewPath.substring(colonAt + 1);
                     }
+
+                    final String finalPreviewPath = previewPath;
 
                     request = new HttpServletRequestWrapper(request) {
 
@@ -449,7 +453,7 @@ public class PageFilter extends AbstractFilter {
 
                         @Override
                         public String getServletPath() {
-                            return previewPath;
+                            return finalPreviewPath;
                         }
                     };
                 }

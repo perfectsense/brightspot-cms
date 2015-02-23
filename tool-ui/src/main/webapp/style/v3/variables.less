@@ -1,3 +1,4 @@
+// Global colors.
 @color-border: darken(white, 21%);
 @color-change: #f5d63d;
 @color-heading: darken(white, 7%);
@@ -13,34 +14,42 @@
 @color-separator: darken(white, 14%);
 @color-text: darken(white, 85%);
 
-@color-alt: @color-heading;
-@color-note: @color-placeholder;
-@color-radial-progress: @color-publish;
-
+// Global text.
+@fontFamily-default: 'Open Sans', sans-serif;
 @fontFamily-code: 'Andale Mono', 'Lucida Console', monospace;
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,600,700);
-@fontFamily-label: 'Open Sans', sans-serif;
-
-@length-fontSize: 13px;
-@length-iconSize: 14px;
-@length-inputBorderWidth: 1px;
-@length-inputHeight: 30px;
-@length-inputLabel-marginRight: 5px;
-@length-inputLabel-width: 140px;
-@length-lineHeight: 18px;
-@length-searchControlsWidth: 200px;
-@length-toolBroadcast-height: 25px;
-@length-toolHeader-height: 70px;
-@length-toolTitle-width: 200px;
-@length-toolFooter-height: 40px;
-@length-tabHeight: 36px;
-@size-input-padding: 4px;
-
-@time-fast: 0.3s;
-
+@fontSize-default: 13px;
+@gap-large: 20px;
+@gap-medium: 10px;
+@gap-small: 5px;
+@iconSize-default: 14px;
+@lineHeight-default: 18px;
 @media-tablet: ~'only screen and (max-width: 979px)';
 @media-phone: ~'only screen and (max-width: 767px)';
+@time-fast: 0.3s;
 
+// Element-specific.
+@input-borderWidth: 1px;
+@input-height: 30px;
+@input-padding: 4px;
+
+@inputLabel-marginRight: 5px;
+@inputLabel-width: 140px;
+
+@list-marginLeft: 25px;
+
+@rail-width: 320px;
+
+@tab-height: 36px;
+
+@toolBroadcast-height: 30px;
+@toolHeader-height: 70px;
+@toolContent-padding: 20px;
+@toolFooter-height: 40px;
+
+@length-searchControlsWidth: 200px;
+@length-toolTitle-width: 200px;
+
+// Custom functions.
 .color-hover-darken(@color) {
   color: @color;
 

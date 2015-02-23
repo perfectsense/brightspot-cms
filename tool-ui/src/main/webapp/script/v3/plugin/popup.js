@@ -24,7 +24,6 @@
       if (name) {
         $container.attr('name', name);
       }
-      console.log('popup init');
 
       // Bind open and close events.
       $container.bind('open.popup', function() {
@@ -35,7 +34,6 @@
           $original.data('popup-scrollLeft', $win.scrollLeft());
           $original.data('popup-scrollTop', $win.scrollTop());
         }
-        console.log('popup open');
         $original.addClass('popup-show');
       });
 

@@ -197,6 +197,11 @@ try {
                     for (ContentEditBulk.Operation op : (field.isInternalCollectionType() ?
                             ContentEditBulk.COLLECTION_OPERATIONS :
                             ContentEditBulk.NON_COLLECTION_OPERATIONS)) {
+
+                        if (field.isRequired() && op.equals(ContentEditBulk.Operation.CLEAR)) {
+                            continue;
+                        }
+
                         wp.writeStart("option",
                                 (ContentEditBulk.Operation.CLEAR.equals(op) ? "data-hide" : "data-show"), "> .inputNote, > .inputSmall, > .inputLarge",
                                 "value", op.name());

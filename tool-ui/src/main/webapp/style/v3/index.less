@@ -1,3 +1,6 @@
+// Fonts.
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,600,700);
+
 @font-face {
   font-family: 'FontAwesome';
   font-style: normal;
@@ -6,10 +9,10 @@
   src: url('../fontawesome-webfont.eot?#iefix') format('embedded-opentype'), url('../fontawesome-webfont.woff') format('woff'), url('../fontawesome-webfont.ttf') format('truetype');
 }
 
+// Base.
 @import 'variables.less';
-@import 'abstract/index';
+@import 'element.less';
 @import 'reset.less';
-@import 'hacks.less';
 
 .repeatableForm > ol > li > .inputLabel > .inputSmall,
 .repeatableForm > ul > li > .inputLabel > .inputSmall {
@@ -18,41 +21,44 @@
   padding: 0 2px 0 6px;
 }
 
-@import 'tool.less';
+// Element-specific.
+@import 'calendar.less';
+@import 'carousel.less';
+@import 'code-editor.less';
+@import 'common-content.less';
+@import 'content-diff.less';
+@import 'dashboard.less';
+@import 'drop-down.less';
+@import 'expandable.less';
+@import 'fixed-scrollable.less';
+@import 'frame.less';
 @import 'guide.less';
-@import 'inlineeditor.less';
-@import 'jquery.calendar.less';
-@import 'jquery.code.less';
-@import 'jquery.dropdown.less';
-@import 'jquery.expandable.less';
-@import 'jquery.fixedscrollable.less';
-@import 'jquery.frame.less';
+@import 'image-editor.less';
+@import 'inline-editor.less';
+@import 'layout.less';
+@import 'object-id.less';
+@import 'page-layout.less';
+@import 'page-thumbnails.less';
+@import 'popup.less';
+@import 'repeatable.less';
+@import 'rte.less';
+@import 'scheduled-events.less';
+@import 'search.less';
+@import 'taxonomy.less';
+@import 'tool.less';
+@import 'tool-user-profile.less';
+@import 'upload.less';
+@import 'work-streams.less';
+@import 'workflow.less';
+
+// From Bower.
 @import '../jquery.handsontable.full.css';
-@import 'jquery.imageeditor.less';
-@import 'jquery.objectid.less';
-@import 'jquery.pagelayout.less';
-@import 'jquery.pagethumbnails.less';
-@import 'jquery.popup.less';
-@import 'jquery.repeatable.less';
-@import 'jquery.rte.less';
-@import '../spectrum.css';
-@import 'jquery.taxonomy.less';
-@import 'jquery.uploader.less';
-@import 'jquery.workflow.less';
 @import '../leaflet/leaflet.css';
 @import '../leaflet/leaflet.draw.css';
-@import '../leaflet/leaflet.draw.ie.css';
 @import '../leaflet/l.geosearch.css';
 @import '../leaflet/L.Control.Locate.min.css';
 @import '../nv.d3.css';
-@import 'content/diff.less';
-@import 'dashboard';
-@import 'page/common-content';
-@import 'page/tool-user-profile';
-@import 'page/work-streams';
-@import 'carousel.less';
-@import 'widget/scheduled-events.less';
-@import 'search';
+@import '../spectrum.css';
 
 .locationMap, .regionMap {
   min-width: 500px;
@@ -148,7 +154,7 @@
   &:hover {
     > .action-create {
       background: white;
-      border-color: @color-note;
+      border-color: @color-placeholder;
       border-top-left-radius: 5px;
       border-top-right-radius: 5px;
       box-shadow: 0 0 2px fade(@color-text, 30%);
@@ -167,7 +173,7 @@
 
     > ul {
       background: white;
-      border: 1px solid @color-note;
+      border: 1px solid @color-placeholder;
       border-bottom-left-radius: 5px;
       border-bottom-right-radius: 5px;
       border-top-left-radius: 5px;
@@ -218,7 +224,7 @@
 .contentForm {
   margin: -10px;
   overflow: hidden;
-  padding: 10px 360px 10px 10px;
+  padding: 10px 340px 10px 10px;
   transition: all @time-fast;
 
   @media @media-tablet {
@@ -238,8 +244,8 @@
 
 .contentForm-aside {
   float: left;
-  margin: 0 -350px 0 10px;
-  width: 340px;
+  margin: 0 -330px 0 10px;
+  width: 320px;
 
   @media @media-tablet {
     margin-right: -200px;
@@ -270,7 +276,7 @@
   font-size: 120%;
   position: fixed;
   right: 20px;
-  top: (@length-toolHeader-height + 30px);
+  top: (@toolHeader-height + 30px);
 }
 
 // --- Widgets ---
@@ -283,7 +289,7 @@
   }
 
   li {
-    border-bottom: 1px solid @color-note;
+    border-bottom: 1px solid @color-placeholder;
     padding-bottom: 10px;
   }
 
@@ -354,7 +360,7 @@
 }
 
 .widget-preview {
-  .background-striped(@color-alt);
+  .background-striped(@color-heading);
 
   margin-top: 10px;
   transition: box-shadow @time-fast;
@@ -540,7 +546,7 @@
   }
 
   .permissionsSection {
-    .background-flat(@color-alt);
+    .background-flat(@color-heading);
 
     border-radius: 5px;
     box-sizing: border-box;
@@ -551,7 +557,7 @@
   }
 
   .permissionsType {
-    .background-flat(@color-alt);
+    .background-flat(@color-heading);
 
     border-radius: 5px;
     clear: left;
@@ -665,10 +671,10 @@
   .link {
     color: @color-text;
     display: inline-block;
-    font-size: (@length-fontSize * 2);
-    line-height: (@length-fontSize * 2);
+    font-size: (@fontSize-default * 2);
+    line-height: (@fontSize-default * 2);
     left: 0;
-    margin-top: (0 - @length-fontSize);
+    margin-top: (0 - @fontSize-default);
     position: absolute;
     top: 50%;
     width: 100%;
@@ -678,7 +684,7 @@
     }
 
     &:before {
-      font-size: (@length-fontSize * 2);
+      font-size: (@fontSize-default * 2);
       opacity: 1;
     }
   }

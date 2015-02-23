@@ -121,8 +121,12 @@ if (selected instanceof Page) {
 WorkStream workStream = Query.from(WorkStream.class).where("_id = ?", wp.param(UUID.class, "workStreamId")).first();
 
 if (workStream != null) {
+    
+    Draft draft = wp.getOverlaidDraft(editing);
+    Object workstreamObject = (draft != null) ? draft : editing;
+
     if (wp.param(boolean.class, "action-skipWorkStream")) {
-        workStream.skip(wp.getUser(), editing);
+        workStream.skip(wp.getUser(), workstreamObject);
         wp.redirect("", "action-skipWorkStream", null);
         return;
 
@@ -132,7 +136,7 @@ if (workStream != null) {
         return;
     }
 
-    State.getInstance(editing).as(WorkStream.Data.class).complete(workStream, wp.getUser());
+    State.getInstance(workstreamObject).as(WorkStream.Data.class).complete(workStream, wp.getUser());
 }
 
 if (wp.tryDelete(editing) ||
