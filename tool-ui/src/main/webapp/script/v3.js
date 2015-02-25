@@ -67,7 +67,8 @@ require([
   'v3/searchcarousel',
   'jquery.tabbed',
   'jquery.toggleable',
-  'v3/jquery.uploader',
+  'evaporate',
+  'v3/upload',
   'nv.d3',
 
   'dashboard',
@@ -125,7 +126,6 @@ function() {
   $doc.calendar('live', ':text.date');
   $doc.dropDown('live', 'select[multiple], select[data-searchable="true"]');
   $doc.editablePlaceholder('live', ':input[data-editable-placeholder]');
-  $doc.uploader('live','.fileSelector .fileSelectorNewUpload, .bulkFileSelector');
 
   bsp_fixedScrollable.live(document, '.fixedScrollable, .searchResult-list, .popup[name="miscSearch"] .searchFiltersRest');
 
