@@ -5,9 +5,10 @@ define([
 
 function($, bsp_utils, evaporate) {
 
-    bsp_utils.onDomInsert(document, '.fileSelector .fileSelectorNewUpload, .bulkFileSelector', {
+    bsp_utils.onDomInsert(document, '.s3Upload', {
 
         insert: function (input) {
+
             $(input).on('change', function(event) {
                 var $this = $(this);
                 var files = event.target.files;

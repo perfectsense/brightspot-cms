@@ -32,11 +32,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
-import com.psddev.cms.db.ToolUiLayoutElement;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
-
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentField;
@@ -54,6 +52,7 @@ import com.psddev.cms.db.StandardImageSize;
 import com.psddev.cms.db.Template;
 import com.psddev.cms.db.ToolFormWriter;
 import com.psddev.cms.db.ToolUi;
+import com.psddev.cms.db.ToolUiLayoutElement;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.Trash;
 import com.psddev.cms.db.Variation;
@@ -1601,16 +1600,6 @@ public class ToolPageContext extends WebPageContext {
         writeEnd();
 
         writeStart("script", "type", "text/javascript", "src", cmsResource(scriptPrefix + "evaporate.js"));
-        writeEnd();
-
-        String defaultStorage = Settings.get(String.class, StorageItem.DEFAULT_STORAGE_SETTING);
-        writeStart("script", "type", "text/javascript");
-            writeRaw("var _e_ = new Evaporate(");
-                write(ObjectUtils.toJson(ImmutableMap.of(
-                    "signerUrl", "/cms/s3auth",
-                    "aws_key", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + defaultStorage + "/access"),
-                    "bucket", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + defaultStorage + "/bucket"))));
-            writeRaw(");");
         writeEnd();
 
         writeStart("script", "type", "text/javascript");

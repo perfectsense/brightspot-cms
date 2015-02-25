@@ -1,11 +1,34 @@
 package com.psddev.cms.tool.page;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.UploadPlugin;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.AggregateException;
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.ImageMetadataMap;
 import com.psddev.dari.util.IoUtils;
 import com.psddev.dari.util.MultipartRequest;
@@ -15,25 +38,7 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import com.psddev.dari.util.TypeDefinition;
 
 @MultipartConfig
 @RoutingFilter.Path(application = "cms", value = "storageItemField")
@@ -186,7 +191,20 @@ public class StorageItemField extends PageServlet {
         String fileName = inputName + ".file";
         String urlName = inputName + ".url";
         String dropboxName = inputName + ".dropbox";
-        String storageSetting = field.as(ToolUi.class).getStorageSetting() != null ? Settings.getOrDefault(String.class, field.as(ToolUi.class).getStorageSetting(), null) : null;
+        String pluginIdentifier = "";
+        String storageSetting = getStorageSetting(field);
+
+        for (Class<? extends UploadPlugin> pluginClass : ClassFinder.Static.findClasses(UploadPlugin.class)) {
+            if (!pluginClass.isInterface() && !Modifier.isAbstract(pluginClass.getModifiers())) {
+                UploadPlugin plugin = TypeDefinition.getInstance(pluginClass).newInstance();
+
+                if (plugin.isSupported(storageSetting)) {
+                    pluginIdentifier = plugin.getClassIdentifier();
+                    plugin.writeHtml(page, storageSetting);
+                    break;
+                }
+            }
+        }
 
         page.writeStart("div", "class", "fileSelector");
 
@@ -236,7 +254,7 @@ public class StorageItemField extends PageServlet {
             page.writeEnd();
 
             page.writeTag("input",
-                    "class", FILE_SELECTOR_ITEM_CLASS + " " + FILE_SELECTOR_NEW_UPLOAD_CLASS,
+                    "class", FILE_SELECTOR_ITEM_CLASS + " " + FILE_SELECTOR_NEW_UPLOAD_CLASS + " " + pluginIdentifier,
                     "type", "file",
                     "name", page.h(fileName),
                     "data-field-name", fieldName,
@@ -454,6 +472,17 @@ public class StorageItemField extends PageServlet {
         pathBuilder.append(extension);
 
         return pathBuilder.toString();
+    }
+
+    public static String getStorageSetting(ObjectField field) {
+        String storageName = Settings.get(String.class, StorageItem.DEFAULT_STORAGE_SETTING);
+        String fieldStorageSetting = field.as(ToolUi.class).getStorageSetting();
+
+        if (!StringUtils.isBlank(fieldStorageSetting)) {
+            storageName = fieldStorageSetting;
+        }
+
+        return storageName;
     }
 
     @Override
