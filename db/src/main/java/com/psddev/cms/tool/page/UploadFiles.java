@@ -1,30 +1,7 @@
 package com.psddev.cms.tool.page;
 
-import com.psddev.cms.db.BulkUploadDraft;
-import com.psddev.cms.db.Site;
-import com.psddev.cms.db.ToolUi;
-import com.psddev.cms.db.Variation;
-import com.psddev.cms.tool.PageServlet;
-import com.psddev.cms.tool.ToolPageContext;
-import com.psddev.dari.db.Database;
-import com.psddev.dari.db.DatabaseEnvironment;
-import com.psddev.dari.db.ObjectField;
-import com.psddev.dari.db.ObjectFieldComparator;
-import com.psddev.dari.db.ObjectType;
-import com.psddev.dari.db.State;
-import com.psddev.dari.util.ErrorUtils;
-import com.psddev.dari.util.ObjectUtils;
-import com.psddev.dari.util.RoutingFilter;
-import com.psddev.dari.util.StorageItem;
-import com.psddev.dari.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,13 +11,39 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Part;
+
+import com.psddev.cms.db.BulkUploadDraft;
+import com.psddev.cms.db.Site;
+import com.psddev.cms.db.ToolUi;
+import com.psddev.cms.db.Variation;
+import com.psddev.cms.tool.PageServlet;
+import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.UploadPlugin;
+import com.psddev.dari.db.Database;
+import com.psddev.dari.db.DatabaseEnvironment;
+import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.ObjectFieldComparator;
+import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.db.State;
+import com.psddev.dari.util.ClassFinder;
+import com.psddev.dari.util.ErrorUtils;
+import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.RoutingFilter;
+import com.psddev.dari.util.Settings;
+import com.psddev.dari.util.StorageItem;
+import com.psddev.dari.util.StringUtils;
+import com.psddev.dari.util.TypeDefinition;
+
 @MultipartConfig
 @RoutingFilter.Path(application = "cms", value = "/content/uploadFiles")
 @SuppressWarnings("serial")
 public class UploadFiles extends PageServlet {
 
     private static final String CONTAINER_ID_PARAMETER = "containerId";
-    private static final Logger LOGGER = LoggerFactory.getLogger(UploadFiles.class);
 
     @Override
     protected String getPermissionId() {
@@ -78,7 +81,14 @@ public class UploadFiles extends PageServlet {
                 if (!ObjectUtils.isBlank(paths)) {
                     //get existing storage item
                     for (String path : paths) {
-                        newStorageItems.add(StorageItemField.createStorageItemFromPath(path, previewField.as(ToolUi.class).getStorageSetting()));
+                        String defaultStorageSetting = StorageItem.DEFAULT_STORAGE_SETTING;
+                        String fieldStorageSetting = previewField.as(ToolUi.class).getStorageSetting();
+                        StorageItem newStorageItem = StorageItemField.createStorageItemFromPath(path, fieldStorageSetting);
+                        if (!StringUtils.isBlank(fieldStorageSetting) && !fieldStorageSetting.equals(defaultStorageSetting)) {
+                            newStorageItem = StorageItem.Static.copy(newStorageItem, fieldStorageSetting);
+                        }
+
+                        newStorageItems.add(newStorageItem);
                     }
                 } else {
                     Collection<Part> parts = request.getParts();
@@ -173,6 +183,21 @@ public class UploadFiles extends PageServlet {
         List<ObjectType> types = new ArrayList<ObjectType>(typesSet);
         Collections.sort(types, new ObjectFieldComparator("name", false));
 
+        String pluginIdentifier = "";
+        String defaultStorage = Settings.get(String.class, StorageItem.DEFAULT_STORAGE_SETTING);
+
+        for (Class<? extends UploadPlugin> pluginClass : ClassFinder.Static.findClasses(UploadPlugin.class)) {
+            if (!pluginClass.isInterface() && !Modifier.isAbstract(pluginClass.getModifiers())) {
+                UploadPlugin plugin = TypeDefinition.getInstance(pluginClass).newInstance();
+
+                if (plugin.isSupported(defaultStorage)) {
+                    pluginIdentifier = plugin.getClassIdentifier();
+                    plugin.writeHtml(page, defaultStorage);
+                    break;
+                }
+            }
+        }
+
         page.writeStart("h1").writeHtml("Upload Files").writeEnd();
 
         page.writeStart("form",
@@ -209,7 +234,7 @@ public class UploadFiles extends PageServlet {
                 page.writeStart("div", "class", "inputSmall");
                     page.writeElement("input",
                             "id", page.getId(),
-                            "class", "bulkFileSelector",
+                            "class", "bulkFileSelector " + pluginIdentifier,
                             "type", "file",
                             "name", "file",
                             "multiple", "multiple",

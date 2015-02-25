@@ -336,8 +336,6 @@ public class StorageItemField extends PageServlet {
 
     public static StorageItem createStorageItemFromPath(String path, String storageSetting) {
 
-        //TODO: check file exists in storage
-
         StorageItem storageItem = StorageItem.Static.createIn(storageSetting != null ? Settings.getOrDefault(String.class, storageSetting, null) : null);
         storageItem.setPath(path);
         storageItem.setContentType(storageItem.getContentType());
