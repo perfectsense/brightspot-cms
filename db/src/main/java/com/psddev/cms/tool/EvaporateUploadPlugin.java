@@ -18,7 +18,7 @@ public class EvaporateUploadPlugin implements UploadPlugin {
 
     @Override
     public String getClassIdentifier() {
-        return "s3Upload";
+        return "evaporate";
     }
 
     @Override

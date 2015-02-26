@@ -5,7 +5,7 @@ define([
 
 function($, bsp_utils, evaporate) {
 
-    bsp_utils.onDomInsert(document, '.s3Upload', {
+    bsp_utils.onDomInsert(document, '.evaporate', {
 
         insert: function (input) {
 
