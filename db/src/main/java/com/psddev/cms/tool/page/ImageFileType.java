@@ -40,9 +40,20 @@ import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeReference;
 
-public class ImageFilePreview implements FileFieldWriter {
+public class ImageFileType implements FileContentType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ToolPageContext.class);
+
+    @Override
+    public boolean isSupported(StorageItem storageItem) {
+        String contentType = storageItem.getContentType();
+        return !StringUtils.isBlank(contentType) && contentType.startsWith("image/");
+    }
+
+    @Override
+    public boolean isPreferred(StorageItem storageItem) {
+        return false;
+    }
 
     @Override
     public void writePreview(ToolPageContext page) throws IOException, ServletException {

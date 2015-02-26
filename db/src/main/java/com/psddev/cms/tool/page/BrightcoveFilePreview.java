@@ -1,5 +1,10 @@
 package com.psddev.cms.tool.page;
 
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.State;
@@ -7,11 +12,17 @@ import com.psddev.dari.util.BrightcoveStorageItem;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StorageItem;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
+public class BrightcoveFilePreview implements FileContentType {
 
-public class BrightcoveFilePreview implements FileFieldWriter {
+    @Override
+    public boolean isSupported(StorageItem storageItem) {
+        return storageItem instanceof BrightcoveStorageItem;
+    }
+
+    @Override
+    public boolean isPreferred(StorageItem storageItem) {
+        return true;
+    }
 
     private static final String BRIGHTCOVE_EXPERIENCES_JS_PATH = "http://admin.brightcove.com/js/BrightcoveExperiences.js";
 

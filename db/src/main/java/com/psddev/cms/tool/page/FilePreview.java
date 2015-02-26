@@ -1,5 +1,13 @@
 package com.psddev.cms.tool.page;
 
+import java.io.IOException;
+import java.util.UUID;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
@@ -10,13 +18,6 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.UUID;
 
 @RoutingFilter.Path(application = "cms", value = "filePreview")
 public class FilePreview extends PageServlet {
@@ -89,9 +90,9 @@ public class FilePreview extends PageServlet {
                 }
             } else {
 
-                FileFieldWriter fileFieldWriter = FileFieldWriter.Static.getFileFieldWriter(fieldValue);
-                if (fileFieldWriter != null) {
-                    fileFieldWriter.writePreview(page);
+                FileContentType fileContentType = FileContentType.Static.getFileFieldWriter(fieldValue);
+                if (fileContentType != null) {
+                    fileContentType.writePreview(page);
                 } else {
                     page.writeStart("a",
                             "href", page.h(fieldValue.getPublicUrl()),
@@ -135,13 +136,13 @@ public class FilePreview extends PageServlet {
 
     public static void setMetadata(ToolPageContext page, State state, StorageItem fieldValue) throws IOException, ServletException {
 
-        FileFieldWriter fileFieldWriter = FileFieldWriter.Static.getFileFieldWriter(fieldValue);
+        FileContentType fileContentType = FileContentType.Static.getFileFieldWriter(fieldValue);
 
-        if (fileFieldWriter == null) {
+        if (fileContentType == null) {
             return;
         }
 
-        fileFieldWriter.setMetadata(page, state, fieldValue);
+        fileContentType.setMetadata(page, state, fieldValue);
     }
 
     @Override

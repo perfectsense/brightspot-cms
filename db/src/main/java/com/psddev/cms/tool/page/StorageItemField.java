@@ -140,7 +140,7 @@ public class StorageItemField extends PageServlet {
                 }
 
             } else if ("newUrl".equals(action)) {
-                newItem = StorageItem.Static.createUrl(page.param(urlName));
+                newItem = StorageItem.Static.createUrl(page.param(String.class, urlName));
             }
 
             FilePreview.setMetadata(page, state, newItem);

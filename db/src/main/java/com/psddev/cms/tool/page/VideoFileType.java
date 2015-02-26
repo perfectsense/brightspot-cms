@@ -1,5 +1,13 @@
 package com.psddev.cms.tool.page;
 
+import java.io.IOException;
+import java.util.UUID;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -7,17 +15,21 @@ import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.UUID;
-
-public class VideoFilePreview implements FileFieldWriter {
+public class VideoFileType implements FileContentType {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ToolPageContext.class);
+
+    @Override
+    public boolean isSupported(StorageItem storageItem) {
+        String contentType = storageItem.getContentType();
+        return !StringUtils.isBlank(contentType) && contentType.startsWith("video/");
+    }
+
+    @Override
+    public boolean isPreferred(StorageItem storageItem) {
+        return false;
+    }
 
     @Override
     public void writePreview(ToolPageContext page) throws IOException, ServletException {
