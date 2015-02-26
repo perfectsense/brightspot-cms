@@ -31,7 +31,6 @@ import com.psddev.dari.util.AggregateException;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.ImageMetadataMap;
 import com.psddev.dari.util.IoUtils;
-import com.psddev.dari.util.MultipartRequest;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.Settings;
@@ -98,8 +97,6 @@ public class StorageItemField extends PageServlet {
             String action = page.param(actionName);
             StorageItem newItem = null;
 
-            InputStream newItemData = null;
-
             if ("keep".equals(action)) {
                 if (fieldValue != null) {
                     newItem = fieldValue;
@@ -111,7 +108,6 @@ public class StorageItemField extends PageServlet {
             } else if ("newUpload".equals(action) ||
                     "dropbox".equals(action)) {
                 file = File.createTempFile("cms.", ".tmp");
-                MultipartRequest mpRequest;
 
                 if ("dropbox".equals(action)) {
                     Map<String, Object> fileData = (Map<String, Object>) ObjectUtils.fromJson(page.param(String.class, dropboxName));
@@ -139,20 +135,7 @@ public class StorageItemField extends PageServlet {
                     }
 
                 } else if (filePart != null) {
-
-                    filePart.write(file.getAbsolutePath());
-
-//                    if (fileItem != null) {
-//
-//                        try {
-//                            file
-//                            fileItem.write(file);
-//                        } catch (Exception e) {
-//                            //ignore
-//                        }
-//
-//
-//                    }
+                    filePart.write(file.getName());
                     newItem = StorageItemField.createStorageItemFromPart(page, filePart, field, state);
                 }
 
