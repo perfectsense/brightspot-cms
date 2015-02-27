@@ -106,7 +106,7 @@ public class FilePreview extends PageServlet {
 
     public static void writeFileUploadPreview(ToolPageContext page) throws  IOException, ServletException {
 
-        page.writeStart("div", "class", "upload-preview loading");
+        page.writeStart("div", "class", "upload-preview");
             page.writeStart("div", "class", "upload-preview-wrapper");
                 page.writeTag("img");
                 page.writeStart("div",

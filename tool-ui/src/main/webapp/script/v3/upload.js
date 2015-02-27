@@ -63,6 +63,7 @@ function($, bsp_utils, evaporate) {
                         _displayImgPreview($uploadPreview.find('img').first(), file);
                     } else {
                         _displayDefaultPreview($uploadPreview);
+                        $uploadPreview.addClass('loading');
                     }
 
                     var $select = $fileSelector.find('select').first();
@@ -150,6 +151,7 @@ function($, bsp_utils, evaporate) {
                 reader.onload = (function(readFile) {
                     return function(event) {
                         img.attr('src', event.target.result);
+                        img.closest('.upload-preview').addClass('loading');
                     };
                 })(file);
 
