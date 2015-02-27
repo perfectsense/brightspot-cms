@@ -60,7 +60,9 @@ function($, bsp_utils, evaporate) {
                     var $uploadPreview = $inputSmall.find('.upload-preview').eq(index);
 
                     if (file.type.match('image.*')) {
-                        _displayPreview($uploadPreview.find('img').first(), file);
+                        _displayImgPreview($uploadPreview.find('img').first(), file);
+                    } else {
+                        _displayDefaultPreview($uploadPreview);
                     }
 
                     var $select = $fileSelector.find('select').first();
@@ -138,7 +140,7 @@ function($, bsp_utils, evaporate) {
                 $inputSmall.find('[data-progress]').eq(i).attr('data-progress', percentageComplete);
             }
 
-            function _displayPreview(img, file) {
+            function _displayImgPreview(img, file) {
 
                 if(!(window.File && window.FileReader && window.FileList)) {
                     return;
@@ -152,6 +154,15 @@ function($, bsp_utils, evaporate) {
                 })(file);
 
                 reader.readAsDataURL(file);
+            }
+
+            function _displayDefaultPreview(uploadPreview) {
+                var $uploadPreview = $(uploadPreview);
+                var $uploadPreviewWrapper = $uploadPreview.find('.upload-preview-wrapper').first();
+
+                $uploadPreview.width(150).height(150);
+                $uploadPreviewWrapper.width(150).height(150);
+
             }
         }
     });
