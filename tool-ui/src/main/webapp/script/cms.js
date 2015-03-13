@@ -513,13 +513,13 @@ $doc.delegate('.exception > *', 'click', function() {
     var TRIM_RE = /^\s+|\s+$/g,
             WHITESPACE_RE = /\s+/;
 
-    function updateWordCount($container, $input, value) {
+    function updateWordCount($container, $input, value, placeholder) {
         var minimum = +$input.attr('data-suggested-minimum'),
                 maximum = +$input.attr('data-suggested-maximum'),
                 cc,
                 wc;
 
-        value = (value || '').replace(TRIM_RE, '');
+        value = (value || placeholder || '').replace(TRIM_RE, '');
         cc = value.length;
         wc = value ? value.split(WHITESPACE_RE).length : 0;
 
@@ -539,7 +539,8 @@ $doc.delegate('.exception > *', 'click', function() {
         updateWordCount(
                 $input.closest('.inputContainer'),
                 $input,
-                $input.val());
+                $input.val(),
+                $input.attr('data-count-placeholder') === "true" ? $input.attr('placeholder') : '');
     }));
 
     $doc.onCreate('.wysihtml5-sandbox', function() {
@@ -557,7 +558,8 @@ $doc.delegate('.exception > *', 'click', function() {
                 updateWordCount(
                         $toolbar,
                         $textarea,
-                        $bodyClone.text());
+                        $bodyClone.text(),
+                        $textarea.attr('data-count-placeholder') === "true" ? $textarea.attr('placeholder') : '');
             }
         }));
     });

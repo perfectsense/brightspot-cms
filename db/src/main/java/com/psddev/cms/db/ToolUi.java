@@ -53,6 +53,7 @@ public class ToolUi extends Modification<Object> {
     private String placeholder;
     private String placeholderDynamicText;
     private Boolean placeholderEditable;
+    private Boolean placeholderCountable;
     private Boolean referenceable;
     private String referenceableViaClassName;
     private Boolean readOnly;
@@ -301,6 +302,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setPlaceholderEditable(boolean placeholderEditable) {
         this.placeholderEditable = Boolean.TRUE.equals(placeholderEditable) ? Boolean.TRUE : null;
+    }
+
+    public boolean isPlaceholderCountable() {
+        return Boolean.TRUE.equals(placeholderCountable);
+    }
+
+    public void setPlaceholderCountable(boolean placeholderCountable) {
+        this.placeholderCountable = Boolean.TRUE.equals(placeholderCountable) ? Boolean.TRUE : null;
     }
 
     public String getPlaceholderDynamicText() {
@@ -891,6 +900,12 @@ public class ToolUi extends Modification<Object> {
          * when the user clicks into the input.
          */
         boolean editable() default false;
+
+        /**
+         * {@code true} if word count and suggested max/min should be diplayed
+         * for placeholder alone.
+         */
+        boolean countPlaceholder() default false;
     }
 
     private static class PlaceholderProcessor implements ObjectField.AnnotationProcessor<Annotation> {
@@ -908,6 +923,7 @@ public class ToolUi extends Modification<Object> {
                 ui.setPlaceholder(placeholder.value());
                 ui.setPlaceholderDynamicText(placeholder.dynamicText());
                 ui.setPlaceholderEditable(placeholder.editable());
+                ui.setPlaceholderCountable(placeholder.countPlaceholder());
             }
         }
     }

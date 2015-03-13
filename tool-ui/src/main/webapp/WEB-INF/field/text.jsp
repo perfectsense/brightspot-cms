@@ -104,6 +104,7 @@ if (validValues != null) {
             "data-dynamic-placeholder", ui.getPlaceholderDynamicText(),
             "data-code-type", ui.getCodeType(),
             "data-editable-placeholder", ui.isPlaceholderEditable() ? ui.getPlaceholder() : null,
+            "data-count-placeholder", ui.isPlaceholderCountable() ? true : null,
             "data-suggested-maximum", suggestedMaximum != null ? suggestedMaximum.intValue() : null,
             "data-suggested-minimum", suggestedMinimum != null ? suggestedMinimum.intValue() : null,
             "data-inline", true,
