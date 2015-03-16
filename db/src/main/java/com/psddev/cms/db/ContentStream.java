@@ -10,7 +10,11 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement. Create your own.
+ */
 @ContentStream.Embedded
+@Deprecated
 public abstract class ContentStream extends Record {
 
     public abstract List<?> findContents(int offset, int limit);
@@ -51,6 +55,10 @@ public abstract class ContentStream extends Record {
         }
     }
 
+    /**
+     * @deprecated No replacement. Create your own.
+     */
+    @Deprecated
     @Embedded
     public static class AreasStream extends Record {
 
@@ -92,6 +100,10 @@ public abstract class ContentStream extends Record {
         }
     }
 
+    /**
+     * @deprecated No replacement. Create your own.
+     */
+    @Deprecated
     public static class Search extends ContentStream {
 
         @Embedded
@@ -112,6 +124,10 @@ public abstract class ContentStream extends Record {
         }
     }
 
+    /**
+     * @deprecated No replacement. Create your own.
+     */
+    @Deprecated
     public static class Static extends ContentStream {
 
         private List<Content> contents;

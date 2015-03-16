@@ -54,7 +54,7 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
 
         PaginatedResult<?> result;
 
-        List<String> visibilities = page.pageParams(String.class, Search.VISIBILITIES_PARAMETER, new ArrayList<String>());
+        List<String> visibilities = page.pageParams(String.class, Search.VISIBILITIES_PARAMETER, new ArrayList<>());
 
         if (valueObject == null && (type == Type.ROLE || type == Type.USER)) {
             result = null;
@@ -106,93 +106,81 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                 page.writeHtml("Recent Activity");
             page.writeEnd();
 
-            page.writeStart("form",
-                    "method", "get",
-                    "action", page.url(null));
-                page.writeStart("ul", "class", "oneLine");
-                    page.writeStart("li");
-                        page.writeTypeSelect(
-                                com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite()),
-                                itemType,
-                                "Any Types",
-                                "data-bsp-autosubmit", "",
-                                "name", "itemType",
-                                "data-searchable", "true");
-                    page.writeEnd();
+            page.writeStart("div", "class", "widget-filters");
+                page.writeStart("form",
+                        "method", "get",
+                        "action", page.url(null));
 
-                    page.writeStart("li");
-                        page.writeHtml("by ");
-                        page.writeStart("select", "data-bsp-autosubmit", "", "name", "type");
-                            for (Type t : Type.values()) {
-                                if (t != Type.ROLE || Query.from(ToolRole.class).first() != null) {
-                                    page.writeStart("option",
-                                            "selected", t.equals(type) ? "selected" : null,
-                                            "value", t.name());
-                                        page.writeHtml(t.getDisplayName());
-                                    page.writeEnd();
-                                }
-                            }
-                        page.writeEnd();
-                    page.writeEnd();
+                    page.writeTypeSelect(
+                            com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite()),
+                            itemType,
+                            "Any Types",
+                            "data-bsp-autosubmit", "",
+                            "name", "itemType",
+                            "data-searchable", "true");
 
-                    page.writeStart("li");
-                        Query<?> valueQuery;
-
-                        if (type == Type.ROLE) {
-                            valueQuery = Query.from(ToolRole.class).sortAscending("name");
-
-                        } else if (type == Type.USER) {
-                            valueQuery = Query.from(ToolUser.class).sortAscending("name");
-
-                        } else {
-                            valueQuery = null;
-                        }
-
-                        if (valueQuery == null) {
-                            page.writeHtml("\u0020");
-
-                        } else {
-                            if (valueQuery.hasMoreThan(250)) {
-                                State valueState = State.getInstance(valueObject);
-
-                                page.writeElement("input",
-                                        "data-bsp-autosubmit", "",
-                                        "type", "text",
-                                        "class", "objectId",
-                                        "data-editable", false,
-                                        "data-label", valueState != null ? valueState.getLabel() : null,
-                                        "data-typeIds", ObjectType.getInstance(ToolRole.class).getId(),
-                                        "name", valueParameter,
-                                        "value", valueState != null ? valueState.getId() : null);
-
-                            } else {
-                                page.writeStart("select",
-                                        "data-bsp-autosubmit", "",
-                                        "name", valueParameter,
-                                        "data-searchable", "true");
-
-                                    page.writeStart("option", "value", "").writeEnd();
-
-                                    for (Object v : valueQuery.selectAll()) {
-                                        State state = State.getInstance(v);
-
-                                        page.writeStart("option",
-                                                "value", state.getId(),
-                                                "selected", v.equals(valueObject) ? "selected" : null);
-                                            page.writeHtml(state.getLabel());
-                                        page.writeEnd();
-                                    }
-
+                    page.writeStart("select", "data-bsp-autosubmit", "", "name", "type");
+                        for (Type t : Type.values()) {
+                            if (t != Type.ROLE || Query.from(ToolRole.class).first() != null) {
+                                page.writeStart("option",
+                                        "selected", t.equals(type) ? "selected" : null,
+                                        "value", t.name());
+                                    page.writeHtml(t.getDisplayName());
                                 page.writeEnd();
                             }
                         }
                     page.writeEnd();
 
-                    page.writeStart("li");
-                        page.writeTag("input", "type", "hidden", "name", Search.VISIBILITIES_PARAMETER, "value", ""); // extra hidden field so ToolPageContext#pageParams() knows we are intentionally submitting nothing
-                        page.writeMultipleVisibilitySelect(itemType, visibilities, "name", Search.VISIBILITIES_PARAMETER, "data-bsp-autosubmit", "");
-                    page.writeEnd();
+                    Query<?> valueQuery;
 
+                    if (type == Type.ROLE) {
+                        valueQuery = Query.from(ToolRole.class).sortAscending("name");
+
+                    } else if (type == Type.USER) {
+                        valueQuery = Query.from(ToolUser.class).sortAscending("name");
+
+                    } else {
+                        valueQuery = null;
+                    }
+
+                    if (valueQuery != null) {
+                        if (valueQuery.hasMoreThan(250)) {
+                            State valueState = State.getInstance(valueObject);
+
+                            page.writeElement("input",
+                                    "data-bsp-autosubmit", "",
+                                    "type", "text",
+                                    "class", "objectId",
+                                    "data-editable", false,
+                                    "data-label", valueState != null ? valueState.getLabel() : null,
+                                    "data-typeIds", ObjectType.getInstance(ToolRole.class).getId(),
+                                    "name", valueParameter,
+                                    "value", valueState != null ? valueState.getId() : null);
+
+                        } else {
+                            page.writeStart("select",
+                                    "data-bsp-autosubmit", "",
+                                    "name", valueParameter,
+                                    "data-searchable", "true");
+
+                                page.writeStart("option", "value", "").writeEnd();
+
+                                for (Object v : valueQuery.selectAll()) {
+                                    State state = State.getInstance(v);
+
+                                    page.writeStart("option",
+                                            "value", state.getId(),
+                                            "selected", v.equals(valueObject) ? "selected" : null);
+                                        page.writeHtml(state.getLabel());
+                                    page.writeEnd();
+                                }
+
+                            page.writeEnd();
+                        }
+                    }
+
+                    page.writeTag("input", "type", "hidden", "name", Search.VISIBILITIES_PARAMETER, "value", ""); // extra hidden field so ToolPageContext#pageParams() knows we are intentionally submitting nothing
+                    page.writeMultipleVisibilitySelect(itemType, visibilities, "name", Search.VISIBILITIES_PARAMETER, "data-bsp-autosubmit", "");
                 page.writeEnd();
             page.writeEnd();
 

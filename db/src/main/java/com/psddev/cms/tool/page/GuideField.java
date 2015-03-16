@@ -153,45 +153,48 @@ public class GuideField extends PageServlet {
                         if (fieldDeclaringClass != null) {
                             Field javaField = field.getJavaField(fieldDeclaringClass);
 
-                            page.writeStart("table", "class", "table-striped");
-                                page.writeStart("tbody");
-                                    page.writeStart("tr");
-                                        page.writeStart("th");
-                                            page.writeHtml("Declared In");
-                                        page.writeEnd();
+                            if (javaField != null) {
 
-                                        page.writeStart("td");
-                                            page.writeJavaClassLink(fieldDeclaringClass);
-                                        page.writeEnd();
-                                    page.writeEnd();
+                                page.writeStart("table", "class", "table-striped");
+                                    page.writeStart("tbody");
+                                        page.writeStart("tr");
+                                            page.writeStart("th");
+                                                page.writeHtml("Declared In");
+                                            page.writeEnd();
 
-                                    page.writeStart("tr");
-                                        page.writeStart("th");
-                                            page.writeHtml("Field Type");
-                                        page.writeEnd();
-
-                                        page.writeStart("td");
-                                            page.writeStart("code");
-                                                page.writeHtml(javaField.getGenericType());
+                                            page.writeStart("td");
+                                                page.writeJavaClassLink(fieldDeclaringClass);
                                             page.writeEnd();
                                         page.writeEnd();
-                                    page.writeEnd();
 
-                                    page.writeStart("tr");
-                                        page.writeStart("th");
-                                            page.writeHtml("Field Name");
+                                        page.writeStart("tr");
+                                            page.writeStart("th");
+                                                page.writeHtml("Field Type");
+                                            page.writeEnd();
+
+                                            page.writeStart("td");
+                                                page.writeStart("code");
+                                                    page.writeHtml(javaField);
+                                                page.writeEnd();
+                                            page.writeEnd();
                                         page.writeEnd();
 
-                                        page.writeStart("td");
-                                            page.writeStart("code");
-                                                page.writeHtml(field.getJavaFieldName());
+                                        page.writeStart("tr");
+                                            page.writeStart("th");
+                                                page.writeHtml("Field Name");
+                                            page.writeEnd();
+
+                                            page.writeStart("td");
+                                                page.writeStart("code");
+                                                    page.writeHtml(field.getJavaFieldName());
+                                                page.writeEnd();
                                             page.writeEnd();
                                         page.writeEnd();
                                     page.writeEnd();
                                 page.writeEnd();
-                            page.writeEnd();
 
-                            ContentTools.Static.writeJavaAnnotationDescriptions(page, javaField);
+                                ContentTools.Static.writeJavaAnnotationDescriptions(page, javaField);
+                            }
                         }
                     page.writeEnd();
                 page.writeEnd();

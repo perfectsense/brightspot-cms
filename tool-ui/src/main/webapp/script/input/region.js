@@ -27,10 +27,6 @@ function($) {
                 "fillOpacity": 0.5
             };
 
-            var lat = 39.8282;
-            var lng = -98.5795;
-
-
             var zoom = zoomInput.val();
             var center = $.parseJSON(centerInput.val());
 
@@ -39,7 +35,31 @@ function($) {
             var regionLayer = new L.FeatureGroup();
             map.addLayer(regionLayer);
 
-            var savedItems = L.GeoJSON.geometryToLayer(geojson, myStyle);
+            // Leaflet/GeoJSON doesn't support Circles, so convert to Leaflet Points for geometryToLayer()
+            if (geojson.geometries) {
+                geojson.geometries.forEach(function (geometry) {
+                    if (geometry.type == "Circle") {
+                        geometry.type = "Point";
+
+                        // Convert an array of coordinate arrays to Leaflet's format
+                        if (Array.isArray(geometry.coordinates) && geometry.coordinates.length > 0 &&
+                            Array.isArray(geometry.coordinates[0]) && geometry.coordinates[0].length > 1) {
+                            geometry.coordinates = [geometry.coordinates[0][1], geometry.coordinates[0][0]];
+                        }
+                    }
+                });
+            }
+
+            var savedItems = L.GeoJSON.geometryToLayer(geojson, function(feature, latlng) {
+                // If a point has a radius, draw as a Circle
+                if (feature.geometry && feature.geometry.type == "Point" && feature.geometry.radius > 0) {
+                    return new L.Circle(latlng, feature.geometry.radius);
+                }
+                else {
+                    return new L.Marker(latlng)
+                }
+            });
+
             for (x in savedItems.getLayers()) {
                 var layer = savedItems.getLayers()[x];
 
@@ -52,7 +72,9 @@ function($) {
                         regionLayer.addLayer(polygon);
                     }
                 } else {
-                    layer.setStyle(myStyle);
+                    if (layer.setStyle) {
+                        layer.setStyle(myStyle);
+                    }
                     regionLayer.addLayer(layer);
                 }
             }
@@ -72,6 +94,45 @@ function($) {
                 }
             });
             map.addControl(drawControl);
+
+            // Add an address search using the OSM geocoder
+            new L.Control.GeoSearch({
+                zoomLevel: 16,
+                provider: new L.GeoSearch.Provider.OpenStreetMap()
+            }).addTo(map);
+
+            // Prevent the enter key in the address search from submitting the CMS page form
+            $("#leaflet-control-geosearch-qry").keypress(function(event) {
+                if (event.which === 13) {
+                    event.preventDefault();
+                }
+            });
+
+            // Add a button to mark to user's current location, using HTML5 geolocation
+            L.control.locate({
+                drawCircle: false,
+                markerClass: L.marker,
+                icon: 'icon icon-map-marker',
+                iconLoading: 'icon icon-rss',
+                strings: {
+                    title: "Set marker to your current location",
+                    popup: "<b>Current location</b><br/>(within {distance} {unit})"
+                }
+            }).addTo(map);
+
+            // Add custom circle JSON serialization since GeoJSON doesn't support circles
+            var circleToGeoJSON = L.Circle.prototype.toGeoJSON;
+            L.Circle.include({
+                toGeoJSON: function() {
+                    var feature = circleToGeoJSON.call(this);
+                    feature.geometry = {
+                        type: 'Circle',
+                        coordinates: [[this.getLatLng().lat, this.getLatLng().lng]],
+                        radius: this.getRadius()
+                    };
+                    return feature;
+                }
+            });
 
             // Bind map events.
 

@@ -560,12 +560,31 @@ public class Search extends Record {
         boolean isAllSearchable = true;
 
         if (selectedType != null) {
-            isAllSearchable = Content.Static.isSearchableType(selectedType);
+            if (selectedType.isAbstract()) {
+                for (ObjectType t : selectedType.findConcreteTypes()) {
+                    if (!Content.Static.isSearchableType(t)) {
+                        isAllSearchable = false;
+                        break;
+                    }
+                }
+
+            } else {
+                isAllSearchable = Content.Static.isSearchableType(selectedType);
+            }
+
             query = Query.fromType(selectedType);
 
         } else {
             for (ObjectType type : validTypes) {
-                if (!Content.Static.isSearchableType(type)) {
+                if (type.isAbstract()) {
+                    for (ObjectType t : type.findConcreteTypes()) {
+                        if (!Content.Static.isSearchableType(t)) {
+                            isAllSearchable = false;
+                            break;
+                        }
+                    }
+
+                } else if (!Content.Static.isSearchableType(type)) {
                     isAllSearchable = false;
                 }
             }
@@ -766,9 +785,11 @@ public class Search extends Record {
                 continue;
             }
 
-            String fieldName = selectedType != null ?
-                    selectedType.getInternalName() + "/" + entry.getKey() :
-                    entry.getKey();
+            String fieldName = entry.getKey();
+
+            if (selectedType != null && !fieldName.contains("/")) {
+                fieldName = selectedType.getInternalName() + "/" + fieldName;
+            }
 
             if (ObjectUtils.to(boolean.class, value.get("m"))) {
                 query.and(fieldName + " = missing");
@@ -1044,32 +1065,49 @@ public class Search extends Record {
             selectedView = new ListSearchResultView();
         }
 
-        page.writeStart("div", "class", "searchResult-container");
-            page.writeStart("div", "class", "searchResult-views");
-                page.writeStart("ul", "class", "piped");
-                    for (SearchResultView view : views) {
-                        page.writeStart("li", "class", view.equals(selectedView) ? "selected" : null);
-                            page.writeStart("a",
-                                    "class", "icon icon-" + view.getIconName(),
-                                    "href", page.url("", "view", view.getClass().getName()));
-                                page.writeHtml(view.getDisplayName());
+        if (selectedView.isHtmlWrapped(this, page, itemWriter)) {
+            page.writeStart("div", "class", "searchResult-container");
+                page.writeStart("div", "class", "searchResult-views");
+                    page.writeStart("ul", "class", "piped");
+                        for (SearchResultView view : views) {
+                            page.writeStart("li", "class", view.equals(selectedView) ? "selected" : null);
+                                page.writeStart("a",
+                                        "class", "icon icon-" + view.getIconName(),
+                                        "href", page.url("", "view", view.getClass().getName()));
+                                    page.writeHtml(view.getDisplayName());
+                                page.writeEnd();
                             page.writeEnd();
-                        page.writeEnd();
-                    }
+                        }
+                    page.writeEnd();
+                page.writeEnd();
+
+                page.writeStart("div", "class", "searchResult-view");
+                    writeViewHtml(itemWriter, selectedView);
+                page.writeEnd();
+
+                page.writeStart("div", "class", "frame searchResult-actions", "name", "searchResultActions");
+                    page.writeStart("a",
+                            "href", page.toolUrl(CmsTool.class, "/searchResultActions",
+                                    "search", ObjectUtils.toJson(getState().getSimpleValues())));
+                    page.writeEnd();
                 page.writeEnd();
             page.writeEnd();
 
-            page.writeStart("div", "class", "searchResult-view");
-                selectedView.writeHtml(this, page, itemWriter != null ? itemWriter : new SearchResultItem());
-            page.writeEnd();
+        } else {
+            writeViewHtml(itemWriter, selectedView);
+        }
+    }
 
-            page.writeStart("div", "class", "frame searchResult-actions", "name", "searchResultActions");
-                page.writeStart("a",
-                        "href", page.toolUrl(CmsTool.class, "/searchResultActions",
-                                "search", ObjectUtils.toJson(getState().getSimpleValues())));
-                page.writeEnd();
+    private void writeViewHtml(SearchResultItem itemWriter, SearchResultView view) throws IOException {
+        try {
+            view.writeHtml(this, page, itemWriter != null ? itemWriter : new SearchResultItem());
+
+        } catch (IllegalArgumentException | Query.NoFieldException error) {
+            page.writeStart("div", "class", "message message-error");
+            page.writeHtml("Invalid advanced query: ");
+            page.writeHtml(error.getMessage());
             page.writeEnd();
-        page.writeEnd();
+        }
     }
 
     /** @deprecated Use {@link #toQuery(Site)} instead. */

@@ -1,6 +1,7 @@
 package com.psddev.cms.tool.page;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
@@ -11,6 +12,8 @@ import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
+import com.psddev.dari.util.ObjectMap;
+import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.StorageItem;
 
@@ -26,8 +29,19 @@ public class ContentImages extends PageServlet {
 
     @Override
     protected void doService(final ToolPageContext page) throws IOException, ServletException {
-        Object object = Query.fromAll().where("_id = ?", page.param(UUID.class, "id")).first();
-        StorageItem image = (StorageItem) State.getInstance(object).get(page.param(String.class, "field"));
+        String imageJsonString = page.param(String.class, "data");
+        StorageItem image;
+
+        if (!ObjectUtils.isBlank(imageJsonString)) {
+            Map<String, Object> imageJson = (Map<String, Object>) ObjectUtils.fromJson(imageJsonString);
+            image = StorageItem.Static.createIn((String) imageJson.get("storage"));
+
+            new ObjectMap(image).putAll(imageJson);
+
+        } else {
+            Object object = Query.fromAll().where("_id = ?", page.param(UUID.class, "id")).first();
+            image = (StorageItem) State.getInstance(object).get(page.param(String.class, "field"));
+        }
 
         page.writeHeader();
             page.writeStart("div", "class", "widget");

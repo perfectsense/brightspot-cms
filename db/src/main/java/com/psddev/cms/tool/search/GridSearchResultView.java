@@ -67,7 +67,6 @@ public class GridSearchResultView extends ListSearchResultView {
             result = search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
         }
 
-        writeFieldsHtml();
         writeSortsHtml();
 
         page.writeStart("div", "class", "searchResult-list infiniteScroll");

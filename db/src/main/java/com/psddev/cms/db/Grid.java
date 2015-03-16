@@ -15,6 +15,10 @@ import com.psddev.dari.util.HtmlObject;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement. Create your own.
+ */
+@Deprecated
 @Grid.Embedded
 public class Grid extends Content implements Renderer {
 

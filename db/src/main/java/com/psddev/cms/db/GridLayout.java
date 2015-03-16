@@ -3,6 +3,10 @@ package com.psddev.cms.db;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement. Create your own.
+ */
+@Deprecated
 @GridLayout.Embedded
 public class GridLayout extends Record {
 

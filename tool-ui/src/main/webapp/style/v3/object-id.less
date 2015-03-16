@@ -1,0 +1,58 @@
+.objectId-select {
+  .select;
+
+  height: auto;
+  white-space: normal;
+  width: 50%;
+
+  figure {
+    display: block;
+  }
+
+  @media @media-tablet {
+    width: 70%;
+  }
+}
+
+.objectId-edit {
+  .icon;
+  .icon-pencil;
+
+  margin-left: 10px;
+
+  &.toBeRemoved {
+    color: @color-remove;
+    text-decoration: line-through;
+  }
+
+  @media @media-tablet {
+    .icon-only;
+  }
+}
+
+.objectId-clear {
+  .icon;
+  .icon-remove;
+
+  color: @color-remove;
+  margin-left: 10px;
+
+  &.restore {
+    .icon-undo;
+    color: @color-link-dark;
+  }
+
+  &.state-disabled {
+    display: none;
+  }
+
+  @media @media-tablet {
+    .icon-only;
+
+    margin-left: 5px;
+  }
+}
+
+.objectId-placeholder {
+  &:extend(.state-placeholder all);
+}

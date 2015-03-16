@@ -80,7 +80,7 @@ define([ 'jquery', 'bsp-utils', 'v3/input/carousel' ], function($, bsp_utils, ca
           }
 
           // Sets active carousel item
-          if ($elem.find('.carousel-tile-content-active').size() > 0) {
+          if ($elem.is('.widget-searchCarousel-item-selected')) {
               index = ($elem.closest('.carousel-tile').index() + 1) || 0;
               carousel.setActive(index);
           }

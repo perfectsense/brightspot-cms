@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="14px" height="14px" viewBox="0 0 14 14">
+    <defs>
+        <style type="text/css">
+            @font-face {
+              font-family: 'FontAwesome';
+              font-style: normal;
+              font-weight: normal;
+              src: url('../fontawesome-webfont.eot');
+              src: url('../fontawesome-webfont.eot?#iefix') format('embedded-opentype'), url('../fontawesome-webfont.woff') format('woff'), url('../fontawesome-webfont.ttf') format('truetype');
+            }
+        </style>
+    </defs>
+    <text id="icon-angle-down" x="0" y="14" font-family="FontAwesome" font-size="14" color="#262626">&#xf107;</text>
+</svg>

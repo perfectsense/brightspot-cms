@@ -1,0 +1,62 @@
+.taxonomyContainer {
+  margin-left: (0 - @gap-large);
+  max-height: 400px;
+  overflow: auto;
+
+  ul {
+    display: table-cell;
+    list-style-type: none;
+    margin-left: 0;
+  }
+
+  li {
+    @-paddingTB: @lineHeight-default;
+    @-paddingTop: floor(@-paddingTB / 2);
+
+    overflow: hidden;
+    padding: @-paddingTop (@iconSize-default + @gap-large) (@-paddingTB - @-paddingTop) @gap-large;
+    position: relative;
+    white-space: nowrap;
+
+    .link {
+      position: relative;
+      z-index: 1;
+    }
+
+    &.state-selected {
+      background-color: @color-link-dark;
+
+      &,
+      & .link { 
+        color: white;
+      }
+    }
+
+    .taxonomyExpand {
+      .icon;
+      .icon-chevron-right;
+      .icon-only;
+
+      line-height: (@lineHeight-default * 2);
+      margin-left: -300px;
+      padding-left: 300px;
+      padding-right: @iconSize-default;
+      position: absolute;
+      right: 5px;
+      top: 1px;
+      z-index: 0;
+    }
+  }
+
+  .taxonChildren {
+    display: table-cell;
+
+    &.loaded {
+      border-left: 2px solid @color-separator;
+    }
+  }
+
+  [name="miscSearch"] & {
+    max-height: none;
+  }
+}

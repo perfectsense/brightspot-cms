@@ -121,8 +121,12 @@ if (selected instanceof Page) {
 WorkStream workStream = Query.from(WorkStream.class).where("_id = ?", wp.param(UUID.class, "workStreamId")).first();
 
 if (workStream != null) {
+    
+    Draft draft = wp.getOverlaidDraft(editing);
+    Object workstreamObject = (draft != null) ? draft : editing;
+
     if (wp.param(boolean.class, "action-skipWorkStream")) {
-        workStream.skip(wp.getUser(), editing);
+        workStream.skip(wp.getUser(), workstreamObject);
         wp.redirect("", "action-skipWorkStream", null);
         return;
 
@@ -132,7 +136,7 @@ if (workStream != null) {
         return;
     }
 
-    State.getInstance(editing).as(WorkStream.Data.class).complete(workStream, wp.getUser());
+    State.getInstance(workstreamObject).as(WorkStream.Data.class).complete(workStream, wp.getUser());
 }
 
 if (wp.tryDelete(editing) ||
@@ -177,7 +181,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
     if (search != null) {
         wp.writeStart("div", "class", "frame");
-            wp.writeStart("a", "href", StringUtils.addQueryParameters(search.replace("misc/searchResult.jsp", "searchCarousel"), "id", wp.param(String.class, "id")));
+            wp.writeStart("a", "href", wp.cmsUrl("/searchCarousel", "id", editingState.getId(), "search", search));
             wp.writeEnd();
         wp.writeEnd();
     }
@@ -198,6 +202,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             data-o-id="<%= State.getInstance(selected).getId() %>"
             data-o-label="<%= wp.h(State.getInstance(selected).getLabel()) %>"
             data-o-preview="<%= wp.h(wp.getPreviewThumbnailUrl(selected)) %>"
+            data-content-locked-out="<%= lockedOut && !editAnyway %>"
             data-content-id="<%= State.getInstance(editing).getId() %>">
         <div class="contentForm-main">
             <div class="widget widget-content">
@@ -343,11 +348,13 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 <h1 class="icon icon-action-publish">Publishing</h1>
 
                 <%
-                wp.writeStart("a",
-                        "class", "icon icon-wrench icon-only",
-                        "href", wp.objectUrl("/contentTools", editing, "returnUrl", wp.url("")),
-                        "target", "contentTools");
-                    wp.writeHtml("Tools");
+                wp.writeStart("div", "class", "widget-controls");
+                    wp.writeStart("a",
+                            "class", "widget-publishing-tools",
+                            "href", wp.objectUrl("/contentTools", editing, "returnUrl", wp.url("")),
+                            "target", "contentTools");
+                        wp.writeHtml("Tools");
+                    wp.writeEnd();
                 wp.writeEnd();
 
                 if (workStream != null) {
@@ -855,7 +862,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 "onchange", "$('.widget-preview_controls').find('form').eq(0).find(':input[name=\"previewDate\"]').val($(this).val());");
 
                         wp.writeHtml(" ");
-                        wp.writeStart("select", "onchange",
+                        wp.writeStart("select", "class", "deviceWidthSelect", "onchange",
                                 "var $input = $(this)," +
                                         "$form = $input.closest('form');" +
                                 "$('iframe[name=\"' + $form.attr('target') + '\"]').css('width', $input.val() || '100%');" +
@@ -1090,6 +1097,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         // $edit.find('.inputContainer').trigger('fieldPreview-disable');
 
                         if ($previewWidget.is('.widget-expanded')) {
+                            $('.queryField_frames').show();
                             $previewWidget.removeClass('widget-expanded');
                             $preview.animate({ 'left': editLeft + $edit.outerWidth() + 10 }, 300, 'easeOutBack');
                             $preview.css('width', '');
@@ -1101,6 +1109,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             });
 
                         } else {
+                            $('.queryField_frames').hide();
                             $previewWidget.addClass('widget-expanded');
                             $preview.animate({ 'left': editLeft + PEEK_WIDTH }, 300, 'easeOutBack');
                             $preview.css('width', $win.width() - PEEK_WIDTH - 30);
@@ -1154,7 +1163,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                         'margin': 0,
                                         'overflow': 'hidden',
                                         'padding': 0,
-                                        'width': $previewForm.find('[name="_deviceWidth"]').val() || '100%'
+                                        'width': $previewForm.find('select.deviceWidthSelect').val() || '100%'
                                     }
                                 });
                                 $previewWidget.append($previewTarget);
@@ -1339,8 +1348,25 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 pathsCanvas = $paths[0].getContext('2d');
 
-                $frame.contents().find('[data-name="' + name + '"]').each(function() {
-                    var $placeholder = $(this),
+                var PLACEHOLDER_PREFIX = 'brightspot.field-access '
+                var frameDocument = $frame[0].contentDocument;
+                var frameCommentWalker = frameDocument.createTreeWalker(frameDocument.body, NodeFilter.SHOW_COMMENT, null, null);
+
+                while (frameCommentWalker.nextNode()) {
+                    var placeholder = frameCommentWalker.currentNode;
+                    var placeholderValue = placeholder.nodeValue;
+
+                    if (placeholderValue.indexOf(PLACEHOLDER_PREFIX) !== 0) {
+                        continue;
+                    }
+
+                    var placeholderData = $.parseJSON(placeholderValue.substring(PLACEHOLDER_PREFIX.length));
+
+                    if (placeholderData.name !== name) {
+                        continue;
+                    }
+
+                    var $placeholder = $(frameCommentWalker.currentNode),
                             $target,
                             targetOffset,
                             pathSourceX, pathSourceY, pathSourceDirection,
@@ -1354,7 +1380,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             pathTargetControlY;
 
                     if ($placeholder.parent().is('body')) {
-                        return;
+                        continue;
                     }
 
                     $target = $placeholder.nextAll(':visible:first');
@@ -1364,7 +1390,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     }
 
                     if ($target.find('> * [data-name="' + name + '"]').length > 0) {
-                        return;
+                        continue;
                     }
 
                     targetOffset = $target.offset();
@@ -1445,7 +1471,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     pathsCanvas.lineTo(pathTargetX - 2 * arrowSize, pathTargetY + arrowSize);
                     pathsCanvas.closePath();
                     pathsCanvas.fill();
-                });
+                }
             });
 
             $edit.delegate('.inputContainer', 'click', function() {

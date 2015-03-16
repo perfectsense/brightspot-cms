@@ -1,0 +1,103 @@
+@widget-borderRadius: 2px;
+@widget-headingHeight: @lineHeight-default * 2;
+@widget-controlsOffset: floor((@widget-headingHeight - @widget-buttonSize) / 2);
+@widget-buttonSize: 20px;
+@widget-padding: 20px;
+
+.widget {
+  background-color: white;
+  border: 1px solid white;
+  border-radius: @widget-borderRadius;
+  box-shadow: 0 2px 0 fade(black, 10%);
+  margin-bottom: 10px;
+  padding: @widget-padding;
+  position: relative;
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.widget-heading {
+  background: @color-heading;
+  border-top-left-radius: @widget-borderRadius;
+  border-top-right-radius: @widget-borderRadius;
+  color: @color-text;
+  font-size: 100%;
+  font-weight: 700;
+  height: @widget-headingHeight;
+  line-height: @widget-headingHeight;
+  margin: (0 - @widget-padding) (0 - @widget-padding) @widget-padding (0 - @widget-padding);
+  overflow: hidden;
+  padding: 0 @widget-padding;
+  text-shadow: rgba(255, 255, 255, 1) 1px 1px 1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:before {
+    display: none !important;
+  }
+}
+
+.widget-controls {
+  position: absolute;
+  right: @widget-controlsOffset;
+  top: @widget-controlsOffset;
+}
+
+.widget-controls-button {
+  .icon;
+  .icon-only;
+
+  color: @color-placeholder;
+  cursor: pointer;
+  height: @widget-buttonSize;
+  margin-left: 5px;
+  width: @widget-buttonSize;
+
+  &:before {
+    height: @widget-buttonSize;
+    line-height: @widget-buttonSize;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    width: @widget-buttonSize;
+  }
+
+  &:hover {
+    background-color: white;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px @color-shadow;
+    color: @color-text;
+  }
+}
+
+.widget-filters {
+  display: inline-block;
+
+  form {
+    margin-bottom: 0;
+  }
+
+  .input {
+    margin: 0 10px 10px 0;
+  }
+
+  + .pagination {
+    float: right;
+
+    + * {
+      clear: right;
+    }
+  }
+}
+
+// Legacy.
+.widgetHeading,
+.widget > h1 {
+  &:extend(.widget-heading all);
+}
+
+.widgetControls {
+  &:extend(.widget-controls all);
+}

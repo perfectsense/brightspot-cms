@@ -8,6 +8,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
   bsp_utils.onDomInsert(document, SELECTOR, {
     'insert': function(element) {
       $(element).css({
+        'margin-bottom': 0,
         'position': 'relative',
         'top': 0
       });
@@ -18,10 +19,12 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
   // throttled heavily so that the actual scroll events can run fast
   // using the cached information.
   var bodyHeight = 0;
+  var toolHeaderHeight = 0;
   var $window = $(window);
 
   $window.scroll(bsp_utils.throttle(1000, function() {
     bodyHeight = $(document.body).height();
+    toolHeaderHeight = $('.toolHeader').outerHeight(true);
 
     $(SELECTOR).each(function() {
       var element = this;
@@ -45,7 +48,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       var $element = $(element);
 
       // Skip the move if not visible.
-      if (!$.data(element, VISIBLE_DATA_KEY)) {
+      if (!$.data(element, VISIBLE_DATA_KEY) ||
+          $element.closest('.popup-objectId-edit-loaded').length > 0) {
         return;
       }
 
@@ -53,9 +57,12 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       var elementHeight = $.data(element, HEIGHT_DATA_KEY);
       var elementTop = $element.offset().top;
 
-      function moveToTop() {
+      function moveToTop(offset) {
+        var top = Math.max(windowScrollTop - (offset || 0), 0);
+
         $element.css({
-          'top': Math.max(windowScrollTop, 0)
+          'margin-bottom': top,
+          'top': top
         });
       }
 
@@ -70,37 +77,21 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
         // The bottom of the element is about to be hidden, so move it up.
         if (windowBottom > elementTop + elementHeight) {
+          var top = Math.max(Math.min(windowBottom - elementHeight - elementTopOriginal, bodyHeight - elementHeight - elementTopOriginal), 0);
+
           $element.css({
-            'top': Math.max(Math.min(windowBottom - elementHeight - elementTopOriginal, bodyHeight - elementHeight - elementTopOriginal), 0)
+            'margin-bottom': top,
+            'top': top
           });
         }
 
       // The user is scrolling up, and the top of the element is about to
       // be hidden, so move it down.
       } else if (lastWindowScrollTop > windowScrollTop &&
-          elementTop > windowScrollTop + elementTopOriginal) {
+          elementTop > windowScrollTop + toolHeaderHeight) {
 
-        moveToTop();
+        moveToTop(elementTopOriginal - toolHeaderHeight);
       }
-    });
-
-    // Hide the right rail widgets when under the publishing widget.
-    $('.contentForm-aside').each(function() {
-      var $aside = $(this);
-      var $widgets = $aside.find('> .contentWidgets');
-      var clipPathTop = (windowScrollTop + 10) + 'px';
-      var clipPath = 'polygon(0 ' + clipPathTop + ', 100% ' + clipPathTop + ', 100% 100%, 0 100%)';
-      var maskImage = 'linear-gradient(to bottom, transparent 0, black 10px, black 100%)';
-      var maskPosition = 'center ' + (windowScrollTop - 10 - (parseInt($aside.css('top'), 10) || 0)) + 'px';
-
-      $widgets.css({
-        '-webkit-clip-path': clipPath,
-        'clip-path': clipPath,
-        '-webkit-mask-image': maskImage,
-        'mask-image': maskImage,
-        '-webkit-mask-position': maskPosition,
-        'mask-position': maskPosition
-      });
     });
 
     lastWindowScrollTop = windowScrollTop;

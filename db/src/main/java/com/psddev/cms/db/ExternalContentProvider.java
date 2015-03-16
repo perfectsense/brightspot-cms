@@ -194,4 +194,35 @@ public interface ExternalContentProvider {
             html.writeEnd();
         }
     }
+
+    /**
+     * {@link ExternalContentProvider} for
+     * <a href="http://vine.co/">Vine</a>.
+     */
+    public static class Vine extends RichExternalContentProvider {
+
+        private static final Pattern URL_PATTERN = Pattern.compile("\"(?i)https?:(//vine.co/[^/]+/[^/]+).*\"");
+
+        @Override
+        protected Pattern getUrlPattern() {
+            return URL_PATTERN;
+        }
+
+        @Override
+        protected void updateHtml(Matcher urlMatcher, HtmlWriter html) throws IOException {
+            html.writeStart("iframe",
+                    "src", "https://vine.co/v/" + urlMatcher.group(1) + "/embed/simple",
+                    "width", 600,
+                    "height", 600,
+                    "frameborder", 0,
+                    "scrolling", "no");
+            html.writeEnd();
+        }
+
+        @Override
+        protected void updateResponse(Map<String, Object> response) {
+            response.put("width", 600);
+            response.put("height", 600);
+        }
+    }
 }

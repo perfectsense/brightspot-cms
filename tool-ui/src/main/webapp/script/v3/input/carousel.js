@@ -79,7 +79,7 @@ function($, bsp_utils) {
         /**
          * Various class names
          */
-        classActive: 'carousel-active',
+        classTileActive: 'carousel-tile-active',
         classNavHide: 'carousel-nav-hide',
         classNumbered: 'carousel-numbered',
 
@@ -110,11 +110,6 @@ function($, bsp_utils) {
         
         /**
          * HTML template for the carousel
-         *
-         * Due to CSS issues using overflow-x:hidden, it's not possible to do
-         * the active arrow simply with positioning within the carousel tiles,
-         * so we need to also set up a viewport for the arrow
-         * at the bottom of the carousel.
          */
         template:
           '<div class="carousel-wrapper">' +
@@ -123,11 +118,6 @@ function($, bsp_utils) {
             '</div>' +
             '<div class="carousel-nav carousel-nav-previous"><a href="#">Previous</a></div>' +
             '<div class="carousel-nav carousel-nav-next"><a href="#">Next</a></div>' +
-          '</div>' +
-          '<div class="carousel-bottom-viewport">' +
-            '<div class="carousel-bottom-content">' +
-              '<span class="carousel-arrow"></span>' +
-            '</div>' +
           '</div>',
 
 
@@ -178,9 +168,6 @@ function($, bsp_utils) {
             self.dom.next = self.dom.carousel.find('.carousel-nav-next');
             self.dom.tiles = self.dom.carousel.find('.carousel-tiles');
             self.dom.viewport = self.dom.carousel.find('.carousel-viewport');
-            self.dom.bottomViewport = self.dom.carousel.find('.carousel-bottom-viewport');
-            self.dom.bottomContent = self.dom.carousel.find('.carousel-bottom-content');
-            self.dom.arrow = self.dom.carousel.find('.carousel-arrow');
 
             self._initEvents();
         },
@@ -401,12 +388,6 @@ function($, bsp_utils) {
             // Number of tiles to shift
             var moveTiles = 0;
 
-            // If all tiles fit within the viewport then no movement needed
-            if (layout.tilesWidth <= layout.viewportWidth) {
-                self.update();
-                return;
-            }
-
             if ($.isNumeric(amount)) {
                 moveTiles = amount;
             } else {
@@ -449,19 +430,12 @@ function($, bsp_utils) {
             
             var self = this;
 
-            // Hide the active arrow, it will be shown again after calling update()
-            // Note we use visibility here because of timing issues with other code
-            // and animations, we don't want others revealing the arrow until we're done moving
-            self.dom.arrow.addClass('moving');
-
             // Set the left offset to move the tiles to the left within the viewport
             self._setOffset(offset);
 
-            // Update the nav links etc but wait enough time for the move animation to complete
-            // so the arrow will be positioned correctly below the active tile
+            // Update the nav links etc
             setTimeout(function(){
                 self.update();
-                self.dom.arrow.removeClass('moving');
             }, 1100);
         },
 
@@ -598,34 +572,7 @@ function($, bsp_utils) {
             var self = this;
 
             self.clearActive();
-            self.dom.tiles.find('> .carousel-tile').eq(n - 1).addClass(self.classActive);
-            self._setActiveArrow();
-        },
-
-
-        /**
-         * @private
-         * Update the positioning for the arrow so it sits underneath the active
-         * tile.
-         */
-        _setActiveArrow: function() {
-            var self = this;
-            //var layout = self._getLayout();
-            var activeTile = self.dom.tiles.find('> .' + self.classActive);
-            var activeTileWidth;
-            var activeTilePosition;
-            var activeTileLeft;
-            var arrowWidth;
-
-            if (activeTile.length) {
-                activeTileWidth = activeTile.width() || 0;
-                activeTilePosition = activeTile.position();
-                activeTileLeft = activeTilePosition.left;
-                arrowWidth = self.dom.arrow.outerWidth() || 0;
-                self.dom.arrow.css('left', activeTileLeft + (activeTileWidth / 2) - arrowWidth).show();
-            } else {
-                self.dom.arrow.hide();
-            }
+            self.dom.tiles.find('> .carousel-tile').eq(n - 1).addClass(self.classTileActive);
         },
 
 
@@ -642,7 +589,7 @@ function($, bsp_utils) {
 
             // return tile number of the active tile
             index = self.dom.tiles.find('> .carousel-tile').filter(function(){
-                return $(this).hasClass(self.classActive);
+                return $(this).hasClass(self.classTileActive);
             }).index() + 1;
 
             return index;
@@ -656,7 +603,7 @@ function($, bsp_utils) {
 
             var self = this;
 
-            self.dom.tiles.find('> .carousel-tile').removeClass(self.classActive);
+            self.dom.tiles.find('> .carousel-tile').removeClass(self.classTileActive);
         },
 
 
@@ -679,9 +626,6 @@ function($, bsp_utils) {
             // Note the actual showing/hiding is done via CSS rules
             self.dom.previous.toggleClass(self.classNavHide, layout.atMin);
             self.dom.next.toggleClass(self.classNavHide, layout.atMax);
-
-            // Update the active arrow
-            self._setActiveArrow();
 
             // Trigger an event if we reach the end of the carousel
             // This can be used to fetch more data and add more tiles to the carousel

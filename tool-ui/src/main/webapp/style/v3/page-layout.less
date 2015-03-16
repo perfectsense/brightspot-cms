@@ -1,0 +1,266 @@
+// Tabs for switching between different modes.
+.pageLayout-tabs {
+  > .visualButton,
+  > .jsonButton {
+    .link;
+
+    display: inline-block;
+    padding: 0 10px 5px 1px;
+
+    &.selected {
+      color: @color-text;
+      font-weight: bold;
+      position: relative;
+
+      &:after {
+        border-color: transparent transparent @color-border transparent;
+        border-style: solid;
+        border-width: 6px;
+        bottom: 0;
+        content: ' ';
+        position: absolute;
+        left: 1em;
+      }
+    }
+  }
+
+  > .jsonButton.selected:after {
+    border-bottom-color: @color-placeholder;
+    bottom: -1px;
+  }
+}
+
+// JSON textarea.
+.pageLayout {
+  .code;
+}
+
+// Visual representation.
+.pageLayout-visual {
+  .section {
+    .background-flat(@color-heading);
+
+    margin-bottom: 10px;
+    min-height: 30px;
+    padding: 10px;
+    position: relative;
+
+    // Sections get darker as they nest.
+    .section { .background-flat(darken(@color-heading, 5%));
+      .section { .background-flat(darken(@color-heading, 10%));
+        .section { .background-flat(darken(@color-heading, 15%));
+          .section { .background-flat(darken(@color-heading, 20%));
+            .section { .background-flat(darken(@color-heading, 25%));
+              .section { .background-flat(darken(@color-heading, 30%));
+                .section { .background-flat(darken(@color-heading, 35%));
+                  .section { .background-flat(darken(@color-heading, 40%));
+    } } } } } } } }
+
+    // Hide contents if the section is set to be removed.
+    &.toBeRemoved {
+      background-color: #fdd !important;
+
+      .section,
+      > .hat > .moveUpButton,
+      > .hat > .moveDownButton,
+      > .hat > .moveLeftButton,
+      > .hat > .moveRightButton,
+      > .hat > .settingsButton,
+      > .heading > .addButton {
+        visibility: hidden;
+      }
+
+      > .heading > .name {
+        color: @color-remove;
+        text-decoration: line-through;
+      }
+    }
+
+    // Hat contains controls for editing general section settings.
+    > .hat {
+      background-color: rgba(0, 0, 0, 0.7);
+      border-radius: 5px;
+      left: 5px;
+      overflow: hidden;
+      padding: 0 5px;
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      z-index: 1;
+
+      > .moveUpButton,
+      > .moveDownButton,
+      > .moveLeftButton,
+      > .moveRightButton {
+        .icon;
+        .icon-only;
+        .link;
+
+        color: @color-link-light;
+        float: left;
+        margin-top: 2px;
+        margin-right: 4px;
+      }
+
+      > .moveUpButton { .icon-arrow-up; }
+      > .moveDownButton { .icon-arrow-down; }
+      > .moveLeftButton { .icon-arrow-left; }
+      > .moveRightButton { .icon-arrow-right; }
+
+      > .settingsButton {
+        .icon;
+        .icon-cogs;
+
+        color: @color-link-light;
+        float: left;
+        margin-top: 2px;
+      }
+
+      > .removeButton {
+        .icon;
+        .icon-remove;
+        .icon-only;
+        .link;
+
+        color: @color-remove;
+        float: right;
+        margin-top: 2px;
+      }
+    }
+
+    // Heading contains the section name and other section-specific
+    // controls.
+    > .heading {
+      > .name {
+        font-size: 150%;
+        margin-bottom: 4px;
+
+        &.anonymous {
+          opacity: 0.3;
+        }
+      }
+
+      > .contentButton {
+        .icon;
+        .icon-pencil;
+
+        color: darken(@color-link-dark, 10%);
+      }
+
+      > .removeContentButton {
+        .icon;
+        .icon-remove;
+
+        color: @color-remove;
+        margin-left: 10px;
+      }
+
+      > .addButton {
+        .icon;
+        .icon-plus;
+
+        background: @color-link-light;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+
+        &:after {
+          content: 'Add Section';
+        }
+      }
+    }
+
+    // Subtle pattern for shared sections.
+    &.shared {
+      background-image: -webkit-gradient(
+        linear,
+        left top,
+        right bottom,
+        color-stop(0, transparent),
+        color-stop(0.25, transparent),
+        color-stop(0.25, rgba(0, 0, 0, 0.04)),
+        color-stop(0.5, rgba(0, 0, 0, 0.04)),
+        color-stop(0.5, transparent),
+        color-stop(0.75, transparent),
+        color-stop(0.75, rgba(0, 0, 0, 0.04)),
+        color-stop(1.0, rgba(0, 0, 0, 0.04))
+      );
+      background: -moz-repeating-linear-gradient(
+        left top -45deg,
+        transparent,
+        transparent 23px,
+        rgba(0, 0, 0, 0.07) 23px,
+        rgba(0, 0, 0, 0.07) 46px
+      ) repeat scroll 0 0 transparent;
+      -webkit-background-size: 5em 5em;
+    }
+
+    &.horizontal {
+      > .content {
+        border-spacing: 10px;
+        display: table;
+        margin: -10px;
+        padding: 0 10px 0 0;
+        width: 100%;
+
+        > .section {
+          display: table-cell;
+        }
+      }
+
+      > .heading > .addButton {
+        bottom: 10px;
+        position: absolute;
+        right: 10px;
+        top: 32px;
+        width: 20px;
+
+        &:before {
+          left: 2px;
+          position: absolute;
+          top: 50%;
+        }
+
+        &:after {
+          content: '';
+        }
+      }
+    }
+  }
+}
+
+.pageLayout-visual .horizontal > .section > .hat > .moveUpButton,
+.pageLayout-visual .horizontal > .section > .hat > .moveDownButton,
+.pageLayout-visual .vertical > .section > .hat > .moveLeftButton,
+.pageLayout-visual .vertical > .section > .hat > .moveRightButton {
+  display: none;
+}
+
+.pageLayout-visual .horizontal > .heading .name,
+.pageLayout-visual .vertical > .heading .name {
+  font-size: 100%;
+}
+
+.pageLayout-visual .section.vertical {
+  padding-bottom: 30px;
+}
+.pageLayout-visual .vertical > .heading > .addButton {
+  bottom: 10px;
+  height: 20px;
+  left: 10px;
+  line-height: 20px;
+  position: absolute;
+  right: 10px;
+}
+
+/* Stack contents in a horizontal section sideways. */
+.pageLayout-visual .content.horizontal {
+  min-height: 120px;
+  overflow: hidden;
+  padding-right: 20px;
+}
+
+/* Main section heading name is larger so that it stands out a little. */
+.pageLayout-visual .main > .heading > .name {
+  font-size: 200%;
+}

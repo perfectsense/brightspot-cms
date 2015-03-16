@@ -27,22 +27,6 @@ function($, bsp_utils) {
             var $originalImage = $image;
             var $imageClone = $image.clone();
             var imageClone = $imageClone[0];
-
-            $editor.find('> .imageEditor-aside').bind('mousewheel', function(event, delta, deltaX, deltaY) {
-                var $aside = $(this),
-                        maxScrollTop = $.data(this, 'imageEditor-maxScrollTop');
-
-                if (typeof maxScrollTop === 'undefined') {
-                    maxScrollTop = $aside.prop('scrollHeight') - $aside.innerHeight();
-                    $.data(this, 'imageEditor-maxScrollTop', maxScrollTop);
-                }
-
-                if ((deltaY > 0 && $aside.scrollTop() === 0) ||
-                        (deltaY < 0 && $aside.scrollTop() >= maxScrollTop)) {
-                    event.preventDefault();
-                }
-            });
-
             var $tools = $editor.find('.imageEditor-tools ul');
             var $edit = $editor.find('.imageEditor-edit');
             var $dataName = $editor.parents('.inputContainer').attr('data-name');
@@ -945,6 +929,7 @@ function($, bsp_utils) {
             };
 
             var $sizes = $editor.find('.imageEditor-sizes table');
+            var cropCenter = $sizes.attr('data-crop-center') === 'true';
             var $sizeSelectors = $('<ul/>', { 'class': 'imageEditor-sizeSelectors' });
             var $mainInputs = { };
 
@@ -1025,7 +1010,7 @@ function($, bsp_utils) {
                         }
 
                         left = (imageWidth - width) / 2;
-                        top = 0;
+                        top = cropCenter ? (imageHeight - height) / 2 : 0;
 
                     } else {
                         left *= imageWidth;

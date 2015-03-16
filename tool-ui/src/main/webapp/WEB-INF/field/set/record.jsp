@@ -172,7 +172,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         }
 
         writer.start("div", "class", "inputSmall");
-            List<?> items = new Search(field).toQuery().selectAll();
+            List<?> items = wp.findDropDownItems(field, new Search(field));
             Collections.sort(items, new ObjectFieldComparator("_label", false));
 
             writer.start("select",
@@ -180,6 +180,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                     "data-searchable", "true",
                     "placeholder", placeholder,
                     "data-dynamic-placeholder", dynamicPlaceholder,
+                    "data-dynamic-field-name", field.getInternalName(),
                     "name", inputName);
                 for (Object item : items) {
                     State itemState = State.getInstance(item);

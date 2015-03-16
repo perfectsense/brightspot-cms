@@ -31,6 +31,20 @@ public interface SearchResultView {
     public boolean isPreferred(Search search);
 
     /**
+     * Returns {@code true} if the output of the {@link #writeHtml} call
+     * should be wrapped with standard controls like view selection and
+     * search result actions.
+     *
+     * @param search Can't be {@code null}.
+     * @param page Can't be {@code null}.
+     * @param itemWriter Can't be {@code null}.
+     */
+    public boolean isHtmlWrapped(
+            Search search,
+            ToolPageContext page,
+            SearchResultItem itemWriter);
+
+    /**
      * @param search Can't be {@code null}.
      * @param page Can't be {@code null}.
      * @param itemWriter Can't be {@code null}.

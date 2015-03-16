@@ -11,6 +11,7 @@ com.psddev.dari.db.State,
 com.psddev.dari.util.ObjectUtils,
 com.psddev.dari.util.TypeReference,
 
+java.util.ArrayList,
 java.util.Collection,
 java.util.Date,
 java.util.List,
@@ -25,7 +26,19 @@ Collection<String> includeFields = ObjectUtils.to(new TypeReference<Collection<S
 Collection<String> excludeFields = ObjectUtils.to(new TypeReference<Collection<String>>() { }, request.getAttribute("excludeFields"));
 State state = State.getInstance(object);
 ObjectType type = state.getType();
-List<ObjectField> fields = type != null ? type.getFields() : null;
+List<ObjectField> fields = new ArrayList<>();
+
+if (type != null) {
+    fields.addAll(type.getFields());
+}
+
+if (wp.param(boolean.class, state.getId() + "/_includeGlobals") && !fields.isEmpty()) {
+    for (ObjectField field : state.getDatabase().getEnvironment().getFields()) {
+        if (Boolean.FALSE.equals(field.getState().get("cms.ui.hidden"))) {
+            fields.add(field);
+        }
+    }
+}
 
 if (object instanceof Query) {
     state.clear();

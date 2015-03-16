@@ -66,6 +66,18 @@ function($, bsp_utils) {
                 return;
             }
 
+            var $positionedParent;
+
+            $.each($field.parents().toArray().reverse(), function(i, parent) {
+                var $parent = $(parent);
+                var position = $parent.css('position');
+
+                if (position !== '' && position !== 'static') {
+                    $positionedParent = $parent;
+                    return false;
+                }
+            });
+
             var $frame = $.data($field[0], 'query-$frame');
             var fieldOffset = $field.offset();
 
@@ -78,7 +90,7 @@ function($, bsp_utils) {
                 'left': fieldOffset.left,
                 'position': 'absolute',
                 'top': fieldOffset.top,
-                'z-index': 1000000
+                'z-index': ($positionedParent ? parseInt($positionedParent.css('z-index'), 10) || 0 : 0) + 1
             });
 
             $frame.outerWidth($field.outerWidth());

@@ -11,6 +11,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.cms.tool.SearchResultSelectionItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,41 @@ public class ContentEditBulk extends PageServlet {
     @SuppressWarnings("unchecked")
     protected void doService(ToolPageContext page) throws IOException, ServletException {
         List<UUID> ids = page.params(UUID.class, ContentSearchAdvanced.ITEMS_PARAMETER);
-        Query<?> query = ids.isEmpty() ? new Search(page).toQuery(page.getSite()) : Query.fromAll().where("_id = ?", ids);
+        UUID selectionId = page.param(UUID.class, "selectionId");
+        Query<?> query;
+
+        if (selectionId != null) {
+            Set<UUID> itemIds = new HashSet<>();
+
+            for (SearchResultSelectionItem item : Query.
+                    from(SearchResultSelectionItem.class).
+                    where("selectionId = ?", selectionId).
+                    selectAll()) {
+
+                itemIds.add(item.getItemId());
+            }
+
+            query = Query.fromAll().where("_id = ?", itemIds);
+
+        } else if (ids.isEmpty()) {
+            String searchString = page.param(String.class, "search");
+            Search search;
+
+            if (searchString != null) {
+                search = new Search();
+
+                search.getState().putAll((Map<String, Object>) ObjectUtils.fromJson(searchString));
+
+            } else {
+                search = new Search(page);
+            }
+
+            query = search.toQuery(page.getSite());
+
+        } else {
+            query = Query.fromAll().where("_id = ?", ids);
+        }
+
         long count = query.count();
         ObjectType type = ObjectType.getInstance(page.param(UUID.class, "typeId"));
         State state = State.getInstance(type.createObject(page.param(UUID.class, "id")));

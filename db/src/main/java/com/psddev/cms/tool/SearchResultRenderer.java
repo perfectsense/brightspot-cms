@@ -54,6 +54,7 @@ public class SearchResultRenderer {
     protected final boolean showSiteLabel;
     protected final boolean showTypeLabel;
     protected final PaginatedResult<?> result;
+    protected final Exception queryError;
 
     @SuppressWarnings("deprecation")
     public SearchResultRenderer(ToolPageContext page, Search search) throws IOException {
@@ -132,11 +133,31 @@ public class SearchResultRenderer {
             this.showTypeLabel = search.findValidTypes().size() != 1;
         }
 
-        this.result = result != null ? result : search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
+        Exception queryError = null;
+
+        if (result == null) {
+            try {
+                result = search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
+
+            } catch (IllegalArgumentException | Query.NoFieldException error) {
+                queryError = error;
+            }
+        }
+
+        this.result = result;
+        this.queryError = queryError;
     }
 
     @SuppressWarnings("unchecked")
     public void render() throws IOException {
+        if (queryError != null) {
+            page.writeStart("div", "class", "message message-error");
+            page.writeHtml("Invalid advanced query: ");
+            page.writeHtml(queryError.getMessage());
+            page.writeEnd();
+            return;
+        }
+
         boolean resultsDisplayed = false;
         int level = page.paramOrDefault(int.class, TAXON_LEVEL_PARAMETER, 1);
 
@@ -333,17 +354,19 @@ public class SearchResultRenderer {
             if (sortField != null) {
                 page.writeHtml(" ");
 
-                page.writeElement("input",
-                        "id", page.createId(),
-                        "type", "checkbox",
-                        "name", Search.SHOW_MISSING_PARAMETER,
-                        "value", "true",
-                        "checked", search.isShowMissing() ? "checked" : null);
+                page.writeStart("div", "class", "searchShowMissing");
+                    page.writeElement("input",
+                            "id", page.createId(),
+                            "type", "checkbox",
+                            "name", Search.SHOW_MISSING_PARAMETER,
+                            "value", "true",
+                            "checked", search.isShowMissing() ? "checked" : null);
 
-                page.writeHtml(" ");
+                    page.writeHtml(" ");
 
-                page.writeStart("label", "for", page.getId());
-                    page.writeHtml("Show Missing");
+                    page.writeStart("label", "for", page.getId());
+                        page.writeHtml("Show Missing");
+                    page.writeEnd();
                 page.writeEnd();
             }
 

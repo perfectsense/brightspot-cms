@@ -194,6 +194,8 @@ public class ContentState extends PageServlet {
             List<UUID> contentIds = page.params(UUID.class, "_dti");
             int contentIdsSize = contentIds.size();
             List<String> templates = page.params(String.class, "_dtt");
+            List<String> contentFieldNames = page.params(String.class, "_dtf");
+            int contentFieldNamesSize = contentFieldNames.size();
 
             for (int i = 0, size = templates.size(); i < size; ++ i) {
                 try {
@@ -201,6 +203,15 @@ public class ContentState extends PageServlet {
 
                     if (content != null) {
                         pageContext.setAttribute("content", content);
+
+                        ObjectField field = null;
+
+                        String contentFieldName = i < contentFieldNamesSize ? contentFieldNames.get(i) : null;
+                        if (contentFieldName != null) {
+                            field = State.getInstance(content).getField(contentFieldName);
+                        }
+                        pageContext.setAttribute("field", field);
+
                         dynamicTexts.add(((String) expressionFactory.createValueExpression(elContext, templates.get(i), String.class).getValue(elContext)));
 
                     } else {

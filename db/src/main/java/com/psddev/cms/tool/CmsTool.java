@@ -141,6 +141,7 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Debug")
     private List<DariSetting> dariSettings;
 
+    @Deprecated
     @ToolUi.Placeholder("v2")
     @ToolUi.Tab("Debug")
     @ToolUi.Values({ "v3" })
@@ -675,10 +676,12 @@ public class CmsTool extends Tool {
         this.dariSettings = dariSettings;
     }
 
+    @Deprecated
     public String getTheme() {
         return theme;
     }
 
+    @Deprecated
     public void setTheme(String theme) {
         this.theme = theme;
     }

@@ -199,6 +199,10 @@ public class ToolUi extends Modification<Object> {
         return hidden != null ? hidden : false;
     }
 
+    public Boolean getHidden() {
+        return hidden;
+    }
+
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }

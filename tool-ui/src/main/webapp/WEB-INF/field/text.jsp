@@ -110,6 +110,7 @@ if (validValues != null) {
             "name", inputName,
             "placeholder", placeholder,
             "data-dynamic-placeholder", ui.getPlaceholderDynamicText(),
+            "data-dynamic-field-name", field.getInternalName(),
             "data-code-type", ui.getCodeType(),
             "data-editable-placeholder", ui.isPlaceholderEditable() ? ui.getPlaceholder() : null,
             "data-suggested-maximum", suggestedMaximum != null ? suggestedMaximum.intValue() : null,

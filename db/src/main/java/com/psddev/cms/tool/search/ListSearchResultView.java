@@ -124,6 +124,8 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     page.getObjectLabel(item));
 
                     page.writeStart("figcaption");
+                        itemWriter.writeCheckboxHtml(page, search, item);
+
                         if (showSiteLabel) {
                             page.writeObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner());
                             page.writeHtml(": ");

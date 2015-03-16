@@ -41,6 +41,8 @@ public class AuthenticationFilter extends AbstractFilter {
     @Deprecated
     public static final String USER_ATTRIBUTE = ATTRIBUTE_PREFIX + "user";
 
+    public static final String USER_TOKEN = ATTRIBUTE_PREFIX + "token";
+
     /**
      * @deprecated Don't use this directly.
      */
@@ -128,6 +130,7 @@ public class AuthenticationFilter extends AbstractFilter {
 
             Cookie c = new Cookie(name, name + value);
 
+            c.setHttpOnly(true);
             c.setMaxAge(maxAge);
             c.setSecure(secure && JspUtils.isSecure(request));
 
@@ -155,6 +158,7 @@ public class AuthenticationFilter extends AbstractFilter {
 
             Cookie dc = new Cookie(name, name + value);
 
+            dc.setHttpOnly(true);
             dc.setMaxAge(maxAge);
             dc.setSecure(secure && JspUtils.isSecure(request));
             dc.setPath("/");
@@ -169,11 +173,44 @@ public class AuthenticationFilter extends AbstractFilter {
          * @param user Can't be {@code null}.
          */
         public static void logIn(HttpServletRequest request, HttpServletResponse response, ToolUser user) {
-            String userId = user.getId().toString();
+            String token = (String) request.getAttribute(USER_TOKEN);
 
-            setSignedCookie(request, response, TOOL_USER_COOKIE, userId, -1, true);
-            setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, userId, -1, false);
+            if (token == null || (user != null && user.getId().toString().equals(token))) {
+                token = user.generateLoginToken();
+
+            } else {
+                boolean matched = false;
+                boolean removed = false;
+                boolean refreshed = false;
+
+                for (java.util.Iterator<ToolUser.LoginToken> i = user.getLoginTokens().iterator(); i.hasNext();) {
+                    ToolUser.LoginToken loginToken = i.next();
+
+                    if (loginToken.getToken().equals(token)) {
+                        if (loginToken.refreshTokenIfNecessary()) {
+                            refreshed = true;
+                        }
+                        matched = true;
+
+                    } else if (!loginToken.isValid()) {
+                        i.remove();
+                        removed = true;
+                    }
+                }
+
+                if (!matched) {
+                    token = user.generateLoginToken();
+                }
+
+                if (refreshed || removed) {
+                    user.save();
+                }
+            }
+
+            setSignedCookie(request, response, TOOL_USER_COOKIE, token, -1, true);
+            setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, token, -1, false);
             request.setAttribute(USER_ATTRIBUTE, user);
+            request.setAttribute(USER_TOKEN, token);
             request.setAttribute(USER_CHECKED_ATTRIBUTE, Boolean.TRUE);
         }
 
@@ -184,6 +221,15 @@ public class AuthenticationFilter extends AbstractFilter {
          * @param response Can't be {@code null}.
          */
         public static void logOut(HttpServletRequest request, HttpServletResponse response) {
+            if (request != null) {
+                ToolUser user = getUser(request);
+                String token = (String) request.getAttribute(USER_TOKEN);
+
+                if (user != null) {
+                    user.removeLoginToken(token);
+                }
+            }
+
             setSignedCookie(request, response, TOOL_USER_COOKIE, "", 0, true);
             setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, "", 0, false);
         }
@@ -284,11 +330,10 @@ public class AuthenticationFilter extends AbstractFilter {
                     toolUser = null;
 
                 } else {
-                    toolUser = Query.
-                            from(ToolUser.class).
-                            where("_id = ?", ObjectUtils.to(UUID.class, cookieValue.substring(cookieName.length()))).
-                            first();
+                    String token = cookieValue.substring(cookieName.length());
+                    toolUser = ToolUser.Static.getByToken(token);
 
+                    request.setAttribute(USER_TOKEN, token);
                     request.setAttribute(toolUserAttribute, toolUser);
                 }
 

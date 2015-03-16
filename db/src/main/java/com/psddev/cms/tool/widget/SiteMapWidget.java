@@ -49,7 +49,7 @@ public class SiteMapWidget extends DefaultDashboardWidget {
         long offset = page.param(long.class, "offset");
         int limit = page.pageParam(Integer.class, "limit", 20);
 
-        List<ObjectType> types = new ArrayList<ObjectType>();
+        List<ObjectType> types = new ArrayList<>();
         boolean typeFound = false;
 
         for (ObjectType t : Database.Static.getDefault().getEnvironment().getTypes()) {
@@ -73,13 +73,13 @@ public class SiteMapWidget extends DefaultDashboardWidget {
         PaginatedResult<?> result = null;
         Long count = null;
 
-        if (type.equals(URL_TYPE)) {
+        if (URL_TYPE.equals(type)) {
             if (!(valueObject instanceof Directory)) {
                 valueObject = Query.from(Directory.class).where("path = /").first();
             }
 
             if (valueObject != null) {
-                result = new AggregateQueryResult<Object>(offset, limit, new DirectoryQueryIterator(Query.
+                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query.
                         from(Directory.class).
                         where("path startsWith ?", ((Directory) valueObject).getPath()).
                         sortAscending("path")) {
@@ -103,7 +103,7 @@ public class SiteMapWidget extends DefaultDashboardWidget {
                     and("cms.directory.paths != missing");
 
             if (query.hasMoreThan(250)) {
-                result = new AggregateQueryResult<Object>(offset, limit, new DirectoryQueryIterator(Query.
+                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query.
                         from(Directory.class).
                         where("path startsWith /").
                         sortAscending("path")) {
@@ -134,7 +134,7 @@ public class SiteMapWidget extends DefaultDashboardWidget {
                     }
                 });
 
-                result = new PaginatedResult<Object>(offset, limit, items);
+                result = new PaginatedResult<>(offset, limit, items);
                 count = (long) items.size();
             }
         }
@@ -148,19 +148,18 @@ public class SiteMapWidget extends DefaultDashboardWidget {
                 page.writeHtml("Sitemap");
             page.writeEnd();
 
-            page.writeStart("form",
-                    "method", "get",
-                    "action", page.url(null));
-                page.writeStart("ul", "class", "oneLine");
-                    page.writeStart("li");
-                        page.writeTypeSelect(
-                                com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite()),
-                                itemType,
-                                "Any Types",
-                                "name", "itemType",
-                                "data-bsp-autosubmit", "",
-                                "data-searchable", "true");
-                    page.writeEnd();
+            page.writeStart("div", "class", "widget-filters");
+                page.writeStart("form",
+                        "method", "get",
+                        "action", page.url(null));
+
+                    page.writeTypeSelect(
+                            com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite()),
+                            itemType,
+                            "Any Types",
+                            "name", "itemType",
+                            "data-bsp-autosubmit", "",
+                            "data-searchable", "true");
 
                     if (types.isEmpty()) {
                         page.writeElement("input",
@@ -169,90 +168,82 @@ public class SiteMapWidget extends DefaultDashboardWidget {
                                 "value", URL_TYPE);
 
                     } else {
-                        page.writeStart("li");
-                            page.writeHtml("with ");
+                        page.writeStart("select",
+                                "data-bsp-autosubmit", "",
+                                "name", "type");
 
-                            page.writeStart("select",
-                                    "data-bsp-autosubmit", "",
-                                    "name", "type");
-
-                                page.writeStart("option",
-                                        "selected", type.equals(URL_TYPE) ? "selected" : null,
-                                        "value", URL_TYPE);
-                                    page.writeHtml("URL");
-                                page.writeEnd();
-
-                                for (ObjectType t : types) {
-                                    String id = t.getId().toString();
-                                    page.writeStart("option",
-                                            "selected", type.equals(id) ? "selected" : null,
-                                            "value", id);
-                                        page.writeHtml(t.getDisplayName());
-                                    page.writeEnd();
-                                }
-
+                            page.writeStart("option",
+                                    "selected", type.equals(URL_TYPE) ? "selected" : null,
+                                    "value", URL_TYPE);
+                                page.writeHtml("URL");
                             page.writeEnd();
+
+                            for (ObjectType t : types) {
+                                String id = t.getId().toString();
+                                page.writeStart("option",
+                                        "selected", type.equals(id) ? "selected" : null,
+                                        "value", id);
+                                    page.writeHtml(t.getDisplayName());
+                                page.writeEnd();
+                            }
+
                         page.writeEnd();
                     }
 
-                    page.writeStart("li");
-                        page.writeHtml("in ");
+                    Query<?> valueQuery;
+                    ObjectType valueType;
 
-                        Query<?> valueQuery;
-                        ObjectType valueType;
+                    if (type.equals(URL_TYPE)) {
+                        valueType = ObjectType.getInstance(Directory.class);
+                        valueQuery = Query.from(Directory.class).sortAscending("path");
+                        valueQuery.where("path != missing");
 
-                        if (type.equals(URL_TYPE)) {
-                            valueType = ObjectType.getInstance(Directory.class);
-                            valueQuery = Query.from(Directory.class).sortAscending("path");
-                            valueQuery.where("path != missing");
+                    } else {
+                        valueType = ObjectType.getInstance(ObjectUtils.to(UUID.class, type));
+                        valueQuery = Query.fromType(valueType);
 
-                        } else {
-                            valueType = ObjectType.getInstance(ObjectUtils.to(UUID.class, type));
-                            valueQuery = Query.fromType(valueType);
+                        for (String fieldName : valueType.getLabelFields()) {
+                            ObjectField field = valueType.getField(fieldName);
 
-                            for (String fieldName : valueType.getLabelFields()) {
-                                ObjectField field = valueType.getField(fieldName);
-
-                                if (field != null && valueType.getIndex(fieldName) != null) {
-                                    valueQuery.sortAscending(valueType.getInternalName() + "/" + fieldName);
-                                }
+                            if (field != null && valueType.getIndex(fieldName) != null) {
+                                valueQuery.sortAscending(valueType.getInternalName() + "/" + fieldName);
                             }
                         }
+                    }
 
-                        if (valueQuery.hasMoreThan(250)) {
-                            page.writeElement("input",
-                                    "type", "text",
-                                    "class", "objectId",
-                                    "data-bsp-autosubmit", "",
-                                    "data-editable", false,
-                                    "data-label", valueObject != null ? State.getInstance(valueObject).getLabel() : null,
-                                    "data-typeIds", valueType.getId(),
-                                    "name", valueParameter,
-                                    "value", value);
+                    if (valueQuery.hasMoreThan(250)) {
+                        page.writeElement("input",
+                                "type", "text",
+                                "class", "objectId",
+                                "data-bsp-autosubmit", "",
+                                "data-editable", false,
+                                "data-label", valueObject != null ? State.getInstance(valueObject).getLabel() : null,
+                                "data-typeIds", valueType.getId(),
+                                "name", valueParameter,
+                                "value", value);
 
-                        } else {
-                            page.writeStart("select",
-                                    "name", valueParameter,
-                                    "data-bsp-autosubmit", "",
-                                    "data-searchable", "true");
+                    } else {
+                        page.writeStart("select",
+                                "name", valueParameter,
+                                "data-bsp-autosubmit", "",
+                                "data-searchable", "true");
 
-                                if (!type.equals(URL_TYPE)) {
-                                    page.writeStart("option", "value", "").writeEnd();
-                                }
+                            if (!type.equals(URL_TYPE)) {
+                                page.writeStart("option", "value", "").writeEnd();
+                            }
 
-                                for (Object v : valueQuery.selectAll()) {
-                                    State state = State.getInstance(v);
+                            for (Object v : valueQuery.selectAll()) {
+                                State state = State.getInstance(v);
 
-                                    page.writeStart("option",
-                                            "value", state.getId(),
-                                            "selected", v.equals(valueObject) ? "selected" : null);
-                                        page.writeHtml(state.getLabel());
-                                    page.writeEnd();
-                                }
+                                page.writeStart("option",
+                                        "value", state.getId(),
+                                        "selected", v.equals(valueObject) ? "selected" : null);
+                                    page.writeHtml(state.getLabel());
+                                page.writeEnd();
+                            }
 
-                            page.writeEnd();
-                        }
-                    page.writeEnd();
+                        page.writeEnd();
+                    }
                 page.writeEnd();
             page.writeEnd();
 

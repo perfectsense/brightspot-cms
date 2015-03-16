@@ -1,296 +1,215 @@
-@carousel-tile-width: 140px;
-@carousel-tile-height: 105px;
-@carousel-nav-width: 30px;
-@carousel-nav-height: 50px;
-@carousel-padding: 4px;
-@carousel-margin-between-tiles: 6px;
 @carousel-counter: carousel-counter;
-@carousel-border-color: #cbcbcb;
-@carousel-border-width: 1px;
-@carousel-outline-width: 3px;
-@carousel-arrow-width: 10px;
-@carousel-arrow-height: @carousel-arrow-width;
-@carousel-background-color: white;
+
+@carousel-tile-borderWidth: 1px;
+@carousel-tile-borderRadius: 2px;
+@carousel-tile-margin: 5px;
+@carousel-tile-padding: 5px;
+@carousel-tile-width: 160px;
+@carousel-tile-height: 100px;
+@carousel-tile-arrowHeight: 10px;
+
+@carousel-nav-width: 25px;
+
 @carousel-nav-background-color: #34b4df;
 
 .carousel-wrapper {
-  // see .carousel-bottom-content for the bottom border and active arrow
   clear: both;
+  padding: 0 (@carousel-nav-width + @carousel-tile-margin);
   position: relative;
-  border-bottom:0; 
-  background:@carousel-background-color;
+}
 
-  // Padding leaves room on the left and right for the navigation controls
-  //padding: @carousel-padding (@carousel-padding + @carousel-nav-width + @carousel-margin-between-tiles);
-  padding: @carousel-padding;
+.carousel-nav,
+.carousel-target-nav {
+  .icon;
+
+  background-color: @color-heading;
+  border-radius: @carousel-tile-borderRadius;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  width: @carousel-nav-width;
+
+  .link {
+    display: none;
+  }
 }
 
 .carousel-nav {
-  .icon;
+  height: @carousel-tile-height;
+  line-height: @carousel-tile-height;
   position: absolute;
-  top: (@carousel-tile-height - @carousel-nav-height) / 2;
-  width: @carousel-nav-width;
-  height: @carousel-nav-height;
-  line-height: @carousel-nav-height;
-  background-color: @carousel-nav-background-color;
-  color:white;
-  text-align:center;
-  cursor:pointer;
-  opacity: 0.9;
-  
-  &.carousel-nav-hide {
-    display:none;
-  }
+  top: 0;
 
-  a {
-    display:none;
+  &.carousel-nav-hide {
+    color: @color-placeholder;
   }
 }
 
 .carousel-nav-previous {
-  left:@carousel-padding;
   .icon-chevron-left;
+
+  left: 0;
 }
 
 .carousel-nav-next {
-  right:@carousel-padding;
   .icon-chevron-right;
+
+  right: 0;
 }
 
 .carousel-viewport {
-  width:100%;
+  overflow-x: hidden;
+  padding-bottom: 20px;
   white-space: nowrap;
-  overflow-x:hidden;
+  width: 100%;
 }
 
 .carousel-tiles {
+  counter-reset: @carousel-counter;
+  display: inline-block;
+  list-style-type: none;
   margin: 0;
   padding: 0;
+  transition: margin-left @time-fast;
   white-space: nowrap;
-  list-style-type: none;
-
-  // This is needed to get correct width within the overflow hidden viewport
-  display:inline-block;
-
-  // Animation for the tiles moving left and right
-  transition: margin-left 900ms ease-in-out;        
-  // TODO: use a mixin so we can add transition prefixes for other browsers?
-
-  // For a numbered carousel create a CSS counter
-  counter-reset: @carousel-counter;
-
-    // Styles for individual tiles (the LI element)
-  > .carousel-tile {
-    display: inline-block;
-    white-space: normal;
-    padding: 0;
-    width: @carousel-tile-width;
-    height: @carousel-tile-height;
-    background-color: #eee;
-    cursor: pointer;
-    counter-increment: @carousel-counter;
-
-    // Use position relative so we can position counter
-    position: relative;
-
-    // Margin between each tile
-    &:not(:last-child) {
-      margin-right: @carousel-margin-between-tiles;
-    }
-
-    // Border for the tile
-    
-    border:1px solid @carousel-border-color;
-
-    // Border for the active tile
-    &.carousel-active {
-      outline:@carousel-outline-width solid #34b4df;
-      outline-offset:-@carousel-outline-width;
-    }
-
-    .carousel-numbered &:before {
-      content: counter(@carousel-counter);
-      position:absolute;
-      top:3px;
-      right:3px;
-      padding:4px;
-      background:rgba(64,64,64,0.7);
-      border:2px solid white;
-      border-radius:50%;
-      color:white;
-      min-width:12px;
-      text-align:center;
-      line-height:1;
-      font-size:12px;
-      font-weight:bold;
-    }
-  }
 }
 
-// The bottom viewport contains the bottom border and the active arrow
-// This is necessary to make the active arrow line up with the active tile
-.carousel-bottom-viewport {
-  height:@carousel-arrow-height;
-  position:relative;
-  overflow-x:hidden;
-}
-
-.carousel-bottom-content {
-
-  // The width of this will be set to match the width of the tiles
-  // using javascript, so the active arrow will align with the active tile
-
-  // Set to position relative so the arrow will be based off the left side
-  border-top: @carousel-border-width solid @carousel-border-color;
-  position:relative;
-
-  width:100%;
-}
-
-// Arrow at bottom of active tile
-.carousel-arrow {
-
-  // Start by hiding the arrow, will be revealed using javascript
-  display:none;
-
-  position:absolute;
-  top:-@carousel-border-width;
-  left: 100px; // will be updated using javascript to position arrow under the active tile
-
-  // Note we set width here although we don't need it for style
-  // we will use javascript to get the width for various calculations.
-  // This lets us avoid having to hard-code the width in both the javascript and the CSS.
-  width: @carousel-arrow-width;
-
-  // Needs to have a z-index so the border will appear above the next div
-  z-index:1;
-
-  // When the carousel is being scrolled to a different position we add the "moving" class
-  // to the arrow so it can be hidden temporarily
-  &.moving {
-    visibility:hidden;
-  }
-  
-  &:before, &:after {
-    content:'';
-    border-style: solid;
-    border-width: @carousel-arrow-width;
-    height:0;
-    width:0;
-    margin-left: @carousel-arrow-width / 2;
-
-    // will be positioned relative to .carousel-arrow so always use 0,0
-    position:absolute;
-    top:0;
-    left:0;
-  }
-
-  &:before {
-
-    // Color for the inside of the arrow
-    border-color: @carousel-background-color transparent transparent transparent;
-
-    // Make sure the inside color sits on top of the :after color
-    z-index: 1;
-
-    // Adjust the :before a little bit above the 
-    top:-@carousel-border-width;
-  }
-
-  &:after {
-    // Color of the border for the arrow
-    border-color: @carousel-border-color transparent transparent transparent;
-  }
-}
-
-// Carousel tile content
-.carousel-tile-content {
-  text-align: center;
-  width: @carousel-tile-width;
+.carousel-tile {
+  background-color: @color-heading;
+  border: @carousel-tile-borderWidth solid @color-border;
+  border-radius: @carousel-tile-borderRadius;
+  counter-increment: @carousel-counter;
+  cursor: pointer;
+  display: inline-block;
   height: @carousel-tile-height;
-  overflow:hidden;
+  padding: @carousel-tile-padding;
+  position: relative;
+  vertical-align: top;
+  white-space: normal;
+  width: @carousel-tile-width;
+
+  &:not(:last-child) {
+    margin-right: @carousel-tile-margin;
+  }
+
+  &.carousel-tile-active {
+
+    // border.
+    &:before {
+      border: 3px solid @color-focus;
+      border-radius: @carousel-tile-borderRadius;
+      bottom: -1px;
+      content: '';
+      left: -1px;
+      position: absolute;
+      top: -1px;
+      right: -1px;
+      z-index: 1;
+    }
+
+    // arrow.
+    &:after {
+      @-arrowWidth: @carousel-tile-arrowHeight * 2;
+
+      border-color: @color-focus transparent transparent transparent;
+      border-style: solid;
+      border-width: @carousel-tile-arrowHeight;
+      bottom: (0 - @-arrowWidth);
+      content: '';
+      height: @-arrowWidth;
+      left: ((@carousel-tile-width - @-arrowWidth) / 2);
+      position: absolute;
+      width: @-arrowWidth;
+      z-index: 1;
+    }
+  }
+
+  .carousel-numbered & figure:before {
+    @-borderWidth: 2px;
+    @-offset: @carousel-tile-borderWidth + @carousel-tile-padding;
+    @-size: 20px;
+
+    background-color: fade(@color-overlay, 50%);
+    border: @-borderWidth solid white;
+    border-radius: 50%;
+    color: white;
+    content: counter(@carousel-counter);
+    height: @-size;
+    left: @-offset;
+    line-height: (@-size - (@-borderWidth * 2));
+    position: absolute;
+    text-align: center;
+    top: @-offset;
+    width: @-size;
+  }
 
   &.toBeRemoved {
-    opacity:0.5;
+    opacity: 0.5;
   }
 
-}
-
-.carousel-tile-content-text {
-  text-align: left;
-  padding: @carousel-padding * 2;
-}
-.carousel-tile-content-image {
-  height: 100%;
-  width: 100%;
-  // Resize the image so it's largest dimension fills the tile completely
-  // and keeps the correct aspect ratio. Any extra 
-  object-fit: cover;
-}
-.carousel-tile-content-label {
-  text-align: left;
-  position:absolute;
-  bottom:0;
-  left:0;
-  font-size:80%;
-  background-color:rgba(255,255,255,0.8);
-  padding:2px 4px;
-  width: @carousel-tile-width;
-
-  // Make the text end in ellipsis if it is too long to fit
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow: ellipsis;
-
-  // Hide by default but show on hover or active tile
-  opacity:0;
-  .carousel-active &, .carousel-tile-content:hover & {
-    opacity:1;
-  }
-  transition:opacity 200ms ease-in-out 200ms;
-
-  .toBeRemoved & {
-    color:red;
-    text-decoration: line-through;
-    opacity:1; // always show label for deleted tiles
+  .link {
+    display: block;
+    height: 100%;
+    width: 100%;
   }
 
-  .carousel-active & {
-    width: @carousel-tile-width - (@carousel-outline-width * 4);
-    // No idea why this doesn't work with outline @carousel-outline-width,
-    // but must subtract one to get it to align with the outline
-    left: @carousel-outline-width - 1;
-    bottom: @carousel-outline-width - 1;
-  }
-}
+  figure {
+    border-radius: @carousel-tile-borderRadius;
+    bottom: 0;
+    display: block;
+    left: 0;
+    min-height: 0;
+    min-width: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
 
-//Styling specific to search result carousel
-.widget-searchCarousel {
-
-  .carousel-bottom-viewport {
-    overflow-y: hidden;
-  }
-
-  // Always display the carousel nav links unless there are no more results to fetch
-  .carousel-nav {
-    
-    &.carousel-nav-hide {
-      display:block;
+    img {
+      height: 100%;
+      object-fit: cover;
+      width: 100%;
     }
   }
+}
 
-  // Hide the next or previous nav links if we are at the start or end of the carousel
-  // and if there are no more results to fetch
-  &[data-next-page=""] .carousel-nav-next.carousel-nav-hide,
-  &[data-prev-page=""] .carousel-nav-previous.carousel-nav-hide {
-    background-color:#aaa;
-    opacity: 0.3;
+.carousel-target {
+  display: table;
+  position: relative;
+  width: 100%;
+}
+
+.carousel-target-items {
+  display: table-cell;
+  padding: 0 @carousel-tile-padding;
+}
+
+.carousel-target-nav {
+  display: table-cell;
+  vertical-align: middle;
+
+  &.carousel-target-nav-hide {
+    color: @color-placeholder;
   }
+}
 
+.carousel-target-prev {
+  .icon-chevron-left;
+}
+
+.carousel-target-next {
+  .icon-chevron-right;
+}
+
+.widget-searchCarousel {
+  .carousel-tile {
+    background-color: white;
+    border-color: white;
+    box-shadow: 0 2px 0 fade(black, 10%);
+  }
 }
 
 // Temporarily turn off transition for the carousel.
 // Used when prepending a new tile
 .no-transition {
-  transition: none; 
+  transition: none;
 }

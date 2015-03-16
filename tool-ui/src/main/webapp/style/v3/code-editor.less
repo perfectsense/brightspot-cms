@@ -1,0 +1,27 @@
+@import '../codemirror/lib/codemirror.css';
+
+.CodeMirror {
+  .input;
+  .code;
+
+  background: transparent;
+  height: auto;
+  padding: 0;
+  width: 100%;
+}
+
+.CodeMirror-scroll {
+  overflow-y: hidden;
+}
+
+.CodeMirror-gutters {
+  .background-flat(@color-heading);
+
+  border-color: @color-placeholder;
+}
+
+.CodeMirror-linenumber {
+  color: @color-text;
+  margin-top: 2px;
+  white-space: nowrap;
+}

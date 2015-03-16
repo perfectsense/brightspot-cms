@@ -156,10 +156,6 @@ public class CreateNewWidget extends DefaultDashboardWidget {
 
         String widgetId = page.createId();
 
-        page.writeStart("style", "type", "text/css");
-            page.writeCss("#" + widgetId + " .checkboxContainer", "text-align", "center");
-        page.writeEnd();
-
         page.writeStart("div", "class", "widget p-commonContent", "id", widgetId);
             page.writeStart("h1", "class", "icon icon-file").writeHtml("Common Content").writeEnd();
 
@@ -172,7 +168,7 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                         page.writeStart("thead");
                             page.writeStart("tr");
                                 page.writeStart("th").writeEnd();
-                                page.writeStart("th").writeHtml("Favorite?").writeEnd();
+                                page.writeStart("th", "class", "p-commonContent-favorite").writeHtml("Favorite?").writeEnd();
                             page.writeEnd();
                         page.writeEnd();
 
@@ -181,7 +177,7 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                                 page.writeStart("tr");
                                     page.writeStart("td").writeHtml(getTypeTemplateLabel(typeCounts, typeTemplate)).writeEnd();
 
-                                    page.writeStart("td", "class", "checkboxContainer");
+                                    page.writeStart("td", "class", "p-commonContent-favorite checkboxContainer");
                                         page.writeElement("input",
                                                 "type", "checkbox",
                                                 "id", page.getId(),
@@ -336,7 +332,7 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                         page.writeStart("h2").writeHtml("Edit Existing").writeEnd();
 
                         page.writeStart("ul", "class", "links pageThumbnails");
-                            for (Content content : editExistingContents) {
+                            for (Object content : editExistingContents) {
                                 page.writeStart("li");
                                     page.writeStart("a",
                                             "target", "_top",

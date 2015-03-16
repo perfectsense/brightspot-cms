@@ -1,0 +1,101 @@
+.p-tud {
+  @-width: @length-toolTitle-width + 40px;
+
+  overflow: hidden;
+  position: relative;
+
+  &:before {
+    background-color: @color-heading;
+    border-right: 1px solid @color-border;
+    box-sizing: border-box;
+    bottom: 0;
+    content: '';
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: @-width;
+  }
+
+  > .tabbed {
+    padding-left: @-width;
+
+    > .tabs {
+      border-bottom-style: none;
+      float: left;
+      left: -20px;
+      margin-left: (0 - @-width);
+      position: relative;
+      top: -20px;
+      width: @-width;
+
+      > li {
+        border-color: @color-border transparent @color-border @color-border;
+        border-style: solid;
+        border-width: 0 1px 1px 0;
+        box-sizing: border-box;
+        width: 100%;
+
+        &, & .link {
+          display: block;
+        }
+
+        .link {
+          padding-bottom: 8px;
+          padding-top: 8px;
+        }
+
+        &:before {
+          background-color: white;
+          border-style: none;
+          bottom: 0;
+          content: '';
+          left: 100%;
+          opacity: 0;
+          position: absolute;
+          right: -1px;
+          top: 0;
+        }
+
+        &.state-selected:before {
+          left: 0;
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+.p-tud-logOut {
+  position: absolute;
+  right: 40px;
+  top: 4px;
+  z-index: 1;
+  padding-bottom: 12px;
+}
+
+.p-tud-site {
+  position: relative;
+  top: -20px;
+}
+
+.p-tud-lg {
+  overflow: hidden;
+}
+
+.p-tud-lg-url {
+  border-right: 2px solid @color-separator;
+  box-sizing: border-box;
+  float: left;
+  margin-right: 19px;
+  padding-right: 19px;
+  width: 221px;
+
+  .input,
+  img {
+    width: 100%;
+  }
+}
+
+.p-tud-lg-recent {
+  margin-left: 240px;
+}

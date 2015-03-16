@@ -39,6 +39,15 @@ public abstract class AbstractSearchResultView implements SearchResultView {
     }
 
     @Override
+    public boolean isHtmlWrapped(
+            Search search,
+            ToolPageContext page,
+            SearchResultItem itemWriter) {
+
+        return true;
+    }
+
+    @Override
     public final void writeHtml(
             Search search,
             ToolPageContext page,

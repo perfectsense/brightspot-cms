@@ -70,6 +70,12 @@ public class Schedule extends Record {
         this.triggerUser = triggerUser;
     }
 
+    protected void beforeSave() {
+        if (ObjectUtils.isBlank(getName()) && getTriggerDate() == null) {
+            throw new IllegalArgumentException("Must provide either the name or the trigger date!");
+        }
+    }
+
     /**
      * @return {@code true} if this schedule was triggered.
      */

@@ -41,7 +41,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
         Query<Workflow> workflowQuery = Query.from(Workflow.class);
-        Map<String, String> workflowStateLabels = new TreeMap<String, String>();
+        Map<String, String> workflowStateLabels = new TreeMap<>();
 
         workflowStateLabels.put("draft", "Draft");
 
@@ -77,35 +77,31 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
         QueryFilter<Object> queryFilter = null;
 
         if (type != null || userType != UserType.ANYONE) {
-            queryFilter = new QueryFilter<Object>() {
+            queryFilter = item -> {
+                State itemState = State.getInstance(item);
+                boolean typeOk = true;
+                boolean userOk = true;
 
-                @Override
-                public boolean include(Object item) {
-                    State itemState = State.getInstance(item);
-                    boolean typeOk = true;
-                    boolean userOk = true;
-
-                    if (type != null) {
-                        ObjectType itemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
-                        typeOk = itemType != null && itemType.getGroups().contains(type.getInternalName());
-                    }
-
-                    if (userType != UserType.ANYONE) {
-                        ToolUser updateUser = itemState.as(Content.ObjectModification.class).getUpdateUser();
-
-                        if (userType == UserType.ME) {
-                            userOk = page.getUser().equals(updateUser);
-
-                        } else if (user instanceof ToolUser) {
-                            userOk = user.equals(updateUser);
-
-                        } else if (user instanceof ToolRole && updateUser != null) {
-                            userOk = user.equals(updateUser.getRole());
-                        }
-                    }
-
-                    return typeOk && userOk;
+                if (type != null) {
+                    ObjectType itemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
+                    typeOk = itemType != null && itemType.getGroups().contains(type.getInternalName());
                 }
+
+                if (userType != UserType.ANYONE) {
+                    ToolUser updateUser = itemState.as(Content.ObjectModification.class).getUpdateUser();
+
+                    if (userType == UserType.ME) {
+                        userOk = page.getUser().equals(updateUser);
+
+                    } else if (user instanceof ToolUser) {
+                        userOk = user.equals(updateUser);
+
+                    } else if (user instanceof ToolRole && updateUser != null) {
+                        userOk = user.equals(updateUser.getRole());
+                    }
+                }
+
+                return typeOk && userOk;
             };
         }
 
@@ -122,106 +118,98 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                 page.writeHtml("Unpublished Drafts");
             page.writeEnd();
 
-            page.writeStart("form",
-                    "method", "get",
-                    "action", page.url(null));
-                page.writeStart("ul", "class", "oneLine");
+            page.writeStart("div", "class", "widget-filters");
+                page.writeStart("form",
+                        "method", "get",
+                        "action", page.url(null));
+
                     if (workflowStateLabels.size() > 1) {
-                        page.writeStart("li");
-                            page.writeStart("select",
-                                    "data-bsp-autosubmit", "",
-                                    "name", "state");
-                                page.writeStart("option", "value", "");
-                                    page.writeHtml("Any Statuses");
-                                page.writeEnd();
-
-                                for (Map.Entry<String, String> entry : workflowStateLabels.entrySet()) {
-                                    String key = entry.getKey();
-
-                                    page.writeStart("option",
-                                            "selected", key.equals(state) ? "selected" : null,
-                                            "value", key);
-                                        page.writeHtml(entry.getValue());
-                                    page.writeEnd();
-                                }
+                        page.writeStart("select",
+                                "data-bsp-autosubmit", "",
+                                "name", "state");
+                            page.writeStart("option", "value", "");
+                                page.writeHtml("Any Statuses");
                             page.writeEnd();
+
+                            for (Map.Entry<String, String> entry : workflowStateLabels.entrySet()) {
+                                String key = entry.getKey();
+
+                                page.writeStart("option",
+                                        "selected", key.equals(state) ? "selected" : null,
+                                        "value", key);
+                                    page.writeHtml(entry.getValue());
+                                page.writeEnd();
+                            }
                         page.writeEnd();
                     }
 
-                    page.writeStart("li");
-                        page.writeTypeSelect(
-                                ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes(),
-                                type,
-                                "Any Types",
-                                "name", "typeId",
-                                "data-bsp-autosubmit", "",
-                                "data-searchable", true);
-                    page.writeEnd();
+                    page.writeTypeSelect(
+                            ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes(),
+                            type,
+                            "Any Types",
+                            "name", "typeId",
+                            "data-bsp-autosubmit", "",
+                            "data-searchable", true);
 
-                    page.writeStart("li");
-                        page.writeHtml("by ");
-                        page.writeStart("select",
-                                "data-bsp-autosubmit", "",
-                                "name", "userType");
-                            for (UserType t : UserType.values()) {
-                                if (t != UserType.ROLE || Query.from(ToolRole.class).first() != null) {
-                                    page.writeStart("option",
-                                            "selected", t.equals(userType) ? "selected" : null,
-                                            "value", t.name());
-                                        page.writeHtml(t.getDisplayName());
-                                    page.writeEnd();
-                                }
-                            }
-                        page.writeEnd();
-
-                        page.writeHtml(" ");
-
-                        Query<?> userQuery;
-
-                        if (userType == UserType.ROLE) {
-                            userQuery = Query.from(ToolRole.class).sortAscending("name");
-
-                        } else if (userType == UserType.USER) {
-                            userQuery = Query.from(ToolUser.class).sortAscending("name");
-
-                        } else {
-                            userQuery = null;
-                        }
-
-                        if (userQuery != null) {
-                            if (userQuery.hasMoreThan(250)) {
-                                State userState = State.getInstance(user);
-
-                                page.writeElement("input",
-                                        "type", "text",
-                                        "class", "objectId",
-                                        "data-bsp-autosubmit", "",
-                                        "data-editable", false,
-                                        "data-label", userState != null ? userState.getLabel() : null,
-                                        "data-typeIds", ObjectType.getInstance(ToolRole.class).getId(),
-                                        "name", userParameter,
-                                        "value", userState != null ? userState.getId() : null);
-
-                            } else {
-                                page.writeStart("select",
-                                        "name", userParameter,
-                                        "data-bsp-autosubmit", "",
-                                        "data-searchable", "true");
-                                    page.writeStart("option", "value", "").writeEnd();
-
-                                    for (Object v : userQuery.selectAll()) {
-                                        State userState = State.getInstance(v);
-
-                                        page.writeStart("option",
-                                                "value", userState.getId(),
-                                                "selected", v.equals(user) ? "selected" : null);
-                                            page.writeHtml(userState.getLabel());
-                                        page.writeEnd();
-                                    }
+                    page.writeStart("select",
+                            "data-bsp-autosubmit", "",
+                            "name", "userType");
+                        for (UserType t : UserType.values()) {
+                            if (t != UserType.ROLE || Query.from(ToolRole.class).first() != null) {
+                                page.writeStart("option",
+                                        "selected", t.equals(userType) ? "selected" : null,
+                                        "value", t.name());
+                                    page.writeHtml(t.getDisplayName());
                                 page.writeEnd();
                             }
                         }
                     page.writeEnd();
+
+                    Query<?> userQuery;
+
+                    if (userType == UserType.ROLE) {
+                        userQuery = Query.from(ToolRole.class).sortAscending("name");
+
+                    } else if (userType == UserType.USER) {
+                        userQuery = Query.from(ToolUser.class).sortAscending("name");
+
+                    } else {
+                        userQuery = null;
+                    }
+
+                    if (userQuery != null) {
+                        if (userQuery.hasMoreThan(250)) {
+                            State userState = State.getInstance(user);
+
+                            page.writeElement("input",
+                                    "type", "text",
+                                    "class", "objectId",
+                                    "data-bsp-autosubmit", "",
+                                    "data-editable", false,
+                                    "data-label", userState != null ? userState.getLabel() : null,
+                                    "data-typeIds", ObjectType.getInstance(ToolRole.class).getId(),
+                                    "name", userParameter,
+                                    "value", userState != null ? userState.getId() : null);
+
+                        } else {
+                            page.writeStart("select",
+                                    "name", userParameter,
+                                    "data-bsp-autosubmit", "",
+                                    "data-searchable", "true");
+                                page.writeStart("option", "value", "").writeEnd();
+
+                                for (Object v : userQuery.selectAll()) {
+                                    State userState = State.getInstance(v);
+
+                                    page.writeStart("option",
+                                            "value", userState.getId(),
+                                            "selected", v.equals(user) ? "selected" : null);
+                                        page.writeHtml(userState.getLabel());
+                                    page.writeEnd();
+                                }
+                            page.writeEnd();
+                        }
+                    }
                 page.writeEnd();
             page.writeEnd();
 

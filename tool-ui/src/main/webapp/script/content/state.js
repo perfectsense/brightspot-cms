@@ -67,10 +67,11 @@ function($, bsp_utils) {
                         var $element = $(this);
 
                         return '&_dti=' + ($element.closest('[data-object-id]').attr('data-object-id') || '') +
-                                '&_dtt=' + ($element.attr('data-dynamic-text') ||
+                                '&_dtt=' + (($element.attr('data-dynamic-text') ||
                                 $element.attr('data-dynamic-html') ||
                                 $element.attr('data-dynamic-placeholder') ||
-                                '');
+                                '')) +
+                                '&_dtf=' + $element.attr('data-dynamic-field-name') || '';
                     }).get().join(''),
 
                     'success': function(data) {
