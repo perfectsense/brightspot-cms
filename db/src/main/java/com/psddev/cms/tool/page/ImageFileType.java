@@ -85,12 +85,14 @@ public class ImageFileType implements FileContentType {
         String metadataFieldName = fieldName + ".metadata";
         String cropsFieldName = fieldName + ".crops";
 
+        String action = page.param(actionName);
+
         Map<String, Object> fieldValueMetadata = null;
         if (fieldValue != null) {
             fieldValueMetadata = fieldValue.getMetadata();
         }
 
-        if (fieldValueMetadata == null) {
+        if (fieldValueMetadata == null && (!(Boolean) request.getAttribute("isFormPost")) || "keep".equals(action)) {
             fieldValueMetadata = new LinkedHashMap<String, Object>();
         }
 
@@ -145,8 +147,6 @@ public class ImageFileType implements FileContentType {
                 crops.put(sizeId, new ImageCrop());
             }
         }
-
-        String action = page.param(actionName);
 
         brightness = page.param(double.class, brightnessName);
         contrast = page.param(double.class, contrastName);
