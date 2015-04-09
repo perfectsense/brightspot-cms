@@ -146,7 +146,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         if (size instanceof StandardImageSize) {
             tagBuilder.setStandardImageSize((StandardImageSize) size);
         } else if (size instanceof String) {
-            tagBuilder.setStandardImageSize(getStandardImageSizeByName((String) size));
+            tagBuilder.setStandardImageSize(getStandardImageSizeByName(new WebPageContext(pageContext), (String) size));
         }
     }
 
@@ -492,15 +492,12 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         return dimension;
     }
 
+    protected static StandardImageSize getStandardImageSizeByName(WebPageContext wp, String size) {
+        return StandardImageSize.findByInternalName(wp != null ? PageFilter.Static.getSite(wp.getRequest()) : null, size);
+    }
+
     protected static StandardImageSize getStandardImageSizeByName(String size) {
-        StandardImageSize standardImageSize = null;
-        for (StandardImageSize standardSize : StandardImageSize.findAll()) {
-            if (standardSize.getInternalName().equals(size)) {
-                standardImageSize = standardSize;
-                break;
-            }
-        }
-        return standardImageSize;
+        return getStandardImageSizeByName(null, size);
     }
 
     /**
@@ -1236,7 +1233,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 ImageEditor editor,
                 String size) {
 
-            StandardImageSize standardImageSize = getStandardImageSizeByName(size);
+            StandardImageSize standardImageSize = getStandardImageSizeByName(wp, size);
 
             Map<String, String> attributes = getAttributes(wp,
                     object, field, editor, standardImageSize, null, null, null, null, null, null);
@@ -1304,7 +1301,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             Integer width,
             Integer height) {
 
-        StandardImageSize standardImageSize = getStandardImageSizeByName(size);
+        StandardImageSize standardImageSize = getStandardImageSizeByName(new WebPageContext(pageContext), size);
 
         ImageEditor imageEditor = null;
         if (editor != null) {

@@ -1,16 +1,20 @@
 package com.psddev.cms.db;
 
-import com.psddev.dari.db.Record;
-import com.psddev.dari.db.Query;
-import com.psddev.dari.util.PeriodicValue;
-import com.psddev.dari.util.PullThroughValue;
-
-import java.util.Collections;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Record;
+import com.psddev.dari.util.ObjectUtils;
 
 /** Represents a standard image size. */
 @ToolUi.IconName("object-standardImageSize")
@@ -19,38 +23,40 @@ public class StandardImageSize extends Record {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardImageSize.class);
 
-    private static final PullThroughValue<PeriodicValue<List<StandardImageSize>>>
-            ALL = new PullThroughValue<PeriodicValue<List<StandardImageSize>>>() {
+    private static final LoadingCache<UUID, Map<String, StandardImageSize>>
+        IMAGE_SIZES = CacheBuilder.newBuilder().refreshAfterWrite(30, TimeUnit.SECONDS).build(new CacheLoader<UUID, Map<String, StandardImageSize>>() {
 
         @Override
-        protected PeriodicValue<List<StandardImageSize>> produce() {
-            return new PeriodicValue<List<StandardImageSize>>() {
+        public Map<String, StandardImageSize> load(UUID uuid) throws Exception {
+            Query<StandardImageSize> query = Query.from(StandardImageSize.class);
 
-                @Override
-                protected List<StandardImageSize> update() {
+            if (uuid == null) {
+                query.and("site is missing");
+            } else {
+                query.and("site = ?", uuid);
+            }
 
-                    Query<StandardImageSize> query = Query.from(StandardImageSize.class).sortAscending("displayName");
-                    Date cacheUpdate = getUpdateDate();
-                    Date databaseUpdate = query.lastUpdate();
-                    if (databaseUpdate == null || (cacheUpdate != null && !databaseUpdate.after(cacheUpdate))) {
-                        List<StandardImageSize> sizes = get();
-                        return sizes != null ? sizes : Collections.<StandardImageSize>emptyList();
-                    }
+            List<StandardImageSize> sizes = query.selectAll();
+            Map<String, StandardImageSize> map = new HashMap<>();
 
-                    LOGGER.info("Loading image sizes");
-                    return query.selectAll();
-                }
-            };
+            if (!ObjectUtils.isBlank(sizes)) {
+                sizes.forEach(size ->  map.put(size.getInternalName(), size));
+            }
+
+            return map;
         }
-    };
+    });
 
-    @Indexed(unique = true)
+    @Indexed
     @Required
     private String displayName;
 
-    @Indexed(unique = true)
+    @Indexed
     @Required
     private String internalName;
+
+    @Indexed
+    private Site site;
 
     private int width;
     private int height;
@@ -61,9 +67,54 @@ public class StandardImageSize extends Record {
     private CropOption cropOption;
     private ResizeOption resizeOption;
 
-    /** Returns a list of all the image sizes. */
+    @Indexed(unique = true)
+    public String displayNameAndSiteKey() {
+        return this.getDisplayName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    }
+
+    @Indexed(unique = true)
+    public String internalNameAndSiteKey() {
+        return this.getInternalName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    }
+
     public static List<StandardImageSize> findAll() {
-        return ALL.get().get();
+        try {
+            return new ArrayList<>(IMAGE_SIZES.get(null).values());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static StandardImageSize findByInternalName(String internalName) {
+        return findByInternalName(null, internalName);
+    }
+
+    public static StandardImageSize findByInternalName(Site site, String internalName) {
+
+        StandardImageSize size = null;
+
+        try {
+            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? site.getId() : null);
+
+            if (!ObjectUtils.isBlank(sizes)) {
+                size = sizes.get(internalName);
+            }
+
+            //fall back to global image sizes
+            if (site != null && size == null) {
+
+                sizes = IMAGE_SIZES.get(null);
+
+                if (!ObjectUtils.isBlank(sizes)) {
+                    size = sizes.get(internalName);
+                }
+            }
+
+        } catch (Exception e) {
+            //ignore
+        }
+
+        return size;
     }
 
     public String getDisplayName() {
@@ -120,5 +171,13 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
     }
 }
