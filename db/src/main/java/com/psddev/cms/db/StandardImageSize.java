@@ -57,6 +57,7 @@ public class StandardImageSize extends Record {
     private String internalName;
 
     @Indexed
+    @ToolUi.Hidden
     private Site site;
 
     private int width;
