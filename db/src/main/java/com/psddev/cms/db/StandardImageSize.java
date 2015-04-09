@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -23,24 +24,24 @@ public class StandardImageSize extends Record {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardImageSize.class);
 
-    private static final LoadingCache<UUID, Map<String, StandardImageSize>>
-        IMAGE_SIZES = CacheBuilder.newBuilder().refreshAfterWrite(30, TimeUnit.SECONDS).build(new CacheLoader<UUID, Map<String, StandardImageSize>>() {
+    private static final LoadingCache<Optional<UUID>, Map<String, StandardImageSize>>
+        IMAGE_SIZES = CacheBuilder.newBuilder().refreshAfterWrite(30, TimeUnit.SECONDS).build(new CacheLoader<Optional<UUID>, Map<String, StandardImageSize>>() {
 
         @Override
-        public Map<String, StandardImageSize> load(UUID uuid) throws Exception {
+        public Map<String, StandardImageSize> load(Optional<UUID> uuid) throws Exception {
             Query<StandardImageSize> query = Query.from(StandardImageSize.class);
 
-            if (uuid == null) {
+            if (!uuid.isPresent()) {
                 query.and("site is missing");
             } else {
-                query.and("site = ?", uuid);
+                query.and("site = ?", uuid.get());
             }
 
             List<StandardImageSize> sizes = query.selectAll();
             Map<String, StandardImageSize> map = new HashMap<>();
 
             if (!ObjectUtils.isBlank(sizes)) {
-                sizes.forEach(size ->  map.put(size.getInternalName(), size));
+                sizes.forEach(size -> map.put(size.getInternalName(), size));
             }
 
             return map;
@@ -79,9 +80,9 @@ public class StandardImageSize extends Record {
 
     public static List<StandardImageSize> findAll() {
         try {
-            return new ArrayList<>(IMAGE_SIZES.get(null).values());
+            return new ArrayList<>(IMAGE_SIZES.get(Optional.absent()).values());
         } catch (Exception e) {
-            return null;
+            return new ArrayList<>();
         }
     }
 
@@ -94,7 +95,7 @@ public class StandardImageSize extends Record {
         StandardImageSize size = null;
 
         try {
-            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? site.getId() : null);
+            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? Optional.of(site.getId()) : Optional.absent());
 
             if (!ObjectUtils.isBlank(sizes)) {
                 size = sizes.get(internalName);
