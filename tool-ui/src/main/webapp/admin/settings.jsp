@@ -38,7 +38,7 @@ if (selected != null && wp.tryStandardUpdate(selected)) {
 }
 
 State selectedState = State.getInstance(selected);
-List<StandardImageSize> standardImageSizes = Query.from(StandardImageSize.class).sortAscending("displayName").select();
+List<StandardImageSize> standardImageSizes = Query.from(StandardImageSize.class).where("site is missing").sortAscending("displayName").select();
 
 // --- Presentation ---
 
