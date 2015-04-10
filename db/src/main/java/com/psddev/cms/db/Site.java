@@ -73,7 +73,7 @@ public class Site extends Record {
     @ToolUi.Tab("Advanced")
     private Set<Site> accessibleSites;
 
-    @JunctionField("site")
+    @Embedded
     private List<StandardImageSize> standardImageSizes;
 
     /** @deprecated Use {@link Static#findAll} instead. */
@@ -181,6 +181,9 @@ public class Site extends Record {
     }
 
     public List<StandardImageSize> getStandardImageSizes() {
+        if (standardImageSizes == null) {
+            standardImageSizes = new ArrayList<>();
+        }
         return standardImageSizes;
     }
 
