@@ -34,7 +34,7 @@ public class StandardImageSize extends Record {
             Query<StandardImageSize> query = Query.from(StandardImageSize.class);
 
             if (!uuid.isPresent()) {
-                query.and("site is missing");
+                query.and(Site.CONSUMERS_FIELD + " is missing || " + Site.IS_GLOBAL_FIELD + " = true");
             } else {
                 query.and(Site.CONSUMERS_FIELD + " = ?", uuid.get());
             }
@@ -72,10 +72,10 @@ public class StandardImageSize extends Record {
         Set<String> compoundKeys = new HashSet<>();
         Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
 
-        compoundKeys.add(this.getInternalName() + "/");
-
         if (!ObjectUtils.isBlank(consumers)) {
             consumers.forEach(site -> compoundKeys.add(this.getInternalName() + "/" + site.getId()));
+        } else {
+            compoundKeys.add(this.getInternalName() + "/");
         }
 
         return compoundKeys;
@@ -86,10 +86,10 @@ public class StandardImageSize extends Record {
         Set<String> compoundKeys = new HashSet<>();
         Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
 
-        compoundKeys.add(this.getDisplayName() + "/");
-
         if (!ObjectUtils.isBlank(consumers)) {
             consumers.forEach(site -> compoundKeys.add(this.getDisplayName() + "/" + site.getId()));
+        }  else {
+            compoundKeys.add(this.getDisplayName() + "/");
         }
 
         return compoundKeys;
@@ -189,5 +189,14 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    @Override
+    public void beforeSave() {
+
+        Site.ObjectModification siteAccessData = this.as(Site.ObjectModification.class);
+        if (ObjectUtils.isBlank(siteAccessData.getConsumers())) {
+            siteAccessData.setGlobal(true);
+        }
     }
 }
