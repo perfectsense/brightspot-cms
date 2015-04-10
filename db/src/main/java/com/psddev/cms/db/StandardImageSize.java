@@ -2,8 +2,10 @@ package com.psddev.cms.db;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +36,7 @@ public class StandardImageSize extends Record {
             if (!uuid.isPresent()) {
                 query.and("site is missing");
             } else {
-                query.and("site = ?", uuid.get());
+                query.and(Site.CONSUMERS_FIELD + " = ?", uuid.get());
             }
 
             List<StandardImageSize> sizes = query.selectAll();
@@ -56,10 +58,6 @@ public class StandardImageSize extends Record {
     @Required
     private String internalName;
 
-    @Indexed
-    @ToolUi.Hidden
-    private Site site;
-
     private int width;
     private int height;
 
@@ -70,13 +68,31 @@ public class StandardImageSize extends Record {
     private ResizeOption resizeOption;
 
     @Indexed(unique = true)
-    public String displayNameAndSiteKey() {
-        return this.getDisplayName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    public Set<String> internalNameAndSiteKeys() {
+        Set<String> compoundKeys = new HashSet<>();
+        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
+
+        compoundKeys.add(this.getInternalName() + "/");
+
+        if (!ObjectUtils.isBlank(consumers)) {
+            consumers.forEach(site -> compoundKeys.add(this.getInternalName() + "/" + site.getId()));
+        }
+
+        return compoundKeys;
     }
 
     @Indexed(unique = true)
-    public String internalNameAndSiteKey() {
-        return this.getInternalName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    public Set<String> displayNameAndSiteKeys() {
+        Set<String> compoundKeys = new HashSet<>();
+        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
+
+        compoundKeys.add(this.getDisplayName() + "/");
+
+        if (!ObjectUtils.isBlank(consumers)) {
+            consumers.forEach(site -> compoundKeys.add(this.getDisplayName() + "/" + site.getId()));
+        }
+
+        return compoundKeys;
     }
 
     public static List<StandardImageSize> findAll() {
@@ -173,13 +189,5 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
-    }
-
-    public Site getSite() {
-        return site;
-    }
-
-    public void setSite(Site site) {
-        this.site = site;
     }
 }
