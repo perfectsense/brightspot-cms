@@ -29,19 +29,15 @@ public class StandardImageSize extends Record {
 
         @Override
         public Map<String, StandardImageSize> load(Optional<UUID> uuid) throws Exception {
-
-            List<StandardImageSize> sizes = null;
+            Query<StandardImageSize> query = Query.from(StandardImageSize.class);
 
             if (!uuid.isPresent()) {
-                sizes = new ArrayList<>(Query.from(StandardImageSize.class).selectAll());
+                query.and("site is missing");
             } else {
-                Site site = Query.from(Site.class).and("id = ?", uuid.get()).first();
-
-                if (site != null) {
-                    sizes = site.getStandardImageSizes();
-                }
+                query.and("site = ?", uuid.get());
             }
 
+            List<StandardImageSize> sizes = query.selectAll();
             Map<String, StandardImageSize> map = new HashMap<>();
 
             if (!ObjectUtils.isBlank(sizes)) {
@@ -60,6 +56,10 @@ public class StandardImageSize extends Record {
     @Required
     private String internalName;
 
+    @Indexed
+    @ToolUi.Hidden
+    private Site site;
+
     private int width;
     private int height;
 
@@ -68,6 +68,16 @@ public class StandardImageSize extends Record {
 
     private CropOption cropOption;
     private ResizeOption resizeOption;
+
+    @Indexed(unique = true)
+    public String displayNameAndSiteKey() {
+        return this.getDisplayName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    }
+
+    @Indexed(unique = true)
+    public String internalNameAndSiteKey() {
+        return this.getInternalName() + "/" + (this.getSite() != null ? this.getSite().getId().toString() : "");
+    }
 
     public static List<StandardImageSize> findAll() {
         try {
@@ -163,5 +173,13 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    public Site getSite() {
+        return site;
+    }
+
+    public void setSite(Site site) {
+        this.site = site;
     }
 }
