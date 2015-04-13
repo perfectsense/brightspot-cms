@@ -169,7 +169,7 @@ public class GuideField extends PageServlet {
 
                                         page.writeStart("tr");
                                             page.writeStart("th");
-                                                page.writeHtml("Field Type");
+                                                page.writeHtml("Field");
                                             page.writeEnd();
 
                                             page.writeStart("td");
@@ -181,12 +181,12 @@ public class GuideField extends PageServlet {
 
                                         page.writeStart("tr");
                                             page.writeStart("th");
-                                                page.writeHtml("Field Name");
+                                                page.writeHtml("Internal Name");
                                             page.writeEnd();
 
                                             page.writeStart("td");
                                                 page.writeStart("code");
-                                                    page.writeHtml(field.getJavaFieldName());
+                                                    page.writeHtml(field.getInternalName());
                                                 page.writeEnd();
                                             page.writeEnd();
                                         page.writeEnd();

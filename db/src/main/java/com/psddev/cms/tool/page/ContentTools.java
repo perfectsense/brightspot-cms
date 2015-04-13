@@ -216,7 +216,7 @@ public class ContentTools extends PageServlet {
                                 page.writeEnd();
                             page.writeEnd();
 
-                            if (!user.equals(contentLock.getOwner())) {
+                            if (page.hasPermission("ui/contentLock") && !user.equals(contentLock.getOwner())) {
                                 page.writeStart("h2");
                                     page.writeHtml("Content Lock");
                                 page.writeEnd();

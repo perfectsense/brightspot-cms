@@ -14,6 +14,7 @@ com.psddev.dari.db.ObjectFieldComparator,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.State,
 
+com.psddev.dari.util.CompactMap,
 com.psddev.dari.util.CssUnit,
 com.psddev.dari.util.HtmlGrid,
 com.psddev.dari.util.HtmlObject,
@@ -606,14 +607,19 @@ if (!isValueExternal) {
                             "name", publishDateName,
                             "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
 
-                    wp.writeElement("input",
-                            "type", "hidden",
-                            "name", dataName,
-                            "value", ObjectUtils.toJson(itemState.getSimpleValues()),
-                            "data-form-fields-url", wp.cmsUrl(
-                                    "/contentFormFields",
-                                    "typeId", itemType.getId(),
-                                    "id", itemState.getId()));
+                    if (ObjectUtils.isBlank(itemState.getErrorFields())) {
+                        wp.writeElement("input",
+                                "type", "hidden",
+                                "name", dataName,
+                                "value", ObjectUtils.toJson(itemState.getSimpleValues()),
+                                "data-form-fields-url", wp.cmsUrl(
+                                        "/contentFormFields",
+                                        "typeId", itemType.getId(),
+                                        "id", itemState.getId()));
+
+                    } else {
+                        wp.writeFormFields(item);
+                    }
                 wp.writeEnd();
             }
 

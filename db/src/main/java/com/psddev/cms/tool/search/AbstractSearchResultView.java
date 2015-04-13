@@ -8,6 +8,7 @@ import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.cms.tool.CmsTool;
+import com.psddev.cms.tool.QueryRestriction;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.SearchResultItem;
 import com.psddev.cms.tool.SearchResultView;
@@ -22,7 +23,6 @@ import com.psddev.dari.util.StringUtils;
 public abstract class AbstractSearchResultView implements SearchResultView {
 
     private static final String SORT_SETTING_PREFIX = "sort/";
-    private static final String SORT_SHOW_MISSING_SETTING_PREFIX = "sortShowMissing/";
 
     protected ToolPageContext page;
     protected Search search;
@@ -67,6 +67,12 @@ public abstract class AbstractSearchResultView implements SearchResultView {
 
     protected abstract void doWriteHtml() throws IOException;
 
+    protected void writeQueryRestrictionsHtml() throws IOException {
+        for (Class<? extends QueryRestriction> qrc : QueryRestriction.classIterable()) {
+            page.writeQueryRestrictionForm(qrc);
+        }
+    }
+
     protected void writeFieldsHtml() throws IOException {
         ObjectType type = search.getSelectedType();
         ToolUser user = page.getUser();
@@ -92,27 +98,18 @@ public abstract class AbstractSearchResultView implements SearchResultView {
         if (selectedType != null) {
             if (search.getSort() != null) {
                 AuthenticationFilter.Static.putUserSetting(page.getRequest(), SORT_SETTING_PREFIX + selectedType.getId(), search.getSort());
-                AuthenticationFilter.Static.putUserSetting(page.getRequest(), SORT_SHOW_MISSING_SETTING_PREFIX + selectedType.getId(), ObjectUtils.to(String.class, search.isShowMissing()));
 
             } else {
                 Object sortSetting = AuthenticationFilter.Static.getUserSetting(page.getRequest(), SORT_SETTING_PREFIX + selectedType.getId());
 
                 if (!ObjectUtils.isBlank(sortSetting)) {
                     search.setSort(sortSetting.toString());
-
-                    Object showMissingSetting = AuthenticationFilter.Static.getUserSetting(page.getRequest(), SORT_SHOW_MISSING_SETTING_PREFIX + selectedType.getId());
-
-                    if (!ObjectUtils.isBlank(showMissingSetting)) {
-                        search.setShowMissing(ObjectUtils.to(Boolean.class, showMissingSetting));
-                    }
                 }
             }
         }
 
         if (search.getSort() == null) {
             ToolUi ui = selectedType == null ? null : selectedType.as(ToolUi.class);
-
-            search.setShowMissing(true);
 
             if (ui != null && ui.getDefaultSortField() != null) {
                 search.setSort(ui.getDefaultSortField());
@@ -176,21 +173,6 @@ public abstract class AbstractSearchResultView implements SearchResultView {
                             page.writeHtml("Sort: ").writeHtml(label);
                         page.writeEnd();
                     }
-                page.writeEnd();
-
-                page.writeHtml(" ");
-
-                page.writeElement("input",
-                        "id", page.createId(),
-                        "type", "checkbox",
-                        "name", Search.SHOW_MISSING_PARAMETER,
-                        "value", "true",
-                        "checked", search.isShowMissing() ? "checked" : null);
-
-                page.writeHtml(" ");
-
-                page.writeStart("label", "for", page.getId());
-                    page.writeHtml("Show Missing");
                 page.writeEnd();
             page.writeEnd();
         page.writeEnd();

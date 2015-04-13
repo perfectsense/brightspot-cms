@@ -152,28 +152,30 @@ public class ToolUserDashboard extends PageServlet {
                             }
                         }
 
-                        page.writeStart("div",
-                                "class", "p-tud-site",
-                                "data-tab", "Site: " + (currentSite != null ? currentSite.getLabel() : "Global"));
+                        if (sites.size() > 1) {
+                            page.writeStart("div",
+                                    "class", "p-tud-site",
+                                    "data-tab", "Site: " + (currentSite != null ? currentSite.getLabel() : "Global"));
 
-                            page.writeStart("ul", "class", "links");
-                                if (page.hasPermission("site/global")) {
-                                    page.writeStart("li");
-                                        page.writeStart("a", "href", page.url("", "tab", "site"));
-                                            page.writeHtml("Global");
+                                page.writeStart("ul", "class", "links");
+                                    if (page.hasPermission("site/global")) {
+                                        page.writeStart("li");
+                                            page.writeStart("a", "href", page.url("", "tab", "site"));
+                                                page.writeHtml("Global");
+                                            page.writeEnd();
                                         page.writeEnd();
-                                    page.writeEnd();
-                                }
+                                    }
 
-                                for (Site site : sites) {
-                                    page.writeStart("li");
-                                        page.writeStart("a", "href", page.url("", "tab", "site", "id", site.getId()));
-                                            page.writeObjectLabel(site);
+                                    for (Site site : sites) {
+                                        page.writeStart("li");
+                                            page.writeStart("a", "href", page.url("", "tab", "site", "id", site.getId()));
+                                                page.writeObjectLabel(site);
+                                            page.writeEnd();
                                         page.writeEnd();
-                                    page.writeEnd();
-                                }
+                                    }
+                                page.writeEnd();
                             page.writeEnd();
-                        page.writeEnd();
+                        }
                     }
 
                     // Profile.

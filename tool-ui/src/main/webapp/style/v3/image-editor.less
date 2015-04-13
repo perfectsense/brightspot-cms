@@ -1,12 +1,15 @@
 .filePreview {
-  margin-top: 5px;
+  margin-top: @gap-medium;
 }
 
 .imageEditor {
   display: inline-block;
   max-width: 100%;
-  min-height: 300px;
   position: relative;
+
+  .tabs {
+    margin-bottom: @gap-medium;
+  }
 }
 
 .imageEditor-aside {
@@ -84,14 +87,22 @@
     }
 }
 
-.imageEditor-image {
-  margin-right: 160px;
-  min-height: 150px;
+@imageEditor-margin-right: 160px;
 
+.imageEditor-image {
+  margin-right: @imageEditor-margin-right;
+  min-height: 150px;
+  position:relative;
+  
   canvas,
   img {
+    display: block;
     width: 100%;
   }
+}
+
+.imageEditor-text-toolbar {
+  margin-right:@imageEditor-margin-right;
 }
 
 .imageEditor-cover {
@@ -106,6 +117,7 @@
 .imageEditor-sizeButton {
   cursor: pointer;
   overflow: hidden;
+  margin-bottom:1em;
 }
 
 .imageEditor-sizePreview {
@@ -162,6 +174,8 @@
   .icon-plus;
 
   display: none;
+  
+  font-size: 11px;
 
   .imageEditor-sizeSelected & {
     display: block;
@@ -243,4 +257,115 @@
   cursor: e-resize;
   right: -10px;
   top: 50%;
+}
+
+.imageEditor-edit > h2 {
+  display:none;
+}
+
+.imageEditor-tools > h2 {
+  display:none;
+}
+
+.imageEditor-sizes > h2 {
+  display:none;
+}
+
+.imageEditor-adjustment {
+  margin: @gap-medium 0;
+
+  .imageEditor-value {
+    float: right;
+    position: relative;
+    top: @lineHeight-default;
+  }
+
+  ul {
+    list-style-type: none;
+    margin:0;
+  }
+
+  input[type=checkbox] {
+    margin-right:0.5em;
+  }
+
+  input[type=range] {
+    width: 75%;
+  }
+}
+
+.imageEditor-adjustment-icons {
+  list-style-type: none;
+  margin-left: 0;
+
+  li {
+    display:inline;
+    margin-right:0.5em;
+  }
+}
+
+.imageEditor-rotate-left {
+  .icon;
+  .icon-undo;
+}
+.imageEditor-rotate-right {
+  .icon;
+  .icon-repeat;
+}
+.imageEditor-flip-h {
+  .icon;
+  .icon-arrows-h;
+}
+.imageEditor-flip-v {
+  .icon;
+  .icon-arrows-v;
+}
+
+.imageEditor-focus {
+  .imageEditor-image {
+    cursor: crosshair;
+  }
+
+  .imageEditor-aside {
+    background-color: @color-heading;
+    border-radius: 2px;
+    padding: @gap-medium;
+  }
+
+  &:before {
+    @-size: @gap-small;
+    @-double: @-size * 2;
+
+    border-color: transparent @color-heading transparent transparent;
+    border-style: solid;
+    border-width: @-size;
+    content: '';
+    height: @-double;
+    position: absolute;
+    right: 150px;
+    top: @-double;
+    width: @-double;
+  }
+}
+
+.imageEditor-focus-tooltip {
+  background:white;
+  padding:1em;
+  border:1px solid #888;
+  border-radius:5px;
+  position:absolute;
+  z-index:999;
+  opacity:0.8;
+}
+.imageEditor-focus-point {
+  position:absolute;
+  width:12px;
+  height:12px;
+  border:1px solid #000;
+  background-color:@color-change;
+  border-radius:6px;
+
+  // Adjust position to account for half the size of the div
+  margin-left:-6px;
+  margin-top:-6px;
 }

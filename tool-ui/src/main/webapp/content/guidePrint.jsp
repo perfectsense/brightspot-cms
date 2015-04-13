@@ -14,8 +14,6 @@
     com.psddev.cms.db.Content,
     com.psddev.cms.db.ContainerSection,
     com.psddev.cms.db.PageFilter,
-    com.psddev.cms.db.Page,
-    com.psddev.cms.db.Section,
     com.psddev.cms.db.Guide,
     com.psddev.cms.db.GuidePage,
     com.psddev.cms.db.GuideSection,
@@ -37,7 +35,7 @@
         return;
     }
 
-    Page pg = Query.findById(Page.class, wp.uuidParam("templateId"));
+    GuidePage pg = Query.findById(GuidePage.class, wp.uuidParam("pageGuideId"));
     Guide guide = Query.findById(Guide.class, wp.uuidParam("guideId"));
     String widgetTitle = "";
     if (guide != null) {
@@ -46,31 +44,10 @@
         widgetTitle = "Production Guide " + pg.getName();
     }
 
-    List<Page> pages = null;
+    List<GuidePage> pages = null;
     String nextTemplate = "";
     if (guide != null) {
         pages = guide.getTemplatesToIncludeInGuide();
-    }
-
-    // Was there a variation selected?
-    String variationIdStr = wp.param("variationId");
-    UUID variationId = null;
-    Variation selectedVariation = null;
-    if (variationIdStr != null) {
-        variationId = UUID.fromString(variationIdStr);
-        selectedVariation = Query.findById(Variation.class,
-                wp.uuidParam("variationId"));
-    }
-
-    // If a variation was selected, we use that
-    if (selectedVariation != null) {
-        // get the state (if this is a page referencing a template, we need the state of the template object, not the edited object)
-        State pageState = State.getInstance(pg);
-        Map<String, Object> variationData = (Map<String, Object>) pageState
-                .getValue("variations/" + selectedVariation.getId());
-        if (variationData != null) {
-            pageState.getValues().putAll(variationData);
-        }
     }
 
     // --- Presentation ---
@@ -116,15 +93,12 @@
     </h1>
 
     <div class="variation">
-        Variation:
-        <%=selectedVariation != null ? wp
-                    .objectLabel(selectedVariation) : "Default"%>
     </div>
 
 
 
     <%
-        Section section = null;
+        GuideSection section = null;
         int curCnt = 1;
         Iterator iterT = null;
     %>
@@ -146,13 +120,13 @@
                 wp.write("</div>"); //end guideForm-main
                     wp.write("</div>"); //end guideForm-page
 
-                    Page prevT = null;
-                    Page nxtT = null;
-                    Page curT = null;
+                    GuidePage prevT = null;
+                    GuidePage nxtT = null;
+                    GuidePage curT = null;
 
                     iterT = pages.iterator();
                     if (iterT.hasNext()) {
-                        pg = (Page) iterT.next();
+                        pg = (GuidePage) iterT.next();
                     } else {
                         pg = null;
                     }
@@ -165,13 +139,13 @@
                         wp.write("<div>");
                     }
                     wp.write("<div class=\"guideForm-main\">");
-                    StorageItem samplePage = Guide.Static.getSamplePageSnapshot(pg);
+                    StorageItem samplePage = pg.getSamplePageSnapshot();
 
                     wp.write("<div class=\"guideTop\">");
 
                     // Display the Summary Page
                     request.setAttribute("pageProductionGuide",
-                            Guide.Static.getPageProductionGuide(pg));
+                            pg);
                     wp.write("<strong>");
                     if (guide != null) {
                         wp.write("Production Guide: " + guide.getTitle() + "<br/>");
@@ -205,32 +179,19 @@
                     }
 
                     //Get the list of sections that are in the layout
-                    Iterable<Section> sections = null;
+                    Iterable<GuideSection> sections = null;
                     HashMap<UUID, String> nameMap = null;
                     Iterator iter = null;
-                    sections = pg.findSections();
+                    sections = pg.getSectionDescriptions();
                     if (sections != null) {
                         nameMap = Guide.Static.getSectionNameMap(sections);
                         iter = sections.iterator();
                     }
 
                     while (iter != null && iter.hasNext()) {
-                        section = (Section) iter.next();
-                        if (section instanceof ContainerSection) {
-                            continue;
-                        }
+                        section = (GuideSection) iter.next();
 
-                        if (selectedVariation != null) {
-                            State sectionState = State.getInstance(section);
-                            Map<String, Object> variationData = (Map<String, Object>) sectionState
-                                    .getValue("variations/"
-                                            + selectedVariation.getId());
-                            if (variationData != null) {
-                                sectionState.getValues().putAll(variationData);
-                            }
-                        }
-                        GuideSection sectionGuide = Guide.Static.getSectionGuide(
-                                pg, section);
+                        GuideSection sectionGuide = section;
                         if (sectionGuide == null
                                 || sectionGuide.getDescription() == null
                                 || sectionGuide.getDescription().isEmpty()) {
@@ -249,19 +210,19 @@
                             wp.write(pg.getName() + " ");
                         }
                         wp.write("Section: ");
-                        wp.write(section.getName());
+                        wp.write(section.getSectionName());
                         wp.write("</strong></div>"); // end guideTop
             %><div class="guideDescription">
                 <cms:render value="${sectionProductionGuide.description}" />
             </div>
             <%
-                List<Page> references = Guide.Static.getSectionReferences(
+                List<GuidePage> references = Guide.Static.getSectionReferences(
                                 section, pg);
 
                         if (references != null && references.size() > 0) {
                             wp.write("<div class=\"guideModuleReferences\"");
                             wp.write("<p>This module also appears on:</p>");
-                            for (Page reference : references) {
+                            for (GuidePage reference : references) {
                                 wp.write("<li>", reference.getName(), "</li>");
                             }
                             wp.write("</div>");
@@ -278,7 +239,7 @@
                         wp.write("</div>"); // end guideForm-page
                     } // end while section
                     if (guide != null && iterT.hasNext()) {
-                        pg = (Page) iterT.next();
+                        pg = (GuidePage) iterT.next();
                     } else {
                         pg = null;
                     }

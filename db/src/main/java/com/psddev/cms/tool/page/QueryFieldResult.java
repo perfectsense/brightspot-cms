@@ -31,7 +31,15 @@ public class QueryFieldResult extends PageServlet {
         renderer.render();
 
         String pageId = page.createId();
-        Query<?> query = search.toQuery(page.getSite());
+        Query<?> query;
+
+        try {
+            query = search.toQuery(page.getSite());
+
+        } catch (IllegalArgumentException | Query.NoFieldException error) {
+            return;
+        }
+
         State queryState = query.getState();
 
         queryState.put("cms.ui.search", search.getState().getSimpleValues());

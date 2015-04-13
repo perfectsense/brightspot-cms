@@ -518,7 +518,7 @@ writer.start("div", "class", "searchForm");
 
         writer.end();
 
-        if (!ObjectUtils.isBlank(newJsp)) {
+        if (!ObjectUtils.isBlank(newJsp) && (selectedType == null || !selectedType.isAbstract())) {
             writer.start("div", "class", "searchCreate");
                 writer.start("h2").html("Create").end();
 

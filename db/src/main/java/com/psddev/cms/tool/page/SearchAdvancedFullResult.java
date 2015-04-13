@@ -568,7 +568,7 @@ public class SearchAdvancedFullResult extends PageServlet {
             });
 
             try {
-                for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.get(getInternalName())).iterator(); i.hasNext();) {
+                for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(getInternalName())).iterator(); i.hasNext();) {
                     Object value = i.next();
 
                     html.writeObject(value);
@@ -587,7 +587,7 @@ public class SearchAdvancedFullResult extends PageServlet {
 
         @Override
         public void writeCell(State itemState, HtmlWriter writer) throws IOException {
-            for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.get(getInternalName())).iterator(); i.hasNext();) {
+            for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(getInternalName())).iterator(); i.hasNext();) {
                 Object value = i.next();
 
                 writer.writeObject(value);

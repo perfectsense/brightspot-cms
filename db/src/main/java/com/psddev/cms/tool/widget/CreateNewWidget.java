@@ -2,11 +2,11 @@ package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,12 +18,15 @@ import javax.servlet.ServletException;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Site;
+import com.psddev.cms.db.ToolRole;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Singleton;
@@ -47,10 +50,22 @@ public class CreateNewWidget extends DefaultDashboardWidget {
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
         String redirect = page.param(String.class, "redirect");
         CmsTool.CommonContentSettings settings = null;
-        Site site = page.getSite();
+        ToolUser user = page.getUser();
 
-        if (site != null) {
-            settings = site.getCommonContentSettings();
+        if (user != null) {
+            ToolRole role = user.getRole();
+
+            if (role != null) {
+                settings = role.getRoleCommonContentSettings();
+            }
+        }
+
+        if (settings == null) {
+            Site site = page.getSite();
+
+            if (site != null) {
+                settings = site.getCommonContentSettings();
+            }
         }
 
         if (settings == null) {
@@ -123,7 +138,7 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         List<TypeTemplate> collapsed = new ArrayList<TypeTemplate>();
 
         if (page.isFormPost()) {
-            Collection<String> collapsedIds = new HashSet<String>();
+            Set<String> collapsedIds = new HashSet<String>();
 
             for (TypeTemplate typeTemplate : typeTemplates) {
                 if (page.param(boolean.class, typeTemplate.getParameterName())) {
@@ -134,11 +149,11 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 }
             }
 
-            page.putPageSetting("collapsedIds", collapsedIds);
+            user.as(ToolUserCreateNewSettings.class).setCollapsedIds(collapsedIds);
+            user.save();
 
         } else {
-            @SuppressWarnings("unchecked")
-            Collection<String> collapsedIds = (Collection<String>) page.getPageSetting("collapsedIds");
+            Set<String> collapsedIds = user.as(ToolUserCreateNewSettings.class).getCollapsedIds();
 
             if (collapsedIds == null) {
                 favorites = typeTemplates;
@@ -214,7 +229,6 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                     page.writeEnd();
                 page.writeEnd();
 
-                ToolUser user = page.getUser();
                 Set<UUID> automaticallySavedDraftIds = user.getAutomaticallySavedDraftIds();
                 List<Object> automaticallySavedDrafts = Query.
                         from(Object.class).
@@ -350,6 +364,24 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 page.writeEnd();
             }
         page.writeEnd();
+    }
+
+    @FieldInternalNamePrefix("toolUserCreateNewSettings.")
+    private static class ToolUserCreateNewSettings extends Modification<ToolUser> {
+
+        @ToolUi.Hidden
+        private Set<String> collapsedIds;
+
+        public Set<String> getCollapsedIds() {
+            if (collapsedIds == null) {
+                collapsedIds = new LinkedHashSet<>();
+            }
+            return collapsedIds;
+        }
+
+        public void setCollapsedIds(Set<String> collapsedIds) {
+            this.collapsedIds = collapsedIds;
+        }
     }
 
     private static String getTypeTemplateLabel(Map<ObjectType, Integer> typeCounts, TypeTemplate typeTemplate) {

@@ -164,11 +164,23 @@ ToolUser user = wp.getUser();
 ContentLock contentLock = null;
 boolean lockedOut = false;
 boolean editAnyway = wp.param(boolean.class, "editAnyway");
+boolean optInLock = wp.param(boolean.class, "lock");
 
-if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
-        wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
-    contentLock = ContentLock.Static.lock(editing, null, user);
-    lockedOut = !user.equals(contentLock.getOwner());
+if (!wp.getCmsTool().isDisableContentLocking()) {
+    if (wp.getCmsTool().isOptInContentLocking()) {
+        if (optInLock && wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
+            contentLock = ContentLock.Static.lock(editing, null, user);
+            lockedOut = !user.equals(contentLock.getOwner());
+
+        } else {
+            contentLock = ContentLock.Static.findLock(editing, null);
+            lockedOut = contentLock != null && !user.equals(contentLock.getOwner());
+        }
+
+    } else if (wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
+        contentLock = ContentLock.Static.lock(editing, null, user);
+        lockedOut = !user.equals(contentLock.getOwner());
+    }
 }
 
 // --- Presentation ---
@@ -199,6 +211,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     "action-trash", null,
                     "published", null) %>"
             autocomplete="off"
+            data-new="<%= State.getInstance(editing).isNew() %>"
             data-o-id="<%= State.getInstance(selected).getId() %>"
             data-o-label="<%= wp.h(State.getInstance(selected).getLabel()) %>"
             data-o-preview="<%= wp.h(wp.getPreviewThumbnailUrl(selected)) %>"
@@ -256,13 +269,13 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 <div class="widgetControls">
                     <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("") %>">Edit In Full</a>
-                    <% if (Query.from(CmsTool.class).first().isEnableAbTesting()) { %>
+                    <% if (wp.getCmsTool().isEnableAbTesting()) { %>
                         <a class="icon icon-beaker" href="<%= wp.url("", "ab", !wp.param(boolean.class, "ab")) %>">A/B</a>
                     <% } %>
                     <%
-                    GuidePage guide = Guide.Static.getPageProductionGuide(template);
+                    GuidePage guide = Guide.Static.getPageTypeProductionGuide(state.getType());
                     if (guide != null && guide.getDescription() != null && !guide.getDescription().isEmpty()) {
-                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "templateId", template.getId(), "variationId", wp.uuidParam("variationId"), "popup", true), "\">PG</a>");
+                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "pageGuideId", guide.getId(),  "popup", true), "\">PG</a>");
                     }
                     %>
                 </div>
@@ -349,6 +362,14 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
+                    if (!wp.getCmsTool().isDisableContentLocking() && !lockedOut && wp.getCmsTool().isOptInContentLocking()) {
+                        wp.writeStart("a",
+                                "class", "icon icon-only icon-" + (optInLock ? "lock" : "unlock"),
+                                "href", wp.url("", "lock", !optInLock));
+                            wp.writeHtml("Lock");
+                        wp.writeEnd();
+                    }
+
                     wp.writeStart("a",
                             "class", "widget-publishing-tools",
                             "href", wp.objectUrl("/contentTools", editing, "returnUrl", wp.url("")),
@@ -574,7 +595,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeHtml(".");
                             wp.writeEnd();
 
-                            if (!editAnyway) {
+                            if (!editAnyway && !wp.getCmsTool().isOptInContentLocking()) {
                                 wp.writeStart("div", "class", "actions");
                                     wp.writeStart("a",
                                             "class", "icon icon-unlock",

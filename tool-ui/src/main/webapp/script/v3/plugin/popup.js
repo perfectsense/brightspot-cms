@@ -27,6 +27,7 @@
 
       // Bind open and close events.
       $container.bind('open.popup', function() {
+        $.removeData($container[0], 'popup-close-cancelled');
         var $original = $(this);
         var scrollLeft = $original.data('popup-scrollLeft');
         var scrollTop = $original.data('popup-scrollTop');
@@ -51,11 +52,13 @@
 
       $container.bind('close.popup', function() {
         if ($container.is(':visible') &&
-            $container.find('.contentForm .inputContainer.state-changed').length > 0 &&
-            confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {
+            $container.find('.enhancementForm, .contentForm').find('.inputContainer.state-changed').length > 0 &&
+            !confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {
+          $.data($container[0], 'popup-close-cancelled', true);
           return;
         }
 
+        $.removeData($container[0], 'popup-close-cancelled');
         var $original = $(this);
         $original.removeClass('popup-show');
         $('.popup').each(function() {

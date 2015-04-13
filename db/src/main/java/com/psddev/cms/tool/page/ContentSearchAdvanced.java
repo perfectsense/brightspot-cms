@@ -166,7 +166,7 @@ public class ContentSearchAdvanced extends PageServlet {
                         }
 
                     } else {
-                        for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.get(field.getInternalName())).iterator(); i.hasNext();) {
+                        for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(field.getInternalName())).iterator(); i.hasNext();) {
                             Object value = i.next();
                             page.writeObject(value);
                             if (i.hasNext()) {
@@ -486,7 +486,7 @@ public class ContentSearchAdvanced extends PageServlet {
                                                     }
 
                                                 } else {
-                                                    for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.get(field.getInternalName())).iterator(); i.hasNext();) {
+                                                    for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(field.getInternalName())).iterator(); i.hasNext();) {
                                                         Object value = i.next();
                                                         page.writeObject(value);
                                                         if (i.hasNext()) {

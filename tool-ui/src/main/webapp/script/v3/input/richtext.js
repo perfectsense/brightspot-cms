@@ -215,10 +215,11 @@ function($) {
         var $position = $createToolbarGroup('Position');
         $toolbar.append($position);
 
-        $position.append($createEnhancementAction('Move Left', 'moveLeft'));
         $position.append($createEnhancementAction('Move Up', 'moveUp'));
-        $position.append($createEnhancementAction('Move Center', 'moveCenter'));
         $position.append($createEnhancementAction('Move Down', 'moveDown'));
+
+        $position.append($createEnhancementAction('Move Left', 'moveLeft'));
+        $position.append($createEnhancementAction('Move Center', 'moveCenter'));
         $position.append($createEnhancementAction('Move Right', 'moveRight'));
 
         var $imageSize = $createToolbarGroup('Image Size');
@@ -704,6 +705,8 @@ function($) {
                     }
 
                     openLinkDialog($anchor);
+
+                    return false;
                 });
             })();
 
@@ -895,6 +898,7 @@ function($) {
                 textarea.element.className += ' rte-source';
 
                 this.on('focus', function() {
+
                     $(textarea.element).parentsUntil('form').addClass('state-focus');
 
                     for (var i = 0, length = rtes.length; i < length; ++ i) {
@@ -910,6 +914,17 @@ function($) {
                     keepToolbarInView();
                 });
 
+                // When we focus or blur the rich text editor, trigger an event on the textarea
+                // so we can notify the caller
+                
+                this.on('focus', function(){
+                    $(textarea.element).trigger('rtefocus');
+                });
+                
+                this.on('blur', function(){
+                    $(textarea.element).trigger('rteblur');
+                });
+                
                 // Hack to make sure that the proper focus fires when clicking
                 // on an 'empty' region.
                 $(composer.iframe.contentWindow).on('focus', function() {

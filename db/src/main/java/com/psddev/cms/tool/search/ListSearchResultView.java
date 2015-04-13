@@ -93,6 +93,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
             result = search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
         }
 
+        writeQueryRestrictionsHtml();
         writeFieldsHtml();
         writeSortsHtml();
         writePaginationHtml(result);
@@ -183,7 +184,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                         if (sortField != null &&
                                 ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
 
-                            DateTime dateTime = page.toUserDateTime(itemState.get(sortField.getInternalName()));
+                            DateTime dateTime = page.toUserDateTime(itemState.getByPath(sortField.getInternalName()));
 
                             if (dateTime == null) {
                                 page.writeStart("td", "colspan", 2);
@@ -228,7 +229,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                 !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
 
                             String sortFieldName = sortField.getInternalName();
-                            Object value = itemState.get(sortFieldName);
+                            Object value = itemState.getByPath(sortFieldName);
 
                             page.writeStart("td");
                                 if (value instanceof Metric) {
@@ -351,7 +352,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
 
                                     } else {
                                         page.writeStart("td");
-                                            page.writeHtml(itemState.get(fieldName));
+                                            page.writeHtml(itemState.getByPath(fieldName));
                                         page.writeEnd();
                                     }
                                 }

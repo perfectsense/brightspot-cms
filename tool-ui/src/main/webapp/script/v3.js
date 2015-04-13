@@ -43,7 +43,7 @@ require([
   'input/color',
   'input/focus',
   'input/grid',
-  'input/image',
+  'v3/input/image',
   'input/location',
   'v3/input/object',
   'input/query',
@@ -76,7 +76,7 @@ require([
   'content/lock',
   'v3/content/publish',
   'content/layout-element',
-  'content/state',
+  'v3/content/state',
   'v3/tabs' ],
 
 function() {
@@ -697,6 +697,11 @@ function() {
     var $frame = $(event.target);
     var $source = $frame.popup('source');
     var $popup = $frame.popup('container');
+
+    if ($.data($popup[0], 'popup-close-cancelled')) {
+      return;
+    }
+
     var sourceOffset = $source.offset();
     var $parent = $source.closest('.popup, .toolContent');
 

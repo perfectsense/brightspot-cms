@@ -99,8 +99,10 @@ String widthFieldName = fieldName + ".width";
 String heightFieldName = fieldName + ".height";
 String cropsFieldName = fieldName + ".crops";
 
+String action = wp.param(actionName);
+
 Map<String, Object> fieldValueMetadata = null;
-if (fieldValue != null) {
+if (fieldValue != null && (!((Boolean) request.getAttribute("isFormPost")) || "keep".equals(action))) {
     fieldValueMetadata = fieldValue.getMetadata();
 }
 
@@ -167,7 +169,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
     File file = null;
 
     try {
-        String action = wp.param(actionName);
+
         StorageItem newItem = null;
 
         brightness = wp.param(double.class, brightnessName);

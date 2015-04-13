@@ -53,6 +53,23 @@ public class ContentLock extends Record {
         }
 
         /**
+         * Returns the lock associated with the given {@code aspect} of the
+         * given {@code content}.
+         *
+         * @param content Can't be {@code null}.
+         * @param aspect If {@code null}, it's equivalent to an empty string.
+         * @return May be {@code null}.
+         */
+        public static ContentLock findLock(Object content, String aspect) {
+            return Query.
+                    from(ContentLock.class).
+                    where("_id = ?", createLockId(content, aspect)).
+                    master().
+                    noCache().
+                    first();
+        }
+
+        /**
          * Tries to lock the given {@code aspect} of the given {@code content}
          * and associate it to the given {@code newOwner}.
          *

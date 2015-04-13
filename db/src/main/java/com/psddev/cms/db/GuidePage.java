@@ -1,55 +1,86 @@
 package com.psddev.cms.db;
 
-import com.psddev.dari.db.Query;
-import com.psddev.dari.db.Record;
-import com.psddev.dari.db.ReferentialText;
-import com.psddev.dari.util.StorageItem;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.db.Record;
+import com.psddev.dari.db.ReferentialText;
+import com.psddev.dari.util.StorageItem;
+
 /**
- * Production Guide class to hold information about Pages and Templates (objects with layouts)
+ * Production Guide class to hold information about Pages and Templates (objects
+ * with layouts)
  *
  */
-@Record.LabelFields({ "pageType/name" })
+
+@Record.LabelFields({ "name" })
 @Record.BootstrapPackages("Production Guides")
 public class GuidePage extends Record {
 
     private static final Logger LOGGER = LoggerFactory
             .getLogger(GuidePage.class);
 
-    @ToolUi.Note("Page type for Production Guide information. On Save, the Section list will be populated with all non-container sections in the current layout")
+    @ToolUi.Note("Name for this template/page guide")
     @Required
     @Indexed(unique = true)
-    @DisplayName("Template or One-Off Page")
+    @DisplayName("Name")
     @BootstrapFollowReferences
+    String name;
+
+    @ToolUi.Hidden
+    @Deprecated
+    // old association to template - retained
     Page pageType;
+
+    @ToolUi.Note("Content Types associated with this page guide (will be displayable from their Edit form)")
+    @Required
+    @DisplayName("Page Types")
+    @BootstrapFollowReferences
+    @Indexed
+    List<ObjectType> pageTypes;
 
     @ToolUi.Note("Production Guide summary for this page type")
     @DisplayName("Summary")
     ReferentialText description;
 
-    @ToolUi.Note("Sample (Published) Page as documentation example for this page/template")
+    @ToolUi.Note("Sample (Published) Page as documentation example for this page")
     @BootstrapFollowReferences
     private Content samplePage;
 
     @ToolUi.Note("Sample Page snapshot image used for Printouts")
     private StorageItem samplePageSnapshot;
 
-    @ToolUi.Note("Production Guide section descriptions for this page/template")
+    @ToolUi.Note("Production Guide section descriptions for this page")
     @Embedded
     private List<GuideSection> sectionDescriptions;
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Deprecated
     public Page getPageType() {
         return pageType;
     }
 
+    @Deprecated
     public void setPageType(Page pageType) {
         this.pageType = pageType;
+    }
+
+    public List<ObjectType> getPageTypes() {
+        return pageTypes;
+    }
+
+    public void setPageTypes(List<ObjectType> pageTypes) {
+        this.pageTypes = pageTypes;
     }
 
     public ReferentialText getDescription() {
@@ -84,11 +115,19 @@ public class GuidePage extends Record {
         this.samplePageSnapshot = samplePageSnapshot;
     }
 
+    @Override
+    public void beforeSave() {
+        // beforeSave() override left in here for backward compatibility
+        super.beforeSave();
+    }
+
     /**
-     * Return a boolean as to whether the basic information expected for this production guide is available.
+     * Return a boolean as to whether the basic information expected for this
+     * production guide is available.
      */
     public boolean isIncomplete() {
-        if (this.getSamplePage() == null || this.getSamplePage().getPermalink() == null) {
+        if (this.getSamplePage() == null ||
+                this.getSamplePage().getPermalink() == null) {
             return true;
         }
         if (this.getDescription() == null || this.getDescription().isEmpty()) {
@@ -97,107 +136,47 @@ public class GuidePage extends Record {
         return false;
     }
 
+    @Deprecated
     public ReferentialText getSectionDescription(Section section) {
-        if (section != null) {
-            GuideSection gs = findOrCreateSectionGuide(section);
-            if (gs != null) {
-                return gs.getDescription();
-            }
-        }
         return null;
     }
 
+    @Deprecated
     public ReferentialText getSectionTips(Section section) {
-        if (section != null) {
-            GuideSection gs = findOrCreateSectionGuide(section);
-            if (gs != null) {
-                return gs.getTips();
-            }
-        }
         return null;
     }
 
     /**
-     * Return the GuideSection entry that matches the given {@code section} of the template
-     * associated with this guide object. If none exists, create one.
+     * Return the GuideSection entry that matches the given {@code section} of
+     * the template associated with this guide object. If none exists, create
+     * one.
+     * @deprecated template section guides no longer automatically created
      */
+    @Deprecated
     public GuideSection findOrCreateSectionGuide(Section section) {
-        if (section instanceof ContainerSection) {
-            return null;
-        }
-        // Only allowed to create a production guide for a named section
-        if (section.getName() == null || section.getName().isEmpty()) {
-            return null;
-        }
-        if (sectionDescriptions == null) {
-            sectionDescriptions = new ArrayList<GuideSection>();
-        }
-        if (!sectionDescriptions.isEmpty()) {
-            for (GuideSection gs : sectionDescriptions) {
-                if (gs.getSectionName() != null &&
-                        gs.getSectionName().equals(section.getName())) {
-                    return gs;
-                }
-            }
-        }
-        // else create it
-        GuideSection gs = new GuideSection();
-        gs.setSectionName(section.getName());
-        sectionDescriptions.add(gs);
-        return gs;
+        return null;
     }
 
     /**
-     * Create a GuideSection entry in the sectionList for all sections in the object's
-     * referenced page/template.
+     * Create a GuideSection entry in the sectionList for all sections in the
+     * object's referenced page/template.
+     * @deprecated template section guides no longer automatically created
      */
+    @Deprecated
     public void generateSectionDescriptionList() {
-        // Create an entry for each field
-        Page type = getPageType();
-        if (type != null) {
-            Iterable<Section> sections = type.findSections();
-            if (sections != null) {
-                for (Section section : sections) {
-                    findOrCreateSectionGuide(section);
-                }
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.psddev.dari.db.Record#beforeSave()
-     */
-    public void beforeSave() {
-        generateSectionDescriptionList();
     }
 
     /** Static utility methods. */
     public static final class Static {
-
         /**
-         * Generate any missing guides for existing templates
+         * - * Generate any missing guides for existing templates -
+         * @deprecated template guides no longer automatically created
          */
-        public static synchronized void createDefaultTemplateGuides() {
-            List<GuidePage> pageGuides = Query.from(GuidePage.class).selectAll();
-            List<Template> templates = Query.from(Template.class).selectAll();
-            // eliminate templates that already have guides
-            for (GuidePage guide : pageGuides) {
-                int i = templates.indexOf(guide.getPageType());
-                if (i >= 0) {
-                    templates.remove(i);
-                }
-            }
-            if (!templates.isEmpty()) {
-                for (Template template : templates) {
-                    GuidePage newGuide = new GuidePage();
-                    newGuide.setPageType(template);
-                    newGuide.saveImmediately();
-                }
-            }
+        @Deprecated
+        public static void createDefaultTemplateGuides() {
             return;
         }
+
     }
 
 }

@@ -171,7 +171,6 @@ public class Search extends Record {
         setSort(page.param(String.class, SORT_PARAMETER));
         setShowDrafts(page.param(boolean.class, SHOW_DRAFTS_PARAMETER));
         setVisibilities(page.params(String.class, VISIBILITIES_PARAMETER));
-        setShowMissing(page.param(boolean.class, SHOW_MISSING_PARAMETER));
         setSuggestions(page.param(boolean.class, SUGGESTIONS_PARAMETER));
         setOffset(page.param(long.class, OFFSET_PARAMETER));
         setLimit(page.paramOrDefault(int.class, LIMIT_PARAMETER, 10));
@@ -317,10 +316,12 @@ public class Search extends Record {
         this.visibilities = visibilities;
     }
 
+    @Deprecated
     public boolean isShowMissing() {
         return showMissing;
     }
 
+    @Deprecated
     public void setShowMissing(boolean showMissing) {
         this.showMissing = showMissing;
     }
@@ -636,10 +637,6 @@ public class Search extends Record {
 
                 } else {
                     query.sortDescending(sortName);
-                }
-
-                if (!isShowMissing()) {
-                    query.and(sortName + " != missing");
                 }
             }
         }
@@ -960,6 +957,10 @@ public class Search extends Record {
 
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.updateSearchQuery(this, query);
+        }
+
+        if (page != null) {
+            QueryRestriction.updateQueryUsingAll(query, page);
         }
 
         return query;
