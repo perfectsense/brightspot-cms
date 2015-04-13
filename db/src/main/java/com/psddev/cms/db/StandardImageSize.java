@@ -14,6 +14,8 @@ import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.psddev.dari.db.Predicate;
+import com.psddev.dari.db.PredicateParser;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.State;
@@ -170,15 +172,20 @@ public class StandardImageSize extends Record {
         State state = this.getState();
         StandardImageSize duplicate;
 
+        Query<StandardImageSize> baseQuery = Query.from(StandardImageSize.class).where("id != ?", this.getId());
+        Predicate internalNamePredicate = PredicateParser.Static.parse("internalName = ?", this.getInternalName());
+        Predicate displayNamePredicate = PredicateParser.Static.parse("displayName = ?", this.getDisplayName());
+
         if (ObjectUtils.isBlank(consumers)) {
 
-            duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("internalName = ?", this.getInternalName()).first();
+            Query<StandardImageSize> globalDuplicateQuery = baseQuery.clone().and(Site.CONSUMERS_FIELD + " is missing");
+            duplicate = globalDuplicateQuery.clone().and(internalNamePredicate).first();
 
-            if(duplicate != null) {
+            if (duplicate != null) {
                 state.addError(state.getField("internalName"), "Must be unique, duplicate found at " + duplicate.getId());
             }
 
-            duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("displayName = ?", this.getDisplayName()).first();
+            duplicate = globalDuplicateQuery.clone().and(displayNamePredicate).first();
 
             if (duplicate != null) {
                 state.addError(state.getField("displayName"), "Must be unique, duplicate found at " + duplicate.getId());
@@ -187,16 +194,17 @@ public class StandardImageSize extends Record {
             return;
         }
 
-        duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("internalName = ?", this.getInternalName()).first();
+        Query<StandardImageSize> siteDuplicateQuery = baseQuery.clone().and(Site.CONSUMERS_FIELD + " = ?", consumers);
+        duplicate = siteDuplicateQuery.clone().and(internalNamePredicate).first();
 
         if (duplicate != null) {
-            this.getState().addError(state.getField("internalName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
+            this.getState().addError(state.getField("internalName"), "Must be unique per site, but duplicate found at " + duplicate.getId());
         }
 
-        duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("displayName = ?", this.getDisplayName()).first();
+        duplicate = siteDuplicateQuery.clone().and(displayNamePredicate).first();
 
         if (duplicate != null) {
-            this.getState().addError(state.getField("displayName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
+            this.getState().addError(state.getField("displayName"), "Must be unique per site, but duplicate found at " + duplicate.getId());
         }
     }
 }
