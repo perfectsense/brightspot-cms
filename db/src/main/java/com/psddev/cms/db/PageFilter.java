@@ -47,6 +47,7 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.Profiler;
 import com.psddev.dari.util.PullThroughCache;
+import com.psddev.dari.util.RequestNormalizer;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
@@ -1719,6 +1720,17 @@ public class PageFilter extends AbstractFilter {
             pathBuilder.append(path.substring(lastEnd));
             PageFilter.Static.setPath(request, pathBuilder.toString());
             return true;
+        }
+    }
+
+    /** If the mainObject implements RequestNormalizer, run it. */
+    public static class MainObjectRequestNormalizer implements RequestNormalizer.Global {
+        @Override
+        public void normalizeRequest(NormalizingRequest request) {
+            Object mainObject = PageFilter.Static.getMainObject(request);
+            if (mainObject instanceof RequestNormalizer && !(mainObject instanceof RequestNormalizer.Global)) {
+                ((RequestNormalizer) mainObject).normalizeRequest(request);
+            }
         }
     }
 
