@@ -2,7 +2,6 @@ package com.psddev.cms.db;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,6 +16,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
 
 /** Represents a standard image size. */
@@ -66,34 +66,6 @@ public class StandardImageSize extends Record {
 
     private CropOption cropOption;
     private ResizeOption resizeOption;
-
-    @Indexed(unique = true)
-    public Set<String> internalNameAndSiteKeys() {
-        Set<String> compoundKeys = new HashSet<>();
-        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
-
-        if (!ObjectUtils.isBlank(consumers)) {
-            consumers.forEach(site -> compoundKeys.add(this.getInternalName() + "/" + site.getId()));
-        } else {
-            compoundKeys.add(this.getInternalName() + "/");
-        }
-
-        return compoundKeys;
-    }
-
-    @Indexed(unique = true)
-    public Set<String> displayNameAndSiteKeys() {
-        Set<String> compoundKeys = new HashSet<>();
-        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
-
-        if (!ObjectUtils.isBlank(consumers)) {
-            consumers.forEach(site -> compoundKeys.add(this.getDisplayName() + "/" + site.getId()));
-        }  else {
-            compoundKeys.add(this.getDisplayName() + "/");
-        }
-
-        return compoundKeys;
-    }
 
     public static List<StandardImageSize> findAll() {
         try {
@@ -194,9 +166,40 @@ public class StandardImageSize extends Record {
     @Override
     public void beforeSave() {
 
-        Site.ObjectModification siteAccessData = this.as(Site.ObjectModification.class);
-        if (ObjectUtils.isBlank(siteAccessData.getConsumers())) {
-            siteAccessData.setGlobal(true);
+        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
+        StandardImageSize duplicate;
+
+        if (ObjectUtils.isBlank(consumers)) {
+
+            duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("internalName = ?", this.getInternalName()).first();
+
+            if(duplicate != null) {
+                State state = this.getState();
+                state.addError(state.getField("internalName"), "Must be unique, duplicate found at " + duplicate.getId());
+            }
+
+            duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("displayName = ?", this.getDisplayName()).first();
+
+            if (duplicate != null) {
+                State state = this.getState();
+                state.addError(state.getField("displayName"), "Must be unique, duplicate found at " + duplicate.getId());
+            }
+
+            return;
+        }
+
+        duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("internalName = ?", this.getInternalName()).first();
+
+        if (duplicate != null) {
+            State state = this.getState();
+            this.getState().addError(state.getField("internalName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
+        }
+
+        duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("displayName = ?", this.getDisplayName()).first();
+
+        if (duplicate != null) {
+            State state = this.getState();
+            this.getState().addError(state.getField("displayName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
         }
     }
 }
