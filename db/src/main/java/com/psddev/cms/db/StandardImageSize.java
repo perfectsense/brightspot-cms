@@ -167,6 +167,7 @@ public class StandardImageSize extends Record {
     public void beforeSave() {
 
         Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
+        State state = this.getState();
         StandardImageSize duplicate;
 
         if (ObjectUtils.isBlank(consumers)) {
@@ -174,14 +175,12 @@ public class StandardImageSize extends Record {
             duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("internalName = ?", this.getInternalName()).first();
 
             if(duplicate != null) {
-                State state = this.getState();
                 state.addError(state.getField("internalName"), "Must be unique, duplicate found at " + duplicate.getId());
             }
 
             duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " is missing").and("displayName = ?", this.getDisplayName()).first();
 
             if (duplicate != null) {
-                State state = this.getState();
                 state.addError(state.getField("displayName"), "Must be unique, duplicate found at " + duplicate.getId());
             }
 
@@ -191,14 +190,12 @@ public class StandardImageSize extends Record {
         duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("internalName = ?", this.getInternalName()).first();
 
         if (duplicate != null) {
-            State state = this.getState();
             this.getState().addError(state.getField("internalName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
         }
 
         duplicate = Query.from(StandardImageSize.class).where("id != ?", this.getId()).and(Site.CONSUMERS_FIELD + " = ?", consumers).and("displayName = ?", this.getDisplayName()).first();
 
         if (duplicate != null) {
-            State state = this.getState();
             this.getState().addError(state.getField("displayName"), "Must be unique per site, but duplicate found at " +duplicate.getId());
         }
     }
