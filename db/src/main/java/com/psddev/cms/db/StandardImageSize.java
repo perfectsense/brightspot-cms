@@ -85,7 +85,7 @@ public class StandardImageSize extends Record {
         StandardImageSize size = null;
 
         try {
-            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? Optional.of(site.getId()) : Optional.absent());
+            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? Optional.of(site.getId()) : Optional.<UUID>absent());
 
             if (!ObjectUtils.isBlank(sizes)) {
                 size = sizes.get(internalName);
@@ -94,7 +94,7 @@ public class StandardImageSize extends Record {
             //fall back to global image sizes
             if (site != null && size == null) {
 
-                sizes = IMAGE_SIZES.get(null);
+                sizes = IMAGE_SIZES.get(Optional.<UUID>absent());
 
                 if (!ObjectUtils.isBlank(sizes)) {
                     size = sizes.get(internalName);
