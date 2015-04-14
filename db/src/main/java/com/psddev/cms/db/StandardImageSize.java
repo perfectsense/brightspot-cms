@@ -178,12 +178,14 @@ public class StandardImageSize extends Record {
         query.and("internalName = ? || displayName = ?", this.getInternalName(), this.getDisplayName());
 
         if (ObjectUtils.isBlank(consumers)) {
-            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " is missing").first();
+            query.and(Site.CONSUMERS_FIELD + " is missing");
             errorMessage = "Must be unique, but duplicate found at ";
         } else {
-            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " = ?", consumers).first();
+            query.and(Site.CONSUMERS_FIELD + " = ?", consumers);
             errorMessage = "Must be unique per site, but duplicate found at ";
         }
+
+        duplicate = query.first();
 
         if (duplicate != null) {
             errorMessage += duplicate.getId();
