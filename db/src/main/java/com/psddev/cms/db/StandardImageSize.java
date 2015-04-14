@@ -15,8 +15,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.psddev.dari.db.ObjectField;
-import com.psddev.dari.db.Predicate;
-import com.psddev.dari.db.PredicateParser;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.State;
@@ -175,18 +173,20 @@ public class StandardImageSize extends Record {
         String errorMessage;
         StandardImageSize duplicate;
 
-        Query<StandardImageSize> query = Query.from(StandardImageSize.class).where("id != ?", this.getId());
-        Predicate namesPredicate = PredicateParser.Static.parse("internalName = ? || displayName = ?", this.getInternalName(), this.getDisplayName());
+        Query<StandardImageSize> query = Query.from(StandardImageSize.class);
+        query.where("id != ?", this.getId());
+        query.and("internalName = ? || displayName = ?", this.getInternalName(), this.getDisplayName());
 
         if (ObjectUtils.isBlank(consumers)) {
-            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " is missing").and(namesPredicate).first();
-            errorMessage = "Must be unique, but duplicate found at " + duplicate.getId();
+            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " is missing").first();
+            errorMessage = "Must be unique, but duplicate found at ";
         } else {
-            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " = ?", consumers).and(namesPredicate).first();
-            errorMessage = "Must be unique per site, but duplicate found at " + duplicate.getId();
+            duplicate = query.clone().and(Site.CONSUMERS_FIELD + " = ?", consumers).first();
+            errorMessage = "Must be unique per site, but duplicate found at ";
         }
 
         if (duplicate != null) {
+            errorMessage += duplicate.getId();
             errorField = this.getInternalName().equals(duplicate.getInternalName()) ? state.getField("internalName") : state.getField("displayName");
             state.addError(errorField, errorMessage);
         }
