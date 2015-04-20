@@ -52,6 +52,11 @@ public class StorageItemField extends PageServlet {
 
     public static void reallyDoService(ToolPageContext page) throws IOException, ServletException {
 
+        if (page.isFormPost()) {
+            doFormPost(page);
+            return;
+        }
+
         HttpServletRequest request = page.getRequest();
         Object object = request.getAttribute("object");
         State state = State.getInstance(object);
@@ -60,7 +65,9 @@ public class StorageItemField extends PageServlet {
         String fieldName = field.getInternalName();
         StorageItem fieldValue = (StorageItem) state.getValue(fieldName);
 
-        writeFileSelector(page);
+        page.writeStart("div", "class", "inputSmall");
+            writeFileSelector(page);
+        page.writeEnd();
 
         if (fieldValue != null) {
             FilePreview.reallyDoService(page);

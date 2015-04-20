@@ -1,13 +1,5 @@
 <%@ page session="false" import="com.psddev.cms.tool.ToolPageContext, com.psddev.cms.tool.page.StorageItemField" %>
 
 <%
-    ToolPageContext wp = new ToolPageContext(pageContext);
-    if (wp.isFormPost()) {
-        StorageItemField.doFormPost(wp);
-        return;
-    }
+    StorageItemField.reallyDoService(new ToolPageContext(pageContext));
 %>
-
-<div class="inputSmall">
-    <% StorageItemField.reallyDoService(wp); %>
-</div>
