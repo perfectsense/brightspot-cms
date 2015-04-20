@@ -72,9 +72,18 @@ $.plugin2('sortable', {
                 $selected.hide();
                 data.$dragCover.hide();
 
-                $drop = $.elementFromPoint(event.clientX, event.clientY).closest('._sortable-item');
+                var dropPoint = $.elementFromPoint(event.clientX, event.clientY)[0];
 
-                if ($drop.closest('._sortable')[0] != container) {
+                if (dropPoint) {
+                  $container.find(options.itemSelector).each(function() {
+                    if ($.contains(this, dropPoint)) {
+                      $drop = $(this);
+                      return false;
+                    }
+                  });
+                }
+
+                if (!$drop ||  $drop.closest('._sortable')[0] != container) {
                     $drop = $();
                 }
 

@@ -66,10 +66,12 @@
 #calendar > .time > .hour,
 #calendar > .time > .minute {
   margin-right: 5px;
-  width: 52px;
+  max-width: none;
+  width: 60px;
 }
 #calendar > .time > .meridiem {
-  width: 57px;
+  max-width: none;
+  width: 60px;
 }
 #calendar > .empty {
   bottom: 0;
@@ -184,13 +186,16 @@
         border-radius: 1px;
         border-left: 1px solid @color-border;
         border-top: 1px solid @color-border;
-        //border: 0 0 1px 1px solid @color-border;
         box-sizing: border-box;
         padding: 8px;
         position: relative;
 
         &:last-child {
           border-right: 1px solid @color-border;
+        }
+
+        &.other-month {
+          background: @color-heading;
         }
       }
 
@@ -229,8 +234,23 @@
         float: left;
         opacity: 0.28;
       }
+
       .calendarDayOfMonth {
         float: right;
+      }
+
+      .calendarDay-today {
+        .calendarDayOfMonth {
+          color: white;
+          background: black;
+          padding: 0 1px;
+        }
+      }
+
+      .other-month {
+        .calendarDayOfMonth {
+          opacity: 0.28;
+        }
       }
 
       .calendarEventsContainer {

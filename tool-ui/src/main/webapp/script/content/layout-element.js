@@ -64,6 +64,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             $fields.hide();
             $label.addClass('inputLayout-label-selected');
             $field.show();
+            $field.trigger('resize');
           }
         });
 

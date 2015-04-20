@@ -54,14 +54,17 @@
 .toolTitle {
   @-height: @toolHeader-height - 20px;
 
-  font-size: @-height;
+  font-size: (@-height / 2);
   font-weight: bold;
   height: @-height;
   left: 65px;
   line-height: @-height;
+  overflow: hidden;
   position: absolute;
+  text-overflow: ellipsis;
   text-transform: uppercase;
   top: ((@toolHeader-height - @-height) / 2);
+  white-space: nowrap;
   width: (@length-toolTitle-width - 40px);
 
   .link {
@@ -173,7 +176,7 @@
   left: (@length-toolTitle-width + 60);
   top: ((@toolHeader-height - @input-height) / 2);
   transition: width @time-fast;
-  width: @length-searchControlsWidth;
+  width: @search-controls-width-large;
 
   .toolHeader-hasEnvironment & {
     right: 52px;
@@ -324,41 +327,6 @@
   &:before {
     line-height: @-size;
     padding: 0;
-  }
-}
-
-.toolNav-popup {
-  left: 0 !important;
-  margin: 4px 0 0 0 !important;
-  max-width: none !important;
-  position: fixed !important;
-  top: (@toolHeader-height - 14) !important;
-  width: auto !important;
-  z-index: 101 !important;
-
-  .hasToolBroadcast & {
-    top: (@toolBroadcast-height + @toolHeader-height - 14) !important;
-  }
-
-  &:before {
-    top: @toolHeader-height !important;
-
-    .hasToolBroadcast & {
-      top: (@toolBroadcast-height + @toolHeader-height) !important;
-    }
-  }
-
-  > .content {
-    border-radius: 0 !important;
-    border-bottom-right-radius: 2px !important;
-    border-style: none !important;
-    border-top: 2px solid @color-separator !important;
-    box-shadow: 0 40px 80px -40px black !important;
-    padding: 0 !important;
-
-    > .closeButton {
-      display: none;
-    }
   }
 }
 

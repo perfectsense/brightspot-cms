@@ -30,6 +30,7 @@ import com.psddev.dari.db.State;
 import com.psddev.dari.util.AggregateException;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CollectionUtils;
+import com.psddev.dari.util.DimsImageEditor;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ImageMetadataMap;
 import com.psddev.dari.util.IoUtils;
@@ -88,11 +89,11 @@ public class ImageFileType implements FileContentType {
         String action = page.param(actionName);
 
         Map<String, Object> fieldValueMetadata = null;
-        if (fieldValue != null) {
+        if (fieldValue != null && (!((Boolean) request.getAttribute("isFormPost")) || "keep".equals(action))) {
             fieldValueMetadata = fieldValue.getMetadata();
         }
 
-        if (fieldValueMetadata == null && (!(Boolean) request.getAttribute("isFormPost")) || "keep".equals(action)) {
+        if (fieldValueMetadata == null) {
             fieldValueMetadata = new LinkedHashMap<String, Object>();
         }
 
@@ -398,7 +399,7 @@ public class ImageFileType implements FileContentType {
                 page.writeStart("li");
                     page.writeStart("a",
                             "class", "icon icon-crop",
-                            "href", page.h(page.url("/contentImage", "id", id, "field", fieldName)),
+                            "href", page.h(page.url("/contentImages", "data", ObjectUtils.toJson(fieldValue))),
                             "target", "contentImages");
                         page.write("View Resized");
                     page.writeEnd();
@@ -521,12 +522,19 @@ public class ImageFileType implements FileContentType {
             }
         }
 
+        ImageEditor defaultImageEditor = ImageEditor.Static.getDefault();
+        boolean centerCrop = !(defaultImageEditor instanceof DimsImageEditor) || ((DimsImageEditor) defaultImageEditor).isUseLegacyThumbnail();
+
+        if (crops.isEmpty()) {
+            return;
+        }
+
         page.writeStart("div", "class", "imageEditor-sizes");
             page.writeStart("h2");
                 page.write("Standard Sizes");
             page.writeEnd();
 
-            page.writeStart("table");
+            page.writeStart("table", "data-crop-center", centerCrop);
                 page.writeStart("tbody");
                     for (Map.Entry<String, ImageCrop> e : crops.entrySet()) {
                         String cropId = e.getKey();

@@ -112,10 +112,15 @@ if (!paths.isEmpty() &&
         for (Directory.Path path : paths) {
             Site pathSite = path.getSite();
             String pathPath = path.getPath();
-            String href = pathSite != null ? pathSite.getPrimaryUrl() + pathPath : pathPath;
+            String externalUrl = Directory.extractExternalUrl(pathPath);
+            String href = null;
 
-            while (href.endsWith("*")) {
-                href = href.substring(0, href.length() - 1);
+            if (externalUrl == null) {
+                href = pathSite != null ? pathSite.getPrimaryUrl() + pathPath : pathPath;
+
+                while (href.endsWith("*")) {
+                    href = href.substring(0, href.length() - 1);
+                }
             }
 
             wp.writeStart("li", "class", "widget-urlsItem");
@@ -126,9 +131,16 @@ if (!paths.isEmpty() &&
                         "value", pathPath);
 
                 wp.writeStart("div", "class", "widget-urlsItemLabel");
-                    wp.writeStart("a", "href", href, "target", "_blank");
-                        wp.writeHtml(pathPath);
-                    wp.writeEnd();
+                    if (externalUrl == null) {
+                        wp.writeStart("a", "href", href, "target", "_blank");
+                            wp.writeHtml(pathPath);
+                        wp.writeEnd();
+
+                    } else {
+                        wp.writeStart("a", "href", externalUrl, "target", "_blank");
+                            wp.writeHtml(externalUrl);
+                        wp.writeEnd();
+                    }
 
                     wp.writeStart("label",
                             "class", "widget-urlsItemRemove");

@@ -4,7 +4,7 @@
     "bsp-autosubmit": "1.0.0",
     "bsp-utils": "2.0.1",
     "codemirror": "4.2.0",
-    "css-element-queries": "0.1",
+    "css-element-queries": "4250c87c5ab2efd467f99d901252c73eb6bb80ea",
     "d3": "3.4.6",
     "handsontable": "0.8.23",
     "husl": "4.0.0",

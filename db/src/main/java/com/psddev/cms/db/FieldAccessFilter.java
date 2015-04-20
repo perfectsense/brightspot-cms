@@ -16,10 +16,10 @@ import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.AbstractFilter;
+import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.JspBufferFilter;
 import com.psddev.dari.util.LazyWriterResponse;
 import com.psddev.dari.util.ObjectUtils;
-import com.psddev.dari.util.StringUtils;
 
 /**
  * Internal filter that adds {@code <span data-field>} to the response
@@ -153,10 +153,7 @@ public class FieldAccessFilter extends AbstractFilter {
          * @return Never blank.
          */
         public static String createMarkerHtml(State state, String name) {
-            StringBuilder marker = new StringBuilder();
-
-            marker.append("<span style=\"display: none;\"");
-
+            Map<String, Object> markerData = new CompactMap<>();
             ObjectType type = state.getType();
 
             if (type != null) {
@@ -168,24 +165,16 @@ public class FieldAccessFilter extends AbstractFilter {
                     if (ObjectField.TEXT_TYPE.equals(fieldType)) {
                         Object value = state.get(name);
 
-                        marker.append(" data-cms-field-text=\"");
-
                         if (value != null) {
-                            marker.append(StringUtils.escapeHtml(value.toString()));
+                            markerData.put("text", value.toString());
                         }
-
-                        marker.append("\"");
                     }
                 }
             }
 
-            marker.append(" data-name=\"");
-            marker.append(StringUtils.escapeHtml(state.getId().toString()));
-            marker.append("/");
-            marker.append(StringUtils.escapeHtml(name));
-            marker.append("\">");
-            marker.append("</span>");
-            return marker.toString();
+            markerData.put("name", state.getId().toString() + "/" + name);
+
+            return "<!--brightspot.field-access " + ObjectUtils.toJson(markerData) + "-->";
         }
 
         /**

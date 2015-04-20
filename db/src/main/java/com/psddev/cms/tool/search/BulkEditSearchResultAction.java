@@ -49,8 +49,6 @@ public class BulkEditSearchResultAction implements SearchResultAction {
                 itemTypeIds.add(State.getInstance(item).getTypeId());
             }
 
-            System.out.println("itemTypeIds: " + itemTypeIds);
-
             if (itemTypeIds.size() != 1) {
                 return;
 
@@ -62,7 +60,7 @@ public class BulkEditSearchResultAction implements SearchResultAction {
         } else if (search != null) {
             ObjectType type = search.getSelectedType();
 
-            if (type == null) {
+            if (type == null || type.isAbstract()) {
                 return;
 
             } else {

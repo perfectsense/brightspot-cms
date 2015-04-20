@@ -42,7 +42,6 @@ public class SearchResultRenderer {
     private static final String MAX_SUM_ATTRIBUTE = ATTRIBUTE_PREFIX + ".maximumSum";
     private static final String TAXON_PARENT_ID_PARAMETER = "taxonParentId";
     private static final String SORT_SETTING_PREFIX = "sort/";
-    private static final String SORT_SHOW_MISSING_SETTING_PREFIX = "sortShowMissing/";
 
     protected final ToolPageContext page;
 
@@ -54,6 +53,7 @@ public class SearchResultRenderer {
     protected final boolean showSiteLabel;
     protected final boolean showTypeLabel;
     protected final PaginatedResult<?> result;
+    protected final Exception queryError;
 
     @SuppressWarnings("deprecation")
     public SearchResultRenderer(ToolPageContext page, Search search) throws IOException {
@@ -65,44 +65,22 @@ public class SearchResultRenderer {
         ToolUi ui = selectedType == null ? null : selectedType.as(ToolUi.class);
         PaginatedResult<?> result = null;
 
-        if (selectedType != null) {
-            if (search.getSort() != null) {
-                AuthenticationFilter.Static.putUserSetting(page.getRequest(), SORT_SETTING_PREFIX + selectedType.getId(), search.getSort());
-                AuthenticationFilter.Static.putUserSetting(page.getRequest(), SORT_SHOW_MISSING_SETTING_PREFIX + selectedType.getId(), ObjectUtils.to(String.class, search.isShowMissing()));
+        if (ui != null && ui.getDefaultSortField() != null) {
+            search.setSort(ui.getDefaultSortField());
+
+        } else if (!ObjectUtils.isBlank(search.getQueryString())) {
+            search.setSort(Search.RELEVANT_SORT_VALUE);
+
+        } else {
+            Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
+
+            if (f != null &&
+                    (f.get("") != null ||
+                    f.get("x") != null)) {
+                search.setSort("cms.content.publishDate");
 
             } else {
-                Object sortSetting = AuthenticationFilter.Static.getUserSetting(page.getRequest(), SORT_SETTING_PREFIX + selectedType.getId());
-
-                if (!ObjectUtils.isBlank(sortSetting)) {
-                    search.setSort(sortSetting.toString());
-                    Object showMissingSetting = AuthenticationFilter.Static.getUserSetting(page.getRequest(), SORT_SHOW_MISSING_SETTING_PREFIX + selectedType.getId());
-                    if (!ObjectUtils.isBlank(showMissingSetting)) {
-                        search.setShowMissing(ObjectUtils.to(Boolean.class, showMissingSetting));
-                    }
-                }
-            }
-        }
-
-        if (search.getSort() == null) {
-            search.setShowMissing(true);
-
-            if (ui != null && ui.getDefaultSortField() != null) {
-                search.setSort(ui.getDefaultSortField());
-
-            } else if (!ObjectUtils.isBlank(search.getQueryString())) {
-                search.setSort(Search.RELEVANT_SORT_VALUE);
-
-            } else {
-                Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
-
-                if (f != null &&
-                        (f.get("") != null ||
-                        f.get("x") != null)) {
-                    search.setSort("cms.content.publishDate");
-
-                } else {
-                    search.setSort("cms.content.updateDate");
-                }
+                search.setSort("cms.content.updateDate");
             }
         }
 
@@ -132,11 +110,31 @@ public class SearchResultRenderer {
             this.showTypeLabel = search.findValidTypes().size() != 1;
         }
 
-        this.result = result != null ? result : search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
+        Exception queryError = null;
+
+        if (result == null) {
+            try {
+                result = search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
+
+            } catch (IllegalArgumentException | Query.NoFieldException error) {
+                queryError = error;
+            }
+        }
+
+        this.result = result;
+        this.queryError = queryError;
     }
 
     @SuppressWarnings("unchecked")
     public void render() throws IOException {
+        if (queryError != null) {
+            page.writeStart("div", "class", "message message-error");
+            page.writeHtml("Invalid advanced query: ");
+            page.writeHtml(queryError.getMessage());
+            page.writeEnd();
+            return;
+        }
+
         boolean resultsDisplayed = false;
         int level = page.paramOrDefault(int.class, TAXON_LEVEL_PARAMETER, 1);
 
@@ -330,23 +328,6 @@ public class SearchResultRenderer {
                 }
             page.writeEnd();
 
-            if (sortField != null) {
-                page.writeHtml(" ");
-
-                page.writeElement("input",
-                        "id", page.createId(),
-                        "type", "checkbox",
-                        "name", Search.SHOW_MISSING_PARAMETER,
-                        "value", "true",
-                        "checked", search.isShowMissing() ? "checked" : null);
-
-                page.writeHtml(" ");
-
-                page.writeStart("label", "for", page.getId());
-                    page.writeHtml("Show Missing");
-                page.writeEnd();
-            }
-
         page.writeEnd();
     }
 
@@ -498,7 +479,7 @@ public class SearchResultRenderer {
 
             if (sortField != null &&
                     ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
-                DateTime dateTime = page.toUserDateTime(itemState.get(sortField.getInternalName()));
+                DateTime dateTime = page.toUserDateTime(itemState.getByPath(sortField.getInternalName()));
 
                 if (dateTime == null) {
                     page.writeStart("td", "colspan", 2);
@@ -542,7 +523,7 @@ public class SearchResultRenderer {
             if (sortField != null &&
                     !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
                 String sortFieldName = sortField.getInternalName();
-                Object value = itemState.get(sortFieldName);
+                Object value = itemState.getByPath(sortFieldName);
 
                 page.writeStart("td");
                     if (value instanceof Metric) {

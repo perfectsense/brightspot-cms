@@ -1,5 +1,6 @@
 package com.psddev.cms.db;
 
+import com.psddev.cms.tool.CmsTool;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ObjectUtils;
@@ -17,6 +18,10 @@ public class ToolRole extends Record implements ToolEntity {
     private String permissions;
 
     private transient SparseSet permissionsCache;
+
+    @ToolUi.DisplayName("Common Content Settings")
+    @ToolUi.Tab("Dashboard")
+    private CmsTool.CommonContentSettings roleCommonContentSettings;
 
     /** Returns the name. */
     public String getName() {
@@ -48,6 +53,14 @@ public class ToolRole extends Record implements ToolEntity {
             permissionsCache = new SparseSet(ObjectUtils.isBlank(permissions) ? "+/" : permissions);
         }
         return permissionsCache.contains(permissionId);
+    }
+
+    public CmsTool.CommonContentSettings getRoleCommonContentSettings() {
+        return roleCommonContentSettings;
+    }
+
+    public void setRoleCommonContentSettings(CmsTool.CommonContentSettings roleCommonContentSettings) {
+        this.roleCommonContentSettings = roleCommonContentSettings;
     }
 
     @Override

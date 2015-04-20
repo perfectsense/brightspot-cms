@@ -131,6 +131,10 @@ function($, bsp_utils) {
             $container.trigger($right.is('.contentDiffCurrent') ?
                     'contentDiff-sideBySide' :
                     'contentDiff-edit');
+
+            $container.closest('form').submit(function() {
+                $left.find(':input').prop('disabled', true);
+            });
         }
     });
 });

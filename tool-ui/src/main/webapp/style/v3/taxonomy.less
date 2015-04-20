@@ -1,17 +1,20 @@
 .taxonomyContainer {
+  margin-left: (0 - @gap-large);
   max-height: 400px;
   overflow: auto;
 
   ul {
-    border-left: 1px solid @color-placeholder;
     display: table-cell;
     list-style-type: none;
     margin-left: 0;
   }
 
   li {
+    @-paddingTB: @lineHeight-default;
+    @-paddingTop: floor(@-paddingTB / 2);
+
     overflow: hidden;
-    padding: 1px 25px 1px 10px;
+    padding: @-paddingTop (@iconSize-default + @gap-large) (@-paddingTB - @-paddingTop) @gap-large;
     position: relative;
     white-space: nowrap;
 
@@ -34,8 +37,10 @@
       .icon-chevron-right;
       .icon-only;
 
+      line-height: (@lineHeight-default * 2);
       margin-left: -300px;
       padding-left: 300px;
+      padding-right: @iconSize-default;
       position: absolute;
       right: 5px;
       top: 1px;
@@ -45,9 +50,9 @@
 
   .taxonChildren {
     display: table-cell;
-  }
 
-  [name="miscSearch"] & {
-    max-height: none;
+    &.loaded {
+      border-left: 2px solid @color-separator;
+    }
   }
 }

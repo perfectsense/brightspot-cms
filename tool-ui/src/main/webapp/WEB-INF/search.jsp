@@ -103,6 +103,52 @@ addFieldFilters(fieldFilters, "", environment);
 
 if (selectedType != null) {
     addFieldFilters(fieldFilters, "", selectedType);
+
+    if (selectedType.isAbstract()) {
+        Map<String, List<ObjectField>> commonFieldsByName = new LinkedHashMap<>();
+
+        for (ObjectType t : selectedType.as(ToolUi.class).findDisplayTypes()) {
+            Map<String, ObjectField> ff = new LinkedHashMap<>();
+
+            addFieldFilters(ff, "", t);
+
+            for (Map.Entry<String, ObjectField> entry : ff.entrySet()) {
+                String n = entry.getKey();
+                List<ObjectField> commonFields = commonFieldsByName.get(n);
+
+                if (commonFields == null) {
+                    commonFields = new ArrayList<>();
+                    commonFieldsByName.put(n, commonFields);
+                }
+
+                commonFields.add(entry.getValue());
+            }
+        }
+
+        for (Map.Entry<String, List<ObjectField>> entry : commonFieldsByName.entrySet()) {
+            List<ObjectField> commonFields = entry.getValue();
+
+            if (commonFields.size() > 1) {
+                ObjectField first = commonFields.get(0);
+                String declaringClassName = first.getJavaDeclaringClassName();
+
+                if (declaringClassName != null) {
+                    boolean same = true;
+
+                    for (ObjectField f : commonFields) {
+                        if (!declaringClassName.equals(f.getJavaDeclaringClassName())) {
+                            same = false;
+                            break;
+                        }
+                    }
+
+                    if (same) {
+                        fieldFilters.put(declaringClassName + "/" + entry.getKey(), first);
+                    }
+                }
+            }
+        }
+    }
 }
 
 if (wp.isFormPost()) {
@@ -257,21 +303,23 @@ writer.start("div", "class", "searchForm");
                     writer.end();
                 }
 
-                if (selectedType != null) {
-                    if (selectedType.getGroups().contains(ColorImage.class.getName())) {
-                        writer.writeElement("input",
-                                "type", "text",
-                                "class", "color",
-                                "name", Search.COLOR_PARAMETER,
-                                "value", search.getColor());
-                    }
-                }
-
                 writer.start("div", "class", "searchFiltersLocal");
                     if (!fieldFilters.isEmpty()) {
                         writer.start("div", "class", "searchMissing");
                             writer.html("Missing?");
                         writer.end();
+                    }
+
+                    if (selectedType != null) {
+                        if (selectedType.getGroups().contains(ColorImage.class.getName())) {
+                            writer.writeStart("div", "class", "searchFilter");
+                                writer.writeElement("input",
+                                        "type", "text",
+                                        "class", "color",
+                                        "name", Search.COLOR_PARAMETER,
+                                        "value", search.getColor());
+                            writer.writeEnd();
+                        }
                     }
 
                     for (Map.Entry<String, ObjectField> entry : fieldFilters.entrySet()) {
@@ -470,7 +518,7 @@ writer.start("div", "class", "searchForm");
 
         writer.end();
 
-        if (!ObjectUtils.isBlank(newJsp)) {
+        if (!ObjectUtils.isBlank(newJsp) && (selectedType == null || !selectedType.isAbstract())) {
             writer.start("div", "class", "searchCreate");
                 writer.start("h2").html("Create").end();
 

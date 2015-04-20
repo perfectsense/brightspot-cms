@@ -164,11 +164,23 @@ ToolUser user = wp.getUser();
 ContentLock contentLock = null;
 boolean lockedOut = false;
 boolean editAnyway = wp.param(boolean.class, "editAnyway");
+boolean optInLock = wp.param(boolean.class, "lock");
 
-if (!Query.from(CmsTool.class).first().isDisableContentLocking() &&
-        wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
-    contentLock = ContentLock.Static.lock(editing, null, user);
-    lockedOut = !user.equals(contentLock.getOwner());
+if (!wp.getCmsTool().isDisableContentLocking()) {
+    if (wp.getCmsTool().isOptInContentLocking()) {
+        if (optInLock && wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
+            contentLock = ContentLock.Static.lock(editing, null, user);
+            lockedOut = !user.equals(contentLock.getOwner());
+
+        } else {
+            contentLock = ContentLock.Static.findLock(editing, null);
+            lockedOut = contentLock != null && !user.equals(contentLock.getOwner());
+        }
+
+    } else if (wp.hasPermission("type/" + editingState.getTypeId() + "/write")) {
+        contentLock = ContentLock.Static.lock(editing, null, user);
+        lockedOut = !user.equals(contentLock.getOwner());
+    }
 }
 
 // --- Presentation ---
@@ -199,9 +211,11 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     "action-trash", null,
                     "published", null) %>"
             autocomplete="off"
+            data-new="<%= State.getInstance(editing).isNew() %>"
             data-o-id="<%= State.getInstance(selected).getId() %>"
             data-o-label="<%= wp.h(State.getInstance(selected).getLabel()) %>"
             data-o-preview="<%= wp.h(wp.getPreviewThumbnailUrl(selected)) %>"
+            data-content-locked-out="<%= lockedOut && !editAnyway %>"
             data-content-id="<%= State.getInstance(editing).getId() %>">
         <div class="contentForm-main">
             <div class="widget widget-content">
@@ -255,13 +269,13 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 <div class="widgetControls">
                     <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("") %>">Edit In Full</a>
-                    <% if (Query.from(CmsTool.class).first().isEnableAbTesting()) { %>
+                    <% if (wp.getCmsTool().isEnableAbTesting()) { %>
                         <a class="icon icon-beaker" href="<%= wp.url("", "ab", !wp.param(boolean.class, "ab")) %>">A/B</a>
                     <% } %>
                     <%
-                    GuidePage guide = Guide.Static.getPageProductionGuide(template);
+                    GuidePage guide = Guide.Static.getPageTypeProductionGuide(state.getType());
                     if (guide != null && guide.getDescription() != null && !guide.getDescription().isEmpty()) {
-                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "templateId", template.getId(), "variationId", wp.uuidParam("variationId"), "popup", true), "\">PG</a>");
+                        wp.write("<a class=\"icon icon-object-guide\" target=\"guideType\" href=\"", wp.objectUrl("/content/guideType.jsp", selected, "pageGuideId", guide.getId(),  "popup", true), "\">PG</a>");
                     }
                     %>
                 </div>
@@ -348,6 +362,14 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
+                    if (!wp.getCmsTool().isDisableContentLocking() && !lockedOut && wp.getCmsTool().isOptInContentLocking()) {
+                        wp.writeStart("a",
+                                "class", "icon icon-only icon-" + (optInLock ? "lock" : "unlock"),
+                                "href", wp.url("", "lock", !optInLock));
+                            wp.writeHtml("Lock");
+                        wp.writeEnd();
+                    }
+
                     wp.writeStart("a",
                             "class", "widget-publishing-tools",
                             "href", wp.objectUrl("/contentTools", editing, "returnUrl", wp.url("")),
@@ -573,7 +595,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeHtml(".");
                             wp.writeEnd();
 
-                            if (!editAnyway) {
+                            if (!editAnyway && !wp.getCmsTool().isOptInContentLocking()) {
                                 wp.writeStart("div", "class", "actions");
                                     wp.writeStart("a",
                                             "class", "icon icon-unlock",
@@ -861,7 +883,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 "onchange", "$('.widget-preview_controls').find('form').eq(0).find(':input[name=\"previewDate\"]').val($(this).val());");
 
                         wp.writeHtml(" ");
-                        wp.writeStart("select", "onchange",
+                        wp.writeStart("select", "class", "deviceWidthSelect", "onchange",
                                 "var $input = $(this)," +
                                         "$form = $input.closest('form');" +
                                 "$('iframe[name=\"' + $form.attr('target') + '\"]').css('width', $input.val() || '100%');" +
@@ -1096,6 +1118,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         // $edit.find('.inputContainer').trigger('fieldPreview-disable');
 
                         if ($previewWidget.is('.widget-expanded')) {
+                            $('.queryField_frames').show();
                             $previewWidget.removeClass('widget-expanded');
                             $preview.animate({ 'left': editLeft + $edit.outerWidth() + 10 }, 300, 'easeOutBack');
                             $preview.css('width', '');
@@ -1107,6 +1130,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             });
 
                         } else {
+                            $('.queryField_frames').hide();
                             $previewWidget.addClass('widget-expanded');
                             $preview.animate({ 'left': editLeft + PEEK_WIDTH }, 300, 'easeOutBack');
                             $preview.css('width', $win.width() - PEEK_WIDTH - 30);
@@ -1160,7 +1184,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                         'margin': 0,
                                         'overflow': 'hidden',
                                         'padding': 0,
-                                        'width': $previewForm.find('[name="_deviceWidth"]').val() || '100%'
+                                        'width': $previewForm.find('select.deviceWidthSelect').val() || '100%'
                                     }
                                 });
                                 $previewWidget.append($previewTarget);
@@ -1345,8 +1369,25 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 pathsCanvas = $paths[0].getContext('2d');
 
-                $frame.contents().find('[data-name="' + name + '"]').each(function() {
-                    var $placeholder = $(this),
+                var PLACEHOLDER_PREFIX = 'brightspot.field-access '
+                var frameDocument = $frame[0].contentDocument;
+                var frameCommentWalker = frameDocument.createTreeWalker(frameDocument.body, NodeFilter.SHOW_COMMENT, null, null);
+
+                while (frameCommentWalker.nextNode()) {
+                    var placeholder = frameCommentWalker.currentNode;
+                    var placeholderValue = placeholder.nodeValue;
+
+                    if (placeholderValue.indexOf(PLACEHOLDER_PREFIX) !== 0) {
+                        continue;
+                    }
+
+                    var placeholderData = $.parseJSON(placeholderValue.substring(PLACEHOLDER_PREFIX.length));
+
+                    if (placeholderData.name !== name) {
+                        continue;
+                    }
+
+                    var $placeholder = $(frameCommentWalker.currentNode),
                             $target,
                             targetOffset,
                             pathSourceX, pathSourceY, pathSourceDirection,
@@ -1360,7 +1401,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             pathTargetControlY;
 
                     if ($placeholder.parent().is('body')) {
-                        return;
+                        continue;
                     }
 
                     $target = $placeholder.nextAll(':visible:first');
@@ -1370,7 +1411,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     }
 
                     if ($target.find('> * [data-name="' + name + '"]').length > 0) {
-                        return;
+                        continue;
                     }
 
                     targetOffset = $target.offset();
@@ -1451,7 +1492,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     pathsCanvas.lineTo(pathTargetX - 2 * arrowSize, pathTargetY + arrowSize);
                     pathsCanvas.closePath();
                     pathsCanvas.fill();
-                });
+                }
             });
 
             $edit.delegate('.inputContainer', 'click', function() {

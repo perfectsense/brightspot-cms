@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.servlet.ServletException;
 
+import com.psddev.cms.tool.QueryRestriction;
 import org.joda.time.DateTime;
 
 import com.psddev.cms.db.Content;
@@ -88,6 +89,8 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                 contentQuery.and(visibilitiesPredicate);
             }
 
+            QueryRestriction.updateQueryUsingAll(contentQuery, page);
+
             try {
                 result = contentQuery.select(offset, limit);
 
@@ -107,6 +110,10 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
             page.writeEnd();
 
             page.writeStart("div", "class", "widget-filters");
+                for (Class<? extends QueryRestriction> c : QueryRestriction.classIterable()) {
+                    page.writeQueryRestrictionForm(c);
+                }
+
                 page.writeStart("form",
                         "method", "get",
                         "action", page.url(null));

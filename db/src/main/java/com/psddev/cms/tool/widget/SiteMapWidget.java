@@ -14,7 +14,7 @@ import javax.servlet.ServletException;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.Dashboard;
-import com.psddev.cms.tool.DefaultDashboardWidget;
+import com.psddev.cms.tool.DashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.AggregateQueryResult;
 import com.psddev.dari.db.Database;
@@ -27,20 +27,10 @@ import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.StringUtils;
 
 @SuppressWarnings("deprecation")
-public class SiteMapWidget extends DefaultDashboardWidget {
+public class SiteMapWidget extends DashboardWidget {
 
     private static final int[] LIMITS = { 10, 20, 50 };
     private static final String URL_TYPE = "url";
-
-    @Override
-    public int getColumnIndex() {
-        return 0;
-    }
-
-    @Override
-    public int getWidgetIndex() {
-        return 2;
-    }
 
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {

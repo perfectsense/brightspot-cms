@@ -27,6 +27,7 @@
 
       // Bind open and close events.
       $container.bind('open.popup', function() {
+        $.removeData($container[0], 'popup-close-cancelled');
         var $original = $(this);
         var scrollLeft = $original.data('popup-scrollLeft');
         var scrollTop = $original.data('popup-scrollTop');
@@ -50,6 +51,14 @@
       });
 
       $container.bind('close.popup', function() {
+        if ($container.is(':visible') &&
+            $container.find('.enhancementForm, .contentForm').find('.inputContainer.state-changed').length > 0 &&
+            !confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {
+          $.data($container[0], 'popup-close-cancelled', true);
+          return;
+        }
+
+        $.removeData($container[0], 'popup-close-cancelled');
         var $original = $(this);
         $original.removeClass('popup-show');
         $('.popup').each(function() {
@@ -167,6 +176,10 @@
           $newSourceParent = $newSource.parent();
         }
 
+        if (isFixedPosition) {
+          $container.addClass('popup-fixed');
+        }
+
         $container.css({
           'left': left,
           'margin': 0,
@@ -180,38 +193,55 @@
     }
   });
 
-  // Clicking outside the popups should close them all.
+  // Clicking outside the popup should close it.
   $win.click(function(event) {
-    var target = event.target,
-        $target = $(target);
+    var target = event.target;
+    var $target = $(target);
 
+    // Special containers that should never close the popup.
     if ($target.closest('#context-menu-layer, .context-menu-root, .search-reset, .queryField_frames').length > 0) {
       return;
     }
 
-    if ($target.popup('container').length === 0) {
-      $('.popup').each(function() {
-        var $container = $(this);
+    // Close the popup if clicked outside of its own content (e.g. shadow).
+    var $targetPopup = $target.popup('container');
 
-        // Suppress the close if the click was within what triggered the popup.
-        var $source = $container.popup('source');
-        if ($source && $source.length > 0) {
-          var source = $source[0];
-          if (!(source == target || $.contains(source, target))) {
-            $container.popup('close');
+    if ($targetPopup.length > 0) {
+      var $targetPopupContent = $targetPopup.find('> .content');
+
+      if ($targetPopupContent.length === 0 || !$.contains($targetPopupContent[0], target)) {
+        $targetPopup.popup('close');
+      }
+
+    } else {
+
+      // Close all popups except the one that was just clicked on.
+      $('.popup').each(function() {
+        var $popup = $(this);
+        var $popupSource = $popup.popup('source');
+
+        if ($popupSource && $popupSource.length > 0) {
+          var popupSource = $popupSource[0];
+
+          if (popupSource === target || $.contains(popupSource, target)) {
+            return;
           }
         }
+
+        $popup.popup('close');
       });
     }
   });
 
-  // Hitting ESC should close all popups too.
+  // Hitting ESC closes all popups.
   $win.keydown(function(event) {
     if (event.which === 27) {
-      var $containers = $('.popup');
-      if ($containers.length > 0) {
-        $containers.popup('close');
+      var $popups = $('.popup');
+
+      if ($popups.length > 0) {
+        $popups.popup('close');
         return false;
+
       } else {
         return true;
       }

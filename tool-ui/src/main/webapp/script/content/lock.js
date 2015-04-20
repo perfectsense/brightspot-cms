@@ -3,16 +3,13 @@ define([
     'bsp-utils' ],
 
 function($, bsp_utils) {
-    bsp_utils.onDomInsert(document, '.contentLock', {
-        'insert': function(container) {
-            var $container = $(container);
-
-            if ($container.attr('data-content-locked-out') === 'true') {
-                $container.find(':input, button, .event-input-disable').trigger('input-disable', [ true ]);
-                $win.resize();
-            }
-        }
+  $(window).load(function() {
+    bsp_utils.onDomInsert(document, '.contentLock[data-content-locked-out = "true"] :input', {
+      'insert': function (input) {
+        $(input).trigger('input-disable', [ true ]);
+      }
     });
+  });
 
     var KEY_PREFIX = "cms.contentLock.";
     var STORAGE = window.localStorage;

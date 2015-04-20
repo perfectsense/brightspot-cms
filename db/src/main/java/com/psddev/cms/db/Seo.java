@@ -132,15 +132,17 @@ public final class Seo {
     /**
      * Object modification for specifying SEO-related overrides.
      */
+    @Recordable.BeanProperty("seo")
     @Modification.FieldInternalNamePrefix("cms.seo.")
     public static final class ObjectModification extends Modification<Object> {
 
         @ToolUi.Hidden(false)
-        @ToolUi.Placeholder(dynamicText = "${content.label}", editable = true)
+        @ToolUi.Placeholder(dynamicText = "${content.seo.findTitle()}", editable = true)
         @ToolUi.Tab("SEO")
         private String title;
 
         @ToolUi.Hidden(false)
+        @ToolUi.Placeholder(dynamicText = "${content.seo.findDescription()}", editable = true)
         @ToolUi.Tab("SEO")
         private String description;
 
@@ -211,7 +213,28 @@ public final class Seo {
         public String findTitle() {
             String title = getTitle();
 
-            return ObjectUtils.isBlank(title) ? getState().getLabel() : title;
+            if (!ObjectUtils.isBlank(title)) {
+                return title;
+            }
+
+            State state = getState();
+            ObjectType type = state.getType();
+
+            if (type != null) {
+                for (String field : type.as(TypeModification.class).getTitleFields()) {
+                    Object fieldTitle = state.getByPath(field);
+
+                    if (fieldTitle != null) {
+                        title = toMetaTagString(fieldTitle);
+
+                        if (title != null) {
+                            return title;
+                        }
+                    }
+                }
+            }
+
+            return getState().getLabel();
         }
 
         // Converts the given object into a plain string that's usable
@@ -358,9 +381,27 @@ public final class Seo {
     @Modification.FieldInternalNamePrefix("cms.seo.")
     public static final class TypeModification extends Modification<ObjectType> {
 
+        private List<String> titleFields;
         private List<String> descriptionFields;
         private List<String> keywordsFields;
         private String openGraphType;
+
+        /**
+         * @return Never {@code null}. Mutable.
+         */
+        public List<String> getTitleFields() {
+            if (titleFields == null) {
+                titleFields = new ArrayList<String>();
+            }
+            return titleFields;
+        }
+
+        /**
+         * @param titleFields May be {@code null} to clear the list.
+         */
+        public void setTitleFields(List<String> titleFields) {
+            this.titleFields = titleFields;
+        }
 
         /**
          * @return Never {@code null}. Mutable.
@@ -402,6 +443,28 @@ public final class Seo {
 
         public void setOpenGraphType(String openGraphType) {
             this.openGraphType = openGraphType;
+        }
+    }
+
+    /**
+     * Specifies an array of field paths that are checked to find the page
+     * title from an instance of the target type.
+     */
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(TitleFieldsProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface TitleFields {
+        String[] value();
+    }
+
+    private static class TitleFieldsProcessor implements ObjectType.AnnotationProcessor<TitleFields> {
+        @Override
+        public void process(ObjectType type, TitleFields annotation) {
+            Collections.addAll(
+                      type.as(TypeModification.class).getTitleFields(),
+                      annotation.value());
         }
     }
 

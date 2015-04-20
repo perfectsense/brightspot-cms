@@ -1,11 +1,14 @@
 package com.psddev.cms.tool.page;
 
+import com.psddev.cms.db.ImageTag;
+import com.psddev.cms.db.ResizeOption;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.State;
+import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.RoutingFilter;
@@ -54,7 +57,9 @@ public class SearchCarousel extends PageServlet {
             for (Object item : items) {
                 State itemState = State.getInstance(item);
                 UUID itemId = itemState.getId();
-                StorageItem itemPreview = itemState.getPreview();
+                StorageItem itemPreview = item instanceof SearchCarouselPreviewable ?
+                        ((SearchCarouselPreviewable) item).getSearchCarouselPreview() :
+                        itemState.getPreview();
 
                 page.writeStart("a",
                         "class", itemId.equals(currentContentId) ? "widget-searchCarousel-item-selected" : null,
@@ -75,9 +80,16 @@ public class SearchCarousel extends PageServlet {
                     }
 
                     if (itemPreviewImage) {
+                        String itemPreviewUrl = ImageEditor.Static.getDefault() != null ?
+                                new ImageTag.Builder(itemPreview).
+                                        setHeight(300).
+                                        setResizeOption(ResizeOption.ONLY_SHRINK_LARGER).
+                                        toUrl() :
+                                itemPreview.getPublicUrl();
+
                         page.writeStart("figure");
                             page.writeElement("img",
-                                    "src", page.getPreviewThumbnailUrl(item),
+                                    "src", itemPreviewUrl,
                                     "alt", (page.getObjectLabel(itemState.as(Site.ObjectModification.class).getOwner()) + ": ") +
                                             (page.getTypeLabel(item) + ": ") + page.getObjectLabel(item));
 

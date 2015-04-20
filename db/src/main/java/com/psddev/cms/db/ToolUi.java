@@ -50,6 +50,7 @@ public class ToolUi extends Modification<Object> {
     private String inputSearcherPath;
     private String storagePreviewProcessorApplication;
     private String storagePreviewProcessorPath;
+    private String languageTag;
     private ToolUiLayoutElement layoutField;
     private List<ToolUiLayoutElement> layoutPlaceholders;
     private String noteHtml;
@@ -199,6 +200,10 @@ public class ToolUi extends Modification<Object> {
         return hidden != null ? hidden : false;
     }
 
+    public Boolean getHidden() {
+        return hidden;
+    }
+
     public void setHidden(boolean hidden) {
         this.hidden = hidden;
     }
@@ -254,6 +259,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setStoragePreviewProcessorApplication(String storagePreviewProcessorApplication) {
         this.storagePreviewProcessorApplication = storagePreviewProcessorApplication;
+    }
+
+    public String getLanguageTag() {
+        return languageTag;
+    }
+
+    public void setLanguageTag(String languageTag) {
+        this.languageTag = languageTag;
     }
 
     public ToolUiLayoutElement getLayoutField() {
@@ -840,6 +853,33 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, InputSearcherPath annotation) {
             field.as(ToolUi.class).setInputSearcherPath(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies the language of the text in the target type or field.
+     */
+    @Documented
+    @Inherited
+    @ObjectField.AnnotationProcessorClass(LanguageTagProcessor.class)
+    @ObjectType.AnnotationProcessorClass(LanguageTagProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.TYPE })
+    public @interface LanguageTag {
+
+        public String value();
+    }
+
+    private static class LanguageTagProcessor implements ObjectField.AnnotationProcessor<LanguageTag>, ObjectType.AnnotationProcessor<LanguageTag> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, LanguageTag annotation) {
+            field.as(ToolUi.class).setLanguageTag(annotation.value());
+        }
+
+        @Override
+        public void process(ObjectType type, LanguageTag annotation) {
+            type.as(ToolUi.class).setLanguageTag(annotation.value());
         }
     }
 

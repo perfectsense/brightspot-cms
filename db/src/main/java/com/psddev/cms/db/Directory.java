@@ -37,6 +37,8 @@ public class Directory extends Record {
     public static final String PATHS_FIELD = FIELD_PREFIX + "paths";
     public static final String PATH_TYPES_FIELD = FIELD_PREFIX + "pathTypes";
 
+    private static final Pattern EXTERNAL_URL_PATTERN = Pattern.compile("(?i)/(https?:)/(.*)");
+
     @Indexed(unique = true)
     @Required
     private String path;
@@ -52,6 +54,25 @@ public class Directory extends Record {
         path = "/" + path + "/";
         path = StringUtils.replaceAll(path, "/(?:/+|\\./)", "/");
         return path;
+    }
+
+    /**
+     * Extracts a valid external URL from the given {@code path} if possible.
+     *
+     * @param path If {@code null}, returns {@code null}.
+     * @return May be {@code null} if the path doesn't look like an external
+     * url.
+     */
+    public static String extractExternalUrl(String path) {
+        if (path != null) {
+            Matcher externalUrlMatcher = EXTERNAL_URL_PATTERN.matcher(path);
+
+            if (externalUrlMatcher.matches()) {
+                return externalUrlMatcher.group(1) + "//" + externalUrlMatcher.group(2);
+            }
+        }
+
+        return null;
     }
 
     /** Returns the path. */

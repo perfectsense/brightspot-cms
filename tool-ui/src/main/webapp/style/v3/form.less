@@ -20,6 +20,7 @@
   border: @-borderWidth solid @color-border;
   border-radius: 2px;
   box-sizing: border-box;
+  color: @color-link-dark;
   cursor: pointer;
   display: inline-block;
   font-weight: 700;
@@ -67,7 +68,7 @@
       border-right: 1px solid @color-border;
     }
     &.selected {
-      background: @color-separator;
+      background: @color-heading;
       a {
         font-weight: bold;
         color: black;
@@ -542,9 +543,10 @@
 
   -moz-appearance: none;
   -webkit-appearance: none;
-  background-image: url(fontawesome.svg#icon-angle-down);
-  background-position: right 5px top 5px;
+  background-image: url(icon/angle-down.svg);
+  background-position: right 9px top 7px;
   background-repeat: no-repeat;
+  background-size: auto 14px;
   cursor: pointer;
   display: inline-block;
   height: (@lineHeight-default + 2 * (@input-padding + @input-borderWidth));

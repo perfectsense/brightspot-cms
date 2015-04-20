@@ -33,9 +33,7 @@ if (wp.tryStandardUpdate(selected)) {
 
 // Ensure that there is a GuidePage object created for any templates
 GuideSettings settings = (wp.getCmsTool()).as(GuideSettings.class);
-if (settings.isAutoGenerateTemplateGuides() == true) {
-    GuidePage.Static.createDefaultTemplateGuides();
-}
+
 // Ensure that there is a GuideType object created for any objects referenced by templates.
 if (settings.isAutoGenerateContentTypeGuides() == true) {
     GuideType.Static.createDefaultTypeGuides();
@@ -43,7 +41,7 @@ if (settings.isAutoGenerateContentTypeGuides() == true) {
 
 List<Guide> guides = Query.from(Guide.class).sortAscending("title").select();
 List<GuideType> typeGuides = Query.from(GuideType.class).sortAscending("documentedType/name").select();
-List<GuidePage> pageGuides = Query.from(GuidePage.class).sortAscending("pageType/name").select();
+List<GuidePage> pageGuides = Query.from(GuidePage.class).sortAscending("name").select();
 List<Page> templates = Query.from(Page.class).sortAscending("name").select();
 String incompleteIndicator = "*";
 

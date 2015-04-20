@@ -12,14 +12,20 @@ $.plugin2('editablePlaceholder', {
             var $input = $(this);
 
             if (!$input.val()) {
+                $.data(this, 'editable-placeholder-empty-before-focus', true);
                 $input.val(getPlaceholder($input));
             }
+        });
+
+        plugin.$caller.delegate(selector, 'input.editablePlaceholder', function() {
+            $.removeData(this, 'editable-placeholder-empty-before-focus');
         });
 
         plugin.$caller.delegate(selector, 'blur.editablePlaceholder', function() {
             var $input = $(this);
 
-            if ($input.val() === getPlaceholder($input)) {
+            if ($.data(this, 'editable-placeholder-empty-before-focus') ||
+                    $input.val() === getPlaceholder($input)) {
                 $input.val('');
             }
         });

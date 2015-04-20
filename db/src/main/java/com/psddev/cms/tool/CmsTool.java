@@ -121,6 +121,9 @@ public class CmsTool extends Tool {
     private boolean disableContentLocking;
 
     @ToolUi.Tab("Debug")
+    private boolean optInContentLocking;
+
+    @ToolUi.Tab("Debug")
     private boolean removeTrailingSlashes;
 
     @ToolUi.Tab("Debug")
@@ -616,6 +619,14 @@ public class CmsTool extends Tool {
         this.disableContentLocking = disableContentLocking;
     }
 
+    public boolean isOptInContentLocking() {
+        return optInContentLocking;
+    }
+
+    public void setOptInContentLocking(boolean optInContentLocking) {
+        this.optInContentLocking = optInContentLocking;
+    }
+
     public boolean isRemoveTrailingSlashes() {
         return removeTrailingSlashes;
     }
@@ -840,6 +851,7 @@ public class CmsTool extends Tool {
             this.file = file;
         }
 
+        @Override
         public String getUrl() {
             StorageItem file = getFile();
             return file != null ? file.getPublicUrl() : null;

@@ -43,7 +43,7 @@ require([
   'input/color',
   'input/focus',
   'input/grid',
-  'input/image',
+  'v3/input/image',
   'input/location',
   'v3/input/object',
   'input/query',
@@ -66,6 +66,7 @@ require([
   'jquery.sortable',
   'v3/searchcarousel',
   'jquery.tabbed',
+  'v3/taxonomy',
   'jquery.toggleable',
   'evaporate',
   'v3/upload',
@@ -77,7 +78,8 @@ require([
   'content/lock',
   'v3/content/publish',
   'content/layout-element',
-  'content/state',
+  'v3/content/state',
+  'v3/search-result-check-all',
   'v3/tabs' ],
 
 function() {
@@ -601,9 +603,10 @@ function() {
 
   $doc.on('open', '.popup[data-popup-source-class~="objectId-edit"]', function(event) {
     var $frame = $(event.target);
+    var $parent = $frame.popup('source').closest('.popup, .toolContent');
 
-    $frame.popup('source').closest('.popup, .toolContent').addClass('popup-objectId-edit-loading');
     $frame.popup('container').removeClass('popup-objectId-edit-hide');
+    $parent.addClass('popup-objectId-edit popup-objectId-edit-loading');
     $win.resize();
   });
 
@@ -651,9 +654,13 @@ function() {
       $parent.removeClass('popup-objectId-edit-loading');
       $parent.addClass('popup-objectId-edit-loaded');
 
-      $frame.prepend($('<div/>', {
+      $frame.prepend($('<a/>', {
         'class': 'popup-objectId-edit-heading',
-        'text': $parent.find('.contentForm-main > .widget > h1').text()
+        'text': 'Back to ' + $parent.find('.contentForm-main > .widget > h1').text(),
+        'click': function() {
+          $frame.popup('close');
+          return false;
+        }
       }));
 
       $frame.css({
@@ -693,6 +700,11 @@ function() {
     var $frame = $(event.target);
     var $source = $frame.popup('source');
     var $popup = $frame.popup('container');
+
+    if ($.data($popup[0], 'popup-close-cancelled')) {
+      return;
+    }
+
     var sourceOffset = $source.offset();
     var $parent = $source.closest('.popup, .toolContent');
 
@@ -808,6 +820,7 @@ function() {
             $split.popup('close');
 
           } else {
+            $split.popup('source', $toggle);
             $split.popup('open');
             $left.find('> li:first-child').trigger('mouseover');
           }

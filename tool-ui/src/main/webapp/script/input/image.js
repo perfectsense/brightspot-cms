@@ -929,6 +929,7 @@ function($, bsp_utils) {
             };
 
             var $sizes = $editor.find('.imageEditor-sizes table');
+            var cropCenter = $sizes.attr('data-crop-center') === 'true';
             var $sizeSelectors = $('<ul/>', { 'class': 'imageEditor-sizeSelectors' });
             var $mainInputs = { };
 
@@ -1009,7 +1010,7 @@ function($, bsp_utils) {
                         }
 
                         left = (imageWidth - width) / 2;
-                        top = 0;
+                        top = cropCenter ? (imageHeight - height) / 2 : 0;
 
                     } else {
                         left *= imageWidth;

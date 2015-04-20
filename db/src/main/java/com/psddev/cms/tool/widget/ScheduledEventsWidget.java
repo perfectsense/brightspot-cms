@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import javax.servlet.ServletException;
 
 import org.joda.time.DateTime;
-
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Schedule;
 import com.psddev.cms.db.Site;
@@ -18,6 +17,7 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.util.ObjectUtils;
 
 public class ScheduledEventsWidget extends DefaultDashboardWidget {
 
@@ -79,7 +79,7 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                                 "class", "icon icon-action-create",
                                 "href", page.cmsUrl("/scheduleEdit"),
                                 "target", "scheduleEdit");
-                            page.writeHtml("New Schedule");
+                            page.writeHtml("New");
                         page.writeEnd();
                     page.writeEnd();
 
@@ -88,7 +88,7 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                                 "class", "icon icon-action-search",
                                 "href", page.cmsUrl("/scheduleList"),
                                 "target", "scheduleList");
-                            page.writeHtml("Available Schedules");
+                            page.writeHtml("View All");
                         page.writeEnd();
                     page.writeEnd();
                 page.writeEnd();
@@ -261,15 +261,35 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
 
                         if (date.getDayOfMonth() == 1) {
                             int offset = date.getDayOfWeek() - 1;
-                            for (int i = 0; i < offset; i++) {
-                                page.writeStart("div", "class", "calendarDay", "style", "visibility:hidden;").writeEnd();
+                            for (int i = offset; i > 0; i--) {
+                                writeCalendarDay(page, null, date.minusDays(i), "other-month");
                             }
                         }
                     }
 
-                    page.writeStart("div", "class", "calendarDay" + (date.equals(new DateTime(null, page.getUserDateTimeZone()).toDateMidnight()) ? " calendarDay-today" : "") + (" day-of-week-" + date.getDayOfWeek()));
-                        page.writeStart("span", "class", "calendarDayOfWeek").writeHtml(date.dayOfWeek().getAsShortText()).writeEnd();
-                        page.writeStart("span", "class", "calendarDayOfMonth").writeHtml(date.dayOfMonth().get()).writeEnd();
+                    writeCalendarDay(page, schedules, date, "");
+
+                    if (date.dayOfMonth().withMaximumValue().equals(date)) {
+                        int extraDays = 7 - date.getDayOfWeek();
+                        for (int i = 1; i <= extraDays; i++) {
+                            writeCalendarDay(page, null, date.plusDays(i), "other-month");
+                        }
+                    }
+
+                    if (date.getDayOfMonth() == 31 || date.getDayOfWeek() == 7) {
+                        page.writeEnd();
+                    }
+
+                }
+                page.writeEnd();
+            }
+
+            private void writeCalendarDay(ToolPageContext page, List<Schedule> schedules, DateTime date, String extraClass) throws IOException {
+                page.writeStart("div", "class", "calendarDay" + (date.equals(new DateTime(null, page.getUserDateTimeZone()).toDateMidnight()) ? " calendarDay-today" : "") + (" day-of-week-" + date.getDayOfWeek()) + " " + extraClass);
+                    page.writeStart("span", "class", "calendarDayOfWeek").writeHtml(date.dayOfWeek().getAsShortText()).writeEnd();
+                    page.writeStart("span", "class", "calendarDayOfMonth").writeHtml(date.dayOfMonth().get()).writeEnd();
+
+                    if (!ObjectUtils.isBlank(schedules)) {
 
                         for (Schedule schedule : schedules) {
                             List<Object> drafts = Query.fromAll().where("com.psddev.cms.db.Draft/schedule = ?", schedule).selectAll();
@@ -285,26 +305,18 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                                         "href", page.cmsUrl("/scheduleEventsList", "date", date.toDate().getTime()),
                                         "target", "scheduleEventsList");
                                     page.writeStart("div", "class", "calendarEvents");
-
                                         page.writeStart("div", "class", "count");
                                             page.writeHtml(draftCount);
                                         page.writeEnd();
                                         page.writeStart("div", "class", "label");
                                             page.writeHtml("Event" + (draftCount > 1 ? "s" : ""));
                                         page.writeEnd();
-
                                     page.writeEnd();
                                 page.writeEnd();
                             page.writeEnd();
                         }
-
-                    page.writeEnd();
-
-                    if (date.getDayOfMonth() == 31 || date.getDayOfWeek() == 7) {
-                        page.writeEnd();
                     }
 
-                }
                 page.writeEnd();
             }
         };

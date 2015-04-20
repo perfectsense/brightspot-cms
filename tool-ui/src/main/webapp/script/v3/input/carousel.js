@@ -388,12 +388,6 @@ function($, bsp_utils) {
             // Number of tiles to shift
             var moveTiles = 0;
 
-            // If all tiles fit within the viewport then no movement needed
-            if (layout.tilesWidth <= layout.viewportWidth) {
-                self.update();
-                return;
-            }
-
             if ($.isNumeric(amount)) {
                 moveTiles = amount;
             } else {

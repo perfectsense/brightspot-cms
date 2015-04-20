@@ -330,6 +330,12 @@ public class PageFilter extends AbstractFilter {
 
         try {
             String servletPath = request.getServletPath();
+            String externalUrl = Directory.extractExternalUrl(servletPath);
+
+            if (externalUrl != null) {
+                response.sendRedirect(externalUrl);
+                return;
+            }
 
             // Serve a special robots.txt file for non-production.
             if (servletPath.equals("/robots.txt") && !Settings.isProduction()) {

@@ -83,7 +83,7 @@ $.plugin2('tabbed', {
                         $tabs.find('> li').removeClass(SELECTED_CLASS);
                         $selected.closest('li').addClass(SELECTED_CLASS);
                         $items.hide();
-                        $(tab.items).show();
+                        $(tab.items).show().trigger('tabbedShow');
                         $container.resize();
                         return false;
                     }

@@ -97,6 +97,26 @@ public class SearchAdvancedQuery extends PageServlet {
                         }
                     page.writeEnd();
 
+                    for (String paramName : paramNames) {
+                        if (paramName.startsWith("p")) {
+                            Integer index = ObjectUtils.to(Integer.class, paramName.substring(1));
+
+                            if (index != null) {
+                                if (lastIndex < index) {
+                                    lastIndex = index;
+                                }
+                            }
+                        }
+                    }
+
+                    page.writeStart("button",
+                            "class", "icon icon-action-add link",
+                            "name", "p" + (lastIndex + 1),
+                            "value", 1);
+                        page.writeHtml("Add Another ");
+                        page.writeHtml(globalPredicateType.getLabel());
+                    page.writeEnd();
+
                     page.writeStart("div", "class", "fixedScrollable");
                         page.writeStart("ul");
                             for (String paramName : paramNames) {
@@ -104,10 +124,6 @@ public class SearchAdvancedQuery extends PageServlet {
                                     Integer index = ObjectUtils.to(Integer.class, paramName.substring(1));
 
                                     if (index != null) {
-                                        if (lastIndex < index) {
-                                            lastIndex = index;
-                                        }
-
                                         page.writeStart("li");
                                             globalPredicate = CompoundPredicate.combine(
                                                     globalPredicateType.getOperator(),
@@ -118,14 +134,6 @@ public class SearchAdvancedQuery extends PageServlet {
                                 }
                             }
                         page.writeEnd();
-                    page.writeEnd();
-
-                    page.writeStart("button",
-                            "class", "icon icon-action-add link",
-                            "name", "p" + (lastIndex + 1),
-                            "value", 1);
-                        page.writeHtml("Add Another ");
-                        page.writeHtml(globalPredicateType.getLabel());
                     page.writeEnd();
 
                     page.writeStart("div", "class", "actions");

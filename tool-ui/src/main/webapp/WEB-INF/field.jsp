@@ -163,6 +163,13 @@ try {
             wp.writeHtml(ObjectUtils.toJson(layoutField.toMap()));
         }
 
+        String languageTag = ui.getLanguageTag();
+
+        if (languageTag != null) {
+            wp.write("\" lang=\"");
+            wp.writeHtml(languageTag);
+        }
+
         wp.write("\">");
 
         String heading = ui.getHeading();

@@ -134,7 +134,8 @@ body.rte-fullscreen {
 
 .rte-group-dropDown {
   height: 20px;
-  overflow: hidden;
+  position: relative;
+  vertical-align: top;
 
   .rte-group-label {
     .icon;
@@ -142,6 +143,12 @@ body.rte-fullscreen {
 
     cursor: pointer;
     display: block;
+  }
+
+  .rte-group-buttons {
+    display: none;
+    position: absolute;
+    z-index: 1;
   }
 
   .rte-button {
@@ -154,8 +161,6 @@ body.rte-fullscreen {
   }
 
   &:hover {
-    position: relative;
-    overflow: visible;
     z-index: 1;
 
     .rte-group-label {
@@ -164,6 +169,7 @@ body.rte-fullscreen {
 
     .rte-group-buttons {
       box-shadow: 0 1px 2px fade(black, 20%);
+      display: block;
     }
   }
 }
@@ -191,7 +197,7 @@ body.rte-fullscreen {
 .rte-button-fullscreen { .icon; .icon-fullscreen; }
 .rte-button-moveLeft { .icon; .icon-arrow-left; }
 .rte-button-moveUp { .icon; .icon-arrow-up; }
-.rte-button-moveCenter { .icon; .icon-fullscreen; }
+.rte-button-moveCenter { .icon; .icon-resize-full; }
 .rte-button-moveDown { .icon; .icon-arrow-down; }
 .rte-button-moveRight { .icon; .icon-arrow-right; }
 .rte-button-enhancementSelect { .icon; .icon-random; }

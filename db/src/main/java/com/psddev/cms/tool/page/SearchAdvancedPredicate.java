@@ -70,16 +70,32 @@ public abstract class SearchAdvancedPredicate extends Record implements Singleto
             String subPredicateIndexParam = paramPrefix + ".p";
             int lastSubPredicateIndex = -1;
 
+            for (String paramName : paramNames) {
+                if (paramName.startsWith(subPredicateIndexParam)) {
+                    Integer subPredicateIndex = ObjectUtils.to(Integer.class, paramName.substring(subPredicateIndexParam.length()));
+
+                    if (subPredicateIndex != null) {
+                        if (lastSubPredicateIndex < subPredicateIndex) {
+                            lastSubPredicateIndex = subPredicateIndex;
+                        }
+                    }
+                }
+            }
+
+            page.writeStart("button",
+                    "class", "icon icon-action-add link",
+                    "name", paramPrefix + ".p" + (lastSubPredicateIndex + 1),
+                    "value", 1);
+                page.writeHtml("Add Another ");
+                page.writeHtml(getLabel());
+            page.writeEnd();
+
             page.writeStart("ul");
                 for (String paramName : paramNames) {
                     if (paramName.startsWith(subPredicateIndexParam)) {
                         Integer subPredicateIndex = ObjectUtils.to(Integer.class, paramName.substring(subPredicateIndexParam.length()));
 
                         if (subPredicateIndex != null) {
-                            if (lastSubPredicateIndex < subPredicateIndex) {
-                                lastSubPredicateIndex = subPredicateIndex;
-                            }
-
                             page.writeStart("li");
                                 predicate = CompoundPredicate.combine(
                                         getOperator(),
@@ -89,14 +105,6 @@ public abstract class SearchAdvancedPredicate extends Record implements Singleto
                         }
                     }
                 }
-            page.writeEnd();
-
-            page.writeStart("button",
-                    "class", "icon icon-action-add link",
-                    "name", paramPrefix + ".p" + (lastSubPredicateIndex + 1),
-                    "value", 1);
-                page.writeHtml("Add Another ");
-                page.writeHtml(getLabel());
             page.writeEnd();
 
             return predicate;

@@ -102,9 +102,8 @@ The HTML within the repeatable element must conform to these standards:
 
 
             /**
-             * Function to add a new item through the jquery plugin.
-             *
-             * ??? - when does this get called, I can't seem to find any reference to it
+             * Function to add a new item after bulk file upload.
+             * This is called by by some code delivered by the back-end.
              *
              * @param {Function} callback
              * Function to call after the item has been added.
@@ -112,19 +111,16 @@ The HTML within the repeatable element must conform to these standards:
              */
             'add': function(callback) {
 
-                // TODO: instead of triggering a click we should directly call the function
-                // that adds the item.
-                
-                // Trigger the click on the add button,
-                // and pass it a callback function to run after the item is added.
-                // ???: I'm not really sure if this works or how closest(.addButton)
-                // could find the add button if $caller is actually the containing element?
-
                 var plugin = this;
-                var $caller = plugin.$caller;
-                
-                $caller.closest('.addButton').trigger('click', [ callback ]);
 
+                // In this case, the plugin is called on the add button
+                var $caller = plugin.$caller;
+
+                // Not a great way to do this, but leaving this for now.
+                // The callback function modifies the template to insert actual values,
+                // then triggers a change event
+                $caller.closest('.addButton').trigger('click', [ callback ]);
+                
                 return $caller;
             }
         });
@@ -551,7 +547,7 @@ The HTML within the repeatable element must conform to these standards:
                 // Determine if we need to AJAX the template onto the page
                 // (if the template has no input but has a link)
                 templateUrl = $addedItem.find('a').attr('href');
-                $templateInputs = $addedItem.find(':input')
+                $templateInputs = $addedItem.find(':input');
                 if (templateUrl && $templateInputs.length === 0) {
 
                     // Not sure why, but sending some kind of cache breaker in the data?
@@ -615,25 +611,31 @@ The HTML within the repeatable element must conform to these standards:
                         return newAttr;
                     });
 
-                    // Trigger a change event
-                    // So other code can act on this if necessary
-                    $addedItem.change();
+                    // If there was a custom callback provided, call it now.
+                    // This is used for example, in Image Upload.
+                    // After the image is uploaded a new repeatable item is added,
+                    // then the callback inserts values into the template.
+                    if (customCallback) {
+                        
+                        // Call the customcallback funtion, setting "this" to be the element for the new item
+                        customCallback.call( $addedItem[0] );
+                    }
 
                     // Trigger a custom "create" event for the item
                     // So other code can act on this if necessary
                     $addedItem.trigger('create');
 
+                    // If we are in mode preview, adjust the added item.
+                    // Add a preview image, and move the form to the carousel.
+                    self.modePreviewAddItem( $addedItem );
+                    
+                    $addedItem.trigger('change');
+                        
                     // Trigger a resize event for the window
                     // Since we have added new content
                     $win.resize();
-
-                    // If we are in mode preview, adjust the added item.
-                    // Add a preview image, and move the form to the carousel.
-                    self.modePreviewAddItem($addedItem);
                     
-                    if (customCallback) {
-                        customCallback.call($addedItem[0]);
-                    }
+
                 }); // END promise.always()
 
                 // Return the promise just in case someone wants to do something after the item is added
@@ -1304,6 +1306,9 @@ The HTML within the repeatable element must conform to these standards:
                 // Remove the item's edit form and move it to the edit container
                 $item.find('.objectInputs').appendTo($editContainer);
 
+                // Trigger a change to update any thumbnails
+                $editContainer.find(':input').trigger('change');
+
                 // Make sure the carousel is updated after we added a tile
                 self.carousel.update();
 
@@ -1446,7 +1451,8 @@ The HTML within the repeatable element must conform to these standards:
                         // If a change is made to the preview image
                         // update the thumbnail image in the carousel
                         // and in the grid view
-                        var imageUrl = $(event.target).attr('data-preview');
+                        var $target = $(event.target).closest('[data-preview]');
+                        var imageUrl = $target.attr('data-preview');
                         if (imageUrl) {
                             self.modePreviewSetThumbnail($item, imageUrl);
                         }
@@ -1468,8 +1474,8 @@ The HTML within the repeatable element must conform to these standards:
                 var tileIndex = self.carousel.getActive();
                 var total = self.dom.$list.find('> li').length;
                 
-                self.dom.$carouselTargetPrev.toggleClass('carousel-target-nav-hide', !(tileIndex > 1));
-                self.dom.$carouselTargetNext.toggleClass('carousel-target-nav-hide', !(tileIndex < total));
+                self.dom.$carouselTargetPrev.toggleClass('carousel-target-nav-hide', !Boolean(tileIndex > 1));
+                self.dom.$carouselTargetNext.toggleClass('carousel-target-nav-hide', !Boolean(tileIndex < total));
             },
 
             
@@ -1548,7 +1554,7 @@ The HTML within the repeatable element must conform to these standards:
                 $thumbnails.attr('src', imageUrl);
             }
             
-        } // END repeatableUtility
+        }; // END repeatableUtility
         
     }); // END require
 

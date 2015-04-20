@@ -42,14 +42,11 @@ public class SearchResultActions extends PageServlet {
         ToolUser user = page.getUser();
         SearchResultSelection selection = user.getCurrentSearchResultSelection();
 
-        if ("item-add".equals(action)) {
-            if (selection == null) {
-                selection = new SearchResultSelection();
-                selection.save();
-                user.setCurrentSearchResultSelection(selection);
-                user.save();
-            }
+        if (selection == null) {
+            throw new IllegalStateException();
+        }
 
+        if ("item-add".equals(action)) {
             UUID itemId = page.param(UUID.class, "id");
 
             if (!Query.
@@ -66,40 +63,32 @@ public class SearchResultActions extends PageServlet {
             }
 
         } else if ("item-remove".equals(action)) {
-            if (selection != null) {
-                Query.
-                        from(SearchResultSelectionItem.class).
-                        where("selectionId = ?", selection.getId()).
-                        and("itemId = ?", page.param(UUID.class, "id")).
-                        deleteAll();
-            }
-
-        } else if ("clear".equals(action)) {
-            if (selection != null) {
-                Query.
-                        from(SearchResultSelectionItem.class).
-                        where("selectionId = ?", selection.getId()).
-                        deleteAll();
-
-                selection.delete();
-
-                selection = null;
-
-                page.writeStart("div", "id", page.createId());
-                page.writeEnd();
-
-                page.writeStart("script", "type", "text/javascript");
-                    page.writeRaw("$('#" + page.getId() + "').closest('.search-result').find('.searchResultList :checkbox').prop('checked', false);");
-                page.writeEnd();
-            }
-        }
-
-        if (selection != null) {
-            long count = Query.
+            Query.
                     from(SearchResultSelectionItem.class).
                     where("selectionId = ?", selection.getId()).
-                    count();
+                    and("itemId = ?", page.param(UUID.class, "id")).
+                    deleteAll();
 
+        } else if ("clear".equals(action)) {
+            Query.
+                    from(SearchResultSelectionItem.class).
+                    where("selectionId = ?", selection.getId()).
+                    deleteAll();
+
+            page.writeStart("div", "id", page.createId());
+            page.writeEnd();
+
+            page.writeStart("script", "type", "text/javascript");
+                page.writeRaw("$('#" + page.getId() + "').closest('.search-result').find('.searchResultList :checkbox').prop('checked', false);");
+            page.writeEnd();
+        }
+
+        long count = Query.
+                from(SearchResultSelectionItem.class).
+                where("selectionId = ?", selection.getId()).
+                count();
+
+        if (count > 0) {
             page.writeStart("h2");
                 page.writeHtml("Selection");
             page.writeEnd();
@@ -127,7 +116,7 @@ public class SearchResultActions extends PageServlet {
                 TypeDefinition.
                         getInstance(c).
                         newInstance().
-                        writeHtml(page, search, selection);
+                        writeHtml(page, search, count > 0 ? selection : null);
             }
         }
     }

@@ -20,6 +20,15 @@
 }
 
 .searchResult-sorts {
+  float: left;
+  margin-right: 10px;
+
+  form {
+    display: inline;
+  }
+}
+
+.searchResult-limits {
   margin-bottom: 20px;
 
   form {
@@ -116,11 +125,15 @@
   box-sizing: border-box;
   float: left;
   padding-right: @-padding;
-  width: (@length-searchControlsWidth + @-padding + @-borderWidth);
+  width: (@search-controls-width-large + @-padding + @-borderWidth);
 
   input[type=text],
   select {
     width: 100%;
+  }
+
+  .searchForm[max-width^='700px'] & {
+    width: (@search-controls-width-small + @-padding + @-borderWidth);
   }
 }
 
@@ -286,8 +299,12 @@
 }
 
 .searchResult {
-  margin-left: (@length-searchControlsWidth + 42);
+  margin-left: (@search-controls-width-large + 42);
   position: relative;
+
+  .searchForm[max-width^='700px'] & {
+    margin-left: (@search-controls-width-small + 42);
+  }
 }
 
 .searchSuggestionsForm {
@@ -300,6 +317,7 @@
 
 .searchSorter {
   margin-bottom: 20px;
+  margin-right: 170px;
 
   form {
     display: inline;
@@ -310,7 +328,7 @@
   margin-bottom: 20px;
   position: absolute;
   right: 0;
-  top: (@lineHeight-default + 10px);
+  top: (@lineHeight-default + @gap-large);
 }
 
 .searchResultImages {

@@ -40,6 +40,8 @@ import com.psddev.dari.util.StorageItem;
 @Record.BootstrapTypeMappable(groups = Content.class, uniqueKey = "email")
 public class ToolUser extends Record implements ToolEntity {
 
+    private static final long TOKEN_CHECK_EXPIRE_MILLISECONDS = 30000L;
+
     @Indexed
     @ToolUi.Note("If left blank, the user will have full access to everything.")
     private ToolRole role;
@@ -823,16 +825,34 @@ public class ToolUser extends Record implements ToolEntity {
         }
 
         public void refreshToken() {
+            refreshTokenIfNecessary();
+        }
+
+        public boolean refreshTokenIfNecessary() {
             long sessionTimeout = Settings.getOrDefault(long.class, "cms/tool/sessionTimeout", 0L);
 
-            if (sessionTimeout == 0L) {
+            if (sessionTimeout == 0L && (this.expireTimestamp == null || this.expireTimestamp != 0L)) {
                 this.expireTimestamp = 0L;
-            } else {
-                this.expireTimestamp = System.currentTimeMillis() + sessionTimeout;
+                return true;
             }
+
+            // Only refresh if the expireTimestamp is empty or token was issued over TOKEN_CHECK_EXPIRE_MILLISECONDS ago.
+            if (sessionTimeout != 0L &&
+                    (this.expireTimestamp == null ||
+                            this.expireTimestamp == 0L ||
+                            (this.expireTimestamp - sessionTimeout) + TOKEN_CHECK_EXPIRE_MILLISECONDS < System.currentTimeMillis())) {
+                this.expireTimestamp = System.currentTimeMillis() + sessionTimeout;
+                return true;
+            }
+
+            return false;
         }
 
         public boolean isValid() {
+            if (getExpireTimestamp() == null) {
+                return false;
+            }
+
             if (getExpireTimestamp() == 0L) {
                 return true;
             }
