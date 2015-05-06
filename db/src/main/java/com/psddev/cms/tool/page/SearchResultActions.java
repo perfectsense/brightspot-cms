@@ -45,7 +45,11 @@ public class SearchResultActions extends PageServlet {
         SearchResultSelection selection = user.getCurrentSearchResultSelection();
 
         if (selection == null) {
-            throw new IllegalStateException();
+
+            selection = new SearchResultSelection();
+            selection.save();
+            user.setCurrentSearchResultSelection(selection);
+            user.save();
         }
 
         if ("item-add".equals(action)) {
