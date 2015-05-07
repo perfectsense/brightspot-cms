@@ -12,12 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.psddev.cms.db.ImageCrop;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.ImageTextOverlay;
@@ -42,6 +39,8 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ImageFileType implements FileContentType {
 
@@ -358,17 +357,13 @@ public class ImageFileType implements FileContentType {
      */
     public void writeImageEditor(ToolPageContext page, State state, StorageItem fieldValue) throws IOException, ServletException {
 
-        Class hotspotClass = ObjectUtils.getClassByName(ImageTag.HOTSPOT_CLASS);
-        boolean projectUsingBrightSpotImage = hotspotClass != null && !ObjectUtils.isBlank(ClassFinder.Static.findClasses(hotspotClass));
-
-        if (projectUsingBrightSpotImage) {
-            page.include("set/hotSpot.jsp");
-        }
-
         page.writeStart("div", "class", "imageEditor");
             writeImageEditorAside(page, fieldValue, state);
             writeImageEditorImage(page, fieldValue);
         page.writeEnd();
+
+        Class hotspotClass = ObjectUtils.getClassByName(ImageTag.HOTSPOT_CLASS);
+        boolean projectUsingBrightSpotImage = hotspotClass != null && !ObjectUtils.isBlank(ClassFinder.Static.findClasses(hotspotClass));
 
         if (projectUsingBrightSpotImage) {
             page.include("set/hotSpot.jsp");
