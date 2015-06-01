@@ -176,6 +176,10 @@ public class Search extends Record {
         setOffset(page.param(long.class, OFFSET_PARAMETER));
         setLimit(page.paramOrDefault(int.class, LIMIT_PARAMETER, 10));
 
+        if (getSelectedType() == null && getTypes().size() == 1) {
+            setSelectedType(getTypes().iterator().next());
+        }
+
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.initializeSearch(this, page);
         }
