@@ -743,7 +743,8 @@ public class ToolPageContext extends WebPageContext {
         }
 
         if (object == null) {
-            Object draftObject = Query.fromAll().where("_id = ?", draftId).first();
+
+            Object draftObject = draftId == null ? null : Query.fromAll().where("_id = ?", draftId).first();
 
             if (draftObject instanceof Draft) {
                 Draft draft = (Draft) draftObject;
@@ -755,9 +756,11 @@ public class ToolPageContext extends WebPageContext {
         } else {
             State state = State.getInstance(object);
 
-            History history = Query.
+            UUID historyId = param(UUID.class, HISTORY_ID_PARAMETER);
+
+            History history = historyId == null ? null : Query.
                     from(History.class).
-                    where("id = ?", param(UUID.class, HISTORY_ID_PARAMETER)).
+                    where("id = ?", historyId).
                     and("objectId = ?", objectId).
                     first();
 
@@ -767,7 +770,7 @@ public class ToolPageContext extends WebPageContext {
                 state.setStatus(StateStatus.SAVED);
 
             } else if (objectId != null) {
-                Object draftObject = Query.
+                Object draftObject = draftId == null ? null : Query.
                         fromAll().
                         where("id = ?", draftId).
                         and("com.psddev.cms.db.Draft/objectId = ?", objectId).
