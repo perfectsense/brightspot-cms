@@ -1733,8 +1733,8 @@ public class PageFilter extends AbstractFilter {
         }
 
         /**
-         * Pushes the given {@code object} to the list of objects that
-         * are currently being rendered.
+         * Pushes the given {@code view} to the list of views that
+         * are currently being loaded.
          */
         public static void pushView(HttpServletRequest request, RendererView<?> view) {
             ErrorUtils.errorIfNull(view, "view");
@@ -1752,8 +1752,8 @@ public class PageFilter extends AbstractFilter {
         }
 
         /**
-         * Pops the last object from the list of objects that are currently
-         * being rendered.
+         * Pops the last view from the list of views that are currently
+         * being loaded.
          */
         public static RendererView<?> popView(HttpServletRequest request) {
             @SuppressWarnings("unchecked")
@@ -1771,8 +1771,8 @@ public class PageFilter extends AbstractFilter {
         }
 
         /**
-         * Returns the last object from the list of objects that are currently
-         * being rendered.
+         * Returns the last view from the list of views that are currently
+         * being loaded.
          */
         public static RendererView<?> peekView(HttpServletRequest request) {
             @SuppressWarnings("unchecked")
