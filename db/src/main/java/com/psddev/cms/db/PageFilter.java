@@ -632,29 +632,29 @@ public class PageFilter extends AbstractFilter {
                     }
                 }
 
-                String typePath;
-                if (mainObject instanceof Renderer.PathResolver) {
+                // find the renderer path.
+                String typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
+
+                if (ObjectUtils.isBlank(typePath) && mainObject instanceof Renderer.PathResolver) {
+
                     typePath = ((Renderer.PathResolver) mainObject).getRendererPath(request);
-
-                } else {
-                    typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
                 }
 
+                // find the renderer view.
                 RendererView<Recordable> typeView = null;
-                Class<? extends RendererView> viewClass;
-                if (mainObject instanceof Renderer.ViewClassResolver) {
-                    viewClass = ((Renderer.ViewClassResolver) mainObject).getRendererViewClass(request);
+                Class<? extends RendererView> typeViewClass = mainType.as(Renderer.TypeModification.class).findContextualViewClass(request);
 
-                } else {
-                    viewClass = mainType.as(Renderer.TypeModification.class).findContextualViewClass(request);
+                if (typeViewClass == null && mainObject instanceof Renderer.ViewClassResolver) {
+                    typeViewClass = ((Renderer.ViewClassResolver) mainObject).getRendererViewClass(request);
                 }
-                if (viewClass != null) {
+
+                if (typeViewClass != null) {
                     try {
-                        typeView = RendererView.create(viewClass, (Recordable) mainObject, request, response);
+                        typeView = RendererView.create(typeViewClass, (Recordable) mainObject, request, response);
 
                     } catch (Exception e) {
                         LOGGER.warn("Failed to create RendererView of type [" +
-                                viewClass.getName() + "]. Cause: " + e.getMessage());
+                                typeViewClass.getName() + "]. Cause: " + e.getMessage());
                     }
                 }
 
@@ -1130,20 +1130,20 @@ public class PageFilter extends AbstractFilter {
                     Renderer.TypeModification typeRenderer = type.as(Renderer.TypeModification.class);
                     engine = typeRenderer.getEngine();
 
-                    if (object instanceof Renderer.PathResolver) {
+                    // find the renderer path.
+                    script = type.as(Renderer.TypeModification.class).findContextualPath(request);
+
+                    if (ObjectUtils.isBlank(script) && object instanceof Renderer.PathResolver) {
                         script = ((Renderer.PathResolver) object).getRendererPath(request);
-
-                    } else {
-                        script = type.as(Renderer.TypeModification.class).findContextualPath(request);
                     }
 
-                    Class<? extends RendererView> viewClass;
-                    if (object instanceof Renderer.ViewClassResolver) {
+                    // find the renderer view.
+                    Class<? extends RendererView> viewClass = type.as(Renderer.TypeModification.class).findContextualViewClass(request);
+
+                    if (viewClass == null && object instanceof Renderer.ViewClassResolver) {
                         viewClass = ((Renderer.ViewClassResolver) object).getRendererViewClass(request);
-
-                    } else {
-                        viewClass = type.as(Renderer.TypeModification.class).findContextualViewClass(request);
                     }
+
                     if (viewClass != null) {
                         try {
                             view = RendererView.create(viewClass, (Recordable) object, request, response);
