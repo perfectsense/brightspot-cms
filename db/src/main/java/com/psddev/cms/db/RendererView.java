@@ -36,15 +36,18 @@ public abstract class RendererView<T extends Recordable> {
     /**
      * @return the current HTTP response.
      */
-    protected final HttpServletRequest getResponse() {
-        return request;
+    protected final HttpServletResponse getResponse() {
+        return response;
     }
 
     /**
-     * @param viewClass the class of the view model to be created.
-     * @param object the associated model for the view model.
-     * @param request the associated request for the view model.
-     * @param response the associated response for the view model.
+     * Creates an instance of RendererView of type {@code viewClass} with the
+     * given arguments.
+     *
+     * @param viewClass the class of the RendererView to be created.
+     * @param object the associated object for the renderer view.
+     * @param request the associated request for the renderer view.
+     * @param response the associated response for the renderer view.
      * @param <V> the RendererView type.
      * @param <T> the Recordable type.
      * @return a newly created RendererView object based on the given arguments.
