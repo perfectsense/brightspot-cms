@@ -635,22 +635,22 @@ public class PageFilter extends AbstractFilter {
                 // find the renderer path.
                 String typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
 
-                if (ObjectUtils.isBlank(typePath) && mainObject instanceof Renderer.PathResolver) {
+                if (ObjectUtils.isBlank(typePath) && mainObject instanceof RendererPathResolver) {
 
-                    typePath = ((Renderer.PathResolver) mainObject).getRendererPath(request);
+                    typePath = ((RendererPathResolver) mainObject).getRendererPath(request);
                 }
 
                 // find the renderer view.
-                RendererView<Recordable> typeView = null;
-                Class<? extends RendererView> typeViewClass = mainType.as(Renderer.TypeModification.class).findContextualViewClass(request);
+                View<Recordable> typeView = null;
+                Class<? extends View> typeViewClass = mainType.as(View.TypeModification.class).findContextualViewClass(request);
 
-                if (typeViewClass == null && mainObject instanceof Renderer.ViewClassResolver) {
-                    typeViewClass = ((Renderer.ViewClassResolver) mainObject).getRendererViewClass(request);
+                if (typeViewClass == null && mainObject instanceof ViewClassResolver) {
+                    typeViewClass = ((ViewClassResolver) mainObject).getViewClass(request);
                 }
 
                 if (typeViewClass != null) {
                     try {
-                        typeView = RendererView.create(typeViewClass, (Recordable) mainObject, request, response);
+                        typeView = View.create(typeViewClass, (Recordable) mainObject, request, response);
 
                     } catch (Exception e) {
                         LOGGER.warn("Failed to create RendererView of type [" +
@@ -1112,7 +1112,7 @@ public class PageFilter extends AbstractFilter {
             script = null;
         }
 
-        RendererView<?> view = null;
+        View<?> view = null;
 
         if (object != null) {
             Object substitution = getSubstitutions(request).get(State.getInstance(object).getId());
@@ -1133,20 +1133,20 @@ public class PageFilter extends AbstractFilter {
                     // find the renderer path.
                     script = type.as(Renderer.TypeModification.class).findContextualPath(request);
 
-                    if (ObjectUtils.isBlank(script) && object instanceof Renderer.PathResolver) {
-                        script = ((Renderer.PathResolver) object).getRendererPath(request);
+                    if (ObjectUtils.isBlank(script) && object instanceof RendererPathResolver) {
+                        script = ((RendererPathResolver) object).getRendererPath(request);
                     }
 
                     // find the renderer view.
-                    Class<? extends RendererView> viewClass = type.as(Renderer.TypeModification.class).findContextualViewClass(request);
+                    Class<? extends View> viewClass = type.as(View.TypeModification.class).findContextualViewClass(request);
 
-                    if (viewClass == null && object instanceof Renderer.ViewClassResolver) {
-                        viewClass = ((Renderer.ViewClassResolver) object).getRendererViewClass(request);
+                    if (viewClass == null && object instanceof ViewClassResolver) {
+                        viewClass = ((ViewClassResolver) object).getViewClass(request);
                     }
 
                     if (viewClass != null) {
                         try {
-                            view = RendererView.create(viewClass, (Recordable) object, request, response);
+                            view = View.create(viewClass, (Recordable) object, request, response);
 
                         } catch (Exception e) {
                             LOGGER.warn("Failed to create RendererView of type [" +
@@ -1736,11 +1736,11 @@ public class PageFilter extends AbstractFilter {
          * Pushes the given {@code view} to the list of views that
          * are currently being loaded.
          */
-        public static void pushView(HttpServletRequest request, RendererView<?> view) {
+        public static void pushView(HttpServletRequest request, View<?> view) {
             ErrorUtils.errorIfNull(view, "view");
 
             @SuppressWarnings("unchecked")
-            List<RendererView<?>> views = (List<RendererView<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
 
             if (views == null) {
                 views = new ArrayList<>();
@@ -1755,16 +1755,16 @@ public class PageFilter extends AbstractFilter {
          * Pops the last view from the list of views that are currently
          * being loaded.
          */
-        public static RendererView<?> popView(HttpServletRequest request) {
+        public static View<?> popView(HttpServletRequest request) {
             @SuppressWarnings("unchecked")
-            List<RendererView<?>> views = (List<RendererView<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
 
             if (views == null || views.isEmpty()) {
                 return null;
 
             } else {
-                RendererView<?> popped = views.remove(views.size() - 1);
-                RendererView<?> view = peekView(request);
+                View<?> popped = views.remove(views.size() - 1);
+                View<?> view = peekView(request);
                 request.setAttribute("view", view);
                 return popped;
             }
@@ -1774,9 +1774,9 @@ public class PageFilter extends AbstractFilter {
          * Returns the last view from the list of views that are currently
          * being loaded.
          */
-        public static RendererView<?> peekView(HttpServletRequest request) {
+        public static View<?> peekView(HttpServletRequest request) {
             @SuppressWarnings("unchecked")
-            List<RendererView<?>> views = (List<RendererView<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
 
             if (views == null || views.isEmpty()) {
                 return null;

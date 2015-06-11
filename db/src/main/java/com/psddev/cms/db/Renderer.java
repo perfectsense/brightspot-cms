@@ -44,40 +44,6 @@ public interface Renderer extends Recordable {
             throws IOException, ServletException;
 
     /**
-     * Resolves the path to be used to render an object for a given HTTP
-     * request.
-     */
-    public static interface PathResolver {
-
-        /**
-         * Gets the renderer path for this object in context of the
-         * {@code request}.
-         *
-         * @param request the current HTTP request.
-         * @return the path to the script that should be used to render this
-         * object.
-         */
-        String getRendererPath(HttpServletRequest request);
-    }
-
-    /**
-     * Resolves the RendererView class to be used to when rendering an object
-     * for a given HTTP request.
-     */
-    public static interface ViewClassResolver {
-
-        /**
-         * Gets the renderer view class for this object in context of the
-         * {@code request}.
-         *
-         * @param request the current HTTP request.
-         * @return the RendererView class that should be used when renderering
-         * this object.
-         */
-        Class<? extends RendererView> getRendererViewClass(HttpServletRequest request);
-    }
-
-    /**
      * Global modification that stores rendering hints.
      */
     @FieldInternalNamePrefix("cms.renderable.")
@@ -112,8 +78,6 @@ public interface Renderer extends Recordable {
         private String layoutPath;
         private String embedPath;
         private int embedPreviewWidth;
-
-        private Map<String, String> viewClassNames;
 
         // Returns the legacy rendering JSP.
         private String getDefaultRecordJsp() {
@@ -241,61 +205,6 @@ public interface Renderer extends Recordable {
         }
 
         /**
-         * Returns the RendererView class names associated with rendering
-         * instances of this type in a specific context.
-         *
-         * @return Never {@code null}.
-         */
-        public Map<String, String> getViewClassNames() {
-            if (viewClassNames == null) {
-                viewClassNames = new CompactMap<>();
-            }
-            return viewClassNames;
-        }
-
-        /**
-         * Sets RendererView class names associated with rendering instances
-         * of this type in a specific context.
-         *
-         * @param viewClassNames May be {@code null} to remove all associations.
-         * @see ContextTag
-         */
-        public void setViewClassNames(Map<String, String> viewClassNames) {
-            this.viewClassNames = viewClassNames;
-        }
-
-        /**
-         * Returns all RendererView classes associated with rendering instances
-         * of this type in a specific context.
-         *
-         * @return Never {@code null}.
-         * @see ContextTag
-         */
-        public Map<String, Class<? extends RendererView>> getViewClasses() {
-
-            Map<String, Class<? extends RendererView>> viewClasses = new CompactMap<>();
-
-            viewClasses.putAll(getInheritedViewClasses());
-
-            // only add contexts that don't already exist.
-            for (Map.Entry<String, Class<? extends RendererView>> entry : getInterfaceViewClasses().entrySet()) {
-
-                String context = entry.getKey();
-                Class<? extends RendererView> viewClass = entry.getValue();
-
-                if (!viewClasses.containsKey(context)) {
-                    viewClasses.put(context, viewClass);
-
-                } else {
-                    LOGGER.warn("A renderer mapping for context [" + context +
-                            "] already exists, skipping view class [" + viewClass + "].");
-                }
-            }
-
-            return viewClasses;
-        }
-
-        /**
          * Finds the servlet path that should be used to render the instances
          * of this type in the current context of the given {@code request}.
          *
@@ -315,29 +224,6 @@ public interface Renderer extends Recordable {
             }
 
             return getPath();
-        }
-
-        /**
-         * Finds the RendererView class that should be used to render the
-         * instances of this type in the current context of the given
-         * {@code request}.
-         *
-         * @param request Can't be {@code null}.
-         * @return May be {@code null}.
-         */
-        public Class<? extends RendererView> findContextualViewClass(ServletRequest request) {
-            Map<String, Class<? extends RendererView>> viewClasses = getViewClasses();
-
-            for (Iterator<String> i = ContextTag.Static.getContexts(request).descendingIterator(); i.hasNext();) {
-                String context = i.next();
-                Class<? extends RendererView> viewClass = viewClasses.get(context);
-
-                if (viewClass != null) {
-                    return viewClass;
-                }
-            }
-
-            return viewClasses.get(DEFAULT_CONTEXT);
         }
 
         private Map<String, String> getEffectiveRawPaths() {
@@ -443,95 +329,6 @@ public interface Renderer extends Recordable {
             }
 
             return paths;
-        }
-
-        private Map<String, Class<? extends RendererView>> getRawViewClasses() {
-            Map<String, Class<? extends RendererView>> viewClasses = new CompactMap<>();
-
-            for (Map.Entry<String, String> entry : getViewClassNames().entrySet()) {
-
-                Class<?> klass = ObjectUtils.getClassByName(entry.getValue());
-
-                if (klass != null && RendererView.class.isAssignableFrom(klass)) {
-
-                    @SuppressWarnings("unchecked")
-                    Class<? extends RendererView> viewClass = (Class<? extends RendererView>) klass;
-                    viewClasses.put(entry.getKey(), viewClass);
-                }
-            }
-
-            return viewClasses;
-        }
-
-        private Map<String, Class<? extends RendererView>> getInheritedViewClasses() {
-
-            Map<String, Class<? extends RendererView>> viewClasses = new CompactMap<>();
-
-            ObjectType originalType = getOriginalObject();
-
-            List<ObjectType> superTypes = new ArrayList<>();
-
-            superTypes.add(originalType);
-
-            for (String className : getOriginalObject().getSuperClassNames()) {
-
-                Class<?> klass = ObjectUtils.getClassByName(className);
-                if (klass != null) {
-
-                    ObjectType type = ObjectType.getInstance(klass);
-                    if (type != null && !type.equals(originalType)) {
-                        superTypes.add(type);
-                    }
-                }
-            }
-
-            Collections.reverse(superTypes);
-
-            for (ObjectType type : superTypes) {
-                viewClasses.putAll(type.as(Renderer.TypeModification.class).getRawViewClasses());
-            }
-
-            return viewClasses;
-        }
-
-        private Map<String, Class<? extends RendererView>> getInterfaceViewClasses() {
-
-            Map<String, Class<? extends RendererView>> viewClasses = new CompactMap<>();
-
-            Set<String> seenContexts = new HashSet<>();
-
-            ObjectType originalType = getOriginalObject();
-
-            for (String group : originalType.getGroups()) {
-
-                Class<?> klass = ObjectUtils.getClassByName(group);
-                if (klass != null && klass.isInterface()) {
-
-                    ObjectType type = ObjectType.getInstance(klass);
-
-                    if (type != null && !type.equals(originalType)) {
-
-                        for (Map.Entry<String, Class<? extends RendererView>> entry : type.as(Renderer.TypeModification.class).getRawViewClasses().entrySet()) {
-
-                            String context = entry.getKey();
-                            Class<? extends RendererView> viewClass = entry.getValue();
-                            if (context != null) {
-
-                                if (seenContexts.add(context)) {
-                                    viewClasses.put(context, viewClass);
-
-                                } else {
-                                    viewClasses.remove(context);
-                                    LOGGER.warn("More than one renderer mapping for context [" +
-                                            context + "], skipping view class [" + viewClass + "].");
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return viewClasses;
         }
 
         // --- Deprecated ---
@@ -681,33 +478,6 @@ public interface Renderer extends Recordable {
         ListLayout[] map() default { };
     }
 
-    /**
-     * Specifies the list of {@link com.psddev.cms.db.Renderer.ViewClass}
-     * annotations to be applied.
-     */
-    @Documented
-    @ObjectType.AnnotationProcessorClass(ViewClassesProcessor.class)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.TYPE)
-    public @interface ViewClasses {
-        ViewClass[] value();
-    }
-
-    /**
-     * Specifies the class of the RendererView object that will be placed on
-     * the request in a "view" attribute when rendering the annotated object in
-     * the specified context.
-     */
-    @Documented
-    @ObjectType.AnnotationProcessorClass(ViewClassProcessor.class)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.TYPE)
-    @Repeatable(ViewClasses.class)
-    public @interface ViewClass {
-        String context() default Renderer.DEFAULT_CONTEXT;
-        Class<? extends RendererView> value();
-    }
-
     // --- Deprecated ---
 
     /** @deprecated No replacement. */
@@ -802,33 +572,6 @@ class ListLayoutsProcessor implements ObjectField.AnnotationProcessor<Renderer.L
                 layoutItems.add(itemClass.getName());
             }
         }
-    }
-}
-
-class ViewClassesProcessor implements ObjectType.AnnotationProcessor<Renderer.ViewClasses> {
-    @Override
-    public void process(ObjectType type, Renderer.ViewClasses annotation) {
-        ViewClassProcessor viewProcessor = new ViewClassProcessor();
-
-        for (Renderer.ViewClass viewAnnotation : annotation.value()) {
-            viewProcessor.process(type, viewAnnotation);
-        }
-    }
-}
-
-class ViewClassProcessor implements ObjectType.AnnotationProcessor<Renderer.ViewClass> {
-    @Override
-    public void process(ObjectType type, Renderer.ViewClass annotation) {
-        Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
-
-        String context = annotation.context();
-        Class<? extends RendererView> viewClass = annotation.value();
-
-        if (ObjectUtils.isBlank(context)) {
-            context = Renderer.DEFAULT_CONTEXT;
-        }
-
-        rendererData.getViewClassNames().put(context, viewClass.getName());
     }
 }
 
