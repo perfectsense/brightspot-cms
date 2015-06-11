@@ -633,19 +633,22 @@ public class PageFilter extends AbstractFilter {
                 }
 
                 // find the renderer path.
-                String typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
-
-                if (ObjectUtils.isBlank(typePath) && mainObject instanceof RendererPathResolver) {
-
+                String typePath;
+                if (mainObject instanceof RendererPathResolver) {
                     typePath = ((RendererPathResolver) mainObject).getRendererPath(request);
+
+                } else {
+                    typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
                 }
 
                 // find the renderer view.
                 View<Recordable> typeView = null;
-                Class<? extends View> typeViewClass = mainType.as(View.TypeModification.class).findContextualViewClass(request);
-
-                if (typeViewClass == null && mainObject instanceof ViewClassResolver) {
+                Class<? extends View> typeViewClass;
+                if (mainObject instanceof ViewClassResolver) {
                     typeViewClass = ((ViewClassResolver) mainObject).getViewClass(request);
+
+                } else {
+                    typeViewClass = mainType.as(View.TypeModification.class).findContextualViewClass(request);
                 }
 
                 if (typeViewClass != null) {
@@ -1131,17 +1134,20 @@ public class PageFilter extends AbstractFilter {
                     engine = typeRenderer.getEngine();
 
                     // find the renderer path.
-                    script = type.as(Renderer.TypeModification.class).findContextualPath(request);
-
-                    if (ObjectUtils.isBlank(script) && object instanceof RendererPathResolver) {
+                    if (object instanceof RendererPathResolver) {
                         script = ((RendererPathResolver) object).getRendererPath(request);
+
+                    } else {
+                        script = type.as(Renderer.TypeModification.class).findContextualPath(request);
                     }
 
                     // find the renderer view.
-                    Class<? extends View> viewClass = type.as(View.TypeModification.class).findContextualViewClass(request);
-
-                    if (viewClass == null && object instanceof ViewClassResolver) {
+                    Class<? extends View> viewClass;
+                    if (object instanceof ViewClassResolver) {
                         viewClass = ((ViewClassResolver) object).getViewClass(request);
+
+                    } else {
+                        viewClass = type.as(View.TypeModification.class).findContextualViewClass(request);
                     }
 
                     if (viewClass != null) {
