@@ -3215,6 +3215,10 @@ public class ToolPageContext extends WebPageContext {
      * @param If {@code null}, returns {@code true}.
      */
     public boolean hasPermission(String permissionId) {
+        ToolPermissionProvider provider = getToolPermissionProvider();
+        if (provider != null) {
+            return provider.hasPermission(this, permissionId);
+        }
         ToolUser user = getUser();
 
         return user != null &&
@@ -3237,6 +3241,20 @@ public class ToolPageContext extends WebPageContext {
                 return true;
             }
         }
+    }
+
+    private transient boolean checkedPermissionProvider;
+    private transient ToolPermissionProvider permissionProvider;
+
+    /**
+     * Returns the {@link ToolPermissionProvider} if configured.
+     */
+    private ToolPermissionProvider getToolPermissionProvider() {
+        if (!checkedPermissionProvider) {
+            permissionProvider = ToolPermissionProvider.getDefault();
+            checkedPermissionProvider = true;
+        }
+        return permissionProvider;
     }
 
     // --- Content.Static bridge ---

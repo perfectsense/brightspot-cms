@@ -6,6 +6,7 @@
     "codemirror": "4.2.0",
     "css-element-queries": "4250c87c5ab2efd467f99d901252c73eb6bb80ea",
     "d3": "3.4.6",
+    "evaporate": "ttlabs/evaporatejs",
     "handsontable": "0.8.23",
     "husl": "4.0.0",
     "jquery": "1.8.3+1",

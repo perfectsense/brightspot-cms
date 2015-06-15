@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -33,6 +34,8 @@ import com.psddev.cms.tool.FileContentType;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.db.Query;
 import com.psddev.dari.db.ReferentialText;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.AggregateException;
@@ -59,13 +62,10 @@ public class StorageItemField extends PageServlet {
         HttpServletRequest request = page.getRequest();
 
         State state = State.getInstance(request.getAttribute("object"));
-        UUID id = state.getId();
 
         ObjectField field = (ObjectField) request.getAttribute("field");
-        String fieldName = field.getInternalName();
-        StorageItem fieldValue = (StorageItem) state.getValue(fieldName);
 
-        String inputName = (String) request.getAttribute("inputName");
+        String inputName = page.paramOrDefault(String.class, "inputName", (String) request.getAttribute("inputName"));
         String actionName = inputName + ".action";
         String storageName = inputName + ".storage";
         String pathName = inputName + ".path";
@@ -89,15 +89,34 @@ public class StorageItemField extends PageServlet {
         String focusXName = inputName + ".focusX";
         String focusYName = inputName + ".focusY";
 
+        String fieldName = field != null ? field.getInternalName() : page.param(String.class, "fieldName");
+        StorageItem fieldValue = null;
+
+        if (state != null) {
+            fieldValue = (StorageItem) state.getValue(fieldName);
+        } else {
+            // handles processing of files uploaded on frontend
+            UUID typeId = page.param(UUID.class, "typeId");
+            ObjectType type = Query.findById(ObjectType.class, typeId);
+            field = type.getField(fieldName);
+            state = State.getInstance(ObjectType.getInstance(page.param(UUID.class, "typeId")));
+        }
+
+        String storageItemPath = page.param(String.class, pathName);
+        if (!StringUtils.isBlank(storageItemPath)) {
+            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
+            newItem.setPath(storageItemPath);
+            fieldValue = newItem;
+        }
+
         String metadataFieldName = fieldName + ".metadata";
-        String widthFieldName = fieldName + ".width";
-        String heightFieldName = fieldName + ".height";
         String cropsFieldName = fieldName + ".crops";
 
         String action = page.param(actionName);
 
         Map<String, Object> fieldValueMetadata = null;
-        if (fieldValue != null && (!((Boolean) request.getAttribute("isFormPost")) || "keep".equals(action))) {
+        boolean isFormPost = request.getAttribute("isFormPost") != null ? (Boolean) request.getAttribute("isFormPost") : false;
+        if (fieldValue != null && (!isFormPost || "keep".equals(action))) {
             fieldValueMetadata = fieldValue.getMetadata();
         }
 
@@ -169,7 +188,7 @@ public class StorageItemField extends PageServlet {
         Class hotSpotClass = ObjectUtils.getClassByName(ImageTag.HOTSPOT_CLASS);
         boolean projectUsingBrightSpotImage = hotSpotClass != null && !ObjectUtils.isBlank(ClassFinder.Static.findClasses(hotSpotClass));
 
-        if ((Boolean) request.getAttribute("isFormPost")) {
+        if (isFormPost) {
             File file = null;
 
             try {
@@ -365,45 +384,10 @@ public class StorageItemField extends PageServlet {
                         }
 
                         if (fileSize > 0) {
-                            String idString = UUID.randomUUID().toString().replace("-", "");
-                            StringBuilder pathBuilder = new StringBuilder();
-                            String label = state.getLabel();
-
                             fieldValueMetadata.put("originalFilename", name);
 
-                            int lastDotAt = name.indexOf('.');
-                            String extension;
-
-                            if (lastDotAt > -1) {
-                                extension = name.substring(lastDotAt);
-                                name = name.substring(0, lastDotAt);
-
-                            } else {
-                                extension = "";
-                            }
-
-                            if (ObjectUtils.isBlank(label) ||
-                                    ObjectUtils.to(UUID.class, label) != null) {
-                                label = name;
-                            }
-
-                            if (ObjectUtils.isBlank(label)) {
-                                label = UUID.randomUUID().toString().replace("-", "");
-                            }
-
-                            pathBuilder.append(idString.substring(0, 2));
-                            pathBuilder.append('/');
-                            pathBuilder.append(idString.substring(2, 4));
-                            pathBuilder.append('/');
-                            pathBuilder.append(idString.substring(4));
-                            pathBuilder.append('/');
-                            pathBuilder.append(StringUtils.toNormalized(label));
-                            pathBuilder.append(extension);
-
-                            String storageSetting = field.as(ToolUi.class).getStorageSetting();
-
-                            newItem = StorageItem.Static.createIn(storageSetting != null ? Settings.getOrDefault(String.class, storageSetting, null) : null);
-                            newItem.setPath(pathBuilder.toString());
+                            newItem = StorageItem.Static.createIn(getStorageSetting(Optional.of(field)));
+                            newItem.setPath(createStorageItemPath(state.getLabel(), fileName));
                             newItem.setContentType(fileContentType);
 
                             Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
@@ -425,7 +409,10 @@ public class StorageItemField extends PageServlet {
                 }
 
                 // Automatic image metadata extraction.
-                if (newItem != null && !"keep".equals(action)) {
+                if (newItem != null &&
+                        !fieldValueMetadata.containsKey("width") &&
+                        !fieldValueMetadata.containsKey("height")) {
+
                     if (newItemData == null) {
                         newItemData = newItem.getData();
                     }
@@ -446,6 +433,8 @@ public class StorageItemField extends PageServlet {
                             IoUtils.closeQuietly(newItemData);
                         }
                     }
+                } else {
+                    IoUtils.closeQuietly(newItemData);
                 }
 
                 // Standard sizes.
@@ -550,14 +539,21 @@ public class StorageItemField extends PageServlet {
             }
         }
 
+        Optional<ObjectField> fieldOptional = Optional.of(field);
+        Uploader uploader = Uploader.getUploader(fieldOptional);
+
         // --- Presentation ---
         page.writeStart("div", "class", "inputSmall");
+
+            if (uploader != null) {
+                uploader.writeHtml(page, fieldOptional);
+            }
+
             page.writeStart("div", "class", "fileSelector");
 
                 page.writeStart("select",
                         "class", "toggleable",
                         "data-root", ".inputSmall",
-                        "id", page.getId(),
                         "name", page.h(actionName));
 
                     if (fieldValue != null) {
@@ -601,9 +597,10 @@ public class StorageItemField extends PageServlet {
                 page.writeEnd();
 
                 page.writeTag("input",
-                        "class", "fileSelectorItem fileSelectorNewUpload",
+                        "class", "fileSelectorItem fileSelectorNewUpload " + (uploader != null ? ObjectUtils.firstNonNull(uploader.getClassIdentifier(), "") : ""),
                         "type", "file",
-                        "name", page.h(fileName));
+                        "name", page.h(fileName),
+                        "data-input-name", inputName);
 
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUrl",
@@ -656,6 +653,73 @@ public class StorageItemField extends PageServlet {
         if (projectUsingBrightSpotImage) {
             page.include("set/hotSpot.jsp");
         }
+    }
+
+    public static String createStorageItemPath(String label, String fileName) {
+
+        String extension = "";
+        String path = createStoragePathPrefix();
+
+        if (!StringUtils.isBlank(fileName)) {
+            int lastDotAt = fileName.indexOf('.');
+
+            if (lastDotAt > -1) {
+                extension = fileName.substring(lastDotAt);
+                fileName = fileName.substring(0, lastDotAt);
+
+            }
+        }
+
+        if (ObjectUtils.isBlank(label) ||
+                ObjectUtils.to(UUID.class, label) != null) {
+            label = fileName;
+        }
+
+        if (ObjectUtils.isBlank(label)) {
+            label = UUID.randomUUID().toString().replace("-", "");
+        }
+
+        path += StringUtils.toNormalized(label);
+        path += extension;
+
+        return path;
+    }
+
+    static String createStoragePathPrefix() {
+        String idString = UUID.randomUUID().toString().replace("-", "");
+        StringBuilder pathBuilder = new StringBuilder();
+
+        pathBuilder.append(idString.substring(0, 2));
+        pathBuilder.append('/');
+        pathBuilder.append(idString.substring(2, 4));
+        pathBuilder.append('/');
+        pathBuilder.append(idString.substring(4));
+        pathBuilder.append('/');
+
+        return pathBuilder.toString();
+    }
+
+    /**
+     * Gets storageSetting for current field,
+     * if non exists, get {@code StorageItem.DEFAULT_STORAGE_SETTING}
+     *
+     * @param field to check for storage setting
+     */
+    static String getStorageSetting(Optional<ObjectField> field) {
+        String storageSetting = null;
+
+        if (field.isPresent()) {
+            String fieldStorageSetting = field.get().as(ToolUi.class).getStorageSetting();
+            if (!StringUtils.isBlank(fieldStorageSetting)) {
+                storageSetting = Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + fieldStorageSetting);
+            }
+        }
+
+        if (StringUtils.isBlank(storageSetting)) {
+            storageSetting = Settings.get(String.class, StorageItem.DEFAULT_STORAGE_SETTING);
+        }
+
+        return storageSetting;
     }
 
     @Override

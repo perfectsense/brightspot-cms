@@ -50,9 +50,16 @@ public class ImageFileType implements FileContentType {
         HttpServletRequest request = page.getRequest();
 
         ObjectField field = (ObjectField) request.getAttribute("field");
-        String fieldName = field.getInternalName();
 
-        String inputName = (String) request.getAttribute("inputName");
+        String fieldName;
+        if (field != null) {
+            fieldName = field.getInternalName();
+        } else {
+            fieldName = page.param(String.class, "fieldName");
+        }
+
+        String inputName = page.paramOrDefault(String.class, "inputName", (String) request.getAttribute("inputName"));
+        String originalWidthName = inputName + ".originalWidth";
         String actionName = inputName + ".action";
         String cropsName = inputName + ".crops.";
 
@@ -72,7 +79,8 @@ public class ImageFileType implements FileContentType {
         String action = page.param(actionName);
 
         Map<String, Object> fieldValueMetadata = null;
-        if (fieldValue != null && (!((Boolean) request.getAttribute("isFormPost")) || "keep".equals(action))) {
+        boolean isFormPost = request.getAttribute("isFormPost") != null ? (Boolean) request.getAttribute("isFormPost") : false;
+        if (fieldValue != null && (!isFormPost || "keep".equals(action))) {
             fieldValueMetadata = fieldValue.getMetadata();
         }
 
@@ -413,7 +421,10 @@ public class ImageFileType implements FileContentType {
                         originalWidth = (Number) CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "dims/originalWidth");
                     } else if (!ObjectUtils.isBlank(CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "width"))) {
                         originalWidth = (Number) CollectionUtils.getByPath(imageTagBuilder.getItem().getMetadata(), "width");
+                    } else if (!ObjectUtils.isBlank(page.param(Integer.class, originalWidthName))) {
+                        originalWidth = page.param(Integer.class, originalWidthName);
                     }
+
                     if (originalWidth != null) {
                         if (originalWidth.intValue() > 1000) {
                             resizeScale = String.format("%.2f", (double) 1000 / originalWidth.intValue());

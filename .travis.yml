@@ -1,0 +1,14 @@
+sudo: false
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+    - $HOME/.m2
+
+install: mvn -Dmaven.test.skip=true install
+
+script: mvn -Plibrary verify
