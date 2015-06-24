@@ -12,7 +12,7 @@ import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
 
-public class SiteTab extends ProfilePanelTab {
+public class SiteTab extends ProfileWidgetTab {
     @Override
     public void writeHtml(ToolPageContext page) throws IOException, ServletException {
 

@@ -1322,8 +1322,8 @@ public class ToolPageContext extends WebPageContext {
                                 writeStart("ul", "class", "piped");
                                     writeStart("li");
                                         writeStart("a",
-                                                "href", cmsUrl("/profilePanel"),
-                                                "target", "profilePanel");
+                                                "href", cmsUrl("/profileWidget"),
+                                                "target", "profileWidget");
                                             writeHtml("Profile");
                                         writeEnd();
                                     writeEnd();
@@ -1339,8 +1339,8 @@ public class ToolPageContext extends WebPageContext {
 
                             writeStart("span", "class", "toolUserAvatar");
                                 writeStart("a",
-                                        "href", cmsUrl("/profilePanel"),
-                                        "target", "profilePanel");
+                                        "href", cmsUrl("/profileWidget"),
+                                        "target", "profileWidget");
                                     if (avatar != null) {
                                         writeElement("img",
                                                 "src", ImageEditor.Static.resize(ImageEditor.Static.getDefault(), avatar, null, 100, 100).getPublicUrl());

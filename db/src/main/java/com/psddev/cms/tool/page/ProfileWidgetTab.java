@@ -6,7 +6,7 @@ import javax.servlet.ServletException;
 
 import com.psddev.cms.tool.ToolPageContext;
 
-public abstract class ProfilePanelTab {
+public abstract class ProfileWidgetTab {
 
     public abstract void writeHtml(ToolPageContext page) throws IOException, ServletException;
 }
