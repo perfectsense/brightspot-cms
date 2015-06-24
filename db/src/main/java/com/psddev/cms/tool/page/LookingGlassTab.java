@@ -14,7 +14,7 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.JspUtils;
 
-public class LookingGlassTab extends ProfilePanelTab {
+public class LookingGlassTab extends ProfileWidgetTab {
 
     @Override
     public void writeHtml(ToolPageContext page) throws IOException, ServletException {

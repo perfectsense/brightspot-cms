@@ -9,7 +9,7 @@ import javax.servlet.ServletException;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.ToolPageContext;
 
-public class ProfileTab extends ProfilePanelTab {
+public class ProfileTab extends ProfileWidgetTab {
 
     @Override
     public void writeHtml(ToolPageContext page) throws IOException, ServletException {
