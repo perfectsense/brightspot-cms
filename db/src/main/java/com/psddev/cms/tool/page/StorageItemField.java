@@ -70,6 +70,7 @@ public class StorageItemField extends PageServlet {
         String storageName = inputName + ".storage";
         String pathName = inputName + ".path";
         String contentTypeName = inputName + ".contentType";
+        String originalFileNameInputName = inputName + ".originalFileName";
         String fileInputName = inputName + ".file";
         String urlName = inputName + ".url";
         String dropboxName = inputName + ".dropbox";
@@ -122,6 +123,10 @@ public class StorageItemField extends PageServlet {
 
         if (fieldValueMetadata == null) {
             fieldValueMetadata = new LinkedHashMap<String, Object>();
+        }
+
+        if (!StringUtils.isBlank(page.param(originalFileNameInputName))) {
+            fieldValueMetadata.put("originalFilename", page.param(originalFileNameInputName));
         }
 
         Map<String, Object> edits = (Map<String, Object>) fieldValueMetadata.get("cms.edits");
@@ -635,6 +640,7 @@ public class StorageItemField extends PageServlet {
                     page.writeTag("input", "name", page.h(storageName), "type", "hidden", "value", page.h(fieldValue.getStorage()));
                     page.writeTag("input", "name", page.h(pathName), "type", "hidden", "value", page.h(fieldValue.getPath()));
                     page.writeTag("input", "name", page.h(contentTypeName), "type", "hidden", "value", page.h(contentType));
+                    page.writeTag("input", "name", page.h(originalFileNameInputName), "type", "hidden", "value", ObjectUtils.firstNonBlank(fieldValueMetadata.get("originalFilename"), page.param(String.class, originalFileNameInputName)));
 
                     if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
 
