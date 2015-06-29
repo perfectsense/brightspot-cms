@@ -396,11 +396,7 @@ public class StorageItemField extends PageServlet {
                             newItem.setPath(createStorageItemPath(state.getLabel(), name));
                             newItem.setContentType(fileContentType);
 
-                            Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
-                            httpHeaders.put("Cache-Control", Collections.singletonList("public, max-age=31536000"));
-                            httpHeaders.put("Content-Length", Collections.singletonList(String.valueOf(fileSize)));
-                            httpHeaders.put("Content-Type", Collections.singletonList(fileContentType));
-                            fieldValueMetadata.put("http.headers", httpHeaders);
+                            setHttpHeaders(fieldValueMetadata, fileSize, fileContentType);
 
                             newItem.setData(new FileInputStream(file));
 
@@ -727,6 +723,14 @@ public class StorageItemField extends PageServlet {
         }
 
         return storageSetting;
+    }
+
+    static void setHttpHeaders(Map<String, Object> storageItemMetadata, long fileSize, String fileContentType) {
+        Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
+        httpHeaders.put("Cache-Control", Collections.singletonList("public, max-age=31536000"));
+        httpHeaders.put("Content-Length", Collections.singletonList(String.valueOf(fileSize)));
+        httpHeaders.put("Content-Type", Collections.singletonList(fileContentType));
+        storageItemMetadata.put("http.headers", httpHeaders);
     }
 
     @Override
