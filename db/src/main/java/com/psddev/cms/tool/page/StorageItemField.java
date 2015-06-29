@@ -72,6 +72,7 @@ public class StorageItemField extends PageServlet {
         String contentTypeName = inputName + ".contentType";
         String originalFileNameInputName = inputName + ".originalFileName";
         String fileInputName = inputName + ".file";
+        String fileSizeInputName = inputName + ".fileSize";
         String urlName = inputName + ".url";
         String dropboxName = inputName + ".dropbox";
         String cropsName = inputName + ".crops.";
@@ -103,17 +104,18 @@ public class StorageItemField extends PageServlet {
             state = State.getInstance(ObjectType.getInstance(page.param(UUID.class, "typeId")));
         }
 
-        // Handles front end uploads
-        if (page.param(boolean.class, inputName + ".uploaded")) {
-            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
-            newItem.setPath(page.param(String.class, pathName));
-            fieldValue = newItem;
-        }
-
         String metadataFieldName = fieldName + ".metadata";
         String cropsFieldName = fieldName + ".crops";
 
         String action = page.param(actionName);
+
+        // Front end upload handling
+        boolean uploaded = page.param(boolean.class, inputName + ".uploaded");
+        if (uploaded) {
+            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
+            newItem.setPath(page.param(String.class, pathName));
+            fieldValue = newItem;
+        }
 
         Map<String, Object> fieldValueMetadata = null;
         boolean isFormPost = request.getAttribute("isFormPost") != null ? (Boolean) request.getAttribute("isFormPost") : false;
@@ -266,10 +268,19 @@ public class StorageItemField extends PageServlet {
                         newItem.setPath(page.param(pathName));
                     }
 
-                    newItem.setContentType(page.param(contentTypeName));
+                    // Front end upload handling
+                    String fileContentType = page.param(String.class, contentTypeName);
+                    long fileSize = page.param(long.class, fileSizeInputName);
+                    String originalFileName = page.param(String.class, originalFileNameInputName);
 
-                    if (!StringUtils.isBlank(page.param(originalFileNameInputName))) {
-                        fieldValueMetadata.put("originalFilename", page.param(originalFileNameInputName));
+                    newItem.setContentType(fileContentType);
+
+                    if (!StringUtils.isBlank(originalFileName)) {
+                        fieldValueMetadata.put("originalFilename", originalFileName);
+                    }
+
+                    if (fileSize > 0) {
+                        setHttpHeaders(fieldValueMetadata, fileSize, fileContentType);
                     }
 
                 } else if ("newUpload".equals(action) ||
@@ -636,7 +647,12 @@ public class StorageItemField extends PageServlet {
                     page.writeTag("input", "name", page.h(storageName), "type", "hidden", "value", page.h(fieldValue.getStorage()));
                     page.writeTag("input", "name", page.h(pathName), "type", "hidden", "value", page.h(fieldValue.getPath()));
                     page.writeTag("input", "name", page.h(contentTypeName), "type", "hidden", "value", page.h(contentType));
-                    page.writeTag("input", "name", page.h(originalFileNameInputName), "type", "hidden", "value", ObjectUtils.firstNonBlank(fieldValueMetadata.get("originalFilename"), page.param(String.class, originalFileNameInputName)));
+
+                    // More front end uploader handling
+                    if (uploaded) {
+                        page.writeTag("input", "name", page.h(originalFileNameInputName), "type", "hidden", "value", page.param(String.class, originalFileNameInputName));
+                        page.writeTag("input", "name", page.h(fileSizeInputName), "type", "hidden", "value", page.param(String.class, fileSizeInputName));
+                    }
 
                     if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
 
