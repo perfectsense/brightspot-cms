@@ -401,15 +401,47 @@ public class PageFilter extends AbstractFilter {
             // If mainObject has a redirect path AND a permalink and the
             // current request is the redirect path, then redirect to the
             // permalink.
-            String path = Static.getPath(request);
             Directory.Path redirectPath = null;
             boolean isRedirect = false;
 
             for (Directory.Path p : State.getInstance(mainObject).as(Directory.Data.class).getPaths()) {
+
                 if (p.getType() == Directory.PathType.REDIRECT &&
-                        ObjectUtils.equals(p.getSite(), site) &&
-                        path.equalsIgnoreCase(p.getPath())) {
-                    isRedirect = true;
+                        ObjectUtils.equals(p.getSite(), site)) {
+                    String path = p.getPath();
+                    String requestPath = Static.getPath(request);
+
+                    if (requestPath.equalsIgnoreCase(path)) {
+                        isRedirect = true;
+
+                    } else {
+                        // handle wildcards
+                        int wildcardIndex = path.indexOf("/*");
+
+                        if (wildcardIndex > -1) {
+                            String purePath = path.substring(0, wildcardIndex);
+
+                            if (requestPath.length() >= purePath.length()) {
+                                String requestPurePath = requestPath.substring(0, wildcardIndex);
+
+                                if (requestPurePath.equalsIgnoreCase(purePath)) {
+                                    String requestPathLeftover = requestPath.substring(wildcardIndex, requestPath.length());
+
+                                    if (requestPathLeftover.isEmpty()) {
+                                        isRedirect = true;
+
+                                    } else {
+                                        String wildcard = path.substring(wildcardIndex, path.length());
+
+                                        if (wildcard.equals("/**") ||
+                                                (wildcard.equals("/*") && requestPathLeftover.split("/").length < 3)) {
+                                            isRedirect = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                 } else if (p.getType() == Directory.PathType.PERMALINK &&
                         ObjectUtils.equals(p.getSite(), site)) {

@@ -633,7 +633,10 @@ if (!isValueExternal) {
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
                             "class", !bulkUploadTypes.isEmpty() ? "collapsed" : null,
-                            "data-type", wp.getObjectLabel(type));
+                            "data-type", wp.getObjectLabel(type),
+                            // Add the name of the preview field so the front end knows
+                            // if that field is updated it should update the thumbnail
+                            "data-preview-field", type.getPreviewField());
                         wp.writeStart("a",
                                 "href", wp.cmsUrl("/content/repeatableObject.jsp",
                                         "inputName", inputName,
@@ -644,7 +647,7 @@ if (!isValueExternal) {
             }
         wp.writeEnd();
 
-        if (!bulkUploadTypes.isEmpty()) {
+        if (!bulkUploadTypes.isEmpty() && !field.as(ToolUi.class).isReadOnly()) {
             StringBuilder typeIdsQuery = new StringBuilder();
 
             for (ObjectType type : bulkUploadTypes) {
@@ -715,7 +718,7 @@ if (!isValueExternal) {
             writer.writeEnd();
         writer.end();
 
-        if (previewable) {
+        if (previewable && !field.as(ToolUi.class).isReadOnly()) {
             writer.start("a",
                     "class", "action-upload",
                     "href", wp.url("/content/uploadFiles?" + typeIdsQuery, "containerId", containerObjectId),

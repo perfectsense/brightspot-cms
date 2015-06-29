@@ -105,6 +105,7 @@
       top: -1px;
       right: -1px;
       z-index: 1;
+      pointer-events: none;
     }
 
     // arrow.
@@ -121,6 +122,7 @@
       position: absolute;
       width: @-arrowWidth;
       z-index: 1;
+      pointer-events: none;
     }
   }
 
@@ -141,10 +143,6 @@
     text-align: center;
     top: @-offset;
     width: @-size;
-  }
-
-  &.toBeRemoved {
-    opacity: 0.5;
   }
 
   .link {

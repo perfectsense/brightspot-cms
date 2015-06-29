@@ -40,7 +40,6 @@ public class GridSearchResultView extends ListSearchResultView {
 
         sortField = updateSort();
         showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult() &&
-                page.getSite() == null &&
                 Query.from(Site.class).hasMoreThan(0);
 
         if (selectedType != null) {

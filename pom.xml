@@ -18,7 +18,7 @@
 
     <groupId>com.psddev</groupId>
     <artifactId>cms</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>BrightSpot CMS</name>
@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>com.psddev</groupId>
                 <artifactId>cms-db</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <version>3.1-SNAPSHOT</version>
             </dependency>
 
             <dependency>

@@ -1,0 +1,28 @@
+sudo: false
+
+branches:
+  except:
+    - /^v[-.0-9]+$/
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+env:
+  global:
+    - secure: "pfQ0YztDBxyLlRboI1ISk6KhI2zQe5ugFF87akt10Bq5mQh3UVrr1YegpBHY9FUiI9V/reGCSb54fi1OGtWFi9jgvZWn4/xkVZhLxwycBUAqP85OQPWQy5hzkerlwL1BNx0wMqMtgP6yPtMwBWrSTSxs+VVAY6hwVCi086uiM90="
+    - secure: "jQbegeTjPZ+5bm4goTU/+jsoR7UmSOYowjZZ04oUZmkGxhd9wdnHDgHGmryRDfpLGPVw8/yt0IVXWntL0oZTDKQ1OrTbhK7I1oppt7hnd7ghylY+UWVj68ZP9Qp/4ntHjvelp8v3kqrY28MPdT7cZp9C7dDSjjNYphXFVpCb2rM="
+
+install: true
+
+script: mvn -Plibrary verify
+
+cache:
+  directories:
+    - $HOME/.m2
+    - tool-ui/bower_components
+    - tool-ui/node_modules
+
+after_success:
+  - git clone https://github.com/perfectsense/travis-maven-deploy.git && travis-maven-deploy/deploy.sh

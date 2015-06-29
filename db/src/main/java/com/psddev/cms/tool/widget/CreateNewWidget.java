@@ -118,7 +118,8 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 if (type.isConcrete() &&
                         type.getGroups().contains(Directory.Item.class.getName()) &&
                         !type.getGroups().contains(Singleton.class.getName()) &&
-                        !typeCounts.containsKey(type)) {
+                        !typeCounts.containsKey(type) &&
+                        page.hasPermission("type/" + type.getId() + "/write")) {
                     TypeTemplate typeTemplate = new TypeTemplate(type, null);
 
                     if (typeTemplate.getCollapsedId().equals(redirect)) {

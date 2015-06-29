@@ -66,7 +66,6 @@ public class ListSearchResultView extends AbstractSearchResultView {
 
         sortField = updateSort();
         showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult() &&
-                page.getSite() == null &&
                 Query.from(Site.class).hasMoreThan(0);
 
         if (selectedType != null) {

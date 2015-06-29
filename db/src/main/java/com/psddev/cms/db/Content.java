@@ -335,9 +335,39 @@ public abstract class Content extends Record {
 
         /**
          * Trashes the given {@code object} so that it's not usable in
-         * the given {@code site}.
+         * the given {@code site}.  If the {@link Site} is the {@link com.psddev.cms.db.Site.ObjectModification#owner},
+         * then the object will be trashed for all {@link com.psddev.cms.db.Site.ObjectModification#consumers}.
+         * @param object the object for which trash status will be set
+         * @param site the site within which the trash status will be reflected
+         * @param user the user for whom this change is made
          */
         public static void trash(Object object, Site site, ToolUser user) {
+            toggleTrash(object, site, user, true);
+        }
+
+        /**
+         * Restores the given {@code object} so that it's usable in
+         * the given {@code site}.  If the {@link Site} is the {@link com.psddev.cms.db.Site.ObjectModification#owner},
+         * then the object will be restored for all {@link com.psddev.cms.db.Site.ObjectModification#consumers}.
+         * @param object the object for which trash status will be removed
+         * @param site the site within which the trash status will be reflected
+         * @param user the user for whom this change is made
+         */
+        public static void restore(Object object, Site site, ToolUser user) {
+            toggleTrash(object, site, user, false);
+        }
+
+        /**
+         * Trashes or restores the given {@code object} for the given {@code site} based
+         * on the value of {@code trash}.  If the {@link Site} is the {@link com.psddev.cms.db.Site.ObjectModification#owner},
+         * then the change in trash status will be reflected for all {@link com.psddev.cms.db.Site.ObjectModification#consumers}.
+         * @param object the object for which trash status will be changed
+         * @param site the site within which the trash status will be reflected
+         * @param user the user for whom this change is made
+         * @param trash {@code true} to set status to trashed, {@code false} to un-set trashed status
+         */
+        private static void toggleTrash(Object object, Site site, ToolUser user, boolean trash) {
+
             State state = State.getInstance(object);
             Site.ObjectModification siteData = state.as(Site.ObjectModification.class);
 
@@ -346,16 +376,26 @@ public abstract class Content extends Record {
                     ObjectUtils.equals(siteData.getOwner(), site)) {
                 ObjectModification contentData = state.as(ObjectModification.class);
 
-                contentData.setTrash(true);
+                contentData.setTrash(trash);
                 contentData.setUpdateDate(new Date());
                 contentData.setUpdateUser(user);
                 state.save();
 
             } else {
-                siteData.getConsumers().remove(site);
+
+                if (trash) {
+                    siteData.getConsumers().remove(site);
+                } else {
+                    siteData.getConsumers().add(site);
+                }
 
                 if (siteData.isGlobal()) {
-                    siteData.getBlacklist().add(site);
+
+                    if (trash) {
+                        siteData.getBlacklist().add(site);
+                    } else {
+                        siteData.getBlacklist().remove(site);
+                    }
                 }
             }
         }

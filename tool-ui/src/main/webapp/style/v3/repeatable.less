@@ -298,6 +298,55 @@
       float: left;
       margin: 0 10px 0 0;
     }
+
+    .carousel-tile {
+      
+      .removeButton {
+        .icon;
+        .icon-remove;
+        .icon-only;
+        .link;
+        color: @color-remove;
+        position: absolute;
+        right: 2px;
+        bottom: 4px;
+        
+        // Hide the remove button unless the tile is active
+        display:none;
+      }
+      
+      .toBeRemoved {
+        
+        opacity: 0.5;
+        text-decoration: line-through;
+
+        .removeButton {
+          // Always show the restore button even if tile is not active
+          display:block;
+          .icon-plus;
+          color: @color-link-dark;
+        }
+        
+        // Add padding to the caption to leave room for removeButton
+        figcaption {
+          padding-right: 1em;
+        }
+      }
+    }
+    
+    .carousel-tile-active {
+
+      // Always show remove/restore on the active tile
+      .removeButton {
+        display:block;
+      }
+
+      // Add padding to the caption to leave room for removeButton
+      figcaption {
+        padding-right: 1em;
+      }
+      
+    }
   }
 }
 
@@ -595,6 +644,11 @@
   }
 
   &.repeatableObjectId-previewable {
+    
+    > .addButtonContainer {
+      float:left;
+    }
+    
     > ol,
     > ul {
       list-style-type: none;
@@ -608,21 +662,40 @@
         box-sizing: border-box;
         float: left;
         margin: 0 10px 10px 0;
-        padding: 4px;
+        padding: 0;
         position: relative;
         width: 210px;
-
+        height:180px;
+        
         .objectId-select {
           background-color: white;
           border: none;
           box-sizing: border-box;
           display: block;
-          margin: -4px -4px 0 -4px;
-          padding: 4px 4px 10px 4px;
+          margin: 0;
+          margin-bottom:4px;
+          padding:4px;
           width: auto;
-
+          height:150px;
+          
           figure {
+            
             width: 100%;
+            height:100%;
+
+            img {
+              width: 100%;
+              height:100%;
+              cursor: pointer;
+          
+              // Resize the image so it's largest dimension fills the tile completely
+              // and keeps the correct aspect ratio.
+              object-fit: cover;
+
+              // In case src is blank set a background color
+              background-color:#ddd;
+            }
+
           }
 
           &:before,
@@ -631,13 +704,16 @@
           }
         }
 
-        .objectId-edit,
         .removeButton {
           .icon-only;
+          position:absolute;
+          right:1em;
         }
-
-        .removeButton {
-          float: right;
+        
+        .objectId-edit {
+          .icon-only;
+          position:absolute;
+          right:3em;
         }
       }
     }

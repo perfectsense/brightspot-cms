@@ -12,8 +12,18 @@ import com.psddev.dari.util.TypeDefinition;
 
 public interface FileContentType {
 
-    boolean isSupported(StorageItem storageItem);
-    boolean isPreferred(StorageItem storageItem);
+    double DEFAULT_PRIORITY_LEVEL = 0;
+
+    /**
+     * Returns {@code double} as a priority rating for
+     * this FileContentType. The highest priority will be used
+     * by {@code StorageItemField}. Return a value less
+     * than zero if FileContentType should not be supported.
+     *
+     * @param storageItem Can't be {@code null}.
+     */
+    double getPriority(StorageItem storageItem);
+
     void writePreview(ToolPageContext page, State state, StorageItem fieldValue) throws IOException, ServletException;
 
     static FileContentType getFileFieldWriter(StorageItem storageItem) {
@@ -24,15 +34,18 @@ public interface FileContentType {
 
         FileContentType fileContentType = null;
 
-        for (Class<? extends FileContentType> contentTypeClass : ClassFinder.Static.findClasses(FileContentType.class)) {
-            if (!contentTypeClass.isInterface() && !Modifier.isAbstract(contentTypeClass.getModifiers())) {
-                FileContentType tester = TypeDefinition.getInstance(contentTypeClass).newInstance();
-                if (tester.isSupported(storageItem)) {
-                    fileContentType = tester;
+        for (Class<? extends FileContentType> fileContentTypeClass : ClassFinder.Static.findClasses(FileContentType.class)) {
 
-                    if (tester.isPreferred(storageItem)) {
-                        break;
-                    }
+            if (fileContentTypeClass.isInterface() || Modifier.isAbstract(fileContentTypeClass.getModifiers())) {
+                continue;
+            }
+
+            FileContentType candidateFileContentType = TypeDefinition.getInstance(fileContentTypeClass).newInstance();
+
+            if (candidateFileContentType.getPriority(storageItem) >= 0) {
+
+                if (fileContentType == null || fileContentType.getPriority(storageItem) < candidateFileContentType.getPriority(storageItem)) {
+                    fileContentType = candidateFileContentType;
                 }
             }
         }

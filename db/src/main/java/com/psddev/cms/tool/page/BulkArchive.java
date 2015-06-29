@@ -51,20 +51,34 @@ public class BulkArchive extends PageServlet {
         execute(new Context(page));
     }
 
-    public void execute(ToolPageContext page, Search search, SearchResultSelection selection, WidgetState widgetState) throws IOException, ServletException {
+    public void execute(ToolPageContext page, Search search, SearchResultSelection selection, WidgetState widgetState, Action action) throws IOException, ServletException {
 
         Context context = new Context(page, search, selection);
         context.setWidgetState(widgetState);
+        context.setAction(action);
         execute(context);
     }
 
-    public void execute(Context page) throws IOException, ServletException {
+    public static enum Action {
+        RESTORE,
+        ARCHIVE
+    }
 
-        long availableDeleteCount = page.getAvailableDeleteCount();
+    private void execute(Context page) throws IOException, ServletException {
 
-        if (availableDeleteCount == 0) {
+        Action action = page.getAction();
+
+        if (action == null) {
+            throw new IllegalArgumentException("action is required");
+        }
+
+        long availableCount = Action.RESTORE.equals(action) ? page.getAvailableRestoreCount() : page.getAvailableArchiveCount();
+
+        if (availableCount == 0) {
             return;
         }
+
+        String actionIconClass = "icon-action-" + (Action.RESTORE.equals(action) ? "restore" : "trash");
 
         switch (page.getWidgetState()) {
 
@@ -75,10 +89,10 @@ public class BulkArchive extends PageServlet {
                         "action", new UrlBuilder(page.getRequest()).absolutePath(page.cmsUrl(PATH)).currentParameters().parameter(Context.WIDGET_STATE_PARAMETER, WidgetState.BUTTON));
 
                 page.writeStart("p");
-                page.writeHtml("Click below to confirm bulk archive of " + availableDeleteCount + " items.");
+                page.writeHtml("Click below to confirm bulk " + action.name().toLowerCase() + " of " + availableCount + " items.");
                 page.writeEnd();
 
-                page.writeStart("button", "class", "icon-action-trash").writeHtml("Confirm Bulk Archive").writeEnd();
+                page.writeStart("button", "class", actionIconClass).writeHtml("Confirm bulk " + action.name()).writeEnd();
                 page.writeEnd();
 
                 break;
@@ -98,7 +112,12 @@ public class BulkArchive extends PageServlet {
                         while (queryIterator.hasNext()) {
 
                             try {
-                                page.trash(queryIterator.next());
+                                if (Action.RESTORE.equals(action)) {
+                                    page.restore(queryIterator.next());
+                                } else if (Action.ARCHIVE.equals(action)) {
+                                    page.trash(queryIterator.next());
+                                }
+
                                 successCount ++;
                             } catch (Exception e) {
                                 page.getErrors().add(e);
@@ -145,7 +164,11 @@ public class BulkArchive extends PageServlet {
                     if (successCount > 0) {
 
                         page.writeStart("div", "class", "message message-success");
-                        page.writeHtml("Successfully archived ");
+                        if (Action.RESTORE.equals(action)) {
+                            page.writeHtml("Successfully restored ");
+                        } else if (Action.ARCHIVE.equals(action)) {
+                            page.writeHtml("Successfully archived ");
+                        }
                         page.writeHtml(successCount);
                         page.writeHtml(" items. ");
 
@@ -162,14 +185,19 @@ public class BulkArchive extends PageServlet {
                 } else {
                     page.writeStart("div", "class", "searchResult-action-simple");
                     page.writeStart("a",
-                            "class", "button icon-action-trash",
+                            "class", "button " + actionIconClass,
                             "target", TARGET,
-                            "href", new UrlBuilder(page.getRequest())
-                                    .absolutePath(page.cmsUrl(PATH))
-                                    .currentParameters()
-                                    .parameter(Context.SELECTION_ID_PARAMETER, page.getSelection() != null ? page.getSelection().getId() : null)
-                                    .parameter("action-confirm", true));
-                    page.writeHtml("Bulk Archive");
+                            "href", new UrlBuilder(page.getRequest()).
+                                    absolutePath(page.cmsUrl(PATH)).
+                                    currentParameters().
+                                    parameter(Context.SELECTION_ID_PARAMETER, page.getSelection() != null ? page.getSelection().getId() : null).
+                                    parameter("action", action.name()));
+
+                    if (Action.RESTORE.equals(action)) {
+                        page.writeHtml("Bulk Restore");
+                    } else if (Action.ARCHIVE.equals(action)) {
+                        page.writeHtml("Bulk Archive");
+                    }
                     page.writeHtml(page.getSelection() != null ? " Selected" : " All");
                     page.writeEnd();
                     page.writeEnd();
@@ -189,6 +217,7 @@ public class BulkArchive extends PageServlet {
     private static class Context extends ToolPageContext {
 
         public static final String WIDGET_STATE_PARAMETER = "bulkArchiveState";
+        public static final String ACTION_PARAMETER = "action";
         public static final String SELECTION_ID_PARAMETER = "selectionId";
         public static final String SEARCH_PARAMETER = "search";
 
@@ -197,6 +226,7 @@ public class BulkArchive extends PageServlet {
         private Search search;
         private SearchResultSelection selection;
         private WidgetState widgetState;
+        private Action action;
 
         public Context(PageContext pageContext) {
             this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null);
@@ -219,6 +249,8 @@ public class BulkArchive extends PageServlet {
             String selectionId = param(String.class, SELECTION_ID_PARAMETER);
 
             this.widgetState = ObjectUtils.firstNonNull(param(WidgetState.class, WIDGET_STATE_PARAMETER), WidgetState.CONFIRM);
+
+            this.action = ObjectUtils.firstNonNull(param(Action.class, ACTION_PARAMETER), Action.ARCHIVE);
 
             if (selection != null) {
 
@@ -275,6 +307,14 @@ public class BulkArchive extends PageServlet {
             this.widgetState = widgetState;
         }
 
+        public Action getAction() {
+            return action;
+        }
+
+        public void setAction(Action action) {
+            this.action = action;
+        }
+
         /**
          * Produces a Search object from JSON and prevents errors when the same query parameter name is used for non-JSON Search representation.
          * @return Search if a query parameter specifies valid Search JSON, null otherwise.
@@ -316,7 +356,7 @@ public class BulkArchive extends PageServlet {
             throw new IllegalStateException("No Search or SearchResultsSelection populated.  Cannot create items Query.");
         }
 
-        public long getAvailableDeleteCount() {
+        private long getAvailableActionCount(boolean archive) {
 
             if (getSelection() != null) {
 
@@ -330,7 +370,7 @@ public class BulkArchive extends PageServlet {
                         State itemState = State.getInstance(item);
                         String typePermissionId = "type/" + itemState.getTypeId();
 
-                        if (!itemState.as(Content.ObjectModification.class).isTrash() &&
+                        if (archive ^ itemState.as(Content.ObjectModification.class).isTrash() &&
                                 hasPermission(typePermissionId + "/write") &&
                                 hasPermission(typePermissionId + "/bulkArchive")) {
 
@@ -340,7 +380,7 @@ public class BulkArchive extends PageServlet {
                 } while (result.hasNext() && (result = itemsQuery().noCache().select(result.getNextOffset(), READ_PAGE_SIZE)) != null);
 
                 return count;
-            } else if (getSearch() != null && !getSearch().getVisibilities().contains("b.cms.content.trashed")) {
+            } else if (getSearch() != null && (archive ^ getSearch().getVisibilities().contains("b.cms.content.trashed"))) {
 
                 ObjectType selectedType = getSearch().getSelectedType();
 
@@ -359,6 +399,16 @@ public class BulkArchive extends PageServlet {
             }
 
             return 0;
+        }
+
+        public long getAvailableArchiveCount() {
+
+            return getAvailableActionCount(true);
+        }
+
+        public long getAvailableRestoreCount() {
+
+            return getAvailableActionCount(false);
         }
     }
 }
