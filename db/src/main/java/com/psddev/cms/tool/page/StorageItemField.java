@@ -263,8 +263,9 @@ public class StorageItemField extends PageServlet {
                     } else {
                         newItem = StorageItem.Static.createIn(page.param(storageName));
                         newItem.setPath(page.param(pathName));
-                        newItem.setContentType(page.param(contentTypeName));
                     }
+
+                    newItem.setContentType(page.param(contentTypeName));
 
                 } else if ("newUpload".equals(action) ||
                         "dropbox".equals(action)) {
