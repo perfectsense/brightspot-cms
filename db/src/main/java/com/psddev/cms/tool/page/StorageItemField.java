@@ -125,10 +125,6 @@ public class StorageItemField extends PageServlet {
             fieldValueMetadata = new LinkedHashMap<String, Object>();
         }
 
-        if (!StringUtils.isBlank(page.param(originalFileNameInputName))) {
-            fieldValueMetadata.put("originalFilename", page.param(originalFileNameInputName));
-        }
-
         Map<String, Object> edits = (Map<String, Object>) fieldValueMetadata.get("cms.edits");
 
         if (edits == null) {
@@ -271,6 +267,10 @@ public class StorageItemField extends PageServlet {
                     }
 
                     newItem.setContentType(page.param(contentTypeName));
+
+                    if (!StringUtils.isBlank(page.param(originalFileNameInputName))) {
+                        fieldValueMetadata.put("originalFilename", page.param(originalFileNameInputName));
+                    }
 
                 } else if ("newUpload".equals(action) ||
                         "dropbox".equals(action)) {
