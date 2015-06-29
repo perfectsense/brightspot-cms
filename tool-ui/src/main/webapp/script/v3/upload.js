@@ -118,6 +118,7 @@ function ($, bsp_utils, evaporate) {
         params['typeId'] = state.typeId;
         params[inputName + '.path'] = filePath;
         params[inputName + '.storage'] = state.storage;
+        params[inputName + '.uploaded'] = true;
         params[inputName + '.fileSize'] = file.size;
         params[inputName + '.contentType'] = file.type;
         params[inputName + '.originalFileName'] = file.name;

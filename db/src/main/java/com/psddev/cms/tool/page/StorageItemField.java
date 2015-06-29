@@ -103,10 +103,10 @@ public class StorageItemField extends PageServlet {
             state = State.getInstance(ObjectType.getInstance(page.param(UUID.class, "typeId")));
         }
 
-        String storageItemPath = page.param(String.class, pathName);
-        if (!StringUtils.isBlank(storageItemPath)) {
+        // Handles front end uploads
+        if (page.param(boolean.class, inputName + ".uploaded")) {
             StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
-            newItem.setPath(storageItemPath);
+            newItem.setPath(page.param(String.class, pathName));
             fieldValue = newItem;
         }
 
