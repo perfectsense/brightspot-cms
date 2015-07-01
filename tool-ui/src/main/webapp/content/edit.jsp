@@ -145,6 +145,11 @@ if (copy != null) {
     State editingState = State.getInstance(editing);
     editingState.setValues(State.getInstance(copy).getSimpleValues());
     editingState.setId(null);
+    editingState.as(Directory.ObjectModification.class).clearPaths();
+    for (Site consumer : editingState.as(Site.ObjectModification.class).getConsumers()) {
+        editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
+    }
+    editingState.as(Site.ObjectModification.class).setOwner(site);
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
