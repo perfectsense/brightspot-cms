@@ -136,7 +136,7 @@ $.plugin2('frame', {
     // Intercept anchor clicks to see if it's targeted.
     $caller.delegate('a', 'click.frame', function(event) {
       return findTargetFrame(this, function($anchor, $frame) {
-        loadPage($frame, $anchor, 'get', $anchor.attr('href'), null, event);
+        loadPage($frame, $anchor, $anchor.attr('data-request-method') || 'get', $anchor.attr('href'), $anchor.data('requestData') || null, event);
         return false;
       });
     });

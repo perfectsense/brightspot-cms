@@ -254,7 +254,7 @@ writer.start("div", "class", "searchForm");
             writer.start("form",
                     "class", "searchFiltersRest" + (singleType || validTypes.isEmpty() ? " searchFiltersRest-single" : ""),
                     "data-bsp-autosubmit", "",
-                    "method", "get",
+                    "method", "post",
                     "action", ObjectUtils.firstNonNull(request.getAttribute("resultPath"), wp.url(request.getAttribute("resultJsp"))),
                     "target", resultTarget);
 

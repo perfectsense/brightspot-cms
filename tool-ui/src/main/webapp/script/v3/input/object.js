@@ -16,6 +16,8 @@ function($) {
           $select,
           $edit,
           $clear,
+          $form,
+          formAction,
           preview,
           visibility,
           label,
@@ -87,17 +89,17 @@ function($) {
         }
       }
 
-      // update additional query parameter in select href
-      selectHref = $select.attr('href');
-      aqIndex = selectHref.indexOf('aq');
-      aqParam = 'aq=' + encodeURIComponent($input.attr('data-additional-query') || '');
+        $form = $select[0].form ? $($select[0].form) : $select.closest('form');
 
-      if (aqIndex === -1) {
-          selectHref += '&' + aqParam;
-      } else {
-          selectHref = selectHref.substr(0, aqIndex) + aqParam + selectHref.substr(selectHref.indexOf('&', aqIndex));
-      }
-      $select.attr('href', selectHref);
+        formAction = $form.attr('action');
+
+        $select.data('requestData', {
+            'pt': (/id=([^&]+)/.exec(formAction) || [ ])[1] || '',
+            'py': (/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '',
+            'p': $input.attr('data-pathed'),
+            'aq': $input.attr('data-additional-query') || '',
+            'sg': $input.attr('data-suggestions') || ''
+        });
 
       $edit.toggle(
           $input.attr('data-editable') !== 'false' &&
@@ -161,20 +163,16 @@ function($) {
         typeIds = $input.attr('data-typeIds');
       }
 
-      formAction = $form.attr('action');
       searcherPath = $input.attr('data-searcher-path') || (CONTEXT_PATH + 'content/objectId.jsp');
 
       $select = $('<a/>', {
         'class': 'objectId-select',
         'target': target,
+        'data-request-method': 'post',
         'click': function() { return !$(this).is('.state-disabled'); },
         'href': searcherPath +
-            (searcherPath.indexOf('?') > -1 ? '&' : '?') + 'pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
-            '&py=' + encodeURIComponent((/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '') +
-            '&p=' + encodeURIComponent($input.attr('data-pathed')) +
-            '&' + (typeIds ? $.map(typeIds.split(','), function(typeId) { return 'rt=' + typeId; }).join('&') : '') +
-            '&aq=' + encodeURIComponent($input.attr('data-additional-query') || '') +
-            '&sg=' + encodeURIComponent($input.attr('data-suggestions') || '')
+            (searcherPath.indexOf('?') > -1 ? '&' : '?') +
+            (typeIds ? $.map(typeIds.split(','), function(typeId) { return 'rt=' + typeId; }).join('&') : '')
       });
 
       $edit = $('<a/>', {
