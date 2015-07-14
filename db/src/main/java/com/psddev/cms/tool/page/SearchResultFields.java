@@ -52,6 +52,7 @@ public class SearchResultFields extends PageServlet {
             page.writeEnd();
 
             page.writeStart("script", "type", "text/javascript");
+                page.writeRaw("$('#" + page.getId() + "').popup('source').closest('.searchForm').find('.searchFiltersRest').submit();");
                 page.writeRaw("$('#" + page.getId() + "').popup('close');");
             page.writeEnd();
             return;
