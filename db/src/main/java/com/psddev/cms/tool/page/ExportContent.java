@@ -6,6 +6,7 @@ import com.psddev.cms.tool.SearchResultField;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Search;
+import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -302,6 +303,10 @@ public class ExportContent extends PageServlet {
                     } else {
                         ObjectField field = selectedType.getField(fieldName);
 
+                        if (field == null) {
+                            field = Database.Static.getDefault().getEnvironment().getField(fieldName);
+                        }
+
                         if (field != null) {
                             writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
                             writeCsvItem(field.getDisplayName());
@@ -364,6 +369,10 @@ public class ExportContent extends PageServlet {
 
                     } else {
                         ObjectField field = selectedType.getField(fieldName);
+
+                        if (field == null) {
+                            field = Database.Static.getDefault().getEnvironment().getField(fieldName);
+                        }
 
                         if (field != null) {
                             writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);

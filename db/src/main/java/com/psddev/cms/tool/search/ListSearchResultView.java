@@ -4,12 +4,20 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.cms.db.Content;
+import com.psddev.cms.db.ImageTag;
+import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.dari.util.CollectionUtils;
+import com.psddev.dari.util.HtmlWriter;
+import com.psddev.dari.util.ImageEditor;
+import com.psddev.dari.util.StorageItem;
 import org.joda.time.DateTime;
 
 import com.psddev.cms.db.Directory;
@@ -149,6 +157,36 @@ public class ListSearchResultView extends AbstractSearchResultView {
     protected void writeTableHtml(Iterable<?> items) throws IOException {
         HttpServletRequest request = page.getRequest();
 
+        page.putOverride(Recordable.class, (HtmlWriter writer, Recordable object) -> {
+            ToolPageContext page = (ToolPageContext) writer;
+
+            page.writeObjectLabel(object);
+        });
+
+        page.putOverride(Metric.class, (HtmlWriter writer, Metric object) -> {
+            writer.write(Double.toString(object.getSum()));
+        });
+
+        page.putOverride(Content.class, (HtmlWriter writer, Content content) -> {
+            ToolPageContext page = (ToolPageContext) writer;
+
+            page.writeStart("a",
+                    "href", page.objectUrl("/content/edit.jsp", content),
+                    "target", "_top");
+            page.writeObjectLabel(content);
+            page.writeEnd();
+        });
+
+        page.putOverride(StorageItem.class, (HtmlWriter writer, StorageItem item) -> {
+            ToolPageContext page = (ToolPageContext) writer;
+
+            page.writeElement("img",
+                    "height", 100,
+                    "src", ImageEditor.Static.getDefault() != null ?
+                            new ImageTag.Builder(item).setHeight(100).toUrl() :
+                            item.getPublicUrl());
+        });
+
         page.writeStart("table", "class", "searchResultTable links table-striped pageThumbnails");
             page.writeStart("thead");
                 page.writeStart("tr");
@@ -201,7 +239,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                 if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
                                     SearchResultField field = TypeDefinition.getInstance(c).newInstance();
 
-                                    if (field.isDefault(selectedType)) {
+                                    if (field.isDefault(selectedType) && !ObjectUtils.equals(sortField, field)) {
                                         field.writeTableHeaderCellHtml(page);
                                     }
                                 }
@@ -215,20 +253,25 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     @SuppressWarnings("unchecked")
                                     SearchResultField field = TypeDefinition.getInstance((Class<? extends SearchResultField>) fieldNameClass).newInstance();
 
-                                    if (field.isSupported(selectedType)) {
+                                    if (field.isSupported(selectedType) && !ObjectUtils.equals(sortField, field)) {
                                         field.writeTableHeaderCellHtml(page);
                                     }
 
                                 } else {
-                                    page.writeStart("th");
-                                        if (selectedType != null) {
-                                            ObjectField field = selectedType.getField(fieldName);
+                                    ObjectField field = null;
+                                    if (selectedType != null) {
+                                        field = selectedType.getField(fieldName);
+                                    }
 
-                                            if (field != null) {
-                                                page.writeHtml(field.getDisplayName());
-                                            }
-                                        }
-                                    page.writeEnd();
+                                    if (field == null) {
+                                        field = Database.Static.getDefault().getEnvironment().getField(fieldName);
+                                    }
+
+                                    if (field != null && !ObjectUtils.equals(sortField, field)) {
+                                        page.writeStart("th");
+                                            page.writeHtml(field.getDisplayName());
+                                        page.writeEnd();
+                                    }
                                 }
                             }
                         }
@@ -401,7 +444,15 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     page.writeHtml(((Recordable) value).getState().getLabel());
 
                                 } else {
-                                    page.writeHtml(value);
+                                    for (Iterator<Object> i = CollectionUtils.recursiveIterable(value).iterator(); i.hasNext();) {
+                                        Object collectionValue = i.next();
+
+                                        page.writeObject(collectionValue);
+
+                                        if (i.hasNext()) {
+                                            page.writeHtml(", ");
+                                        }
+                                    }
                                 }
                             page.writeEnd();
                         }
@@ -416,7 +467,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
                                         SearchResultField field = TypeDefinition.getInstance(c).newInstance();
 
-                                        if (field.isDefault(itemType)) {
+                                        if (field.isDefault(itemType) && !ObjectUtils.equals(sortField, field)) {
                                             field.writeTableDataCellHtml(page, item);
                                         }
                                     }
@@ -430,14 +481,31 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                         @SuppressWarnings("unchecked")
                                         SearchResultField field = TypeDefinition.getInstance((Class<? extends SearchResultField>) fieldNameClass).newInstance();
 
-                                        if (field.isSupported(itemState.getType())) {
+                                        if (field.isSupported(itemState.getType()) && !ObjectUtils.equals(sortField, field)) {
                                             field.writeTableDataCellHtml(page, item);
                                         }
 
                                     } else {
-                                        page.writeStart("td");
-                                            page.writeHtml(itemState.getByPath(fieldName));
-                                        page.writeEnd();
+
+                                        ObjectField field = itemState.getField(fieldName);
+
+                                        if (field == null) {
+                                            field = Database.Static.getDefault().getEnvironment().getField(fieldName);
+                                        }
+
+                                        if (field != null && !ObjectUtils.equals(sortField, field)) {
+                                            page.writeStart("td");
+                                            for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(fieldName)).iterator(); i.hasNext();) {
+                                                Object value = i.next();
+
+                                                page.writeObject(value);
+
+                                                if (i.hasNext()) {
+                                                    page.writeHtml(", ");
+                                                }
+                                            }
+                                            page.writeEnd();
+                                        }
                                     }
                                 }
                             }

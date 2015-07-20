@@ -1350,7 +1350,7 @@ public class ToolPageContext extends WebPageContext {
                                 writeEnd();
                             writeEnd();
 
-                            if (Query.from(Site.class).hasMoreThan(0)) {
+                            if (Site.Static.findAll().size() > 0) {
                                 writeStart("div", "class", "toolUserSite");
                                     writeStart("div", "class", "toolUserSiteDisplay");
                                         writeHtml("Site: ");
@@ -1359,13 +1359,15 @@ public class ToolPageContext extends WebPageContext {
 
                                     writeStart("div", "class", "toolUserSiteControls");
                                         writeStart("ul", "class", "piped");
+                                        if (user.findOtherAccessibleSites().size() > 0 || (user.getCurrentSite() != null && user.hasPermission("site/global"))) {
                                             writeStart("li");
                                                 writeStart("a",
-                                                        "href", cmsUrl("/siteSwitch"),
-                                                        "target", "siteSwitch");
+                                                    "href", cmsUrl("/siteSwitch"),
+                                                    "target", "siteSwitch");
                                                     writeHtml("Switch");
                                                 writeEnd();
                                             writeEnd();
+                                        }
                                         writeEnd();
                                     writeEnd();
                                 writeEnd();

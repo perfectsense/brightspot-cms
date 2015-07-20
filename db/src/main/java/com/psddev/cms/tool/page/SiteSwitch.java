@@ -10,6 +10,7 @@ import com.psddev.dari.util.RoutingFilter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @RoutingFilter.Path(application = "cms", value = "/siteSwitch")
@@ -22,8 +23,10 @@ public class SiteSwitch extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
+
+        ToolUser user = page.getUser();
+
         if (page.param(boolean.class, "switch")) {
-            ToolUser user = page.getUser();
 
             user.setCurrentSite(Query.from(Site.class).where("_id = ?", page.param(UUID.class, "id")).first());
             user.save();
@@ -32,33 +35,48 @@ public class SiteSwitch extends PageServlet {
         }
 
         page.writeHeader();
-            page.writeStart("div", "class", "widget");
-                page.writeStart("h1");
-                    page.writeHtml("Switch Site");
-                page.writeEnd();
 
-                page.writeStart("div", "class", "siteSwitch-content fixedScrollable");
-                    page.writeStart("ul", "class", "links");
-                        page.writeStart("li");
-                            page.writeStart("a",
-                                    "href", page.cmsUrl("/siteSwitch", "switch", true),
-                                    "target", "_top");
-                                page.writeHtml("Global");
-                            page.writeEnd();
-                        page.writeEnd();
+        if (Query.from(Site.class).hasMoreThan(0)) {
+            Site currentSite = user.getCurrentSite();
 
-                        for (Site site : Site.Static.findAll()) {
-                            page.writeStart("li");
-                                page.writeStart("a",
-                                        "href", page.cmsUrl("/siteSwitch", "switch", true, "id", site.getId()),
-                                        "target", "_top");
-                                    page.writeObjectLabel(site);
+            List<Site> sites = user.findOtherAccessibleSites();
+
+            // Only render the control if there is at least one Site to which the ToolUser can change
+            // Case 1: ToolUser has access to at least one other Site (not including Global)
+            // Case 2: ToolUser has access to at least one Site and the Global Site
+            if (!sites.isEmpty() || (currentSite != null && page.hasPermission("site/global"))) {
+
+                page.writeStart("div", "class", "widget");
+                    page.writeStart("h1");
+                        page.writeHtml("Switch Site");
+                    page.writeEnd();
+
+                    page.writeStart("div", "class", "siteSwitch-content fixedScrollable");
+                        page.writeStart("ul", "class", "links");
+                            if (currentSite != null && page.hasPermission("site/global")) {
+                                page.writeStart("li");
+                                    page.writeStart("a",
+                                            "href", page.cmsUrl("/siteSwitch", "switch", true),
+                                            "target", "_top");
+                                        page.writeHtml("Global");
+                                    page.writeEnd();
                                 page.writeEnd();
-                            page.writeEnd();
-                        }
+                            }
+
+                            for (Site site : sites) {
+                                page.writeStart("li");
+                                    page.writeStart("a",
+                                            "href", page.cmsUrl("/siteSwitch", "switch", true, "id", site.getId()),
+                                            "target", "_top");
+                                        page.writeObjectLabel(site);
+                                    page.writeEnd();
+                                page.writeEnd();
+                            }
+                        page.writeEnd();
                     page.writeEnd();
                 page.writeEnd();
-            page.writeEnd();
+            }
+        }
         page.writeFooter();
     }
 }
