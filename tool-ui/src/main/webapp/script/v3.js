@@ -70,7 +70,7 @@ require([
   'v3/upload',
   'nv.d3',
 
-  'dashboard',
+  'v3/dashboard',
   'v3/constrainedscroll',
   'content/diff',
   'v3/content/edit',
@@ -243,7 +243,7 @@ function() {
     $result.on('change', ':checkbox', function() {
       $result.find('.actions .action').each(function() {
         var $action= $(this),
-            text = $action.text();
+          text = $action.text();
 
         if ($result.find(':checkbox:checked').length > 0) {
           $action.text(text.replace('All', 'Selected'));
@@ -338,6 +338,11 @@ function() {
 
     // Show all drop zones when the user initiates drag-and-drop.
     $doc.bind('dragenter', function() {
+
+      if (DISABLE_DRAG_AND_DROP === true) {
+        return;
+      }
+
       var $body,
           $cover;
 
@@ -350,8 +355,8 @@ function() {
 
       // Cover is required to detect mouse leaving the window.
       $cover = $('<div/>', {
-        'class': 'uploadableCover',
-        'css': {
+          'class': 'uploadableCover',
+          'css': {
           'left': 0,
           'height': '100%',
           'position': 'fixed',
@@ -385,12 +390,12 @@ function() {
       // Valid file drop zones.
       $('.inputContainer .action-upload, .uploadable .uploadableLink').each(function() {
         var $upload = $(this),
-            $container = $upload.closest('.inputContainer, .uploadable'),
-            overlayCss,
-            $dropZone,
-            $dropLink,
-            $fileInputContainer,
-            $fileInput;
+          $container = $upload.closest('.inputContainer, .uploadable'),
+          overlayCss,
+          $dropZone,
+          $dropLink,
+          $fileInputContainer,
+          $fileInput;
 
         overlayCss = $.extend($container.offset(), {
           'height': $container.outerHeight(),
@@ -421,8 +426,8 @@ function() {
         // On file drop, replace the appropriate input.
         $fileInput.one('change', function() {
           var dropLinkOffset = $dropLink.offset(),
-              $frame,
-              replaceFileInput;
+            $frame,
+            replaceFileInput;
 
           $cover.hide();
           $dropLink.click();
@@ -470,6 +475,11 @@ function() {
     });
 
     $doc.bind('dragend', function(event) {
+
+      if (DISABLE_DRAG_AND_DROP === true) {
+        return;
+      }
+
       if (docEntered) {
         docEntered = false;
         $('.uploadableCover').remove();

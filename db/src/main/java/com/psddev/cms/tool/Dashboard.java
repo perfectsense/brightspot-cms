@@ -31,15 +31,9 @@ public class Dashboard extends Record {
             columns.get(columnIndex).getWidgets().add(widget);
         }
 
-        double width = 1.0;
-
         for (ListIterator<DashboardColumn> i = columns.listIterator(columns.size()); i.hasPrevious();) {
             DashboardColumn column = i.previous();
-            width *= 1.61803398875;
-
-            column.setWidth(width);
             Collections.sort(column.getWidgets(), new Comparator<DashboardWidget>() {
-
                 @Override
                 public int compare(DashboardWidget x, DashboardWidget y) {
                     return ((DefaultDashboardWidget) x).getWidgetIndex() - ((DefaultDashboardWidget) y).getWidgetIndex();

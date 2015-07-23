@@ -1,10 +1,185 @@
+@-dashboard-button-size : 72px;
+
 .dashboard-columns {
   margin: 0 -5px;
   overflow: hidden;
+  display: flex;
+
+  @media @media-phone {
+    flex-flow: row wrap;
+  }
 }
 
 .dashboard-column {
   box-sizing: border-box;
   float: left;
   padding: 0 5px;
+  min-width: 320px;
+}
+
+.dashboard-edit {
+  position:fixed;
+  bottom: 0;
+  right: 0;
+  font-weight: normal;
+
+  &:before {
+    content: 'Edit Dashboard';
+  }
+
+  &.toggled {
+    background: @color-focus;
+    color: white;
+
+    &:before {
+      font-family: 'FontAwesome';
+      content: '\f00c';
+      padding-right: 8px;
+    }
+    &:after {
+      content: 'Done Editing';
+    }
+  }
+
+}
+
+.dashboard-widget {
+  margin-bottom: 10px;
+}
+
+.dashboard-columns {
+  transition: transform 0.2s ease-out;
+
+  .widget {
+    margin-bottom:0;
+    display:block;
+    > h1 {
+      cursor: move;
+    }
+  }
+
+  &.dashboard-editable {
+    margin: -20px 0;
+
+    .dashboard-column {
+      background: #efefef;
+    }
+
+    .widget {
+      height: 200px;
+      overflow: hidden;
+      position:relative;
+      white-space:nowrap;
+      display: block;
+      border: 0;
+
+      &.drag-active {
+        opacity: 0.6;
+      }
+
+      &.widget-ghost {
+        background: darken(white, 28%);
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        background: @color-focus;
+        color: white;
+        font-weight: normal;
+        text-shadow: none;
+      }
+
+      > *:not(h1) {
+        opacity: 0.2;
+        pointer-events: none;
+      }
+
+      .widgetControls a.action {
+        display:none;
+      }
+    }
+  }
+}
+
+.widget-remove {
+  .popup-closeButton;
+  color: white;
+  height: 28px;
+  top: 0;
+  &:hover {
+    color: darken(white, 5%);
+    background: none;
+    box-shadow: none;
+    border: 0;
+  }
+}
+
+.dashboard-column-gutter {
+  border-left: 1px solid @color-shadow;
+  border-right: 1px solid @color-shadow;
+  width: 80px;
+  position:relative;
+  cursor: ew-resize;
+}
+
+.dashboard-addColumnButton, .dashboard-addWidgetButton {
+  background: darken(white, 28%);
+}
+
+.dashboard-add-widget-container {
+  position:relative;
+  width: 100%;
+  height: @-dashboard-button-size + 28px;
+}
+
+.dashboard-addWidgetButton {
+  position: absolute;
+  display:block;
+  width: @-dashboard-button-size;
+  height: @-dashboard-button-size;
+  margin: 14px 0;
+  text-align: center;
+  border: 2px dashed #b4b4b4;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  color: #b4b4b4;
+  padding: 4px;
+
+  &:hover {
+    background: white;
+    border: 0;
+    border-bottom: 2px solid #b8b8b8;
+    color: @color-focus;
+    border-radius: 2px;
+    text-decoration: none ;
+  }
+
+  span {
+    &:before {
+      display: block;
+      content: '+';
+      font-size: 28px;
+      text-decoration: none !important;
+    }
+  }
+
+  .dashboard-column-gutter & {
+    margin-top: 148px;
+  }
+}
+
+.drag-handle {
+  .icon;
+  cursor: ew-resize;
+  color: @color-shadow;
+  &:before, &:after {
+    width:100%;
+    font-size: 14px;
+    content: "\f141\0020\f141";
+    font-family: "FontAwesome";
+    text-align: center;
+    display:block;
+    height: 6px;
+  }
 }
