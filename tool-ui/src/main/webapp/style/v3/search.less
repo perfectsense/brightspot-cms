@@ -374,3 +374,61 @@
   display: block;
   height: 30px;
 }
+
+.widget[name="searchAdvancedFull"] {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  bottom: 50px;
+  left: 20px;
+  height: auto; /* necessary? */
+
+  > .searchForm {
+    position: absolute;
+    top: 56px;
+    right: 20px;
+    bottom: 20px;
+    left: 20px;
+
+    .searchControls,
+    .searchResult,
+    .searchResult-container,
+    .searchResult-view,
+    .searchResult-list {
+      position: absolute;
+    }
+
+    .searchControls,
+    .searchResult,
+    .searchResult-container {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+
+    .searchResult-view {
+      top: 36px;
+      right: 242px;
+      bottom: 0;
+      left: 0;
+    }
+
+    .searchResult-list {
+      float: none;
+      top: 40px;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+
+    .searchControls,
+    .searchResult-list {
+      overflow-y: auto;
+    }
+
+    .searchResult-actions {
+      bottom: 0;
+    }
+  }
+}

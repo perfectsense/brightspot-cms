@@ -23,10 +23,10 @@ public class ContentEditBulkSubmissionStatus extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        ContentEditBulkSubmission submission = Query.
-                from(ContentEditBulkSubmission.class).
-                where("_id = ?", page.param(UUID.class, "id")).
-                first();
+        ContentEditBulkSubmission submission = Query
+                .from(ContentEditBulkSubmission.class)
+                .where("_id = ?", page.param(UUID.class, "id"))
+                .first();
 
         page.writeHeader();
         {

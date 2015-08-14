@@ -4,6 +4,10 @@ import java.util.Map;
 
 import com.psddev.cms.db.ToolUser;
 
+/**
+ * @deprecated Use {@link com.psddev.cms.tool.page.RtcAction} instead.
+ */
+@Deprecated
 public abstract class ToolCheck {
 
     /**

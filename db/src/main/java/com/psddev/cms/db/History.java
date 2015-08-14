@@ -89,9 +89,9 @@ public class History extends Record {
 
     /** Returns an unmodifiable map of all the original values. */
     public Map<String, Object> getObjectOriginals() {
-        return objectOriginals == null ?
-                Collections.<String, Object>emptyMap() :
-                Collections.unmodifiableMap(objectOriginals);
+        return objectOriginals == null
+                ? Collections.<String, Object>emptyMap()
+                : Collections.unmodifiableMap(objectOriginals);
     }
 
     public boolean isLockIgnored() {

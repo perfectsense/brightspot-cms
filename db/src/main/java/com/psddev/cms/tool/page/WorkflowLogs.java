@@ -23,11 +23,11 @@ public class WorkflowLogs extends PageServlet {
 
     @Override
     protected void doService(final ToolPageContext page) throws IOException, ServletException {
-        List<WorkflowLog> logs = Query.
-                from(WorkflowLog.class).
-                where("objectId = ?", page.param(UUID.class, "objectId")).
-                sortDescending("date").
-                selectAll();
+        List<WorkflowLog> logs = Query
+                .from(WorkflowLog.class)
+                .where("objectId = ?", page.param(UUID.class, "objectId"))
+                .sortDescending("date")
+                .selectAll();
 
         page.writeHeader();
             page.writeStart("div", "class", "widget");

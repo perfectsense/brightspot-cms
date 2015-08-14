@@ -18,19 +18,19 @@ public abstract class LookingGlassView {
     }
 
     public void renderAction(ToolPageContext page, ToolUser user, ToolUserAction action) throws IOException {
-        Object content = Query.
-                from(Object.class).
-                where("_id = ?", action.getContentId()).
-                first();
+        Object content = Query
+                .from(Object.class)
+                .where("_id = ?", action.getContentId())
+                .first();
 
-        Preview preview = Query.
-                from(Preview.class).
-                where("_id = ?", user.getCurrentPreviewId()).
-                first();
+        Preview preview = Query
+                .from(Preview.class)
+                .where("_id = ?", user.getCurrentPreviewId())
+                .first();
 
-        String mirrorUrl = StringUtils.addQueryParameters(preview != null && ObjectUtils.equals(action.getContentId(), preview.getObjectId()) ?
-                JspUtils.getAbsolutePath(page.getRequest(), "/_preview", "_cms.db.previewId", preview.getId()) :
-                action.getUrl(), "_mirror", true);
+        String mirrorUrl = StringUtils.addQueryParameters(preview != null && ObjectUtils.equals(action.getContentId(), preview.getObjectId())
+                ? JspUtils.getAbsolutePath(page.getRequest(), "/_preview", "_cms.db.previewId", preview.getId())
+                : action.getUrl(), "_mirror", true);
 
         doRenderAction(page, content, mirrorUrl);
     }

@@ -31,20 +31,20 @@ public class BulkEditSearchResultAction implements SearchResultAction {
         if (selection != null) {
             Set<UUID> itemIds = new HashSet<>();
 
-            for (SearchResultSelectionItem item : Query.
-                    from(SearchResultSelectionItem.class).
-                    where("selectionId = ?", selection.getId()).
-                    selectAll()) {
+            for (SearchResultSelectionItem item : Query
+                    .from(SearchResultSelectionItem.class)
+                    .where("selectionId = ?", selection.getId())
+                    .selectAll()) {
 
                 itemIds.add(item.getItemId());
             }
 
             Set<UUID> itemTypeIds = new HashSet<>();
 
-            for (Object item : Query.
-                    fromAll().
-                    where("_id = ?", itemIds).
-                    selectAll()) {
+            for (Object item : Query
+                    .fromAll()
+                    .where("_id = ?", itemIds)
+                    .selectAll()) {
 
                 itemTypeIds.add(State.getInstance(item).getTypeId());
             }
@@ -71,8 +71,8 @@ public class BulkEditSearchResultAction implements SearchResultAction {
         String typePermissionId = "type/" + typeId;
 
         // Do not allow editing of types for which the user does not have Bulk Edit permission
-        if (!page.hasPermission(typePermissionId + "/bulkEdit") ||
-                !page.hasPermission(typePermissionId + "/write")) {
+        if (!page.hasPermission(typePermissionId + "/bulkEdit")
+                || !page.hasPermission(typePermissionId + "/write")) {
             return;
         }
 
@@ -80,11 +80,11 @@ public class BulkEditSearchResultAction implements SearchResultAction {
             page.writeStart("a",
                     "class", "button",
                     "target", "_top",
-                    "href", new UrlBuilder(page.getRequest()).
-                            absolutePath(page.toolPath(CmsTool.class, "/contentEditBulk")).
-                            currentParameters().
-                            parameter("typeId", typeId).
-                            parameter("selectionId", selectionId));
+                    "href", new UrlBuilder(page.getRequest())
+                            .absolutePath(page.toolPath(CmsTool.class, "/contentEditBulk"))
+                            .currentParameters()
+                            .parameter("typeId", typeId)
+                            .parameter("selectionId", selectionId));
                 page.writeHtml("Bulk Edit ");
                 page.writeHtml(selection != null ? "Selected" : "All");
             page.writeEnd();

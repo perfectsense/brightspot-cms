@@ -27,6 +27,10 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.TypeDefinition;
 
+/**
+ * @deprecated Use {@link RtcFilter} instead.
+ */
+@Deprecated
 @RoutingFilter.Path(application = "cms", value = "toolCheckStream")
 public class ToolCheckStream extends HttpServlet {
 
@@ -100,8 +104,8 @@ public class ToolCheckStream extends HttpServlet {
                 }
             }
 
-            if (hasNonNullResponses ||
-                    System.currentTimeMillis() > longPollTimeout) {
+            if (hasNonNullResponses
+                    || System.currentTimeMillis() > longPollTimeout) {
                 response.setContentType("application/json");
                 page.writeRaw(ObjectUtils.toJson(checkResponses));
                 break;
@@ -133,22 +137,22 @@ public class ToolCheckStream extends HttpServlet {
          */
         public ToolUser get() {
             if (user != null) {
-                long newLastUpdate = Query.
-                        from(ToolUser.class).
-                        where("_id = ?", user.getId()).
-                        noCache().
-                        lastUpdate().
-                        getTime();
+                long newLastUpdate = Query
+                        .from(ToolUser.class)
+                        .where("_id = ?", user.getId())
+                        .noCache()
+                        .lastUpdate()
+                        .getTime();
 
                 if (lastUpdate == null) {
                     lastUpdate = newLastUpdate;
 
                 } else if (lastUpdate != newLastUpdate) {
-                    user = Query.
-                            from(ToolUser.class).
-                            where("_id = ?", user.getId()).
-                            noCache().
-                            first();
+                    user = Query
+                            .from(ToolUser.class)
+                            .where("_id = ?", user.getId())
+                            .noCache()
+                            .first();
                 }
             }
 

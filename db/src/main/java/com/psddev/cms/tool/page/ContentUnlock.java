@@ -25,10 +25,10 @@ public class ContentUnlock extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        Object content = Query.
-                fromAll().
-                where("_id = ?", page.param(UUID.class, "id")).
-                first();
+        Object content = Query
+                .fromAll()
+                .where("_id = ?", page.param(UUID.class, "id"))
+                .first();
 
         if (content != null) {
             ContentLock.Static.unlock(content, null, page.getUser());

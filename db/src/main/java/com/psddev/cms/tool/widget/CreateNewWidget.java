@@ -91,11 +91,11 @@ public class CreateNewWidget extends DefaultDashboardWidget {
             }
 
         } else {
-            for (com.psddev.cms.db.Template template : Query.
-                    from(com.psddev.cms.db.Template.class).
-                    where(page.siteItemsPredicate()).
-                    sortAscending("name").
-                    selectAll()) {
+            for (com.psddev.cms.db.Template template : Query
+                    .from(com.psddev.cms.db.Template.class)
+                    .where(page.siteItemsPredicate())
+                    .sortAscending("name")
+                    .selectAll()) {
 
                 for (ObjectType type : template.getContentTypes()) {
                     if (type.getGroups().contains(Singleton.class.getName())) {
@@ -115,11 +115,11 @@ public class CreateNewWidget extends DefaultDashboardWidget {
             }
 
             for (ObjectType type : Database.Static.getDefault().getEnvironment().getTypes()) {
-                if (type.isConcrete() &&
-                        type.getGroups().contains(Directory.Item.class.getName()) &&
-                        !type.getGroups().contains(Singleton.class.getName()) &&
-                        !typeCounts.containsKey(type) &&
-                        page.hasPermission("type/" + type.getId() + "/write")) {
+                if (type.isConcrete()
+                        && type.getGroups().contains(Directory.Item.class.getName())
+                        && !type.getGroups().contains(Singleton.class.getName())
+                        && !typeCounts.containsKey(type)
+                        && page.hasPermission("type/" + type.getId() + "/write")) {
                     TypeTemplate typeTemplate = new TypeTemplate(type, null);
 
                     if (typeTemplate.getCollapsedId().equals(redirect)) {
@@ -231,10 +231,10 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 page.writeEnd();
 
                 Set<UUID> automaticallySavedDraftIds = user.getAutomaticallySavedDraftIds();
-                List<Object> automaticallySavedDrafts = Query.
-                        from(Object.class).
-                        where("_id = ?", automaticallySavedDraftIds).
-                        selectAll();
+                List<Object> automaticallySavedDrafts = Query
+                        .from(Object.class)
+                        .where("_id = ?", automaticallySavedDraftIds)
+                        .selectAll();
 
                 if (!automaticallySavedDrafts.isEmpty()) {
                     boolean removed = false;
@@ -326,10 +326,10 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 page.writeEnd();
 
                 if (editExistingContents.isEmpty()) {
-                    for (Object item : Query.
-                            from(Object.class).
-                            where("_type = ?", Database.Static.getDefault().getEnvironment().getTypesByGroup(Singleton.class.getName())).
-                            selectAll()) {
+                    for (Object item : Query
+                            .from(Object.class)
+                            .where("_type = ?", Database.Static.getDefault().getEnvironment().getTypesByGroup(Singleton.class.getName()))
+                            .selectAll()) {
                         if (item instanceof Content) {
                             editExistingContents.add((Content) item);
                         }

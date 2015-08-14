@@ -76,7 +76,11 @@ var updateInput = function() {
     $calendar.data('$calendarButton').text(
             options.dayLabels[selectedDate.getDay()] + ', ' +
             options.monthLabels[selectedDate.getMonth()].substring(0, 3) + ' ' +
-            dayNumber + ', ' + hour + ':' + minute + ' ' + meridiem);
+            dayNumber + ', ' +
+            selectedDate.getFullYear() + ', ' +
+            hour + ':' +
+            minute + ' ' +
+            meridiem);
 };
 
 getCalendar = function() {

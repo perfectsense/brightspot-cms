@@ -13,6 +13,7 @@ import com.psddev.dari.db.State;
 import com.psddev.dari.util.ListMap;
 import com.psddev.dari.util.ObjectUtils;
 
+// CHECKSTYLE:OFF
 /**
  * @deprecated No direct replacement but {@link Renderer.LayoutPath} and
  * {@link Renderer.ListLayouts} provide similar functionality.

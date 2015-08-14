@@ -29,8 +29,8 @@ public class ToolUserTfa extends PageServlet {
         ToolUser user = page.getUser();
         boolean verifyError = false;
 
-        if (page.isFormPost() &&
-                page.param(String.class, "action-verify") != null) {
+        if (page.isFormPost()
+                && page.param(String.class, "action-verify") != null) {
             if (!user.verifyTotp(page.param(int.class, "totpCode"))) {
                 verifyError = true;
 

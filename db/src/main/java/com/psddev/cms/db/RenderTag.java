@@ -175,8 +175,8 @@ public class RenderTag extends BodyTagSupport implements DynamicAttributes, TryC
                         writeArea(request, entry.getKey(), entry.getValue());
                     }
 
-                } else if (value instanceof Iterable &&
-                        !(value instanceof ReferentialText)) {
+                } else if (value instanceof Iterable
+                        && !(value instanceof ReferentialText)) {
                     int index = 0;
                     for (Object item : (Iterable<?>) value) {
                         writeArea(request, index, item);
@@ -426,8 +426,8 @@ public class RenderTag extends BodyTagSupport implements DynamicAttributes, TryC
             if (item instanceof Reference) {
                 Object referenced = ((Reference) item).getObject();
 
-                if (referenced instanceof ReferentialTextMarker &&
-                        internalName.equals(((ReferentialTextMarker) referenced).getInternalName())) {
+                if (referenced instanceof ReferentialTextMarker
+                        && internalName.equals(((ReferentialTextMarker) referenced).getInternalName())) {
                     if (offset == markerIndex) {
                         return itemIndex;
                     } else {

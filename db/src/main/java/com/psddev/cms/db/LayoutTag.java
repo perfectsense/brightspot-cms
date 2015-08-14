@@ -160,9 +160,9 @@ public class LayoutTag extends BodyTagSupport implements DynamicAttributes, TryC
                 areas = null;
                 writer.writeStart("div",
                         attributes,
-                        "class", cssClasses != null && !cssClasses.isEmpty() ?
-                                cssClasses.get(0) + " " + extraCss :
-                                extraCss);
+                        "class", cssClasses != null && !cssClasses.isEmpty()
+                                ? cssClasses.get(0) + " " + extraCss
+                                : extraCss);
 
             } else {
                 areas = new LinkedHashMap<String, Object>();

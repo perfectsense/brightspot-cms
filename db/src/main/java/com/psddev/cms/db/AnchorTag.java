@@ -54,9 +54,9 @@ public class AnchorTag extends BodyTagSupport implements DynamicAttributes, TryC
         if (href == null) {
             hrefString = null;
 
-        } else if (href instanceof String ||
-                href instanceof URI ||
-                href instanceof URL) {
+        } else if (href instanceof String
+                || href instanceof URI
+                || href instanceof URL) {
             hrefString = href.toString();
 
         } else if (href instanceof Content) {

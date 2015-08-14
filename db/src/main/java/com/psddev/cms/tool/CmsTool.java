@@ -163,6 +163,9 @@ public class CmsTool extends Tool {
 
     private boolean enableCrossDomainInlineEditing;
 
+    @ToolUi.Tab("Debug")
+    private boolean disableCodeMirrorRichTextEditor;
+
     @Embedded
     public static class CommonTime extends Record {
 
@@ -584,8 +587,8 @@ public class CmsTool extends Tool {
      */
     @Deprecated
     public boolean isUseNonMinified() {
-        return isUseNonMinifiedCss() &&
-                isUseNonMinifiedJavaScript();
+        return isUseNonMinifiedCss()
+                && isUseNonMinifiedJavaScript();
     }
 
     /**
@@ -738,6 +741,14 @@ public class CmsTool extends Tool {
 
     public void setEnableCrossDomainInlineEditing(boolean enableCrossDomainInlineEditing) {
         this.enableCrossDomainInlineEditing = enableCrossDomainInlineEditing;
+    }
+
+    public boolean isDisableCodeMirrorRichTextEditor() {
+        return disableCodeMirrorRichTextEditor;
+    }
+
+    public void setDisableCodeMirrorRichTextEditor(boolean disableCodeMirrorRichTextEditor) {
+        this.disableCodeMirrorRichTextEditor = disableCodeMirrorRichTextEditor;
     }
 
     /** Returns the preview URL. */
@@ -972,9 +983,9 @@ public class CmsTool extends Tool {
         protected void doRepeatingTask(DateTime runTime) {
             Date newLastUpdate = Query.from(CmsTool.class).lastUpdate();
 
-            if (newLastUpdate != null &&
-                    (oldLastUpdate == null ||
-                    !newLastUpdate.equals(oldLastUpdate))) {
+            if (newLastUpdate != null
+                    && (oldLastUpdate == null
+                    || !newLastUpdate.equals(oldLastUpdate))) {
                 oldLastUpdate = newLastUpdate;
                 Map<String, Object> settings = new CompactMap<String, Object>();
 

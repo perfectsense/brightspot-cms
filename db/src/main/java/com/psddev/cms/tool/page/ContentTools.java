@@ -16,10 +16,11 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.servlet.ServletException;
 
+import com.psddev.cms.db.Draft;
+import com.psddev.cms.db.History;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -35,7 +36,6 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
-import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.DebugFilter;
@@ -57,7 +57,7 @@ public class ContentTools extends PageServlet {
     protected void doService(ToolPageContext page) throws IOException, ServletException {
         ToolUser user = page.getUser();
         Collection<String> includeFields = Arrays.asList("returnToDashboardOnSave");
-        Object object = Query.from(Object.class).where("_id = ?", page.param(UUID.class, "id")).first();
+        Object object = page.findOrReserve();
         State state = State.getInstance(object);
         ContentLock contentLock = null;
 
@@ -66,17 +66,37 @@ public class ContentTools extends PageServlet {
         }
 
         if (page.isFormPost()) {
-            if (page.param(String.class, "action-edits") != null) {
+            if (page.param(String.class, "action-compare") != null) {
+                Draft draft = page.getOverlaidDraft(object);
+
+                if (draft != null) {
+                    user.setCompareId(draft.getId());
+                    user.save();
+
+                } else {
+                    History history = page.getOverlaidHistory(object);
+
+                    if (history != null) {
+                        user.setCompareId(history.getId());
+                        user.save();
+
+                    } else if (state != null) {
+                        user.setCompareId(state.getId());
+                        user.save();
+                    }
+                }
+
+            } else if (page.param(String.class, "action-edits") != null) {
                 if (state != null) {
                     Date newPublishDate = page.param(Date.class, "publishDate");
 
                     if (newPublishDate != null) {
                         Content.ObjectModification contentData = state.as(Content.ObjectModification.class);
                         DateTimeZone timeZone = page.getUserDateTimeZone();
-                        newPublishDate = new Date(DateTimeFormat.
-                                forPattern("yyyy-MM-dd HH:mm:ss").
-                                withZone(timeZone).
-                                parseMillis(new DateTime(newPublishDate).toString("yyyy-MM-dd HH:mm:ss")));
+                        newPublishDate = new Date(DateTimeFormat
+                                .forPattern("yyyy-MM-dd HH:mm:ss")
+                                .withZone(timeZone)
+                                .parseMillis(new DateTime(newPublishDate).toString("yyyy-MM-dd HH:mm:ss")));
 
                         contentData.setPublishUser(page.getUser());
                         contentData.setPublishDate(newPublishDate);
@@ -171,11 +191,43 @@ public class ContentTools extends PageServlet {
                             page.writeEnd();
 
                             page.writeStart("h2");
+                                page.writeHtml("Compare");
+                            page.writeEnd();
+
+                            page.writeStart("form",
+                                    "method", "post",
+                                    "action", page.url(""));
+
+                                Object compareObject = user.createCompareObject();
+
+                                if (compareObject != null) {
+                                    page.writeStart("div", "class", "message message-info");
+                                        page.writeStart("a",
+                                                "target", "_top",
+                                                "href", page.cmsUrl("/content/edit.jsp?",
+                                                        "id", state.getId(),
+                                                        "compare", true));
+                                            page.writeHtml("Compare With ");
+                                            page.writeTypeObjectLabel(compareObject);
+                                        page.writeEnd();
+                                    page.writeEnd();
+                                }
+
+                                page.writeStart("div", "class", "actions");
+                                    page.writeStart("button",
+                                            "name", "action-compare",
+                                            "value", true);
+                                        page.writeHtml("Start Comparison");
+                                    page.writeEnd();
+                                page.writeEnd();
+                            page.writeEnd();
+
+                            page.writeStart("h2");
                                 page.writeHtml("Advanced Edits");
                             page.writeEnd();
 
-                            if (page.isFormPost() &&
-                                    page.param(String.class, "action-edits") != null) {
+                            if (page.isFormPost()
+                                    && page.param(String.class, "action-edits") != null) {
                                 if (page.getErrors().isEmpty()) {
                                     page.writeStart("div", "class", "message message-success");
                                         page.writeHtml("Advanced edits successfully saved.");
@@ -202,7 +254,7 @@ public class ContentTools extends PageServlet {
                                                 "type", "text",
                                                 "class", "date",
                                                 "name", "publishDate",
-                                                "value", page.formatUserDateTime(publishDate));
+                                                "value", page.formatUserDateTimeWith(publishDate, "yyyy-MM-dd HH:mm:ss"));
                                     page.writeEnd();
                                 page.writeEnd();
 
@@ -250,8 +302,8 @@ public class ContentTools extends PageServlet {
                             page.writeHtml("Settings");
                         page.writeEnd();
 
-                        if (page.isFormPost() &&
-                                page.param(String.class, "action-settings") != null) {
+                        if (page.isFormPost()
+                                && page.param(String.class, "action-settings") != null) {
                             if (page.getErrors().isEmpty()) {
                                 page.writeStart("div", "class", "message message-success");
                                     page.writeHtml("Settings successfully saved.");
@@ -287,7 +339,7 @@ public class ContentTools extends PageServlet {
                                 page.writeStart("li");
                                     page.writeStart("a",
                                             "target", "_blank",
-                                            "href", page.objectUrl("/contentRaw", object));
+                                            "href", page.objectUrl("/contentRaw", ObjectUtils.firstNonNull(page.getOverlaidDraft(object), page.getOverlaidHistory(object), object)));
                                         page.writeHtml("View Raw Data");
                                     page.writeEnd();
                                 page.writeEnd();
@@ -494,10 +546,10 @@ public class ContentTools extends PageServlet {
             List<Class<? extends Annotation>> possibleAnnotationClasses = new ArrayList<Class<? extends Annotation>>();
 
             for (Class<? extends Annotation> ac : ClassFinder.Static.findClasses(Annotation.class)) {
-                if (!ac.isAnnotationPresent(Deprecated.class) &&
-                        ac.isAnnotationPresent(annotated instanceof Field ?
-                                ObjectField.AnnotationProcessorClass.class :
-                                ObjectType.AnnotationProcessorClass.class)) {
+                if (!ac.isAnnotationPresent(Deprecated.class)
+                        && ac.isAnnotationPresent(annotated instanceof Field
+                        ? ObjectField.AnnotationProcessorClass.class
+                        : ObjectType.AnnotationProcessorClass.class)) {
                     possibleAnnotationClasses.add(ac);
                     continue;
                 }

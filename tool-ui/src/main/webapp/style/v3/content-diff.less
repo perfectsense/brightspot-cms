@@ -7,13 +7,11 @@
 }
 
 .contentDiffAdded {
-  background-color: #9c2;
-  outline: 1px solid #9c2;
+  background-color: lighten(@color-publish, 21%);
 }
 
 .contentDiffRemoved {
-  background-color: @color-remove;
-  outline: 1px solid @color-remove;
+  background-color: lighten(@color-remove, 21%);
 }
 
 .contentDiff-edit {
@@ -42,6 +40,10 @@
   }
 
   .inputContainer {
+    &:before {
+      display: none;
+    }
+
     &.state-changed,
     &.state-focused {
       > .inputLabel {
@@ -61,15 +63,11 @@
   .inputSmall {
     margin-bottom: 5px;
     margin-left: 0;
-    padding-left: 2px;
-  }
-
-  .inputLarge {
-    padding-left: 2px;
+    padding-left: 0;
   }
 
   .inputNote {
-    margin-left: 2px;
+    margin-left: 0;
   }
 
   .contentDiffSame,
@@ -80,9 +78,14 @@
   .objectId-clear,
   .rte-toolbar,
   .rte-toolbar-container,
+  .rte2-wrapper,
   .plugin-repeatable .addButtonContainer,
   .plugin-repeatable .removeButton {
     display: none !important;
+  }
+
+  .objectId-select {
+    width: 100%;
   }
 
   .repeatableForm.repeatableForm-previewable {

@@ -23,20 +23,20 @@ public class AdminTrash extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        Object trash = Query.
-                from(Object.class).
-                where("_id = ?", page.param(UUID.class, "id")).
-                first();
+        Object trash = Query
+                .from(Object.class)
+                .where("_id = ?", page.param(UUID.class, "id"))
+                .first();
 
         if (page.tryStandardUpdate(trash)) {
             return;
         }
 
-        PaginatedResult<Object> trashes = Query.
-                from(Object.class).
-                where("cms.content.trashed = true").
-                sortDescending("cms.content.updateDate").
-                select(page.param(long.class, "offset"), page.paramOrDefault(int.class, "limit", 10));
+        PaginatedResult<Object> trashes = Query
+                .from(Object.class)
+                .where("cms.content.trashed = true")
+                .sortDescending("cms.content.updateDate")
+                .select(page.param(long.class, "offset"), page.paramOrDefault(int.class, "limit", 10));
 
         page.writeHeader();
             page.writeStart("div", "class", "withLeftNav");

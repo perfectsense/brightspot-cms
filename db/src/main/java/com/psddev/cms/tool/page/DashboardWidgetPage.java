@@ -60,10 +60,10 @@ public class DashboardWidgetPage extends PageServlet {
         String widgetClassName = pathInfoParts[1];
         UUID widgetId = UuidUtils.fromString(pathInfoParts[2]);
 
-        widget = Query.
-                from(DashboardWidget.class).
-                where("_id = ?", widgetId).
-                first();
+        widget = Query
+                .from(DashboardWidget.class)
+                .where("_id = ?", widgetId)
+                .first();
 
         if (widget == null) {
             COLUMNS: for (DashboardColumn column : dashboard.getColumns()) {

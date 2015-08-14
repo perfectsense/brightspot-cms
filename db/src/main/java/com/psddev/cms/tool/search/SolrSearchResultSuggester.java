@@ -84,8 +84,8 @@ public class SolrSearchResultSuggester implements SearchResultSuggester {
             Float score = SolrDatabase.Static.getNormalizedScore(item);
 
             if (score != null && score > 0.7) {
-                if (site != null &&
-                        !PredicateParser.Static.evaluate(item, site.itemsPredicate())) {
+                if (site != null
+                        && !PredicateParser.Static.evaluate(item, site.itemsPredicate())) {
                     continue;
                 }
 
@@ -112,8 +112,8 @@ public class SolrSearchResultSuggester implements SearchResultSuggester {
             Float score = SolrDatabase.Static.getNormalizedScore(item);
 
             if (score > 0.7) {
-                if (site != null &&
-                        !PredicateParser.Static.evaluate(item, site.itemsPredicate())) {
+                if (site != null
+                        && !PredicateParser.Static.evaluate(item, site.itemsPredicate())) {
                     continue;
                 }
 

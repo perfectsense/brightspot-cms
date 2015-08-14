@@ -28,8 +28,17 @@ public class Workflow extends Record {
     @Required
     private String name;
 
-    @Indexed(unique = true)
+    @Indexed
+    @ToolUi.Note("Leave blank to apply this workflow to all sites.")
+    private Set<Site> sites;
+
+    @Indexed
+    @Required
     private Set<ObjectType> contentTypes;
+
+    @Indexed(unique = true)
+    @ToolUi.Hidden
+    private Set<String> siteContentTypeIds;
 
     @ToolUi.FieldDisplayType("workflowActions")
     private Map<String, Object> actions;
@@ -42,6 +51,17 @@ public class Workflow extends Record {
     /** Sets the name. */
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Set<Site> getSites() {
+        if (sites == null) {
+            sites = new LinkedHashSet<>();
+        }
+        return sites;
+    }
+
+    public void setSites(Set<Site> sites) {
+        this.sites = sites;
     }
 
     public Set<ObjectType> getContentTypes() {
@@ -171,15 +191,28 @@ public class Workflow extends Record {
                 transition.setSource(source);
                 transition.setTarget(states.get(t.get("target")));
 
-                if (!(source == null ||
-                        !from.equals(source.getName()) ||
-                        "Published".equals(transition.getTarget().getName()))) {
+                if (!(source == null
+                        || !from.equals(source.getName())
+                        || "Published".equals(transition.getTarget().getName()))) {
                     transitions.put(name, transition);
                 }
             }
         }
 
         return transitions;
+    }
+
+    @Override
+    protected void beforeSave() {
+        super.beforeSave();
+
+        siteContentTypeIds = new LinkedHashSet<>();
+
+        for (Site site : getSites()) {
+            for (ObjectType contentType : getContentTypes()) {
+                siteContentTypeIds.add(site.getId() + ":" + contentType.getId());
+            }
+        }
     }
 
     @FieldInternalNamePrefix("cms.workflow.")
@@ -274,10 +307,10 @@ public class Workflow extends Record {
             String currentState = getCurrentState();
 
             if (currentState != null) {
-                Workflow workflow = Query.
-                        from(Workflow.class).
-                        where("contentTypes = ?", getState().getType()).
-                        first();
+                Workflow workflow = Query
+                        .from(Workflow.class)
+                        .where("contentTypes = ?", getState().getType())
+                        .first();
 
                 if (workflow != null) {
                     for (WorkflowState s : workflow.getStates()) {

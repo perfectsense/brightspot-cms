@@ -97,8 +97,8 @@ public final class ElFunctionUtils {
                 if (item instanceof Reference) {
                     Object referenced = ((Reference) item).getObject();
 
-                    if (referenced instanceof ReferentialTextMarker &&
-                            (((ReferentialTextMarker) referenced).getInternalName().equals(markerInternalName))) {
+                    if (referenced instanceof ReferentialTextMarker
+                            && (((ReferentialTextMarker) referenced).getInternalName().equals(markerInternalName))) {
                         ++ count;
                     }
                 }
@@ -132,9 +132,9 @@ public final class ElFunctionUtils {
                 StorageItem item = StorageItem.Static.getPlainResource(null, servletContext, servletPath);
 
                 if (item != null) {
-                    return JspUtils.isSecure(request) ?
-                            item.getSecurePublicUrl() :
-                            item.getPublicUrl();
+                    return JspUtils.isSecure(request)
+                            ? item.getSecurePublicUrl()
+                            : item.getPublicUrl();
                 }
             }
         }
@@ -192,14 +192,14 @@ public final class ElFunctionUtils {
                     Settings.isProduction())) {
 
                 String encodings = request.getHeader("Accept-Encoding");
-                StorageItem item = ObjectUtils.isBlank(encodings) || !encodings.contains("gzip") ?
-                        StorageItem.Static.getPlainResource(null, servletContext, servletPath) :
-                        StorageItem.Static.getGzippedResource(null, servletContext, servletPath);
+                StorageItem item = ObjectUtils.isBlank(encodings) || !encodings.contains("gzip")
+                        ? StorageItem.Static.getPlainResource(null, servletContext, servletPath)
+                        : StorageItem.Static.getGzippedResource(null, servletContext, servletPath);
 
                 if (item != null) {
-                    return JspUtils.isSecure(request) ?
-                            item.getSecurePublicUrl() :
-                            item.getPublicUrl();
+                    return JspUtils.isSecure(request)
+                            ? item.getSecurePublicUrl()
+                            : item.getPublicUrl();
                 }
             }
         }

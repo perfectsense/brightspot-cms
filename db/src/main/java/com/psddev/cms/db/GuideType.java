@@ -225,24 +225,24 @@ public class GuideType extends Record {
             Object minVal = field.getMinimum();
             if (minVal != null) {
                 Class javaTypeClass = minVal.getClass();
-                if (javaTypeClass.equals(long.class) ||
-                        javaTypeClass.equals(Long.class) &&
-                        (Long) minVal == Long.MIN_VALUE) {
+                if (javaTypeClass.equals(long.class)
+                        || javaTypeClass.equals(Long.class)
+                        && (Long) minVal == Long.MIN_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(int.class) ||
-                        javaTypeClass.equals(Integer.class) &&
-                        (Integer) minVal == Integer.MIN_VALUE) {
+                if (javaTypeClass.equals(int.class)
+                        || javaTypeClass.equals(Integer.class)
+                        && (Integer) minVal == Integer.MIN_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(short.class) ||
-                        javaTypeClass.equals(Short.class) &&
-                        (Short) minVal == Short.MIN_VALUE) {
+                if (javaTypeClass.equals(short.class)
+                        || javaTypeClass.equals(Short.class)
+                        && (Short) minVal == Short.MIN_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(byte.class) ||
-                        javaTypeClass.equals(Byte.class) &&
-                        (Byte) minVal == Byte.MIN_VALUE) {
+                if (javaTypeClass.equals(byte.class)
+                        || javaTypeClass.equals(Byte.class)
+                        && (Byte) minVal == Byte.MIN_VALUE) {
                     return null;
                 }
             }
@@ -259,24 +259,24 @@ public class GuideType extends Record {
             Object maxVal = field.getMaximum();
             if (maxVal != null) {
                 Class javaTypeClass = maxVal.getClass();
-                if (javaTypeClass.equals(long.class) ||
-                        javaTypeClass.equals(Long.class) &&
-                        (Long) maxVal == Long.MAX_VALUE) {
+                if (javaTypeClass.equals(long.class)
+                        || javaTypeClass.equals(Long.class)
+                        && (Long) maxVal == Long.MAX_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(int.class) ||
-                        javaTypeClass.equals(Integer.class) &&
-                        (Integer) maxVal == Integer.MAX_VALUE) {
+                if (javaTypeClass.equals(int.class)
+                        || javaTypeClass.equals(Integer.class)
+                        && (Integer) maxVal == Integer.MAX_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(short.class) ||
-                        javaTypeClass.equals(Short.class) &&
-                        (Short) maxVal == Short.MAX_VALUE) {
+                if (javaTypeClass.equals(short.class)
+                        || javaTypeClass.equals(Short.class)
+                        && (Short) maxVal == Short.MAX_VALUE) {
                     return null;
                 }
-                if (javaTypeClass.equals(byte.class) ||
-                        javaTypeClass.equals(Byte.class) &&
-                        (Byte) maxVal == Byte.MAX_VALUE) {
+                if (javaTypeClass.equals(byte.class)
+                        || javaTypeClass.equals(Byte.class)
+                        && (Byte) maxVal == Byte.MAX_VALUE) {
                     return null;
                 }
             }

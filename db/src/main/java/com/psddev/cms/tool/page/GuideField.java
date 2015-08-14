@@ -137,9 +137,9 @@ public class GuideField extends PageServlet {
                             page.writeEnd();
                         }
 
-                        if ((fieldDescription == null ||
-                                fieldDescription.isEmpty()) &&
-                                constraints.isEmpty()) {
+                        if ((fieldDescription == null
+                                || fieldDescription.isEmpty())
+                                && constraints.isEmpty()) {
                             page.writeStart("div", "class", "message message-info");
                                 page.writeHtml("No editorial production guide for this field.");
                             page.writeEnd();

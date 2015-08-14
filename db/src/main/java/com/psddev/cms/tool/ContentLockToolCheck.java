@@ -6,6 +6,10 @@ import java.util.UUID;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement.
+ */
+@Deprecated
 public class ContentLockToolCheck extends ToolCheck {
 
     @Override

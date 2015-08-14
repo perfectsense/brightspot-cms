@@ -46,11 +46,11 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
 
         Site currentSite = page.getSite();
 
-        for (Schedule schedule : Query.
-                from(Schedule.class).
-                where("triggerDate >= ? and triggerDate < ?", begin, end).
-                sortAscending("triggerDate").
-                iterable(0)) {
+        for (Schedule schedule : Query
+                .from(Schedule.class)
+                .where("triggerDate >= ? and triggerDate < ?", begin, end)
+                .sortAscending("triggerDate")
+                .iterable(0)) {
 
             if (currentSite != null && !currentSite.equals(schedule.getTriggerSite())) {
                 continue;

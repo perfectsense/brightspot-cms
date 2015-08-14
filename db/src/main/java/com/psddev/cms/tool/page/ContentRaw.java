@@ -1,13 +1,11 @@
 package com.psddev.cms.tool.page;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import javax.servlet.ServletException;
 
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
-import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
@@ -23,7 +21,8 @@ public class ContentRaw extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        Object object = Query.from(Object.class).where("_id = ?", page.param(UUID.class, "id")).first();
+
+        Object object = page.findOrReserve();
 
         page.writeHeader();
             page.writeStart("div", "class", "widget");

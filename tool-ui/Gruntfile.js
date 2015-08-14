@@ -2,6 +2,10 @@ module.exports = function(grunt) {
     require('bsp-grunt')(grunt, {
         bsp: {
             bower: {
+                'atmosphere': [
+                    'modules/javascript/src/main/webapp/javascript/atmosphere.js'
+                ],
+
                 'codemirror': [
                     {
                         dest: 'codemirror',
@@ -15,6 +19,7 @@ module.exports = function(grunt) {
                         src: [
                             'mode/clike/clike.js',
                             'mode/css/css.js',
+                            'addon/mode/multiplex.js', // needed by htmlembedded
                             'mode/htmlembedded/htmlembedded.js',
                             'mode/htmlmixed/htmlmixed.js',
                             'mode/javascript/javascript.js',

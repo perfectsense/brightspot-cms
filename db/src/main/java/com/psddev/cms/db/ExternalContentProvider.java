@@ -222,13 +222,13 @@ public interface ExternalContentProvider {
         @Override
         protected void updateHtml(Matcher matcher, HtmlWriter page) throws IOException {
             page.writeStart("script");
-            page.writeRaw("(function(d, s, id) {\n" +
-                    "  var js, fjs = d.getElementsByTagName(s)[0];\n" +
-                    "  if (d.getElementById(id)) return;\n" +
-                    "  js = d.createElement(s); js.id = id;\n" +
-                    "  js.src = \"//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.2\";\n" +
-                    "  fjs.parentNode.insertBefore(js, fjs);\n" +
-                    "}(document, 'script', 'facebook-jssdk'));");
+            page.writeRaw("(function(d, s, id) {\n"
+                    + "  var js, fjs = d.getElementsByTagName(s)[0];\n"
+                    + "  if (d.getElementById(id)) return;\n"
+                    + "  js = d.createElement(s); js.id = id;\n"
+                    + "  js.src = \"//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.2\";\n"
+                    + "  fjs.parentNode.insertBefore(js, fjs);\n"
+                    + "}(document, 'script', 'facebook-jssdk'));");
             page.writeEnd();
 
             page.writeStart("div",

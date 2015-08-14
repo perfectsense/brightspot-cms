@@ -46,10 +46,10 @@ public class UpdateUserSettings extends PageServlet {
                 userState.put(settingsPrefix + "dashboardWidgetsCollapse", ObjectUtils.fromJson(page.param(String.class, "widgetsCollapse")));
 
             } else if ("scheduleSet".equals(action)) {
-                user.setCurrentSchedule(Query.
-                        from(Schedule.class).
-                        where("_id = ?", page.param(UUID.class, "scheduleId")).
-                        first());
+                user.setCurrentSchedule(Query
+                        .from(Schedule.class)
+                        .where("_id = ?", page.param(UUID.class, "scheduleId"))
+                        .first());
             }
         }
 

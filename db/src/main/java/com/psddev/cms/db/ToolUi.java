@@ -36,12 +36,15 @@ public class ToolUi extends Modification<Object> {
     private String codeType;
     private Boolean colorPicker;
     private String cssClass;
+    private Set<String> displayAfter;
+    private Set<String> displayBefore;
     private boolean displayFirst;
     private boolean displayLast;
     private boolean dropDown;
     private boolean dropDownSortDescending;
     private String dropDownSortField;
     private Boolean expanded;
+    private List<String> fieldDisplayOrder;
     private Boolean filterable;
     private boolean globalFilter;
     private String heading;
@@ -60,6 +63,7 @@ public class ToolUi extends Modification<Object> {
     private String placeholder;
     private String placeholderDynamicText;
     private Boolean placeholderEditable;
+    private String publishButtonText;
     private Boolean referenceable;
     private String referenceableViaClassName;
     private Boolean readOnly;
@@ -104,6 +108,28 @@ public class ToolUi extends Modification<Object> {
 
     public void setCssClass(String cssClass) {
         this.cssClass = cssClass;
+    }
+
+    public Set<String> getDisplayAfter() {
+        if (displayAfter == null) {
+            displayAfter = new LinkedHashSet<>();
+        }
+        return displayAfter;
+    }
+
+    public void setDisplayAfter(Set<String> displayAfter) {
+        this.displayAfter = displayAfter;
+    }
+
+    public Set<String> getDisplayBefore() {
+        if (displayBefore == null) {
+            displayBefore = new LinkedHashSet<>();
+        }
+        return displayBefore;
+    }
+
+    public void setDisplayBefore(Set<String> displayBefore) {
+        this.displayBefore = displayBefore;
     }
 
     public boolean isDisplayFirst() {
@@ -154,6 +180,17 @@ public class ToolUi extends Modification<Object> {
         this.expanded = expanded ? Boolean.TRUE : null;
     }
 
+    public List<String> getFieldDisplayOrder() {
+        if (fieldDisplayOrder == null) {
+            fieldDisplayOrder = new ArrayList<>();
+        }
+        return fieldDisplayOrder;
+    }
+
+    public void setFieldDisplayOrder(List<String> fieldDisplayOrder) {
+        this.fieldDisplayOrder = fieldDisplayOrder;
+    }
+
     public Boolean getFilterable() {
         return filterable;
     }
@@ -177,10 +214,10 @@ public class ToolUi extends Modification<Object> {
 
         ObjectField field = (ObjectField) object;
 
-        if (field.isDeprecated() ||
-                isHidden() ||
-                !ObjectField.RECORD_TYPE.equals(field.getInternalItemType()) ||
-                field.isEmbedded()) {
+        if (field.isDeprecated()
+                || isHidden()
+                || !ObjectField.RECORD_TYPE.equals(field.getInternalItemType())
+                || field.isEmbedded()) {
             return false;
         }
 
@@ -347,6 +384,14 @@ public class ToolUi extends Modification<Object> {
         this.placeholder = placeholder;
     }
 
+    public String getPublishButtonText() {
+        return publishButtonText;
+    }
+
+    public void setPublishButtonText(String publishButtonText) {
+        this.publishButtonText = publishButtonText;
+    }
+
     public boolean isReadOnly() {
         if (readOnly == null) {
             readOnly = ObjectUtils.to(Boolean.class, getState().get("cms.ui.isReadOnly"));
@@ -443,10 +488,10 @@ public class ToolUi extends Modification<Object> {
 
         String fieldType = field.getInternalType();
 
-        return ObjectField.DATE_TYPE.equals(fieldType) ||
-                ObjectField.NUMBER_TYPE.equals(fieldType) ||
-                ObjectField.TEXT_TYPE.equals(fieldType) ||
-                field.isMetric();
+        return ObjectField.DATE_TYPE.equals(fieldType)
+                || ObjectField.NUMBER_TYPE.equals(fieldType)
+                || ObjectField.TEXT_TYPE.equals(fieldType)
+                || field.isMetric();
     }
 
     public Set<String> getStandardImageSizes() {
@@ -630,6 +675,36 @@ public class ToolUi extends Modification<Object> {
         }
     }
 
+    @Documented
+    @ObjectField.AnnotationProcessorClass(DisplayAfterProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface DisplayAfter {
+        String[] value();
+    }
+
+    private static class DisplayAfterProcessor implements ObjectField.AnnotationProcessor<DisplayAfter> {
+        @Override
+        public void process(ObjectType type, ObjectField field, DisplayAfter annotation) {
+            Collections.addAll(field.as(ToolUi.class).getDisplayAfter(), annotation.value());
+        }
+    }
+
+    @Documented
+    @ObjectField.AnnotationProcessorClass(DisplayBeforeProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface DisplayBefore {
+        String[] value();
+    }
+
+    private static class DisplayBeforeProcessor implements ObjectField.AnnotationProcessor<DisplayBefore> {
+        @Override
+        public void process(ObjectType type, ObjectField field, DisplayBefore annotation) {
+            Collections.addAll(field.as(ToolUi.class).getDisplayBefore(), annotation.value());
+        }
+    }
+
     /**
      * Specifies that the target field should be displayed before any other
      * fields.
@@ -670,6 +745,21 @@ public class ToolUi extends Modification<Object> {
         }
     }
 
+    @Documented
+    @ObjectType.AnnotationProcessorClass(FieldDisplayOrderProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface FieldDisplayOrder {
+        String[] value();
+    }
+
+    private static class FieldDisplayOrderProcessor implements ObjectType.AnnotationProcessor<FieldDisplayOrder> {
+        @Override
+        public void process(ObjectType type, FieldDisplayOrder annotation) {
+            Collections.addAll(type.as(ToolUi.class).getFieldDisplayOrder(), annotation.value());
+        }
+    }
+
     /**
      * Specifies whether the target field should be displayed as a drop-down
      * menu.
@@ -677,7 +767,7 @@ public class ToolUi extends Modification<Object> {
     @Documented
     @ObjectField.AnnotationProcessorClass(DropDownProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
     public @interface DropDown {
         boolean value() default true;
         String sortField() default "";
@@ -1111,6 +1201,26 @@ public class ToolUi extends Modification<Object> {
         }
     }
 
+    /**
+     * Specifies the note displayed along with the target in the UI.
+     */
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(PublishButtonTextProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface PublishButtonText {
+        String value();
+    }
+
+    private static class PublishButtonTextProcessor implements ObjectType.AnnotationProcessor<PublishButtonText> {
+
+        @Override
+        public void process(ObjectType objectType, PublishButtonText annotation) {
+            objectType.as(ToolUi.class).setPublishButtonText(annotation.value());
+        }
+    }
+
     /** Specifies whether the target is read-only. */
     @Documented
     @ObjectField.AnnotationProcessorClass(ReadOnlyProcessor.class)
@@ -1267,9 +1377,9 @@ public class ToolUi extends Modification<Object> {
     private static class SuggestedMaximumProcessor implements ObjectField.AnnotationProcessor<Annotation> {
         @Override
         public void process(ObjectType type, ObjectField field, Annotation annotation) {
-            field.as(ToolUi.class).setSuggestedMaximum(annotation instanceof FieldSuggestedMaximum ?
-                    ((FieldSuggestedMaximum) annotation).value() :
-                    ((SuggestedMaximum) annotation).value());
+            field.as(ToolUi.class).setSuggestedMaximum(annotation instanceof FieldSuggestedMaximum
+                    ? ((FieldSuggestedMaximum) annotation).value()
+                    : ((SuggestedMaximum) annotation).value());
         }
     }
 
@@ -1285,9 +1395,9 @@ public class ToolUi extends Modification<Object> {
     private static class SuggestedMinimumProcessor implements ObjectField.AnnotationProcessor<Annotation> {
         @Override
         public void process(ObjectType type, ObjectField field, Annotation annotation) {
-            field.as(ToolUi.class).setSuggestedMinimum(annotation instanceof FieldSuggestedMinimum ?
-                    ((FieldSuggestedMinimum) annotation).value() :
-                    ((SuggestedMinimum) annotation).value());
+            field.as(ToolUi.class).setSuggestedMinimum(annotation instanceof FieldSuggestedMinimum
+                    ? ((FieldSuggestedMinimum) annotation).value()
+                    : ((SuggestedMinimum) annotation).value());
         }
     }
 

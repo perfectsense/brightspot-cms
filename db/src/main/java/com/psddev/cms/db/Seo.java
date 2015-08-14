@@ -80,9 +80,9 @@ public final class Seo {
          */
         @Deprecated
         public static String findTitle(Object object) {
-            return object != null ?
-                    State.getInstance(object).as(ObjectModification.class).findTitle() :
-                    null;
+            return object != null
+                    ? State.getInstance(object).as(ObjectModification.class).findTitle()
+                    : null;
         }
 
         /**
@@ -94,9 +94,9 @@ public final class Seo {
          */
         @Deprecated
         public static String findDescription(Object object) {
-            return object != null ?
-                    State.getInstance(object).as(ObjectModification.class).findDescription() :
-                    null;
+            return object != null
+                    ? State.getInstance(object).as(ObjectModification.class).findDescription()
+                    : null;
         }
 
         /**
@@ -108,9 +108,9 @@ public final class Seo {
          */
         @Deprecated
         public static Set<String> findKeywords(Object object) {
-            return object != null ?
-                    State.getInstance(object).as(ObjectModification.class).findKeywords() :
-                    null;
+            return object != null
+                    ? State.getInstance(object).as(ObjectModification.class).findKeywords()
+                    : null;
         }
     }
 
@@ -137,12 +137,12 @@ public final class Seo {
     public static final class ObjectModification extends Modification<Object> {
 
         @ToolUi.Hidden(false)
-        @ToolUi.Placeholder(dynamicText = "${content.seo.findTitle()}", editable = true)
+        @ToolUi.Placeholder(dynamicText = "${content.seo.findTitlePlaceholder()}", editable = true)
         @ToolUi.Tab("SEO")
         private String title;
 
         @ToolUi.Hidden(false)
-        @ToolUi.Placeholder(dynamicText = "${content.seo.findDescription()}", editable = true)
+        @ToolUi.Placeholder(dynamicText = "${content.seo.findDescriptionPlaceholder()}", editable = true)
         @ToolUi.Tab("SEO")
         private String description;
 
@@ -206,17 +206,11 @@ public final class Seo {
         }
 
         /**
-         * Finds the most appropriate page title.
+         * Finds the most appropriate page title placeholder.
          *
          * @return Never {@code null}.
          */
-        public String findTitle() {
-            String title = getTitle();
-
-            if (!ObjectUtils.isBlank(title)) {
-                return title;
-            }
-
+        public String findTitlePlaceholder() {
             State state = getState();
             ObjectType type = state.getType();
 
@@ -235,6 +229,17 @@ public final class Seo {
             }
 
             return getState().getLabel();
+        }
+
+        /**
+         * Finds the most appropriate page title.
+         *
+         * @return Never {@code null}.
+         */
+        public String findTitle() {
+            String title = getTitle();
+
+            return ObjectUtils.isBlank(title) ? findTitlePlaceholder() : title;
         }
 
         // Converts the given object into a plain string that's usable
@@ -273,17 +278,11 @@ public final class Seo {
         }
 
         /**
-         * Finds the most appropriate page description.
+         * Finds the most appropriate page description placeholder.
          *
          * @return May be {@code null}.
          */
-        public String findDescription() {
-            String description = getDescription();
-
-            if (!ObjectUtils.isBlank(description)) {
-                return description;
-            }
-
+        public String findDescriptionPlaceholder() {
             State state = getState();
             ObjectType type = state.getType();
 
@@ -302,6 +301,17 @@ public final class Seo {
             }
 
             return null;
+        }
+
+        /**
+         * Finds the most appropriate page description.
+         *
+         * @return May be {@code null}.
+         */
+        public String findDescription() {
+            String description = getDescription();
+
+            return ObjectUtils.isBlank(description) ? findDescriptionPlaceholder() : description;
         }
 
         /**

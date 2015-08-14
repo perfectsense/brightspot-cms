@@ -30,7 +30,7 @@ b {
 }
 
 body {
-  .background-flat(darken(white, 20%));
+  .background-flat(@color-border);
   font-family: @fontFamily-default;
   font-size: @fontSize-default;
   font-style: normal;
@@ -92,14 +92,17 @@ h1 {
   line-height: floor(@lineHeight-default * 1.2);
 
   select {
-    background-color: transparent;
-    border-style: none;
-    height: auto;
-    max-width: 100%;
-    padding: 0;
+    border-radius: 0;
+    line-height: floor(@lineHeight-default * 1.2);
+    margin: -4px 0 0 0;
+    padding-left: 0;
 
+    &,
     &:focus {
-      box-shadow: none;
+      background-color: inherit;
+      border-left-color: transparent;
+      border-right-color: transparent;
+      border-top-color: transparent;
     }
   }
 }
@@ -190,6 +193,17 @@ select {
 
   &[multiple] {
     max-width: 100%;
+  }
+}
+
+@-moz-document url-prefix() {
+  select {
+    @-borderWidth: 1px;
+    @-paddingTB: @input-height - @lineHeight-default - (@-borderWidth * 2);
+    @-paddingTop: floor(@-paddingTB / 2);
+
+    padding-bottom: (@-paddingTB - @-paddingTop - 1);
+    padding-top: (@-paddingTop - 1);
   }
 }
 

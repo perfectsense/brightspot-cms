@@ -85,10 +85,10 @@ public class ContentSearchAdvanced extends PageServlet {
         Collections.sort(fields);
 
         List<UUID> ids = page.params(UUID.class, ITEMS_PARAMETER);
-        Query<Object> query = (type != null ?
-                Query.fromType(type) :
-                Query.fromGroup(Content.SEARCHABLE_GROUP)).
-                where(predicate);
+        Query<Object> query = (type != null
+                ? Query.fromType(type)
+                : Query.fromGroup(Content.SEARCHABLE_GROUP))
+                .where(predicate);
 
         if (page.param(String.class, "action-download") != null) {
             HttpServletResponse response = page.getResponse();
@@ -251,9 +251,9 @@ public class ContentSearchAdvanced extends PageServlet {
                 ToolPageContext page = (ToolPageContext) writer;
                 page.writeElement("img",
                         "height", 100,
-                        "src", ImageEditor.Static.getDefault() != null ?
-                                new ImageTag.Builder(item).setHeight(100).toUrl() :
-                                item.getPublicUrl());
+                        "src", ImageEditor.Static.getDefault() != null
+                                ? new ImageTag.Builder(item).setHeight(100).toUrl()
+                                : item.getPublicUrl());
             }
         });
 
@@ -378,9 +378,9 @@ public class ContentSearchAdvanced extends PageServlet {
                                 page.writeEnd();
                             }
 
-                            if (result.getOffset() > 0 ||
-                                    result.hasNext() ||
-                                    result.getItems().size() > LIMITS[0]) {
+                            if (result.getOffset() > 0
+                                    || result.hasNext()
+                                    || result.getItems().size() > LIMITS[0]) {
                                 page.writeStart("li");
                                     for (String fieldName : fieldNames) {
                                         page.writeElement("input", "type", "hidden", "name", FIELDS_PARAMETER, "value", fieldName);

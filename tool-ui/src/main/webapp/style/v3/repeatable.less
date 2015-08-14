@@ -7,6 +7,7 @@
     margin-left: 0;
 
     > li {
+      background: white;
       border: 1px solid @color-heading;
       border-radius: 2px;
       margin-bottom: 10px;
@@ -38,6 +39,9 @@
           counter-increment: item;
           left: 20px;
           position: absolute;
+          text-align: right;
+          top: 6px;
+          width: 20px;
         }
 
         &:hover:before {
@@ -157,6 +161,10 @@
       > li.state-changed {
         .background-flat(@color-change);
       }
+
+      > li.state-error {
+        .background-flat(@color-remove);
+      }
       
       > li {
         background: white;
@@ -197,7 +205,7 @@
         .previewable-controls {
           height:22px;
           position:absolute;
-          width:208px;
+          width:100%;
           left:0;
           bottom:0;
           background-color:#f8f8f8;
@@ -851,4 +859,43 @@
           display: none;
         }
     }
+}
+
+.repeatableForm {
+  > ol,
+  > ul {
+    > li.sortable-dragging {
+      box-shadow: 0 0 20px fade(black, 50%);
+    }
+  }
+}
+
+.repeatableObjectId {
+  > ol,
+  > ul {
+    > li.sortable-dragging {
+      > .objectId-select {
+        box-shadow: 0 0 20px fade(black, 50%);
+      }
+    }
+  }
+}
+
+.sortable-parent {
+  z-index: 1000000 !important;
+}
+
+.sortable-droppable {
+  position: relative;
+
+  &:before {
+    border: 5px dotted fade(@color-focus, 50%);
+    border-radius: 5px;
+    bottom: -15px;
+    content: '';
+    left: -15px;
+    position: absolute;
+    right: -15px;
+    top: -15px;
+  }
 }

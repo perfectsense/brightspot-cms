@@ -102,11 +102,11 @@ public class ToolUserDevice extends Record {
      * @return May be {@code null}.
      */
     public ToolUserAction findLastAction() {
-        return Query.
-                from(ToolUserAction.class).
-                where("device = ?", this).
-                sortDescending("time").
-                first();
+        return Query
+                .from(ToolUserAction.class)
+                .where("device = ?", this)
+                .sortDescending("time")
+                .first();
     }
 
     /**
@@ -123,11 +123,11 @@ public class ToolUserDevice extends Record {
         actionMap.remove("_id");
         actionMap.remove("time");
 
-        List<ToolUserAction> actions = Query.
-                from(ToolUserAction.class).
-                where("device = ?", this).
-                sortDescending("time").
-                selectAll();
+        List<ToolUserAction> actions = Query
+                .from(ToolUserAction.class)
+                .where("device = ?", this)
+                .sortDescending("time")
+                .selectAll();
 
         for (Iterator<ToolUserAction> i = actions.iterator(); i.hasNext();) {
             ToolUserAction a = i.next();

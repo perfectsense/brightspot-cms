@@ -82,11 +82,11 @@ public class AuthenticationFilter extends AbstractFilter {
 
         if (ObjectUtils.to(boolean.class, request.getParameter("_clearPreview"))) {
             Static.removeCurrentPreview(request, response);
-            response.sendRedirect(new UrlBuilder(request).
-                    currentPath().
-                    currentParameters().
-                    parameter("_clearPreview", null).
-                    toString());
+            response.sendRedirect(new UrlBuilder(request)
+                    .currentPath()
+                    .currentParameters()
+                    .parameter("_clearPreview", null)
+                    .toString());
             return;
         }
 
@@ -280,19 +280,20 @@ public class AuthenticationFilter extends AbstractFilter {
         public static boolean requireUser(ServletContext context, HttpServletRequest request, HttpServletResponse response) throws IOException {
             String toolUrlPrefix = Settings.get(String.class, ToolPageContext.TOOL_URL_PREFIX_SETTING);
 
-            if (!ObjectUtils.isBlank(toolUrlPrefix) &&
-                    !new UrlBuilder(request).
-                            currentScheme().
-                            currentHost().
-                            currentPath().
-                            toString().startsWith(toolUrlPrefix)) {
+            if (!ObjectUtils.isBlank(toolUrlPrefix)
+                    && !new UrlBuilder(request)
+                    .currentScheme()
+                    .currentHost()
+                    .currentPath()
+                    .toString()
+                    .startsWith(toolUrlPrefix)) {
 
                 response.sendRedirect(
-                        StringUtils.removeEnd(toolUrlPrefix, "/") +
-                        new UrlBuilder(request).
-                                currentPath().
-                                currentParameters().
-                                toString());
+                        StringUtils.removeEnd(toolUrlPrefix, "/")
+                                + new UrlBuilder(request)
+                                .currentPath()
+                                .currentParameters()
+                                .toString());
 
                 return true;
             }
@@ -416,10 +417,10 @@ public class AuthenticationFilter extends AbstractFilter {
                     preview = null;
 
                 } else {
-                    preview = Query.
-                            from(Preview.class).
-                            where("_id = ?", ObjectUtils.to(UUID.class, cookieValue.substring(PREVIEW_COOKIE.length()))).
-                            first();
+                    preview = Query
+                            .from(Preview.class)
+                            .where("_id = ?", ObjectUtils.to(UUID.class, cookieValue.substring(PREVIEW_COOKIE.length())))
+                            .first();
 
                     request.setAttribute(PREVIEW_ATTRIBUTE, preview);
                 }

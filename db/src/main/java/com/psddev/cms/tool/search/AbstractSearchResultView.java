@@ -90,10 +90,10 @@ public abstract class AbstractSearchResultView implements SearchResultView {
                             "typeId", type != null ? type.getId() : null));
 
                 page.writeHtml("Fields: ");
-                page.writeHtml(user != null &&
-                        user.getSearchResultFieldsByTypeId().get(type != null ? type.getId().toString() : "") != null ?
-                        "Custom" :
-                        "Default");
+                page.writeHtml(user != null
+                        && user.getSearchResultFieldsByTypeId().get(type != null ? type.getId().toString() : "") != null
+                        ? "Custom"
+                        : "Default");
             page.writeEnd();
         page.writeEnd();
     }
@@ -112,9 +112,9 @@ public abstract class AbstractSearchResultView implements SearchResultView {
             } else {
                 Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
 
-                if (f != null &&
-                        (f.get("") != null ||
-                        f.get("x") != null)) {
+                if (f != null
+                        && (f.get("") != null
+                        || f.get("x") != null)) {
                     search.setSort("cms.content.publishDate");
 
                 } else {

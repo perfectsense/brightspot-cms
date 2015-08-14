@@ -69,17 +69,17 @@ public class SiteMapWidget extends DashboardWidget {
             }
 
             if (valueObject != null) {
-                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query.
-                        from(Directory.class).
-                        where("path startsWith ?", ((Directory) valueObject).getPath()).
-                        sortAscending("path")) {
+                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query
+                        .from(Directory.class)
+                        .where("path startsWith ?", ((Directory) valueObject).getPath())
+                        .sortAscending("path")) {
 
                     @Override
                     protected Query<?> createQuery(Directory directory) {
-                        return (itemType != null ? Query.fromType(itemType) : Query.fromAll()).
-                                and(page.siteItemsSearchPredicate()).
-                                and(directory.itemsPredicate(page.getSite())).
-                                sortAscending(Directory.PATHS_FIELD);
+                        return (itemType != null ? Query.fromType(itemType) : Query.fromAll())
+                                .and(page.siteItemsSearchPredicate())
+                                .and(directory.itemsPredicate(page.getSite()))
+                                .sortAscending(Directory.PATHS_FIELD);
                     }
                 });
 
@@ -87,24 +87,24 @@ public class SiteMapWidget extends DashboardWidget {
             }
 
         } else if (valueObject != null) {
-            Query<?> query = (itemType != null ? Query.fromType(itemType) : Query.fromAll()).
-                    and(page.siteItemsPredicate()).
-                    and("* matches ?", value).
-                    and("cms.directory.paths != missing");
+            Query<?> query = (itemType != null ? Query.fromType(itemType) : Query.fromAll())
+                    .and(page.siteItemsPredicate())
+                    .and("* matches ?", value)
+                    .and("cms.directory.paths != missing");
 
             if (query.hasMoreThan(250)) {
-                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query.
-                        from(Directory.class).
-                        where("path startsWith /").
-                        sortAscending("path")) {
+                result = new AggregateQueryResult<>(offset, limit, new DirectoryQueryIterator(Query
+                        .from(Directory.class)
+                        .where("path startsWith /")
+                        .sortAscending("path")) {
 
                     @Override
                     protected Query<?> createQuery(Directory directory) {
-                        return (itemType != null ? Query.fromType(itemType) : Query.fromAll()).
-                                and(page.siteItemsPredicate()).
-                                and(directory.itemsPredicate(page.getSite())).
-                                and("* matches ?", value).
-                                and("cms.directory.paths != missing");
+                        return (itemType != null ? Query.fromType(itemType) : Query.fromAll())
+                                .and(page.siteItemsPredicate())
+                                .and(directory.itemsPredicate(page.getSite()))
+                                .and("* matches ?", value)
+                                .and("cms.directory.paths != missing");
                     }
                 });
 
@@ -281,9 +281,9 @@ public class SiteMapWidget extends DashboardWidget {
                         page.writeEnd();
                     }
 
-                    if (result.getOffset() > 0 ||
-                            result.hasNext() ||
-                            result.getItems().size() > LIMITS[0]) {
+                    if (result.getOffset() > 0
+                            || result.hasNext()
+                            || result.getItems().size() > LIMITS[0]) {
                         page.writeStart("li");
                             page.writeStart("form",
                                     "data-bsp-autosubmit", "",

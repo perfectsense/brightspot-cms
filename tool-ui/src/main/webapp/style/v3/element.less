@@ -364,6 +364,7 @@ figure,
 .icon-spinner { &:before { content: '\f110'; } }
 .icon-reply { &:before { content: '\f112'; } }
 .icon-terminal { &:before { content: '\f120'; } }
+.icon-code { &:before { content: '\f121'; } }
 .icon-crop { &:before { content: '\f125'; } }
 .icon-unlink { &:before { content: '\f127'; } }
 .icon-question { &:before { content: '\f128'; } }
@@ -492,31 +493,35 @@ table.links.table-striped {
     z-index: 1;
   }
 
-  .link {
-    position: relative;
+  &:not(.multipleLinkedColumns) {
+      .link {
+          position: relative;
 
-    &:before {
-      content: '';
-      height: 2000px;
-      left: -2000px;
-      position: absolute;
-      top: -4px;
-      width: 4000px;
-    }
+          &:before {
+              content: '';
+              height: 2000px;
+              left: -2000px;
+              position: absolute;
+              top: -4px;
+              width: 4000px;
+          }
+      }
+
+      > tbody > tr {
+          &:hover {
+              .background-flat(#d7f0f8);
+              cursor: pointer;
+
+              .link {
+                  &:hover {
+                      text-decoration: none;
+                  }
+              }
+          }
+      }
   }
 
   > tbody > tr {
-    &:hover {
-      .background-flat(#d7f0f8);
-      cursor: pointer;
-
-      .link {
-        &:hover {
-          text-decoration: none;
-        }
-      }
-    }
-
     &.selected {
       .background-flat(@color-focus);
 

@@ -17,11 +17,11 @@ import java.util.Map;
 public class ImageHotSpot {
 
     public static List<Integer> crop(StorageItem item, Integer cropWidth, Integer cropHeight) {
-        if (item != null &&
-            item.getMetadata().containsKey("height") &&
-            item.getMetadata().containsKey("width") &&
-            ((cropWidth != null && ObjectUtils.to(Integer.class, item.getMetadata().get("width")) > cropWidth) ||
-                cropHeight != null && ObjectUtils.to(Integer.class, item.getMetadata().get("height")) > cropHeight)) {
+        if (item != null
+                && item.getMetadata().containsKey("height")
+                && item.getMetadata().containsKey("width")
+                && ((cropWidth != null && ObjectUtils.to(Integer.class, item.getMetadata().get("width")) > cropWidth)
+                || cropHeight != null && ObjectUtils.to(Integer.class, item.getMetadata().get("height")) > cropHeight)) {
 
             List<HotSpotPoint> hotSpots = HotSpots.Data.getHotSpots(item);
             if (!ObjectUtils.isBlank(hotSpots)) {
@@ -30,12 +30,12 @@ public class ImageHotSpot {
                 Integer imageHeight = ObjectUtils.to(Integer.class, item.getMetadata().get("height"));
                 Integer imageWidth = ObjectUtils.to(Integer.class, item.getMetadata().get("width"));
 
-                Integer originalHeight = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH) != null ?
-                        ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH)) :
-                        imageHeight;
-                Integer originalWidth = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH) != null ?
-                        ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH)) :
-                        imageWidth;
+                Integer originalHeight = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH) != null
+                        ? ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH))
+                        : imageHeight;
+                Integer originalWidth = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH) != null
+                        ? ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH))
+                        : imageWidth;
 
                 Integer angle = ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), "cms.edits/rotate"));
                 if (angle != null && (angle == 90 || angle == -90)) {
@@ -175,10 +175,10 @@ public class ImageHotSpot {
 
     public static List<HotSpotPoint> getReSizedHotSpots(StorageItem item, Integer reSizedWidth, Integer reSizedHeight, CropOption cropOption, ResizeOption resizeOption, String standardImageSizeId, Boolean disableHotSpotCrop) throws IOException {
         List<HotSpotPoint> originalHotSpots = HotSpots.Data.getHotSpots(item);
-        if (!ObjectUtils.isBlank(originalHotSpots) &&
-            item != null &&
-            item.getMetadata().containsKey("height") &&
-            item.getMetadata().containsKey("width")) {
+        if (!ObjectUtils.isBlank(originalHotSpots)
+                && item != null
+                && item.getMetadata().containsKey("height")
+                && item.getMetadata().containsKey("width")) {
 
             ImageCrop crop = null;
             Integer originalWidth = ImageTag.findDimension(item, "width");
@@ -190,10 +190,10 @@ public class ImageHotSpot {
             boolean usingDimsImageEditor = ImageEditor.Static.getDefault() instanceof DimsImageEditor;
 
             Map<String, ImageCrop> crops = ImageTag.findImageCrops(item);
-            if (crops != null &&
-                    !StringUtils.isBlank(standardImageSizeId) &&
-                    (crop = crops.get(standardImageSizeId)) != null &&
-                    originalWidth != null && originalHeight != null) {
+            if (crops != null
+                    && !StringUtils.isBlank(standardImageSizeId)
+                    && (crop = crops.get(standardImageSizeId)) != null
+                    && originalWidth != null && originalHeight != null) {
                 cropX = (int) (crop.getX() * originalWidth);
                 cropY = (int) (crop.getY() * originalHeight);
                 cropWidth = (int) (crop.getWidth() * originalWidth);
@@ -202,9 +202,9 @@ public class ImageHotSpot {
 
             Dimension originalDimension = new Dimension(originalWidth, originalHeight);
             if (resizeOption == ResizeOption.ONLY_SHRINK_LARGER) {
-                if (reSizedWidth != null &&
-                        reSizedWidth > 0 &&
-                        reSizedHeight != null && reSizedHeight > 0) {
+                if (reSizedWidth != null
+                        && reSizedWidth > 0
+                        && reSizedHeight != null && reSizedHeight > 0) {
                     reSizedWidth = originalDimension.width != null ? Math.min(originalDimension.width, reSizedWidth) : reSizedWidth;
                     reSizedHeight = originalDimension.height != null ? Math.min(originalDimension.height, reSizedHeight) : reSizedHeight;
                 } else {
@@ -213,9 +213,9 @@ public class ImageHotSpot {
                     reSizedHeight = outputDimension.height;
                 }
             } else if (resizeOption == ResizeOption.ONLY_ENLARGE_SMALLER) {
-                if (reSizedWidth != null &&
-                        reSizedWidth > 0 &&
-                        reSizedHeight != null && reSizedHeight > 0) {
+                if (reSizedWidth != null
+                        && reSizedWidth > 0
+                        && reSizedHeight != null && reSizedHeight > 0) {
                     reSizedWidth = originalDimension.width != null ? Math.max(originalDimension.width, reSizedWidth) : reSizedWidth;
                     reSizedHeight = originalDimension.height != null ? Math.max(originalDimension.height, reSizedHeight) : reSizedHeight;
                 } else {
@@ -236,12 +236,12 @@ public class ImageHotSpot {
                 cropHeight = ((Double) (reSizedHeight * horzScale)).intValue();
             }
 
-            if (cropX == null &&
-                    cropY  == null &&
-                    (cropOption == null || cropOption.equals(CropOption.AUTOMATIC))) {
+            if (cropX == null
+                    && cropY  == null
+                    && (cropOption == null || cropOption.equals(CropOption.AUTOMATIC))) {
                 List<Integer> hotSpotCrop = crop(item, cropWidth, cropHeight);
-                if (!ObjectUtils.isBlank(hotSpotCrop) &&
-                        hotSpotCrop.size() == 4) {
+                if (!ObjectUtils.isBlank(hotSpotCrop)
+                        && hotSpotCrop.size() == 4) {
                     cropX = hotSpotCrop.get(0);
                     cropY = hotSpotCrop.get(1);
                     cropWidth = hotSpotCrop.get(2);
@@ -255,10 +255,10 @@ public class ImageHotSpot {
                 cropWidth = originalWidth;
                 cropHeight = originalHeight;
             } else {
-                if (cropX == null &&
-                        cropY == null &&
-                        cropOption == null ||
-                        cropOption == CropOption.AUTOMATIC) {
+                if (cropX == null
+                        && cropY == null
+                        && cropOption == null
+                        || cropOption == CropOption.AUTOMATIC) {
                     if (usingDimsImageEditor) {
                         cropX = 0;
                         cropY = 0;
@@ -284,20 +284,20 @@ public class ImageHotSpot {
 
     public static List<HotSpotPoint> getReSizedHotSpots(StorageItem item, Integer cropX, Integer cropY, Integer cropWidth, Integer cropHeight, Integer reSizedWidth, Integer reSizedHeight) {
         List<HotSpotPoint> hotSpots = HotSpots.Data.getHotSpots(item);
-        if (!ObjectUtils.isBlank(hotSpots) &&
-            item != null &&
-            item.getMetadata().containsKey("height") &&
-            item.getMetadata().containsKey("width")) {
+        if (!ObjectUtils.isBlank(hotSpots)
+                && item != null
+                && item.getMetadata().containsKey("height")
+                && item.getMetadata().containsKey("width")) {
 
             Integer imageHeight = ObjectUtils.to(Integer.class, item.getMetadata().get("height"));
             Integer imageWidth = ObjectUtils.to(Integer.class, item.getMetadata().get("width"));
 
-            Integer originalHeight = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH) != null ?
-                    ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH)) :
-                    imageHeight;
-            Integer originalWidth = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH) != null ?
-                    ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH)) :
-                    imageWidth;
+            Integer originalHeight = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH) != null
+                    ? ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_HEIGHT_METADATA_PATH))
+                    : imageHeight;
+            Integer originalWidth = CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH) != null
+                    ? ObjectUtils.to(Integer.class, CollectionUtils.getByPath(item.getMetadata(), ImageTag.ORIGINAL_WIDTH_METADATA_PATH))
+                    : imageWidth;
 
             Boolean flipH = ObjectUtils.to(Boolean.class, CollectionUtils.getByPath(item.getMetadata(), "cms.edits/flipH"));
             Boolean flipV = ObjectUtils.to(Boolean.class, CollectionUtils.getByPath(item.getMetadata(), "cms.edits/flipV"));
@@ -404,8 +404,8 @@ public class ImageHotSpot {
         Integer actualWidth = null;
         Integer actualHeight = null;
 
-        if (originalWidth != null && originalHeight != null &&
-                (requestedWidth != null || requestedHeight != null)) {
+        if (originalWidth != null && originalHeight != null
+                && (requestedWidth != null || requestedHeight != null)) {
 
             float originalRatio = (float) originalWidth / (float) originalHeight;
             if (requestedWidth != null && requestedHeight != null) {

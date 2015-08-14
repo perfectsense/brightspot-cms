@@ -297,6 +297,18 @@ wp.writeStart("div", "class", "inputSmall permissions");
                             wp.writeEnd();
 
                             wp.writeStart("li");
+                                writeChild(wp, permissions, "Archive", typePermissionId + "/archive");
+                            wp.writeEnd();
+
+                            wp.writeStart("li");
+                                writeChild(wp, permissions, "Restore", typePermissionId + "/restore");
+                            wp.writeEnd();
+
+                            wp.writeStart("li");
+                                writeChild(wp, permissions, "Delete Permanently", typePermissionId + "/delete");
+                            wp.writeEnd();
+
+                            wp.writeStart("li");
                                 writeChild(wp, permissions, "Bulk Edit", typePermissionId + "/bulkEdit");
                             wp.writeEnd();
 

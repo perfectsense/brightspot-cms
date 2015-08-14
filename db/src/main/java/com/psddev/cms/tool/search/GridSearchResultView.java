@@ -39,8 +39,8 @@ public class GridSearchResultView extends ListSearchResultView {
         ObjectType selectedType = search.getSelectedType();
 
         sortField = updateSort();
-        showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult() &&
-                Query.from(Site.class).hasMoreThan(0);
+        showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult()
+                && Query.from(Site.class).hasMoreThan(0);
 
         if (selectedType != null) {
             showTypeLabel = selectedType.as(ToolUi.class).findDisplayTypes().size() != 1;

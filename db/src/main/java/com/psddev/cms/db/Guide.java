@@ -157,8 +157,8 @@ public class Guide extends Record {
             for (GuideSection section : sections) {
                 String sectionName = "";
                 if (!nameMap.containsKey(section.getId())) {
-                    if (section.getSectionName() != null &&
-                           !section.getSectionName().isEmpty()) {
+                    if (section.getSectionName() != null
+                            && !section.getSectionName().isEmpty()) {
                         sectionName = section.getSectionName();
                     } else {
                         sectionName = "Unnamed";

@@ -70,10 +70,10 @@ public class ContentRevisions extends Widget {
             }
         }
 
-        for (Draft d : Query.
-                from(Draft.class).
-                where("objectId = ?", state.getId()).
-                selectAll()) {
+        for (Draft d : Query
+                .from(Draft.class)
+                .where("objectId = ?", state.getId())
+                .selectAll()) {
             if (d.getSchedule() != null) {
                 scheduled.add(d);
 
@@ -99,19 +99,19 @@ public class ContentRevisions extends Widget {
             }
         });
 
-        for (History h : Query.
-                from(History.class).
-                where("name != missing and objectId = ?", state.getId()).
-                sortAscending("name").
-                selectAll()) {
+        for (History h : Query
+                .from(History.class)
+                .where("name != missing and objectId = ?", state.getId())
+                .sortAscending("name")
+                .selectAll()) {
             namedHistories.add(h);
         }
 
-        PaginatedResult<History> historiesResult = Query.
-                from(History.class).
-                where("name = missing and objectId = ?", state.getId()).
-                sortDescending("updateDate").
-                select(0, 10);
+        PaginatedResult<History> historiesResult = Query
+                .from(History.class)
+                .where("name = missing and objectId = ?", state.getId())
+                .sortDescending("updateDate")
+                .select(0, 10);
 
         for (History h : historiesResult.getItems()) {
             histories.add(h);
@@ -122,16 +122,13 @@ public class ContentRevisions extends Widget {
                 page.writeHtml("Revisions");
             page.writeEnd();
 
-            if (!(selected instanceof Draft &&
-                    state.as(Content.ObjectModification.class).isDraft())) {
-                page.writeStart("ul", "class", "links");
-                    page.writeStart("li", "class", object.equals(selected) ? "selected" : null);
-                        page.writeStart("a", "href", page.originalUrl(null, object));
-                            page.writeHtml("Current");
-                        page.writeEnd();
+            page.writeStart("ul", "class", "links");
+                page.writeStart("li", "class", object.equals(selected) ? "selected" : null);
+                    page.writeStart("a", "href", page.originalUrl(null, object));
+                        page.writeHtml("Current");
                     page.writeEnd();
                 page.writeEnd();
-            }
+            page.writeEnd();
 
             if (!scheduled.isEmpty()) {
                 page.writeStart("h2").writeHtml("Scheduled").writeEnd();
@@ -234,10 +231,10 @@ public class ContentRevisions extends Widget {
                                 String workflowState = ObjectUtils.to(String.class, originals.get("cms.workflow.currentState"));
 
                                 if (workflowState != null) {
-                                    Workflow workflow = Query.
-                                            from(Workflow.class).
-                                            where("contentTypes = ?", h.getState().get("objectType")).
-                                            first();
+                                    Workflow workflow = Query
+                                            .from(Workflow.class)
+                                            .where("contentTypes = ?", h.getState().get("objectType"))
+                                            .first();
 
                                     if (workflow != null) {
                                         for (WorkflowState s : workflow.getStates()) {

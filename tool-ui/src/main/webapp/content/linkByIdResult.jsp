@@ -51,8 +51,8 @@ String removeId = wp.createId();
 
         $page.delegate('[data-permalink]', 'click', function() {
             var $sourceParent = $page.popup('source').parent(),
-                    $idInput = $sourceParent.find('.rte-dialogLinkId'),
-                    $hrefInput = $sourceParent.find('.rte-dialogLinkHref'),
+                    $idInput = $sourceParent.find('.rte-dialogLinkId, .rte2-dialogLinkId'),
+                    $hrefInput = $sourceParent.find('.rte-dialogLinkHref, .rte2-dialogLinkHref'),
                     $link = $(this);
 
             $idInput.val($link.attr('data-id'));

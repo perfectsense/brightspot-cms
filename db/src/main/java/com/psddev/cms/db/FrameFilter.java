@@ -15,6 +15,10 @@ import com.psddev.dari.util.AbstractFilter;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ObjectUtils;
 
+/**
+ * @deprecated No replacement.
+ */
+@Deprecated
 public class FrameFilter extends AbstractFilter {
 
     @Override

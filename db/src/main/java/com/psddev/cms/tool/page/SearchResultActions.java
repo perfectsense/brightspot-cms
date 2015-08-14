@@ -90,8 +90,8 @@ public class SearchResultActions extends PageServlet {
             // reset the current selection
             currentSelection = user.resetCurrentSelection();
 
-        } else if (ACTION_CLEAR.equals(action) ||
-                (ACTION_ACTIVATE.equals(action) && selectionId == null)) {
+        } else if (ACTION_CLEAR.equals(action)
+                || (ACTION_ACTIVATE.equals(action) && selectionId == null)) {
 
             // deactivate the current selection
             currentSelection = user.deactivateSelection(currentSelection);
@@ -171,11 +171,11 @@ public class SearchResultActions extends PageServlet {
 
         page.writeStart("a",
                 "class", "reload",
-                "href", new UrlBuilder(page.getRequest()).
-                        currentScheme().
-                        currentHost().
-                        currentPath().
-                        parameter("search", ObjectUtils.toJson(new Search(page, (Set<UUID>) null).getState().getSimpleValues()))).writeEnd();
+                "href", new UrlBuilder(page.getRequest())
+                        .currentScheme()
+                        .currentHost()
+                        .currentPath()
+                        .parameter("search", ObjectUtils.toJson(new Search(page, (Set<UUID>) null).getState().getSimpleValues()))).writeEnd();
 
         if (count == 0) {
             page.writeStart("h2");
@@ -184,13 +184,13 @@ public class SearchResultActions extends PageServlet {
         }
 
         // Sort SearchResultActions first by getClass().getSimpleName(), then by getClass().getName() for tie-breaking.
-        for (Class<? extends SearchResultAction> actionClass : ClassFinder.Static.findClasses(SearchResultAction.class).
-            stream().
-            filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers())).
-            sorted(Comparator.
-                <Class<? extends SearchResultAction>, String>comparing(Class::getSimpleName).
-                thenComparing(Class::getName)).
-            collect(Collectors.toList())) {
+        for (Class<? extends SearchResultAction> actionClass : ClassFinder.Static.findClasses(SearchResultAction.class)
+                .stream()
+                .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
+                .sorted(Comparator
+                        .<Class<? extends SearchResultAction>, String>comparing(Class::getSimpleName)
+                        .thenComparing(Class::getName))
+                .collect(Collectors.toList())) {
 
             TypeDefinition.getInstance(actionClass).newInstance().writeHtml(page, search, count > 0 ? currentSelection : null);
         }
@@ -247,10 +247,10 @@ public class SearchResultActions extends PageServlet {
 
             Object item = entry.getKey();
 
-            String previewUrl = new ImageTag.Builder(entry.getValue()).
-                setHeight(30).
-                setResizeOption(ResizeOption.ONLY_SHRINK_LARGER).
-                toUrl();
+            String previewUrl = new ImageTag.Builder(entry.getValue())
+                    .setHeight(30)
+                    .setResizeOption(ResizeOption.ONLY_SHRINK_LARGER)
+                    .toUrl();
 
             page.writeStart("figure");
             page.writeElement("img",

@@ -33,10 +33,10 @@ public class ToolUserHistory extends PageServlet {
         ToolUser user = page.getUser();
         Map<String, List<ToolUserDevice>> devicesByUserAgent = new CompactMap<String, List<ToolUserDevice>>();
 
-        for (ToolUserDevice device : Query.
-                from(ToolUserDevice.class).
-                where("user = ?", user).
-                selectAll()) {
+        for (ToolUserDevice device : Query
+                .from(ToolUserDevice.class)
+                .where("user = ?", user)
+                .selectAll()) {
             String userAgent = device.getUserAgentDisplay();
             List<ToolUserDevice> devices = devicesByUserAgent.get(userAgent);
 
@@ -56,11 +56,11 @@ public class ToolUserHistory extends PageServlet {
             long lastTime = 0;
 
             for (ToolUserDevice d : entry.getValue()) {
-                List<ToolUserAction> a = Query.
-                        from(ToolUserAction.class).
-                        where("device = ?", d).
-                        sortDescending("time").
-                        selectAll();
+                List<ToolUserAction> a = Query
+                        .from(ToolUserAction.class)
+                        .where("device = ?", d)
+                        .sortDescending("time")
+                        .selectAll();
 
                 if (!a.isEmpty()) {
                     long time = a.get(0).getTime();

@@ -31,15 +31,15 @@ public class BulkUploadDraft extends Modification<Object> {
 
     @Override
     protected void afterSave() {
-        if (!isRunAfterSave() ||
-                !getState().isVisible()) {
+        if (!isRunAfterSave()
+                || !getState().isVisible()) {
             return;
         }
 
-        for (Object item : Query.
-                fromAll().
-                where("cms.bulkUpload.containerId = ?", getId().toString()).
-                selectAll()) {
+        for (Object item : Query
+                .fromAll()
+                .where("cms.bulkUpload.containerId = ?", getId().toString())
+                .selectAll()) {
             State itemState = State.getInstance(item);
 
             itemState.as(BulkUploadDraft.class).setContainerId(null);
@@ -55,10 +55,10 @@ public class BulkUploadDraft extends Modification<Object> {
             return;
         }
 
-        for (Object item : Query.
-                fromAll().
-                where("cms.bulkUpload.containerId = ?", state.getId().toString()).
-                selectAll()) {
+        for (Object item : Query
+                .fromAll()
+                .where("cms.bulkUpload.containerId = ?", state.getId().toString())
+                .selectAll()) {
             State.getInstance(item).deleteImmediately();
         }
     }

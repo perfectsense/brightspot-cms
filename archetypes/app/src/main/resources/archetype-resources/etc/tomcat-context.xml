@@ -1,3 +1,7 @@
+##
+#set($mysqlPortProperty = '${mysql.port}')
+#set($tomcatPortProperty = '${tomcat.port}')
+##
 <?xml version="1.0" encoding="UTF-8"?>
 <Context>
     <Resources cachingAllowed="false" />
@@ -9,25 +13,58 @@
     <Environment name="dari/database/${artifactId}.local/class" type="java.lang.String" value="com.psddev.dari.db.AggregateDatabase" />
     <Environment name="dari/database/${artifactId}.local/defaultDelegate" type="java.lang.String" value="sql" />
 
-    <!-- SQL via H2 -->
+    <!-- SQL via embedded MySQL -->
     <Environment name="dari/database/${artifactId}.local/delegate/sql/class" type="java.lang.String" value="com.psddev.dari.db.SqlDatabase" />
     <Environment name="dari/database/${artifactId}.local/delegate/sql/jdbcUrl" type="java.lang.String" value="##
-#{if}($jdbcUrl && $jdbcUrl != '_default')##
+#{if}($jdbcUrl != '_default')##
 ${jdbcUrl}##
 #{else}##
-jdbc:mysql:mxj://localhost:3306/${artifactId.replaceAll("[^0-9A-Za-z]", "")}?server.basedir=${dataDirectory}/mysql&amp;server.initialize-user=true&amp;createDatabaseIfNotExist=true&amp;useConfigs=maxPerformance&amp;enableQueryTimeouts=true&amp;clobberStreamingResults=true##
+jdbc:mysql:mxj://localhost:${mysqlPortProperty}/${artifactId.replaceAll('[^0-9A-Za-z]', '')}##
+?server.basedir=##
+##
+#set($string = '')
+#set($stringClass = $string.getClass())
+##
+## Find URLEncoder#encode(String s, String enc) method.
+##
+#set($urlEncoderClass = $stringClass.forName('java.net.URLEncoder'))
+#foreach($method in $urlEncoderClass.getMethods())
+#if($method.name == 'encode')
+#set($paramCount = 0)
+#foreach($paramType in $method.parameterTypes)
+#set($paramCount = $paramCount + 1)
+#end
+#if($paramCount == 2)
+#set($encodeMethod = $method)
+#end
+#end
+#end
+##
+## Output URL-encoded $dataDirectory.
+##
+#set($parameters = [ $dataDirectory, 'UTF-8' ])
+${encodeMethod.invoke(null, $parameters.toArray())}%2Fmysql##
+##
+&amp;server.initialize-user=true##
+&amp;createDatabaseIfNotExist=true##
+&amp;useConfigs=maxPerformance##
+&amp;enableQueryTimeouts=true##
+&amp;clobberStreamingResults=true##
 #{end}" />
     <Environment name="dari/database/${artifactId}.local/delegate/sql/jdbcUser" type="java.lang.String" value="${jdbcUser}" />
-    <Environment name="dari/database/${artifactId}.local/delegate/sql/jdbcPassword" type="java.lang.String" value="#{if}($jdbcPassword && $jdbcPassword != '_default')${jdbcPassword}#{end}" />
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/jdbcPassword" type="java.lang.String" value="##
+#{if}($jdbcPassword != '_default')##
+${jdbcPassword}##
+#{end}" />
 
     <!-- Solr -->
     <Environment name="dari/database/${artifactId}.local/delegate/solr/class" type="java.lang.String" value="com.psddev.dari.db.SolrDatabase" />
     <Environment name="dari/database/${artifactId}.local/delegate/solr/groups" type="java.lang.String" value="-* +cms.content.searchable" />
-    <Environment name="dari/database/${artifactId}.local/delegate/solr/serverUrl" type="java.lang.String" value="http://localhost:8080/solr" />
+    <Environment name="dari/database/${artifactId}.local/delegate/solr/serverUrl" type="java.lang.String" value="http://localhost:${tomcatPortProperty}/solr" />
 
     <!-- Storage -->
     <Environment name="dari/defaultStorage" type="java.lang.String" value="${artifactId}.local" />
     <Environment name="dari/storage/${artifactId}.local/class" type="java.lang.String" value="com.psddev.dari.util.LocalStorageItem" />
-    <Environment name="dari/storage/${artifactId}.local/baseUrl" type="java.lang.String" value="http://localhost:8080/storage" />
+    <Environment name="dari/storage/${artifactId}.local/baseUrl" type="java.lang.String" value="http://localhost:${tomcatPortProperty}/storage" />
     <Environment name="dari/storage/${artifactId}.local/rootPath" type="java.lang.String" value="${dataDirectory}/storage" />
 </Context>

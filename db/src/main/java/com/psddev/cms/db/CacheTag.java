@@ -25,17 +25,17 @@ public class CacheTag extends BodyTagSupport implements TryCatchFinally {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheTag.class);
     private static final ConcurrentMap<String, Output> OUTPUT_LOCKS = new ConcurrentHashMap<String, Output>();
-    private static final Cache<String, Output> OUTPUT_CACHE = CacheBuilder.
-            newBuilder().
-            maximumSize(Settings.getOrDefault(int.class, "brightspot/cacheTagOutputMaximumSize", 100000)).
-            removalListener(new RemovalListener<String, Output>() {
+    private static final Cache<String, Output> OUTPUT_CACHE = CacheBuilder
+            .newBuilder()
+            .maximumSize(Settings.getOrDefault(int.class, "brightspot/cacheTagOutputMaximumSize", 100000))
+            .removalListener(new RemovalListener<String, Output>() {
 
                 @Override
                 public void onRemoval(RemovalNotification<String, Output> notification) {
                     OUTPUT_LOCKS.remove(notification.getKey());
                 }
-            }).
-            build();
+            })
+            .build();
 
     private String name;
     private long duration;
@@ -60,8 +60,8 @@ public class CacheTag extends BodyTagSupport implements TryCatchFinally {
 
         // Output is expired? While producing, it's not considered expired
         // because lastProduced field is set far in the future.
-        if (output != null &&
-                System.currentTimeMillis() - output.lastProduced > duration) {
+        if (output != null
+                && System.currentTimeMillis() - output.lastProduced > duration) {
             setOutput(output, null);
             OUTPUT_LOCKS.remove(key);
             OUTPUT_CACHE.invalidate(key);

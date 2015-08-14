@@ -74,9 +74,9 @@ public class SearchResultRenderer {
             } else {
                 Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
 
-                if (f != null &&
-                        (f.get("") != null ||
-                        f.get("x") != null)) {
+                if (f != null
+                        && (f.get("") != null
+                        || f.get("x") != null)) {
                     search.setSort("cms.content.publishDate");
 
                 } else {
@@ -85,9 +85,9 @@ public class SearchResultRenderer {
             }
         }
 
-        showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult() &&
-                page.getSite() == null &&
-                Query.from(Site.class).hasMoreThan(0);
+        showSiteLabel = Query.from(CmsTool.class).first().isDisplaySiteInSearchResult()
+                && page.getSite() == null
+                && Query.from(Site.class).hasMoreThan(0);
 
         if (selectedType != null) {
             this.sortField = selectedType.getFieldGlobally(search.getSort());
@@ -145,8 +145,8 @@ public class SearchResultRenderer {
 
         // check if the Taxon UI should be displayed
         ObjectType taxonType = null;
-        if (ObjectUtils.isBlank(search.getQueryString()) &&
-                search.getVisibilities().isEmpty()) {
+        if (ObjectUtils.isBlank(search.getQueryString())
+                && search.getVisibilities().isEmpty()) {
 
             if (search.getSelectedType() != null) {
 
@@ -430,9 +430,9 @@ public class SearchResultRenderer {
             page.writeElement("img",
                     "src", page.getPreviewThumbnailUrl(item),
                     "alt",
-                            (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "") +
-                            (showTypeLabel ? page.getTypeLabel(item) + ": " : "") +
-                            page.getObjectLabel(item));
+                            (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "")
+                                    + (showTypeLabel ? page.getTypeLabel(item) + ": " : "")
+                                    + page.getObjectLabel(item));
 
             page.writeStart("figcaption");
                 if (showSiteLabel) {
@@ -465,8 +465,8 @@ public class SearchResultRenderer {
                 Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
                 int previewWidth = rendererData.getEmbedPreviewWidth();
 
-                if (previewWidth > 0 &&
-                        !ObjectUtils.isBlank(rendererData.getEmbedPath())) {
+                if (previewWidth > 0
+                        && !ObjectUtils.isBlank(rendererData.getEmbedPath())) {
                     permalink = "/_preview?_embed=true&_cms.db.previewId=" + itemState.getId();
                     embedWidth = 320;
                 }
@@ -478,8 +478,8 @@ public class SearchResultRenderer {
                 "data-preview-embed-width", embedWidth,
                 "class", State.getInstance(item).getId().equals(page.param(UUID.class, "id")) ? "selected" : null);
 
-            if (sortField != null &&
-                    ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
+            if (sortField != null
+                    && ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
                 DateTime dateTime = page.toUserDateTime(itemState.getByPath(sortField.getInternalName()));
 
                 if (dateTime == null) {
@@ -521,8 +521,8 @@ public class SearchResultRenderer {
                 renderAfterItem(item);
             page.writeEnd();
 
-            if (sortField != null &&
-                    !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
+            if (sortField != null
+                    && !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
                 String sortFieldName = sortField.getInternalName();
                 Object value = itemState.getByPath(sortFieldName);
 
@@ -533,9 +533,9 @@ public class SearchResultRenderer {
 
                             if (maxSum == null) {
                                 Object maxObject = search.toQuery(page.getSite()).sortDescending(sortFieldName).first();
-                                maxSum = maxObject != null ?
-                                        ((Metric) State.getInstance(maxObject).get(sortFieldName)).getSum() :
-                                        1.0;
+                                maxSum = maxObject != null
+                                        ? ((Metric) State.getInstance(maxObject).get(sortFieldName)).getSum()
+                                        : 1.0;
 
                                 request.setAttribute(MAX_SUM_ATTRIBUTE, maxSum);
                             }

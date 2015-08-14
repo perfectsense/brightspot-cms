@@ -10,5 +10,14 @@
 
   > .main {
     margin-left: (@rail-width + @gap-medium);
+
+
+    // Create a new "block formatting context" so when we clear floats within
+    // it does not clear the float of the leftNav
+    // https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Block_formatting_context
+    > .widget {
+      display:inline-block;
+      width:100%;
+    }
   }
 }

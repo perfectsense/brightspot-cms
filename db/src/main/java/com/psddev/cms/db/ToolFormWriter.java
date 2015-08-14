@@ -97,9 +97,9 @@ public class ToolFormWriter extends FormWriter {
 
             } catch (ServletException ex) {
                 Throwable cause = ex.getCause();
-                throw cause instanceof RuntimeException ?
-                        (RuntimeException) cause :
-                        new RuntimeException(cause);
+                throw cause instanceof RuntimeException
+                        ? (RuntimeException) cause
+                        : new RuntimeException(cause);
             }
         }
     }

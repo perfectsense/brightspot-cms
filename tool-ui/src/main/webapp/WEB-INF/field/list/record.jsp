@@ -33,7 +33,8 @@ java.util.Iterator,
 java.util.List,
 java.util.Map,
 java.util.Set,
-java.util.UUID
+java.util.UUID,
+java.util.stream.Collectors
 " %><%
 
 // --- Logic ---
@@ -379,7 +380,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                     "data-label", itemState != null ? itemState.getLabel() : null,
                                                                     "data-typeIds", itemTypeIdsCsv,
                                                                     "data-pathed", ToolUi.isOnlyPathed(field),
-                                                                    "data-additional-query", field.getPredicate(),
+                                                                    "data-dynamic-predicate", field.getPredicate(),
                                                                     "data-preview", preview != null ? preview.getUrl() : null,
                                                                     "name", inputName,
                                                                     "value", itemState != null ? itemState.getId() : null);
@@ -529,7 +530,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                 "data-searcher-path", field.as(ToolUi.class).getInputSearcherPath(),
                                                                 "data-typeIds", itemTypeIdsCsv,
                                                                 "data-pathed", ToolUi.isOnlyPathed(field),
-                                                                "data-additional-query", field.getPredicate(),
+                                                                "data-dynamic-predicate", field.getPredicate(),
                                                                 "name", inputName);
                                                     }
                                                 writer.end();
@@ -582,13 +583,21 @@ if (!isValueExternal) {
             "class", "inputLarge repeatableForm" + (!bulkUploadTypes.isEmpty() ? " repeatableForm-previewable" : ""),
             "foo", "bar",
             "data-generic-arguments", genericArgumentsString);
-        wp.writeStart("ol");
+
+        wp.writeStart("ol",
+                "data-sortable-input-name", inputName,
+                "data-sortable-valid-item-types", validTypes.stream()
+                        .map(ObjectType::getId)
+                        .map(UUID::toString)
+                        .collect(Collectors.joining(" ")));
+
             for (Object item : fieldValue) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
                 wp.writeStart("li",
+                        "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
                         "data-label", wp.getObjectLabel(item),
                         
@@ -633,6 +642,7 @@ if (!isValueExternal) {
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
                             "class", !bulkUploadTypes.isEmpty() ? "collapsed" : null,
+                            "data-sortable-item-type", type.getId(),
                             "data-type", wp.getObjectLabel(type),
                             // Add the name of the preview field so the front end knows
                             // if that field is updated it should update the thumbnail
@@ -703,10 +713,18 @@ if (!isValueExternal) {
             }
         }
 
-        writer.start("ol");
+        writer.start("ol",
+                    "data-sortable-input-name", inputName,
+                    "data-sortable-valid-item-types", validTypes.stream()
+                            .map(ObjectType::getId)
+                            .map(UUID::toString)
+                            .collect(Collectors.joining(" ")));
+
             if (fieldValue != null) {
                 for (Object item : fieldValue) {
-                    writer.start("li");
+                    writer.start("li",
+                            "data-sortable-item-type", State.getInstance(item).getTypeId());
+
                         wp.writeObjectSelect(field, item, "name", inputName);
                     writer.end();
                 }

@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.DistributedLock;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -264,14 +265,14 @@ public abstract class Content extends Record {
          * is searchable.
          */
         public static boolean isSearchableType(ObjectType type) {
-            return type != null &&
-                    type.getGroups().contains(SEARCHABLE_GROUP);
+            return type != null
+                    && type.getGroups().contains(SEARCHABLE_GROUP);
         }
 
         /** Returns {@code true} if the given {@code object} is searchable. */
         public static boolean isSearchable(Object object) {
-            return object != null &&
-                    isSearchableType(State.getInstance(object).getType());
+            return object != null
+                    && isSearchableType(State.getInstance(object).getType());
         }
 
         /**
@@ -292,8 +293,8 @@ public abstract class Content extends Record {
                 site = (Site) object;
                 siteData.setOwner(site);
 
-            } else if (state.isNew() &&
-                    siteData.getOwner() == null) {
+            } else if (state.isNew()
+                    && siteData.getOwner() == null) {
                 siteData.setOwner(site);
             }
 
@@ -330,6 +331,30 @@ public abstract class Content extends Record {
                 } finally {
                     state.endWrites();
                 }
+            }
+        }
+
+        public static History publishChanges(Object object, Map<String, Object> changedValues, Site site, ToolUser user) {
+            State state = State.getInstance(object);
+            UUID id = state.getId();
+            DistributedLock lock = DistributedLock.Static.getInstance(
+                    Database.Static.getDefault(),
+                    Content.class.getName() + "/publish/" + id);
+
+            lock.lock();
+
+            try {
+                Object oldObject = Query.fromAll().where("_id = ?", id).noCache().first();
+
+                if (oldObject != null) {
+                    state.setValues(State.getInstance(oldObject).getValues());
+                    state.putAll(changedValues);
+                }
+
+                return publish(object, site, user);
+
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -371,9 +396,9 @@ public abstract class Content extends Record {
             State state = State.getInstance(object);
             Site.ObjectModification siteData = state.as(Site.ObjectModification.class);
 
-            if (object instanceof ToolEntity ||
-                    site == null ||
-                    ObjectUtils.equals(siteData.getOwner(), site)) {
+            if (object instanceof ToolEntity
+                    || site == null
+                    || ObjectUtils.equals(siteData.getOwner(), site)) {
                 ObjectModification contentData = state.as(ObjectModification.class);
 
                 contentData.setTrash(trash);

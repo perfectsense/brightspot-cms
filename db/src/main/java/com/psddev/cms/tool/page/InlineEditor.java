@@ -32,10 +32,10 @@ public class InlineEditor extends HttpServlet {
         @SuppressWarnings("resource")
         ToolPageContext page = new ToolPageContext(getServletContext(), request, response);
         UUID mainId = page.param(UUID.class, "id");
-        Object mainObject = Query.
-                fromAll().
-                where("_id = ?", mainId).
-                first();
+        Object mainObject = Query
+                .fromAll()
+                .where("_id = ?", mainId)
+                .first();
 
         if (mainObject == null) {
             throw new IllegalArgumentException(String.format(

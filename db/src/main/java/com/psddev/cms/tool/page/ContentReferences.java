@@ -28,12 +28,12 @@ public class ContentReferences extends PageServlet {
     @Override
     protected void doService(final ToolPageContext page) throws IOException, ServletException {
         UUID id = page.param(UUID.class, "id");
-        Query<Object> query = Query.
-                fromGroup(Content.SEARCHABLE_GROUP).
-                and("* matches ?", id).
-                and("_type != ?", Draft.class).
-                and("_id != ?", id).
-                sortDescending("cms.content.updateDate");
+        Query<Object> query = Query
+                .fromGroup(Content.SEARCHABLE_GROUP)
+                .and("* matches ?", id)
+                .and("_type != ?", Draft.class)
+                .and("_id != ?", id)
+                .sortDescending("cms.content.updateDate");
         PaginatedResult<Object> result = query.select(0L, 10);
 
         if (result.getItems().isEmpty()) {

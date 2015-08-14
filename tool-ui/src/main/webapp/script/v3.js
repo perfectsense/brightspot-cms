@@ -46,6 +46,7 @@ require([
   'input/query',
   'input/region',
   'v3/input/richtext',
+  'v3/input/richtext2',
   'input/table',
   'input/workflow',
 
@@ -69,9 +70,10 @@ require([
   'v3/upload',
   'nv.d3',
 
-  'dashboard',
+  'v3/dashboard',
   'v3/constrainedscroll',
-  'content/diff',
+  'v3/content/diff',
+  'v3/content/edit',
   'content/lock',
   'v3/content/publish',
   'content/layout-element',
@@ -88,28 +90,10 @@ function() {
   var undef;
   var $win = $(win),
       doc = win.document,
-      $doc = $(doc),
-      toolChecks = [ ],
-      toolCheckActionCallbacks = [ ];
+      $doc = $(doc);
 
-  $.addToolCheck = function(check) {
-    toolCheckActionCallbacks.push(check.actions);
-    delete check.actions;
-    toolChecks.push(check);
+  $.addToolCheck = function() {
   };
-
-  $.addToolCheck({
-    'check': 'kick',
-    'actions': {
-      'kickIn': function(parameters) {
-        win.location = win.location.protocol + '//' + win.location.host + parameters.returnPath;
-      },
-
-      'kickOut': function() {
-        win.location = CONTEXT_PATH + '/logIn.jsp?forced=true&returnPath=' + encodeURIComponent(win.location.pathname + win.location.search);
-      }
-    }
-  });
 
   // Standard behaviors.
   $doc.repeatable('live', '.repeatableForm, .repeatableInputs, .repeatableLayout, .repeatableObjectId');
@@ -151,7 +135,14 @@ function() {
   $doc.pageLayout('live', '.pageLayout');
   $doc.pageThumbnails('live', '.pageThumbnails');
   $doc.regionMap('live', '.regionMap');
-  $doc.rte('live', '.richtext');
+
+  if (window.DISABLE_CODE_MIRROR_RICH_TEXT_EDITOR) {
+    $doc.rte('live', '.richtext');
+
+  } else {
+    $doc.rte2('live', '.richtext');
+  }
+
   $doc.tabbed('live', '.tabbed, .objectInputs');
   $doc.toggleable('live', '.toggleable');
 
@@ -187,7 +178,7 @@ function() {
 
     search = win.location.search;
     search += search.indexOf('?') > -1 ? '&' : '?';
-    search += 'id=' + $contentForm.attr('data-object-id');
+    search += 'id=' + $contentForm.attr('data-content-id');
 
     $.ajax({
       'data': $contentForm.serialize(),
@@ -283,7 +274,18 @@ function() {
       cc = value.length;
       wc = value ? value.split(WHITESPACE_RE).length : 0;
 
-      $container.attr('data-wc-message',
+      var $wordCount = $container.find('> .inputWordCount');
+
+      if ($wordCount.length === 0) {
+        $wordCount = $('<div/>', {
+          'class': 'inputWordCount'
+        });
+
+        $container.append($wordCount);
+      }
+
+      $wordCount.toggleClass('inputWordCount-warning', cc < minimum || cc > maximum);
+      $wordCount.text(
           cc < minimum ? 'Too Short' :
           cc > maximum ? 'Too Long' :
           wc + 'w ' + cc + 'c');
@@ -296,12 +298,16 @@ function() {
 
       var $input = $(this);
 
+      // Skip textarea created inside CodeMirror editor
+      if ($input.closest('.CodeMirror').length) { return; }
+            
       updateWordCount(
           $input.closest('.inputContainer'),
           $input,
           $input.val());
     }));
 
+    // For original rich text editor, special handling for the word count
     $doc.onCreate('.wysihtml5-sandbox', function() {
       var iframe = this,
           $iframe = $(iframe),
@@ -321,6 +327,20 @@ function() {
         }
       }));
     });
+
+    // For new rich text editor, special handling for the word count.
+    // Note this counts only the text content not the final output which includes extra HTML elements.
+    $doc.on('rteChange', function(event, rte) {
+          
+        var $input, $container, count, text;
+
+        $input = rte.$el;
+        $container = $input.closest('.inputContainer');
+        text = rte.toText();
+          
+        updateWordCount($container, $input, text);
+    });
+
   })();
 
   // Handle file uploads from drag-and-drop.
@@ -476,14 +496,6 @@ function() {
 
   $doc.on('click', 'button[name="action-trash"], :submit[name="action-trash"]', function() {
     return confirm('Are you sure you want to archive this item?');
-  });
-
-  $doc.on('input-disable', ':input', function(event, disable) {
-    $(this).prop('disabled', disable);
-  });
-
-  $doc.onCreate('.inputContainer-readOnly', function() {
-    $(this).find(":input, div").trigger('input-disable', [ true ]);
   });
 
   (function() {
@@ -733,7 +745,8 @@ function() {
               'opacity': '',
               'transform': '',
               'transform-origin': ''
-            })
+            });
+            $popup.remove();
           }
         })
       }
@@ -868,42 +881,5 @@ function() {
         return false;
       });
     }());
-
-    // Starts all server-side tool checks.
-    if (!DISABLE_TOOL_CHECKS) {
-      (function() {
-        var toolCheckPoll = function() {
-          $.ajax({
-            'method': 'post',
-            'url': CONTEXT_PATH + '/toolCheckStream',
-            'cache': false,
-            'dataType': 'json',
-            'data': {
-              'url': win.location.href,
-              'r': JSON.stringify(toolChecks)
-            }
-
-          }).done(function(responses) {
-            if (!responses) {
-              return;
-            }
-
-            $.each(responses, function(i, response) {
-              if (response) {
-                toolCheckActionCallbacks[i][response.action].call(toolChecks[i], response);
-              }
-            });
-
-          }).done(function() {
-            setTimeout(toolCheckPoll, 100);
-
-          }).fail(function() {
-            setTimeout(toolCheckPoll, 10000);
-          });
-        };
-
-        toolCheckPoll();
-      })();
-    }
   });
 });

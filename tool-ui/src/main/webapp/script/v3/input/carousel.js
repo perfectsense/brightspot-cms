@@ -362,6 +362,23 @@ function($, bsp_utils) {
 
         
         /**
+         * Set or clear the "error" class for a tile.
+         *
+         * @param {Number} n
+         * Number of the tile to retrieve (starting at 1 for the first tile).
+         *
+         * @param {Boolean} [state]
+         * True to set the error state, false to clear error state,
+         * or undefined to toggle the error state.
+         */
+        toggleTileError: function(n, state) {
+            var self = this;
+            var $tile = self.dom.tiles.find('> .carousel-tile').eq(n - 1);
+            $tile.toggleClass('carousel-tile-error', state);
+        },
+
+        
+        /**
          * @private
          * Move the carousel forward or back.
          *

@@ -12,6 +12,7 @@ import com.psddev.dari.db.ForwardingDatabase;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.util.PaginatedResult;
 
+// CHECKSTYLE:OFF
 /**
  * Database wrapper that applies all profile-specific variations
  * automatically.

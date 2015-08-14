@@ -21,10 +21,10 @@ import com.psddev.dari.util.PaginatedResult;
 
 public class RichTextDatabase extends ForwardingDatabase {
 
-    private static final LoadingCache<String, String> PUBLISHABLES = CacheBuilder.
-            newBuilder().
-            maximumSize(10000).
-            build(new CacheLoader<String, String>() {
+    private static final LoadingCache<String, String> PUBLISHABLES = CacheBuilder
+            .newBuilder()
+            .maximumSize(10000)
+            .build(new CacheLoader<String, String>() {
 
                 @Override
                 public String load(String value) {

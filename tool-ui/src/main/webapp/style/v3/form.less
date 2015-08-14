@@ -147,7 +147,6 @@
 .inputContainer {
   margin: 0 0 10px 0;
   min-height: 30px;
-  overflow: hidden;
   position: relative;
 
   &:before {
@@ -165,6 +164,14 @@
     }
   }
 
+  // Most reliable way to clear floats and avoid margin collapse after the input container
+  // As described here: https://css-tricks.com/snippets/css/clear-fix/
+  &:after {
+    content: '';
+    display:table;
+    clear:both;
+  }
+  
   .message {
     margin-bottom: 5px;
   }
@@ -190,7 +197,7 @@
   }
 
   // Soft validation based on suggested sizes.
-  &[data-wc-message]:after {
+  > .inputWordCount {
     border-radius: 3px;
     bottom: 6px;
     position: absolute;
@@ -242,6 +249,38 @@
 
 .inputContainer-error {
   margin-left: 145px;
+}
+
+.contentDiff-sideBySide .objectInputs,
+.inputContainer-pending,
+.inputContainer-readOnly,
+.inputContainer-updated {
+  opacity: 0.6;
+  pointer-events: none;
+
+  .inputStatus a,
+  .objectId-edit,
+  .repeatableLabel,
+  .tabs,
+  .tabs-wrapper {
+    pointer-events: auto;
+  }
+
+  .objectId-clear {
+    display: none !important;
+  }
+
+  .repeatableForm,
+  .repeatableObjectId {
+    > .addButtonContainer,
+    .removeButton {
+      display: none !important;
+    }
+  }
+}
+
+.contentDiff-sideBySide .objectInputs {
+  opacity: 1;
 }
 
 .inputContentEditBulkOperation {
@@ -352,6 +391,7 @@
   }
 }
 
+.inputStatus,
 .inputNote {
   display: block;
   margin-bottom: 5px;
@@ -360,6 +400,11 @@
   .objectInputs[max-width^='350px'] & {
     margin-left: 2px;
   }
+}
+
+.inputStatus {
+    .icon;
+    .icon-lock;
 }
 
 .inputLabel > .icon-beaker {
@@ -549,7 +594,6 @@
   background-size: auto 14px;
   cursor: pointer;
   display: inline-block;
-  height: (@lineHeight-default + 2 * (@input-padding + @input-borderWidth));
   max-width: 100%;
   padding-right: 26px;
   position: relative;

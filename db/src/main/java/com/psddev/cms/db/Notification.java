@@ -12,6 +12,7 @@ import com.psddev.dari.util.MailMessage;
 import com.psddev.dari.util.MailProvider;
 import com.psddev.dari.util.SmsProvider;
 
+// CHECKSTYLE:OFF
 /**
  * @deprecated Use {@link Record#beforeSave} or {@link Record#afterSave} instead.
  */

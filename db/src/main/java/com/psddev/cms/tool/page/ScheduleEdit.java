@@ -97,10 +97,10 @@ public class ScheduleEdit extends PageServlet {
                 page.writeEnd();
             page.writeEnd();
 
-            List<Draft> drafts = Query.
-                    from(Draft.class).
-                    where("schedule = ?", schedule).
-                    selectAll();
+            List<Draft> drafts = Query
+                    .from(Draft.class)
+                    .where("schedule = ?", schedule)
+                    .selectAll();
 
             if (!drafts.isEmpty()) {
                 page.writeStart("h2").writeHtml("Items").writeEnd();

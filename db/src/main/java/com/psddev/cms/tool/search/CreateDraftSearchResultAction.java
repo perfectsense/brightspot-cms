@@ -37,16 +37,16 @@ public class CreateDraftSearchResultAction implements SearchResultAction {
             return;
         }
 
-        Query<SearchResultSelectionItem> itemsQuery = Query.
-                from(SearchResultSelectionItem.class).
-                where("selectionId = ?", selection.getId());
+        Query<SearchResultSelectionItem> itemsQuery = Query
+                .from(SearchResultSelectionItem.class)
+                .where("selectionId = ?", selection.getId());
 
         if (!itemsQuery.hasMoreThan(100)) {
 
             Set<ObjectType> itemTypes = new HashSet<>();
 
-            for (Object item : selection.createItemsQuery().
-                    selectAll()) {
+            for (Object item : selection.createItemsQuery()
+                    .selectAll()) {
 
                 itemTypes.add(State.getInstance(item).getType());
             }
@@ -54,20 +54,26 @@ public class CreateDraftSearchResultAction implements SearchResultAction {
             List<TypeAndItemTypes> generates = new ArrayList<>();
 
             for (ObjectType type : Database.Static.getDefault().getEnvironment().getTypes()) {
-                if (!type.isConcrete() ||
-                        !page.hasPermission("type/" + type.getId() + "/write") ||
-                        (!page.getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() &&
-                        type.getObjectClass() == null) ||
-                        Draft.class.equals(type.getObjectClass()) ||
-                        (type.isDeprecated() &&
-                        !Query.fromType(type).hasMoreThan(0))) {
+                if (!type.isConcrete()
+                        || !page.hasPermission("type/" + type.getId() + "/write")
+                        || (!page.getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses()
+                        && type.getObjectClass() == null)
+                        || Draft.class.equals(type.getObjectClass())
+                        || (type.isDeprecated()
+                        && !Query.fromType(type).hasMoreThan(0))) {
 
                     continue;
                 }
 
-                if (type.getObjectClass() != null &&
-                        type.getGroups().contains(SearchResultSelectionGeneratable.class.getName()) &&
-                        type.as(SearchResultSelectionGeneratable.TypeData.class).getItemTypes().containsAll(itemTypes)) {
+                Set<ObjectType> generatableItemTypes = new HashSet<>();
+
+                for (ObjectType itemType : type.as(SearchResultSelectionGeneratable.TypeData.class).getItemTypes()) {
+                    generatableItemTypes.addAll(itemType.findConcreteTypes());
+                }
+
+                if (type.getObjectClass() != null
+                        && type.getGroups().contains(SearchResultSelectionGeneratable.class.getName())
+                        && generatableItemTypes.containsAll(itemTypes)) {
 
                     generates.add(new TypeAndItemTypes(type, new ArrayList<>(itemTypes)));
                 }
@@ -82,11 +88,11 @@ public class CreateDraftSearchResultAction implements SearchResultAction {
                     page.writeStart("a",
                             "class", "button",
                             "target", "_top",
-                            "href", new UrlBuilder(page.getRequest()).
-                                    absolutePath(page.toolPath(CmsTool.class, CreateDraft.PATH)).
-                                    currentParameters().
-                                    parameter("typeIdAndField", generate.type.getId()).
-                                    parameter("selectionId", selection.getId()));
+                            "href", new UrlBuilder(page.getRequest())
+                                    .absolutePath(page.toolPath(CmsTool.class, CreateDraft.PATH))
+                                    .currentParameters()
+                                    .parameter("typeIdAndField", generate.type.getId())
+                                    .parameter("selectionId", selection.getId()));
                     page.writeHtml("Create New ");
                     page.writeObjectLabel(generate.type);
 

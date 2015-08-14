@@ -4,6 +4,11 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
         http://maven.apache.org/maven-v4_0_0.xsd">
 
+    <properties>
+        <mysql.port>4706</mysql.port>
+        <tomcat.port>9480</tomcat.port>
+    </properties>
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -204,8 +209,15 @@
                                     <url>http://archive.apache.org/dist/tomcat/tomcat-8/v8.0.23/bin/apache-tomcat-8.0.23.zip</url>
                                     <downloadDir>\${user.home}/.brightspot/cargo-downloads</downloadDir>
                                 </zipUrlInstaller>
+                                <systemProperties>
+                                    <mysql.port>\${mysql.port}</mysql.port>
+                                    <tomcat.port>\${tomcat.port}</tomcat.port>
+                                </systemProperties>
                             </container>
                             <configuration>
+                                <properties>
+                                    <cargo.servlet.port>\${tomcat.port}</cargo.servlet.port>
+                                </properties>
                                 <configfiles>
                                     <configfile>
                                         <file>\${project.basedir}/etc/tomcat-context.xml</file>

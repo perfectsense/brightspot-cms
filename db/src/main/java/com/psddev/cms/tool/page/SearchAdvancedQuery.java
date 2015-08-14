@@ -26,10 +26,10 @@ public class SearchAdvancedQuery extends PageServlet {
     }
 
     private <T extends SearchAdvancedPredicate> T findSearchAdvancedPredicate(Class<T> predicateClass, String value) {
-        for (T p : Query.
-                from(predicateClass).
-                sortAscending("dari.singleton.key").
-                selectAll()) {
+        for (T p : Query
+                .from(predicateClass)
+                .sortAscending("dari.singleton.key")
+                .selectAll()) {
             if (p.getParameterValue().equals(value)) {
                 return p;
             }
@@ -46,11 +46,11 @@ public class SearchAdvancedQuery extends PageServlet {
             if (paramName.startsWith("action-remove-")) {
                 String index = paramName.substring(14);
 
-                page.getResponse().sendRedirect(page.url("", paramName, null).
-                        replaceAll("\\?p" + index + "=1", "?").
-                        replaceAll("&p" + index + "=1", "").
-                        replaceAll("\\?" + index + "\\.[^=]+=[^&]*", "?").
-                        replaceAll("&" + index + "\\.[^=]+=[^&]*", ""));
+                page.getResponse().sendRedirect(page.url("", paramName, null)
+                        .replaceAll("\\?p" + index + "=1", "?")
+                        .replaceAll("&p" + index + "=1", "")
+                        .replaceAll("\\?" + index + "\\.[^=]+=[^&]*", "?")
+                        .replaceAll("&" + index + "\\.[^=]+=[^&]*", ""));
                 return;
             }
         }
@@ -80,10 +80,10 @@ public class SearchAdvancedQuery extends PageServlet {
                     page.writeStart("select",
                             "data-bsp-autosubmit", "",
                             "name", "gpt");
-                        for (SearchAdvancedPredicate.Compound pt : Query.
-                                from(SearchAdvancedPredicate.Compound.class).
-                                sortAscending("dari.singleton.key").
-                                selectAll()) {
+                        for (SearchAdvancedPredicate.Compound pt : Query
+                                .from(SearchAdvancedPredicate.Compound.class)
+                                .sortAscending("dari.singleton.key")
+                                .selectAll()) {
                             if (globalPredicateType == null) {
                                 globalPredicateType = pt;
                             }
@@ -201,10 +201,10 @@ public class SearchAdvancedQuery extends PageServlet {
         page.writeStart("select",
                 "data-bsp-autosubmit", "",
                 "name", predicateTypeParam);
-            for (SearchAdvancedPredicate pt : Query.
-                    from(SearchAdvancedPredicate.class).
-                    sortAscending("dari.singleton.key").
-                    selectAll()) {
+            for (SearchAdvancedPredicate pt : Query
+                    .from(SearchAdvancedPredicate.class)
+                    .sortAscending("dari.singleton.key")
+                    .selectAll()) {
                 page.writeStart("option",
                         "selected", pt.equals(predicateType) ? "selected" : null,
                         "value", pt.getParameterValue());

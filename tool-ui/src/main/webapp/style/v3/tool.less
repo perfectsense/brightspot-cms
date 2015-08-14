@@ -29,14 +29,6 @@
   .toolHeader {
     top: @toolBroadcast-height;
   }
-
-  .contentPreview {
-    margin-top: -35px;
-  }
-
-  .contentPreviewClose {
-    top: 107px;
-  }
 }
 
 .toolHeader {
@@ -116,7 +108,6 @@
 
   display: block;
   right: @toolContent-padding;
-  padding-right: (@-padding + @-avatar-size);
   position: absolute;
   top: @-padding;
 
@@ -124,15 +115,37 @@
     right: 70px;
   }
 
+  .toolUserSite,
+  .toolUser,
+  .toolUserAvatar {
+    float: right;
+    margin-left: @-padding;
+  }
+
+  .toolUserSite,
+  .toolUser {
+    margin-top: floor((@-avatar-size / 2) - @lineHeight-default);
+  }
+
+  .toolUserSite {
+    border-right: 1px solid @color-separator;
+    padding-right: @-padding;
+  }
+
+  .toolUserSiteDisplay,
   .toolUserWelcome {
     font-weight: 700;
-    margin-top: floor((@-avatar-size / 2) - @lineHeight-default);
     text-align: right;
   }
 
+  .toolUserSiteControls,
   .toolUserControls {
     font-size: floor(@fontSize-default * 0.8);
     text-align: right;
+
+    .piped {
+      margin: 0;
+    }
   }
 
   .toolUserAvatar {
@@ -143,12 +156,7 @@
     background-size: (@-avatar-size - 15px);
     border-radius: 50%;
     color: @color-border;
-    display: inline-block;
     height: @-avatar-size;
-    margin-left: 10px;
-    position: absolute;
-    right: 0;
-    top: 0;
     text-align: center;
     vertical-align: middle;
     width: @-avatar-size;
@@ -366,6 +374,21 @@
 
   img {
     vertical-align: middle;
+  }
+}
+
+.toolMessage {
+  left: 50%;
+  margin-left: -150px;
+  position: fixed;
+  top: 0;
+  width: 300px;
+  z-index: 1000;
+
+  > .message {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    box-shadow: 0 0 20px fade(black, 50%);
   }
 }
 

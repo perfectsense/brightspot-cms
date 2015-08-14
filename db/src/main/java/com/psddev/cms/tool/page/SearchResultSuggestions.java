@@ -44,7 +44,7 @@ public class SearchResultSuggestions extends PageServlet {
 
         SearchResultSuggester suggester = null;
         for (Class<? extends SearchResultSuggester> c : ClassFinder.Static.findClasses(SearchResultSuggester.class)) {
-            if (c.isInterface() && Modifier.isAbstract(c.getModifiers())) {
+            if (c.isInterface() || Modifier.isAbstract(c.getModifiers())) {
                 continue;
             }
 

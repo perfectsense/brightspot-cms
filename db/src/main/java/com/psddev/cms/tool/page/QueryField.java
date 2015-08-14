@@ -24,10 +24,10 @@ public class QueryField extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        page.getRequest().setAttribute("containerObject", Query.
-                fromAll().
-                where("_id = ?", page.param(UUID.class, "containerObjectId")).
-                first());
+        page.getRequest().setAttribute("containerObject", Query
+                .fromAll()
+                .where("_id = ?", page.param(UUID.class, "containerObjectId"))
+                .first());
 
         page.writeHeader();
             page.writeStart("div", "class", "widget widget-queryField");

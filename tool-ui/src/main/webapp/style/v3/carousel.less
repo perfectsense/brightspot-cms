@@ -126,6 +126,17 @@
     }
   }
 
+  &.carousel-tile-error {
+    // Using @color-remove because that's what error messages use
+    border: 2px solid @color-remove;
+    &:before {
+      border-color: @color-remove;
+    }
+    &:after {
+      border-color: @color-remove transparent transparent transparent;
+    }
+  }
+  
   .carousel-numbered & figure:before {
     @-borderWidth: 2px;
     @-offset: @carousel-tile-borderWidth + @carousel-tile-padding;
@@ -209,6 +220,17 @@
     background-color: white;
     border-color: white;
     box-shadow: 0 2px 0 fade(black, 10%);
+      .widget-searchCarousel-item-selected.notIncluded {
+          img {
+              opacity: 0.5;
+          }
+          figcaption {
+              text-decoration: line-through;
+              > .visibilityLabel {
+                  text-decoration: none;
+              }
+          }
+      }
   }
 }
 

@@ -34,10 +34,10 @@ public class InlineEditorCookie extends HttpServlet {
             String signature = StringUtils.hex(StringUtils.hmacSha1(Settings.getSecret(), userId + token));
 
             if (signature.equals(request.getParameter("signature"))) {
-                ToolUser user = Query.
-                        from(ToolUser.class).
-                        where("_id = ?", ObjectUtils.to(UUID.class, userId)).
-                        first();
+                ToolUser user = Query
+                        .from(ToolUser.class)
+                        .where("_id = ?", ObjectUtils.to(UUID.class, userId))
+                        .first();
 
                 if (user != null) {
                     AuthenticationFilter.Static.logIn(request, response, user, token);

@@ -47,41 +47,41 @@ public class LookingGlass extends PageServlet {
             return;
         }
 
-        ToolUserDevice device = Query.
-                from(ToolUserDevice.class).
-                where("lookingGlassId = ?", id).
-                first();
+        ToolUserDevice device = Query
+                .from(ToolUserDevice.class)
+                .where("lookingGlassId = ?", id)
+                .first();
 
         if (device == null) {
             throw new IllegalArgumentException(String.format(
                     "No looking glass at [%s]!", id));
         }
 
-        ToolUserAction lastAction = Query.
-                from(ToolUserAction.class).
-                where("device = ?", device).
-                sortDescending("time").
-                noCache().
-                first();
+        ToolUserAction lastAction = Query
+                .from(ToolUserAction.class)
+                .where("device = ?", device)
+                .sortDescending("time")
+                .noCache()
+                .first();
 
-        if (lastAction != null &&
-                "ping".equals(page.param(String.class, "action"))) {
+        if (lastAction != null
+                && "ping".equals(page.param(String.class, "action"))) {
             long end = System.currentTimeMillis() + 30000;
 
-            while (System.currentTimeMillis() < end &&
-                    lastAction.getTime() == page.param(long.class, "time")) {
+            while (System.currentTimeMillis() < end
+                    && lastAction.getTime() == page.param(long.class, "time")) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException error) {
                     break;
                 }
 
-                lastAction = Query.
-                        from(ToolUserAction.class).
-                        where("device = ?", device).
-                        sortDescending("time").
-                        noCache().
-                        first();
+                lastAction = Query
+                        .from(ToolUserAction.class)
+                        .where("device = ?", device)
+                        .sortDescending("time")
+                        .noCache()
+                        .first();
             }
 
             Map<String, Object> response = new HashMap<String, Object>();
@@ -118,8 +118,8 @@ public class LookingGlass extends PageServlet {
 
             Class<?> viewClass = ObjectUtils.getClassByName(page.param(String.class, "view"));
 
-            if (viewClass == null ||
-                    !LookingGlassView.class.isAssignableFrom(viewClass)) {
+            if (viewClass == null
+                    || !LookingGlassView.class.isAssignableFrom(viewClass)) {
                 viewClass = LookingGlassView.PreviewView.class;
             }
 

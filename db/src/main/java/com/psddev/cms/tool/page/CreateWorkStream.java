@@ -34,8 +34,8 @@ public class CreateWorkStream extends PageServlet {
 
         WorkStream object = (WorkStream) page.findOrReserve(WorkStream.class);
 
-        if (page.isFormPost() &&
-                page.param(String.class, "action-save") != null) {
+        if (page.isFormPost()
+                && page.param(String.class, "action-save") != null) {
 
             doPost(page, object);
             return;

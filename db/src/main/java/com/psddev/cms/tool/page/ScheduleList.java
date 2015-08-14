@@ -31,11 +31,11 @@ public class ScheduleList extends PageServlet {
             page.writeEnd();
 
             page.writeStart("ul");
-                for (Schedule schedule : Query.
-                        from(Schedule.class).
-                        where("name != missing").
-                        sortAscending("name").
-                        selectAll()) {
+                for (Schedule schedule : Query
+                        .from(Schedule.class)
+                        .where("name != missing")
+                        .sortAscending("name")
+                        .selectAll()) {
                     page.writeStart("li");
                         page.writeStart("form",
                                 "method", "post",

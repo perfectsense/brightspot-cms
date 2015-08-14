@@ -44,10 +44,10 @@ public class ToolUserAction extends Record {
     }
 
     public Object getContent() {
-        return Query.
-                from(Object.class).
-                where("_id = ?", getContentId()).
-                first();
+        return Query
+                .from(Object.class)
+                .where("_id = ?", getContentId())
+                .first();
     }
 
     public String getUrl() {

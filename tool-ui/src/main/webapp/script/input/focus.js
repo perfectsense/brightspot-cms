@@ -9,10 +9,20 @@ function($, bsp_utils) {
     // Automatically focus on certain elements.
     bsp_utils.onDomInsert(document, '[autofocus], .autoFocus', {
         'insert': function(input) {
+            var $input = $(input);
+
+            if ($input.closest('.dashboard-widget').length > 0) {
+                return;
+            }
+
+            if ($input.closest('.popup').length > 0) {
+                $input.focus();
+            }
+
             var focus = document.activeElement;
 
             if (!focus || focus === document || focus === document.body) {
-                $(input).focus();
+                $input.focus();
             }
         }
     });
@@ -29,6 +39,11 @@ function($, bsp_utils) {
 
         $parents.addClass('state-focus');
 
+        // Don't expand the label for rich text editor
+        if ($input.closest('.CodeMirror').length) {
+            return;
+        }
+        
         function onScroll() {
             var focusLabelHeight;
             var index;

@@ -59,7 +59,8 @@ wp.include(
 <script type="text/javascript">
     if (typeof jQuery !== 'undefined') (function(win, $, undef) {
         var $headerInput = $('.toolSearch :text');
-        if (!$headerInput.val()) {
+        var $miscSearchFrame = $('.frame[name="miscSearch"]');
+        if (!$headerInput.val() && $miscSearchFrame.length) {
             $headerInput.val($('.frame[name="miscSearch"] .searchFilters .searchInput :text').val()).trigger('input');
             $headerInput[0].select();
         }

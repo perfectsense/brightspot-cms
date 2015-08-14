@@ -45,7 +45,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
         var $dynamicTexts = $form.find(
             '[data-dynamic-text][data-dynamic-text != ""],' +
             '[data-dynamic-html][data-dynamic-html != ""],' +
-            '[data-dynamic-placeholder][data-dynamic-placeholder != ""]');
+            '[data-dynamic-placeholder][data-dynamic-placeholder != ""],' +
+            '[data-dynamic-predicate][data-dynamic-predicate != ""]');
 
         $dynamicTexts = $dynamicTexts.filter(function() {
           return $(this).closest('.collapsed').length === 0;
@@ -65,7 +66,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 $element.attr('data-dynamic-html') ||
                 $element.attr('data-dynamic-placeholder') ||
                 '')) +
-                  '&_dtf=' + ($element.attr('data-dynamic-field-name') || '');
+                  '&_dtf=' + ($element.attr('data-dynamic-field-name') || '') +
+                  '&_dtq=' + ($element.attr('data-dynamic-predicate') || '');
           }).get().join(''),
 
           'success': function(data) {
@@ -73,7 +75,14 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
             $dynamicTexts.each(function(index) {
               var $element = $(this),
-                  text = data._dynamicTexts[index];
+                  text = data._dynamicTexts[index],
+                  dynamicPredicate = data._dynamicPredicates[index];
+
+              if ($element.is('[data-dynamic-predicate]')) {
+
+                $element.attr('data-additional-query', dynamicPredicate);
+                $element.trigger('change.objectId');
+              }
 
               if (text === null || text === '') {
                 return;

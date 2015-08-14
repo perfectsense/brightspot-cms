@@ -34,10 +34,10 @@ public class TaxonomySearchResultView extends AbstractSearchResultView {
     public boolean isSupported(Search search) {
         ObjectType selectedType = search.getSelectedType();
 
-        if (selectedType != null &&
-                selectedType.getGroups().contains(Taxon.class.getName()) &&
-                ObjectUtils.isBlank(search.getQueryString()) &&
-                search.getVisibilities().isEmpty()) {
+        if (selectedType != null
+                && selectedType.getGroups().contains(Taxon.class.getName())
+                && ObjectUtils.isBlank(search.getQueryString())
+                && search.getVisibilities().isEmpty()) {
 
             @SuppressWarnings("unchecked")
             Class<? extends Taxon> taxonClass = (Class<? extends Taxon>) search.getSelectedType().getObjectClass();
@@ -56,10 +56,10 @@ public class TaxonomySearchResultView extends AbstractSearchResultView {
     }
 
     private Taxon findParent(ToolPageContext page) {
-        return Query.
-                from(Taxon.class).
-                where("_id = ?", page.param(UUID.class, PARENT_ID_PARAMETER)).
-                first();
+        return Query
+                .from(Taxon.class)
+                .where("_id = ?", page.param(UUID.class, PARENT_ID_PARAMETER))
+                .first();
     }
 
     @Override

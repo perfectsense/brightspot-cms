@@ -74,9 +74,9 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
     public void setSrc(Object src) {
         WebPageContext wp = new WebPageContext(pageContext);
 
-        if (src instanceof String ||
-                src instanceof URI ||
-                src instanceof URL) {
+        if (src instanceof String
+                || src instanceof URI
+                || src instanceof URL) {
 
             String path = JspUtils.resolvePath(wp.getServletContext(), wp.getRequest(), src.toString());
             StorageItem pathItem;
@@ -380,9 +380,9 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         Builder tagBuilder = new Builder();
 
-        if (src instanceof String ||
-                src instanceof URI ||
-                src instanceof URL) {
+        if (src instanceof String
+                || src instanceof URI
+                || src instanceof URL) {
 
             tagBuilder.setItem(StorageItem.Static.createUrl(
                     JspUtils.getEmbeddedAbsolutePath(
@@ -981,8 +981,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                     // get the crop coordinates
                     ImageCrop crop;
-                    if (crops != null && (crop = crops.get(standardImageSize.getId().toString())) != null &&
-                            originalWidth != null && originalHeight != null) {
+                    if (crops != null && (crop = crops.get(standardImageSize.getId().toString())) != null
+                            && originalWidth != null && originalHeight != null) {
 
                         cropX = (int) (crop.getX() * originalWidth);
                         cropY = (int) (crop.getY() * originalHeight);
@@ -1042,16 +1042,16 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                 // Requires at least the width and height to perform a crop
                 if (cropWidth != null && cropHeight != null) {
-                    if (!disableHotSpotCrop &&
-                            useHotSpotCrop() &&
-                            standardImageSize != null &&
-                            (standardImageSize.getCropOption() == null || standardImageSize.getCropOption().equals(CropOption.AUTOMATIC)) &&
-                            cropX == null &&
-                            cropY == null) {
+                    if (!disableHotSpotCrop
+                            && useHotSpotCrop()
+                            && standardImageSize != null
+                            && (standardImageSize.getCropOption() == null || standardImageSize.getCropOption().equals(CropOption.AUTOMATIC))
+                            && cropX == null
+                            && cropY == null) {
 
                         List<Integer> hotSpotCrop = ImageHotSpot.crop(item, cropWidth, cropHeight);
-                        if (!ObjectUtils.isBlank(hotSpotCrop) &&
-                                hotSpotCrop.size() == 4) {
+                        if (!ObjectUtils.isBlank(hotSpotCrop)
+                                && hotSpotCrop.size() == 4) {
                             cropX = hotSpotCrop.get(0);
                             cropY = hotSpotCrop.get(1);
                             cropWidth = hotSpotCrop.get(2);

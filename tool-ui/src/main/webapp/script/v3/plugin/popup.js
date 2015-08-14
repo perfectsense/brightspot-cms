@@ -6,10 +6,15 @@
 
   $.plugin2('popup', {
     '_defaultOptions': {
+
+      // Selector, element, or jquery object for the parent element that will
+      // contain the popup container
+      parent: doc.body,
+      
       'padding': {
-        'left': 35,
-        'right': 35,
-        'top': 20
+        'left': 10,
+        'right': 10,
+        'top': 10
       }
     },
 
@@ -74,7 +79,7 @@
         $(this).popup('close');
       });
 
-      var $body = $(doc.body);
+      var $body = $(options.parent || doc.body);
       $content.append($inner);
       $content.append($closeButton);
       $container.append($content);
@@ -155,7 +160,7 @@
           $marker = $('<div/>', { 'class': 'marker' });
           $content.append($marker);
         }
-        var markerLeft = (popupWidth  - $marker.outerWidth()) / 2 + markerDelta;
+        var markerLeft = (popupWidth  - 20) / 2 + markerDelta;
         $marker.css('left', markerLeft < 5 ? 5 : markerLeft);
 
         // Make sure top is within bounds.
@@ -176,7 +181,7 @@
           $newSourceParent = $newSource.parent();
         }
 
-        if (isFixedPosition) {
+        if (isFixedPosition && (top / $win.height()) > 0.3) {
           $container.addClass('popup-fixed');
         }
 

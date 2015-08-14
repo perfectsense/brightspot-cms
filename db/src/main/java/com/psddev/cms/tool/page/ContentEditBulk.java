@@ -56,10 +56,10 @@ public class ContentEditBulk extends PageServlet {
         if (selectionId != null) {
             Set<UUID> itemIds = new HashSet<>();
 
-            for (SearchResultSelectionItem item : Query.
-                    from(SearchResultSelectionItem.class).
-                    where("selectionId = ?", selectionId).
-                    selectAll()) {
+            for (SearchResultSelectionItem item : Query
+                    .from(SearchResultSelectionItem.class)
+                    .where("selectionId = ?", selectionId)
+                    .selectAll()) {
 
                 itemIds.add(item.getItemId());
             }
@@ -93,8 +93,8 @@ public class ContentEditBulk extends PageServlet {
 
         Exception error = null;
 
-        if (page.isFormPost() &&
-                page.param(String.class, "action-save") != null) {
+        if (page.isFormPost()
+                && page.param(String.class, "action-save") != null) {
             try {
                 JspUtils.include(
                         page.getRequest(),
@@ -174,10 +174,10 @@ public class ContentEditBulk extends PageServlet {
                         "action", page.url(null, "id", state.getId()));
 
                     for (String paramName : page.paramNamesList()) {
-                        if ("id".equals(paramName) ||
-                                paramName.startsWith(OPERATION_PARAMETER_PREFIX) ||
-                                paramName.startsWith(state.getId() + "/") ||
-                                paramName.startsWith("action-")) {
+                        if ("id".equals(paramName)
+                                || paramName.startsWith(OPERATION_PARAMETER_PREFIX)
+                                || paramName.startsWith(state.getId() + "/")
+                                || paramName.startsWith("action-")) {
                             continue;
                         }
 

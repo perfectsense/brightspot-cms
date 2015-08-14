@@ -90,10 +90,10 @@ public class Area extends Plugin {
                 }
             });
             for (Area area : areas) {
-                if (ObjectUtils.equals(area.getTool(), tool) &&
-                        area.getUrl() != null &&
-                        area.getUrl().endsWith("/") &&
-                        path.startsWith(area.getUrl())) {
+                if (ObjectUtils.equals(area.getTool(), tool)
+                        && area.getUrl() != null
+                        && area.getUrl().endsWith("/")
+                        && path.startsWith(area.getUrl())) {
                     selected = area;
                     break;
                 }

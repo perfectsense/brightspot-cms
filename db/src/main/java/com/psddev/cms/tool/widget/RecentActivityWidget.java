@@ -18,10 +18,10 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
-import com.psddev.dari.db.DatabaseException;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Predicate;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.QueryFilter;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.PaginatedResult;
 
@@ -61,10 +61,10 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
             result = null;
 
         } else {
-            Query<?> contentQuery = (itemType != null ? Query.fromType(itemType) : Query.fromGroup(Content.SEARCHABLE_GROUP)).
-                    where(page.siteItemsSearchPredicate()).
-                    and(Content.UPDATE_DATE_FIELD + " != missing").
-                    sortDescending(Content.UPDATE_DATE_FIELD);
+            Query<?> contentQuery = (itemType != null ? Query.fromType(itemType) : Query.fromGroup(Content.SEARCHABLE_GROUP))
+                    .where(page.siteItemsSearchPredicate())
+                    .and(Content.UPDATE_DATE_FIELD + " != missing")
+                    .sortDescending(Content.UPDATE_DATE_FIELD);
 
             switch (type) {
                 case ROLE :
@@ -84,24 +84,17 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
             }
 
             Predicate visibilitiesPredicate = Search.getVisibilitiesPredicate(itemType, visibilities, null, false);
+            QueryFilter<Object> visibilitiesFilter = null;
 
             if (visibilitiesPredicate != null) {
                 contentQuery.and(visibilitiesPredicate);
+            } else {
+                visibilitiesFilter = item -> State.getInstance(item).isVisible();
             }
 
             QueryRestriction.updateQueryUsingAll(contentQuery, page);
 
-            try {
-                result = contentQuery.select(offset, limit);
-
-            } catch (DatabaseException error) {
-                if (error instanceof DatabaseException.ReadTimeout) {
-                    result = contentQuery.and("_any matches *").select(offset, limit);
-
-                } else {
-                    throw error;
-                }
-            }
+            result = contentQuery.and("_any matches *").selectFiltered(offset, limit, visibilitiesFilter);
         }
 
         page.writeStart("div", "class", "widget");
@@ -160,7 +153,7 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                                     "class", "objectId",
                                     "data-editable", false,
                                     "data-label", valueState != null ? valueState.getLabel() : null,
-                                    "data-typeIds", ObjectType.getInstance(ToolRole.class).getId(),
+                                    "data-typeIds", ObjectType.getInstance(valueQuery.getGroup()).getId(),
                                     "name", valueParameter,
                                     "value", valueState != null ? valueState.getId() : null);
 
@@ -226,9 +219,9 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                         page.writeEnd();
                     }
 
-                    if (result.getOffset() > 0 ||
-                            result.hasNext() ||
-                            result.getItems().size() > LIMITS[0]) {
+                    if (result.getOffset() > 0
+                            || result.hasNext()
+                            || result.getItems().size() > LIMITS[0]) {
                         page.writeStart("li");
                             page.writeStart("form",
                                     "data-bsp-autosubmit", "",

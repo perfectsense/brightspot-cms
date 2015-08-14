@@ -22,6 +22,7 @@ import com.psddev.dari.util.ErrorUtils;
 import com.psddev.dari.util.PeriodicValue;
 import com.psddev.dari.util.PullThroughValue;
 
+// CHECKSTYLE:OFF
 /**
  * Changes objects based on rules.
  *

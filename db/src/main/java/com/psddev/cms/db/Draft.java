@@ -132,13 +132,13 @@ public class Draft extends Content {
         }
 
         UUID id = getObjectId();
-        Object object = Query.fromAll().
-                where("_id = ?", id).
-                using(getState().getDatabase()).
-                master().
-                noCache().
-                resolveInvisible().
-                first();
+        Object object = Query.fromAll()
+                .where("_id = ?", id)
+                .using(getState().getDatabase())
+                .master()
+                .noCache()
+                .resolveInvisible()
+                .first();
 
         if (object == null) {
             object = type.createObject(id);

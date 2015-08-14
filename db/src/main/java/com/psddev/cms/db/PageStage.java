@@ -145,8 +145,8 @@ public class PageStage extends Record {
 
             HtmlElement element = (HtmlElement) node;
 
-            if (name.equals(element.getName()) &&
-                    element.hasAttributes(attributes)) {
+            if (name.equals(element.getName())
+                    && element.hasAttributes(attributes)) {
                 return element;
             }
         }
@@ -187,8 +187,8 @@ public class PageStage extends Record {
                     nodes.add(element);
 
                 // CSS goes first.
-                } else if ("link".equals(name) &&
-                        "text/css".equals(element.getAttributes().get("type"))) {
+                } else if ("link".equals(name)
+                        && "text/css".equals(element.getAttributes().get("type"))) {
                     int insertIndex = 0;
 
                     for (ListIterator<HtmlNode> i = nodes.listIterator(); i.hasNext();) {
@@ -200,8 +200,8 @@ public class PageStage extends Record {
 
                         HtmlElement iElement = (HtmlElement) node;
 
-                        if ("link".equals(iElement.getName()) &&
-                                "text/css".equals(iElement.getAttributes().get("type"))) {
+                        if ("link".equals(iElement.getName())
+                                && "text/css".equals(iElement.getAttributes().get("type"))) {
                             continue;
 
                         } else {
@@ -263,8 +263,8 @@ public class PageStage extends Record {
 
             HtmlElement element = (HtmlElement) node;
 
-            if (name.equals(element.getName()) &&
-                    element.hasAttributes(attributes)) {
+            if (name.equals(element.getName())
+                    && element.hasAttributes(attributes)) {
                 i.remove();
             }
         }
@@ -357,9 +357,9 @@ public class PageStage extends Record {
     public String getCanonicalUrl() {
         HtmlElement urlElement = findHeadElement("link", "rel", "canonical");
 
-        return urlElement != null ?
-                urlElement.getAttributes().get("href") :
-                null;
+        return urlElement != null
+                ? urlElement.getAttributes().get("href")
+                : null;
     }
 
     /**
@@ -464,9 +464,9 @@ public class PageStage extends Record {
     public void update(Object object) {
         State state = State.getInstance(object);
         ObjectType type = state.getType();
-        SharedUpdatable sharedUpdatable = type != null ?
-                type.as(TypeData.class).createSharedUpdatable() :
-                null;
+        SharedUpdatable sharedUpdatable = type != null
+                ? type.as(TypeData.class).createSharedUpdatable()
+                : null;
 
         if (sharedUpdatable != null) {
             sharedUpdatable.updateStageBefore(object, this);
@@ -529,9 +529,9 @@ public class PageStage extends Record {
         public SharedUpdatable createSharedUpdatable() {
             Class<?> c = ObjectUtils.getClassByName(getUpdateClassName());
 
-            return c != null && SharedUpdatable.class.isAssignableFrom(c) ?
-                    TypeDefinition.getInstance((Class<? extends SharedUpdatable>) c).newInstance() :
-                    null;
+            return c != null && SharedUpdatable.class.isAssignableFrom(c)
+                    ? TypeDefinition.getInstance((Class<? extends SharedUpdatable>) c).newInstance()
+                    : null;
         }
     }
 

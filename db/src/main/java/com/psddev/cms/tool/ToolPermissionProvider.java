@@ -14,8 +14,8 @@ public interface ToolPermissionProvider extends SettingsBackedObject {
     /** Get the configured permission provider. */
     static ToolPermissionProvider getDefault() {
         String defaultPermissionProvider = Settings.get(String.class, DEFAULT_SETTING_KEY);
-        return defaultPermissionProvider == null ? null :
-                Settings.newInstance(ToolPermissionProvider.class, SETTING_KEY + '/' + defaultPermissionProvider);
+        return defaultPermissionProvider == null ? null
+                : Settings.newInstance(ToolPermissionProvider.class, SETTING_KEY + '/' + defaultPermissionProvider);
     }
 
     /** Called by ToolPageContext#hasPermission, so do NOT execute that method within this method. */

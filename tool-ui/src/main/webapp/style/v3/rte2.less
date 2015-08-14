@@ -1,0 +1,421 @@
+.rte2-toolbar {
+  background-color: fade(white, 93%);
+  margin: 0;
+  position: relative;
+  vertical-align: top;
+
+  // Give a higher z-index than the rich text editor.
+  z-index: 3;
+
+  // When hovering the toolbar, give it a higher z-index than other toolbars
+  // below so that the submenu will be on top of other toolbars.
+  &:hover {
+    z-index: 4;
+  }
+
+  &.rte2-toolbar-fixed {
+    padding-top: 5px;
+  }
+
+  .state-disabled & {
+    display: none;
+  }
+
+  li {
+    display: inline-block;
+    list-style-type: none;
+    height: 25px;
+
+    > ul {  // Submenu
+      display:none;
+      margin:0;
+      position:absolute;
+      padding:0.5em;
+      background-color: fade(white, 93%);
+      border:1px solid @color-separator;
+
+      li {
+        display:block;
+      }
+    }
+
+    &:hover {
+
+      > span {
+        .icon-caret-down;
+      }
+
+      > ul { // show submenu
+        display:block;
+      }
+    }
+  }
+  
+  a, span, .rte2-toolbar-separator {
+    color: @color-placeholder;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 80%;
+    height: 20px;
+    line-height: 20px;
+    margin: 0 5px 0 0;
+    overflow: hidden;
+    width: 20px;
+
+    &.active {
+      .background-flat(@color-focus);
+    }
+  }
+
+  .rte2-toolbar-submenu {
+    &.active span {
+      background-color: @color-link-light;
+    }
+  }
+
+  span {
+    background-color:transparent;
+  }
+  
+  a {
+    border-radius: 2px;
+
+    .link {
+      color: @color-text;
+    }
+
+    &:not(.active):hover {
+      box-shadow: 0 1px 2px fade(black, 20%);
+      color: @color-text;
+    }
+  }
+
+  .rte2-toolbar-bold { .icon; .icon-bold; }
+  .rte2-toolbar-italic { .icon; .icon-italic; }
+  .rte2-toolbar-underline { .icon; .icon-underline; }
+  .rte2-toolbar-strikethrough { .icon; .icon-strikethrough; }
+  .rte2-toolbar-superscript { .icon; .icon-superscript; }
+  .rte2-toolbar-subscript { .icon; .icon-subscript; }
+  .rte2-toolbar-align-left { .icon; .icon-align-left; }
+  .rte2-toolbar-align-center { .icon; .icon-align-center; }
+  .rte2-toolbar-align-right { .icon; .icon-align-right; }
+  .rte2-toolbar-ul { .icon; .icon-list-ul; }
+  .rte2-toolbar-ol { .icon; .icon-list-ol; }
+  .rte2-toolbar-outdent { .icon; .icon-indent-right; }
+  .rte2-toolbar-indent { .icon; .icon-indent-left; }
+  .rte2-toolbar-link { .icon; .icon-link; }
+  .rte2-toolbar-html { .icon; .icon-code; }
+  .rte2-toolbar-comment { .icon; .icon-comment-alt; }
+  .rte2-toolbar-comment-collapse { .icon; .icon-ellipsis-horizontal; }
+  .rte2-toolbar-comment-remove { .icon; .icon-remove; }
+  
+  .rte2-toolbar-enhancement { width:auto; padding-left:0.5em; padding-right:0.5em; }
+  .rte2-toolbar-marker { width:auto; padding-left:0.5em; padding-right:0.5em; }
+
+  .rte2-toolbar-track-changes { width:auto; padding-left:0.5em; padding-right:0.5em; }
+  .rte2-toolbar-track-changes-accept { .icon; .icon-ok; }
+  .rte2-toolbar-track-changes-reject { .icon; .icon-remove; }
+  .rte2-toolbar-track-changes-show-final { .icon; .icon-action-preview; }
+
+  .rte2-toolbar-clear { width:auto; padding-left:0.5em; padding-right:0.5em; }
+
+  .rte2-toolbar-fullscreen { .icon; .icon-fullscreen; }
+  .rte2-toolbar-moveLeft { .icon; .icon-arrow-left; }
+  .rte2-toolbar-moveUp { .icon; .icon-arrow-up; }
+  .rte2-toolbar-moveCenter { .icon; .icon-resize-full; }
+  .rte2-toolbar-moveDown { .icon; .icon-arrow-down; }
+  .rte2-toolbar-moveRight { .icon; .icon-arrow-right; }
+  .rte2-toolbar-enhancementSelect { .icon; .icon-random; }
+  .rte2-toolbar-enhancementEdit { .icon; .icon-pencil; }
+  .rte2-toolbar-remove { .icon; .icon-remove; color: @color-remove; }
+  .rte2-toolbar-restore { .icon; .icon-undo; }
+  .rte2-toolbar-removeCompletely { .icon; .icon-remove; color: @color-remove; }
+
+  .rte2-toolbar-custom { width:auto; padding: 0 0.5em; }
+
+  .rte2-toolbar-submenu > span {
+    .icon;
+    .icon-caret-right;
+    width:auto;
+    padding-right:0.5em;
+    &:before { padding: 0 0 1px 3px; }
+  }
+
+  .rte2-toolbar-separator {
+    border-left: 1px solid @color-separator;
+    cursor: none;
+    width: 0;
+  }
+}
+
+.rte2-enhancement-toolbar:extend(.rte2-toolbar all) {
+
+  background-color: transparent;
+  border-style: none;
+  padding: 0;
+
+  .rte2-enhancement-toolbar-up { .icon; .icon-arrow-up; }
+  .rte2-enhancement-toolbar-down { .icon; .icon-arrow-down; }
+  .rte2-enhancement-toolbar-left { .icon; .icon-arrow-left; }
+  .rte2-enhancement-toolbar-right { .icon; .icon-arrow-right; }
+  .rte2-enhancement-toolbar-full { .icon; .icon-resize-full; }
+  .rte2-enhancement-toolbar-remove { .icon; .icon-remove; color: @color-remove; width:auto; padding-right:0.5em; }
+  .rte2-enhancement-toolbar-restore { .icon; .icon-undo; width:auto; padding-right:0.5em; display:none; }
+  .rte2-enhancement-toolbar-remove-completely { .icon; .icon-remove; color: @color-remove; width:auto; padding-right:0.5em; display:none; }
+  .rte2-enhancement-toolbar-change { .icon; .icon-random; width:auto; padding-right:0.5em; }
+  .rte2-enhancement-toolbar-edit { .icon; .icon-pencil; width:auto; padding-right:0.5em; }
+  .rte2-enhancement-toolbar-size { width:auto; }
+}
+
+.rte2-enhancement.toBeRemoved {
+  .rte2-enhancement-toolbar-remove { display:none; }
+  .rte2-enhancement-toolbar-restore { display:inline-block; }
+  .rte2-enhancement-toolbar-remove-completely { display:inline-block; }
+}
+
+.rte2-style-html {
+  font-family: @fontFamily-code;
+  background-color:fade(black, 10%);
+}
+.rte2-style-newline {
+  color: @color-placeholder;
+}
+.rte2-style-bold {
+  font-weight:bold;
+}
+.rte2-style-italic {
+  font-style:italic;
+}
+.rte2-style-underline {
+  text-decoration: underline;
+}
+.rte2-style-strikethrough {
+  text-decoration:line-through;
+}
+.rte2-style-subscript {
+  font-size: 0.83em;
+  vertical-align:sub;
+}
+.rte2-style-superscript {
+  font-size: 0.83em;
+  vertical-align:super;
+}
+.rte2-style-link {
+  color:blue;
+  text-decoration: underline;
+  cursor:pointer;
+}
+.rte2-style-align-left {
+  text-align:left;
+}
+.rte2-style-align-center {
+  text-align:center;
+}
+.rte2-style-align-right {
+  text-align:right;
+}
+.rte2-style-comment {
+  font-style:italic;
+  outline:1px solid #333;
+  padding:0.1em;
+}
+.rte2-style-collapsed {
+  font-style:italic;
+  border:1px solid #333;
+  display:inline-block;
+  padding:0.1em 0.5em;
+  background-color:#ddd;
+}
+.rte2-style-enhancement {
+  display:inline-block;
+  padding:2em;
+  background-color:#ddd;
+  border:1px solid #888;
+  float:left;
+  width:100%;
+  margin:1em 0;
+}
+.rte2-style-enhancement-left {
+  float:left;
+  margin:0 1em 0 0;
+  width:400px;
+}
+.rte2-style-enhancement-right {
+  float:right;
+  margin:0 0 0 1em;
+  width:400px;
+}
+.rte2-style-track-delete {
+  background-color: rgba(255, 0, 0, 0.3);
+  color:white;
+  text-decoration: line-through;
+}
+.rte2-style-track-display .rte2-style-track-insert {
+  background-color: rgba(125, 255, 125, 0.3);
+  color:black;
+}
+
+.rte2-wrapper {
+
+  position:relative;
+  
+  &::after {
+    content: attr(rte2-placeholder);
+    position:absolute;
+    left:0.5em;
+    top:0.5em;
+    color: @color-placeholder;
+    font-style: italic;
+  }
+
+  &.rte-fullscreen {
+    background: @color-border;
+    border-style: none;
+    height: 100%;
+    left: 0;
+    overflow: auto;
+    overflow-x: hidden;
+    padding: 0 40px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 49;
+
+    .rte2-toolbar {
+      background: white;
+      border-bottom: 1px solid @color-separator;
+      left: 0 !important;
+      padding-left: 5px;
+      padding-right: 5px;
+      right: 0 !important;
+      width: auto !important;
+    }
+
+    .CodeMirror {
+      background: white;
+      border: 0;
+      box-shadow: 0 0 20px fade(black, 50%);
+      display: block;
+      font-size: 16px;
+      line-height: 24px;
+      margin: 0 auto;
+      width: 60em;
+
+      .CodeMirror-lines {
+        padding: 30px;
+      }
+    }
+  }
+  
+  .CodeMirror {
+
+    font-family:inherit;
+
+    .CodeMirror-lines {
+      padding: 5px 6px;
+    }
+
+    pre {
+      font-family:inherit;
+      counter-reset: brightspot_ol_counter;
+      padding: 0;
+    }
+    .rte2-style-ul {
+      padding-left: 2em;
+    }
+    .rte2-style-ul:before {
+      content: "\2022";
+      margin-left: -1em;
+      padding-right:0.5em;
+    }
+    .rte2-style-ol {
+      counter-reset: none;
+      counter-increment: brightspot_ol_counter;
+      padding-left: 2em;
+    }
+    .rte2-style-ol:before {
+      content: counter(brightspot_ol_counter) ".";
+      margin-left: -1em;
+      padding-right:0.25em;
+    }
+  }
+
+  .rte2-enhancement {
+  
+    .background-striped(@color-heading);
+    box-sizing: border-box;
+    padding: 4px;
+
+    .rte2-enhancement-label {
+ 
+      position:relative;
+    }
+    
+    figure {
+      height: 153px;
+    }
+
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    a {
+      color: @color-placeholder;
+
+      &:hover {
+        background-color: fade(white, 93%);
+      }
+    }
+
+    .rte2-enhancement-size {
+      position:absolute;
+      top:0;
+      left:0;
+      width:auto;
+      background-color: fade(white, 85%);
+      padding:0.25em;
+    }
+  }
+}
+
+.rte2-dialogLine {
+  margin-bottom: 5px;
+  position: relative;
+}
+
+.rte2-dialogLinkHref {
+  padding-right: 6em !important;
+  width: 100%;
+}
+
+.rte2-dialogLinkContent {
+  .icon;
+  .icon-action-search;
+
+  line-height: 26px;
+  position: absolute;
+  right: 5px;
+  top: 0;
+}
+
+.rte2-dialogLinkSave {
+  .icon;
+  .icon-ok;
+
+  margin-right: 10px;
+}
+
+.rte2-dialogLinkOpen {
+  .icon;
+  .icon-share;
+}
+
+.rte2-dialogLinkUnlink {
+  .icon;
+  .icon-unlink;
+
+  color: @color-remove;
+  float: right;
+}
+

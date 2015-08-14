@@ -25,13 +25,13 @@ public class ScheduleFilter extends AbstractFilter {
 
             Thread.currentThread().setName(SCHEDULE_THREAD_NAME);
 
-            for (Schedule schedule : Query.
-                    from(Schedule.class).
-                    sortAscending("triggerDate").
-                    master().
-                    noCache().
-                    resolveInvisible().
-                    iterable(0)) {
+            for (Schedule schedule : Query
+                    .from(Schedule.class)
+                    .sortAscending("triggerDate")
+                    .master()
+                    .noCache()
+                    .resolveInvisible()
+                    .iterable(0)) {
 
                 try {
                     schedule.trigger();

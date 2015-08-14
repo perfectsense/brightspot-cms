@@ -216,10 +216,10 @@ public class Site extends Record {
             consumers.add(this);
             consumers.addAll(getAccessibleSites());
             return PredicateParser.Static.parse(
-                    Site.OWNER_FIELD + " = ? or (" +
-                    Site.IS_GLOBAL_FIELD + " = ? and " +
-                    Site.BLACKLIST_FIELD + " != ?) or " +
-                    Site.CONSUMERS_FIELD + " = ?",
+                    Site.OWNER_FIELD + " = ? or ("
+                            + Site.IS_GLOBAL_FIELD + " = ? and "
+                            + Site.BLACKLIST_FIELD + " != ?) or "
+                            + Site.CONSUMERS_FIELD + " = ?",
                     consumers, Boolean.TRUE, this, consumers);
         }
     }
@@ -341,9 +341,9 @@ public class Site extends Record {
                 return true;
 
             } else {
-                return (objectSiteMod.isGlobal() &&
-                        !objectSiteMod.getBlacklist().contains(site)) ||
-                        objectSiteMod.getConsumers().contains(site);
+                return (objectSiteMod.isGlobal()
+                        && !objectSiteMod.getBlacklist().contains(site))
+                        || objectSiteMod.getConsumers().contains(site);
             }
         }
     }

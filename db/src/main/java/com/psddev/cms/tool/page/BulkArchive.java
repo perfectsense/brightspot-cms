@@ -187,11 +187,11 @@ public class BulkArchive extends PageServlet {
                     page.writeStart("a",
                             "class", "button " + actionIconClass,
                             "target", TARGET,
-                            "href", new UrlBuilder(page.getRequest()).
-                                    absolutePath(page.cmsUrl(PATH)).
-                                    currentParameters().
-                                    parameter(Context.SELECTION_ID_PARAMETER, page.getSelection() != null ? page.getSelection().getId() : null).
-                                    parameter("action", action.name()));
+                            "href", new UrlBuilder(page.getRequest())
+                                    .absolutePath(page.cmsUrl(PATH))
+                                    .currentParameters()
+                                    .parameter(Context.SELECTION_ID_PARAMETER, page.getSelection() != null ? page.getSelection().getId() : null)
+                                    .parameter("action", action.name()));
 
                     if (Action.RESTORE.equals(action)) {
                         page.writeHtml("Bulk Restore");
@@ -370,9 +370,9 @@ public class BulkArchive extends PageServlet {
                         State itemState = State.getInstance(item);
                         String typePermissionId = "type/" + itemState.getTypeId();
 
-                        if (archive ^ itemState.as(Content.ObjectModification.class).isTrash() &&
-                                hasPermission(typePermissionId + "/write") &&
-                                hasPermission(typePermissionId + "/bulkArchive")) {
+                        if (archive ^ itemState.as(Content.ObjectModification.class).isTrash()
+                                && hasPermission(typePermissionId + "/write")
+                                && hasPermission(typePermissionId + "/bulkArchive")) {
 
                             count ++;
                         }
@@ -390,8 +390,8 @@ public class BulkArchive extends PageServlet {
 
                 String typePermissionId = "type/" + selectedType.getId();
 
-                if (!hasPermission(typePermissionId + "/write") ||
-                        !hasPermission(typePermissionId + "/bulkArchive")) {
+                if (!hasPermission(typePermissionId + "/write")
+                        || !hasPermission(typePermissionId + "/bulkArchive")) {
                     return 0;
                 }
 

@@ -18,9 +18,9 @@ public class SearchResultItem {
 
         SearchResultSelection currentSelection = page.getUser().getCurrentSearchResultSelection();
 
-        boolean selected = currentSelection != null &&
-                item != null &&
-                Query.from(SearchResultSelectionItem.class).where("selectionId = ?", currentSelection).and("itemId = ?", item).first() != null;
+        boolean selected = currentSelection != null
+                && item != null
+                && Query.from(SearchResultSelectionItem.class).where("selectionId = ?", currentSelection).and("itemId = ?", item).first() != null;
 
         page.writeElement("input",
                 "type", "checkbox",

@@ -244,10 +244,16 @@ function($) {
         var $misc = $createToolbarGroup('Misc');
         $toolbar.append($misc);
 
+        // For the select enhancement / marker popup, include parameters for the form id and typeId
+        var formAction, formId, formTypeId;
+        formAction = $('form.contentForm').attr('action') || '';
+        formId = (/id=([^&]+)/.exec(formAction) || [ ])[1] || '';
+        formTypeId = (/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '';
+
         $misc.append($('<span/>', {
             'class': 'rte-button rte-button-enhancementSelect',
             'html': $('<a/>', {
-                'href': CONTEXT_PATH + '/enhancementSelect',
+                'href': CONTEXT_PATH + '/enhancementSelect' + '?pt=' + encodeURIComponent(formId) + '&py=' + encodeURIComponent(formTypeId),
                 'target': getContentEnhancementTarget(),
                 'text': 'Select'
             })
@@ -286,10 +292,15 @@ function($) {
         var $misc = $createToolbarGroup('Misc');
         $toolbar.append($misc);
 
+        var formAction, formId, formTypeId;
+        formAction = $('form.contentForm').attr('action') || '';
+        formId = (/id=([^&]+)/.exec(formAction) || [ ])[1] || '';
+        formTypeId = (/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '';
+        
         $misc.append($('<span/>', {
             'class': 'rte-button rte-button-selectMarker',
             'html': $('<a/>', {
-                'href': CONTEXT_PATH + '/content/marker.jsp',
+                'href': CONTEXT_PATH + '/content/marker.jsp' + '?pt=' + encodeURIComponent(formId) + '&py=' + encodeURIComponent(formTypeId),
                 'target': getContentEnhancementTarget(),
                 'text': 'Select'
             })

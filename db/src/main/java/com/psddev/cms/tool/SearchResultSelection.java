@@ -48,10 +48,10 @@ public class SearchResultSelection extends Record {
 
         Set<UUID> itemIds = new HashSet<>();
 
-        for (SearchResultSelectionItem item : Query.
-                from(SearchResultSelectionItem.class).
-                where("selectionId = ?", getId()).
-                selectAll()) {
+        for (SearchResultSelectionItem item : Query
+                .from(SearchResultSelectionItem.class)
+                .where("selectionId = ?", getId())
+                .selectAll()) {
 
             itemIds.add(item.getItemId());
         }
@@ -63,10 +63,9 @@ public class SearchResultSelection extends Record {
      * Clear the SearchResultSelection by deleting all of the SearchResultSelectionItem that point to it.
      */
     public void clear() {
-        Query.
-            from(SearchResultSelectionItem.class).
-            where("selectionId = ?", getId()).
-            deleteAll();
+        Query.from(SearchResultSelectionItem.class)
+                .where("selectionId = ?", getId())
+                .deleteAll();
     }
 
     /**
@@ -79,11 +78,11 @@ public class SearchResultSelection extends Record {
             throw new IllegalArgumentException("itemId cannot be null!");
         }
 
-        SearchResultSelectionItem item = Query.
-                from(SearchResultSelectionItem.class).
-                where("selectionId = ?", getId()).
-                and("itemId = ?", itemId).
-                first();
+        SearchResultSelectionItem item = Query
+                .from(SearchResultSelectionItem.class)
+                .where("selectionId = ?", getId())
+                .and("itemId = ?", itemId)
+                .first();
 
         if (item == null) {
 
@@ -108,10 +107,10 @@ public class SearchResultSelection extends Record {
             throw new IllegalArgumentException("itemId cannot be null!");
         }
 
-        SearchResultSelectionItem item = Query.
-            from(SearchResultSelectionItem.class).
-            where("selectionId = ?", getId()).
-            and("itemId = ?", itemId).first();
+        SearchResultSelectionItem item = Query
+                .from(SearchResultSelectionItem.class)
+                .where("selectionId = ?", getId())
+                .and("itemId = ?", itemId).first();
 
         if (item == null) {
             return false;

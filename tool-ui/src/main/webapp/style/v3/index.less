@@ -42,6 +42,7 @@
 @import 'popup.less';
 @import 'repeatable.less';
 @import 'rte.less';
+@import 'rte2.less';
 @import 'scheduled-events.less';
 @import 'search.less';
 @import 'taxonomy.less';
@@ -254,13 +255,15 @@
 }
 
 .contentPreview {
+  bottom: 0;
   display: none;
   overflow: hidden;
-  margin: -10px;
-  padding: 10px 0 10px 10px;
-  position: absolute;
+  margin: -20px 0 -20px -20px;
+  padding: 20px 0 20px 20px;
+  position: fixed;
+  right: 0;
   width: 150px;
-  z-index: 2;
+  z-index: 4;
 
   @media @media-tablet {
     width: 85px;
@@ -268,15 +271,14 @@
 }
 
 .contentPreviewClose {
-  .icon;
-  .icon-remove;
-  .icon-only;
+  &:extend(.widget-controls-button all);
 
-  cursor: pointer;
-  font-size: 120%;
-  position: fixed;
-  right: 20px;
-  top: (@toolHeader-height + 30px);
+  .icon-remove;
+
+  right: @widget-controlsOffset;
+  position: absolute;
+  top: (@widget-controlsOffset + 40);
+  z-index: 1;
 }
 
 // --- Widgets ---
@@ -362,7 +364,13 @@
 .widget-preview {
   .background-striped(@color-heading);
 
-  margin-top: 10px;
+  bottom: 30px;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  left: 20px;
+  position: absolute;
+  right: -1px;
+  top: 40px;
   transition: box-shadow @time-fast;
 
   > h1 {
@@ -396,22 +404,45 @@
   }
 
   &.widget-loading {
-    min-height: 1000px;
-
     > h1:before {
       content: url(icon/ajax-loader.gif);
     }
   }
+
+  &:after {
+    background-image: linear-gradient(to left, @color-heading 0, fade(@color-heading, 0%) 20px);
+    bottom: 0;
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20px;
+  }
 }
 
 .widget-preview_controls {
-  .piped;
-
+  margin-left: 0;
   margin-top: 35px;
+  list-style-type: none;
+  overflow: hidden;
 
   form {
     display: inline;
   }
+
+  li {
+    float: left;
+    margin: 0 20px 0 0;
+  }
+}
+
+.widget-previewFrameContainer {
+  bottom: 20px;
+  left: 20px;
+  overflow: auto;
+  position: absolute;
+  right: 0;
+  top: 110px;
 }
 
 .widget-publishing {
@@ -587,20 +618,21 @@
 }
 
 // Soft validation based on suggested sizes.
+.inputWordCount {
+  display: none;
+}
+
 .inputContainer.state-focus {
-  &[data-wc-message],
-  [data-wc-message] {
-    &:after {
-      .background-flat(@color-placeholder);
+  > .inputWordCount {
+    .background-flat(@color-placeholder);
 
-      content: attr(data-wc-message);
-      font-size: 11px;
-      height: 18px;
-      line-height: 18px;
-      padding: 0 3px;
-    }
+    display: block;
+    font-size: 11px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 3px;
 
-    &[data-wc-message ^= 'Too']:after {
+    &.inputWordCount-warning {
       background-color: #e90;
     }
   }
@@ -765,6 +797,7 @@ form[data-type='com.psddev.cms.db.ContentType'] {
   line-height: 50px;
   margin: -10px 0 10px 0;
   padding: 0;
+  width: 90%;
 
   .icon:before {
     display: none !important;

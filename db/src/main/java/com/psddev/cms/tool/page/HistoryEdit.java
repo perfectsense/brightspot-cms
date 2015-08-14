@@ -22,10 +22,10 @@ public class HistoryEdit extends PageServlet {
 
     @Override
     protected void doService(final ToolPageContext page) throws IOException, ServletException {
-        History history = Query.
-                from(History.class).
-                where("_id = ?", page.param(UUID.class, "id")).
-                first();
+        History history = Query
+                .from(History.class)
+                .where("_id = ?", page.param(UUID.class, "id"))
+                .first();
 
         if (page.isFormPost()) {
             try {

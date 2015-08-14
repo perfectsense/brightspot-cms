@@ -71,9 +71,9 @@ public class JspWidget extends Widget {
             appPath = "";
         }
 
-        return appPath != null ?
-                appPath + StringUtils.ensureStart(getJsp(), "/") :
-                null;
+        return appPath != null
+                ? appPath + StringUtils.ensureStart(getJsp(), "/")
+                : null;
     }
 
     private String includeJsp(

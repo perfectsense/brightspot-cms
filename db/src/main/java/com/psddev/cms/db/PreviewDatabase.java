@@ -28,10 +28,10 @@ public class PreviewDatabase extends ForwardingDatabase {
     }
 
     public void addChanges(Schedule schedule) {
-        for (Draft draft : Query.
-                from(Draft.class).
-                where("schedule = ?", schedule).
-                selectAll()) {
+        for (Draft draft : Query
+                .from(Draft.class)
+                .where("schedule = ?", schedule)
+                .selectAll()) {
             changesById.put(draft.getObjectId(), draft.getObjectChanges());
         }
     }
@@ -47,11 +47,11 @@ public class PreviewDatabase extends ForwardingDatabase {
                 Draft draft = null;
                 Date draftDate = null;
 
-                for (Object dObject : Query.
-                        fromAll().
-                        and("com.psddev.cms.db.Draft/schedule != missing").
-                        and("com.psddev.cms.db.Draft/objectId = ?", object).
-                        iterable(0)) {
+                for (Object dObject : Query
+                        .fromAll()
+                        .and("com.psddev.cms.db.Draft/schedule != missing")
+                        .and("com.psddev.cms.db.Draft/objectId = ?", object)
+                        .iterable(0)) {
                     if (!(dObject instanceof Draft)) {
                         continue;
                     }
@@ -59,10 +59,10 @@ public class PreviewDatabase extends ForwardingDatabase {
                     Draft d = (Draft) dObject;
                     Date triggerDate = d.getSchedule().getTriggerDate();
 
-                    if (triggerDate != null &&
-                            triggerDate.before(date) &&
-                            (draftDate == null ||
-                            triggerDate.after(draftDate))) {
+                    if (triggerDate != null
+                            && triggerDate.before(date)
+                            && (draftDate == null
+                            || triggerDate.after(draftDate))) {
 
                         draft = d;
                         draftDate = triggerDate;

@@ -125,9 +125,9 @@ public abstract class Tool extends Application {
         ErrorUtils.errorIfBlank(toolUrl, "CmsTool#getDefaultToolUrl()");
 
         return StringUtils.addQueryParameters(
-                StringUtils.removeEnd(toolUrl, "/") +
-                RoutingFilter.Static.getApplicationPath(appName) +
-                StringUtils.ensureStart(path, "/"),
+                StringUtils.removeEnd(toolUrl, "/")
+                        + RoutingFilter.Static.getApplicationPath(appName)
+                        + StringUtils.ensureStart(path, "/"),
                 parameters);
     }
 
@@ -381,9 +381,9 @@ public abstract class Tool extends Application {
         String internalName = plugin.getInternalName();
 
         for (Plugin p : Static.getPlugins()) {
-            if (ObjectUtils.equals(typeId, p.getState().getTypeId()) &&
-                    ObjectUtils.equals(tool, p.getTool()) &&
-                    ObjectUtils.equals(internalName, p.getInternalName())) {
+            if (ObjectUtils.equals(typeId, p.getState().getTypeId())
+                    && ObjectUtils.equals(tool, p.getTool())
+                    && ObjectUtils.equals(internalName, p.getInternalName())) {
                 pluginState.setId(p.getId());
                 break;
             }

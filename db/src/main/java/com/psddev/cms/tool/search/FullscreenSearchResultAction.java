@@ -21,10 +21,10 @@ public class FullscreenSearchResultAction implements SearchResultAction {
             page.writeStart("a",
                     "class", "button",
                     "target", "_top",
-                    "href", new UrlBuilder(page.getRequest()).
-                            absolutePath(page.cmsUrl("/searchAdvancedFull")).
-                            currentParameters().
-                            parameter(Search.NAME_PARAMETER, null));
+                    "href", new UrlBuilder(page.getRequest())
+                            .absolutePath(page.cmsUrl("/searchAdvancedFull"))
+                            .currentParameters()
+                            .parameter(Search.NAME_PARAMETER, null));
                 page.writeHtml("Fullscreen");
             page.writeEnd();
         page.writeEnd();

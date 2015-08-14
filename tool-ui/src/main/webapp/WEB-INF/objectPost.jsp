@@ -73,27 +73,6 @@ if (object instanceof Query) {
     } finally {
         if (oldContainer == null) {
             request.setAttribute("containerObject", null);
-
-            Date oldUpdateDate = wp.param(Date.class, state.getId() + "/_updateDate");
-
-            if (oldUpdateDate != null) {
-                Object newObject = Query.fromAll().where("_id = ?", state.getId()).master().noCache().first();
-
-                if (newObject != null) {
-                    Content.ObjectModification newContentData = State.getInstance(newObject).as(Content.ObjectModification.class);
-                    Date newUpdateDate = newContentData.getUpdateDate();
-
-                    if (!oldUpdateDate.equals(newUpdateDate)) {
-                        ToolUser newUpdateUser = newContentData.getUpdateUser();
-
-                        throw new IllegalArgumentException(
-                                (newUpdateUser != null ? newUpdateUser.getLabel() : "Unknown user") +
-                                " has updated this content at " +
-                                newUpdateDate +
-                                " since you've seen it last. Click on publish button again to override the changes with your own.");
-                    }
-                }
-            }
         }
 
         if (draftCheck) {

@@ -35,9 +35,9 @@ public class ReferenceCountField implements SearchResultField {
 
     private long getReferencesCount(Object item) {
 
-        return Query.
-                fromAll().
-                where("* matches ?", State.getInstance(item).getId()).
-                count();
+        return Query
+                .fromAll()
+                .where("* matches ?", State.getInstance(item).getId())
+                .count();
     }
 }

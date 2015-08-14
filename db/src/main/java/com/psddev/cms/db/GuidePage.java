@@ -126,8 +126,8 @@ public class GuidePage extends Record {
      * production guide is available.
      */
     public boolean isIncomplete() {
-        if (this.getSamplePage() == null ||
-                this.getSamplePage().getPermalink() == null) {
+        if (this.getSamplePage() == null
+                || this.getSamplePage().getPermalink() == null) {
             return true;
         }
         if (this.getDescription() == null || this.getDescription().isEmpty()) {
