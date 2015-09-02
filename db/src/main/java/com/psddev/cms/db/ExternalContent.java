@@ -196,26 +196,29 @@ public class ExternalContent extends Content implements Renderer {
             HtmlWriter writer)
             throws IOException {
         Map<String, Object> response = getResponse();
-        Object type = response.get("type");
+        if (!ObjectUtils.isBlank(response)) {
 
-        if ("photo".equals(type)) {
-            writer.writeElement("img",
-                    "src", response.get("url"),
-                    "width", response.get("width"),
-                    "height", response.get("height"),
-                    "alt", response.get("title"));
+            Object type = response.get("type");
 
-        } else if ("video".equals(type)) {
-            writer.writeRaw(response.get("html"));
+            if ("photo".equals(type)) {
+                writer.writeElement("img",
+                        "src", response.get("url"),
+                        "width", response.get("width"),
+                        "height", response.get("height"),
+                        "alt", response.get("title"));
 
-        } else if ("link".equals(type)) {
-            writer.writeStart("a",
-                    "href", response.get("_url"));
-                writer.writeHtml(response.get("title"));
-            writer.writeEnd();
+            } else if ("video".equals(type)) {
+                writer.writeRaw(response.get("html"));
 
-        } else if ("rich".equals(type)) {
-            writer.writeRaw(response.get("html"));
+            } else if ("link".equals(type)) {
+                writer.writeStart("a",
+                        "href", response.get("_url"));
+                    writer.writeHtml(response.get("title"));
+                writer.writeEnd();
+
+            } else if ("rich".equals(type)) {
+                writer.writeRaw(response.get("html"));
+            }
         }
     }
 }

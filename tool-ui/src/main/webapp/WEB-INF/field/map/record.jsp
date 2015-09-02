@@ -30,16 +30,7 @@ if(fieldValue == null) {
 }
 
 List<ObjectType> validTypes = field.as(ToolUi.class).findDisplayTypes();
-boolean isValueExternal = true;
-if (validTypes != null && validTypes.size() > 0) {
-    isValueExternal = false;
-    for (ObjectType type : validTypes) {
-        if (!type.isEmbedded()) {
-            isValueExternal = true;
-            break;
-        }
-    }
-}
+boolean isValueExternal = ToolUi.isValueExternal(field);
 
 String inputName = (String) request.getAttribute("inputName");
 String idName = inputName + ".id";

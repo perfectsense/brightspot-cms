@@ -1,4 +1,4 @@
-define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils) {
+define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
   bsp_utils.onDomInsert(document, '.contentDiff', {
     'insert': function(container) {
       var $container = $(container);
@@ -33,7 +33,7 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils) {
       });
 
       $container.bind('contentDiff-edit', function() {
-        $container.add($('.widget-publishing')).removeClass('contentDiff-sideBySide').addClass('contentDiff-edit');
+        $container.removeClass('contentDiff-sideBySide').addClass('contentDiff-edit');
         $tabs.find('li').removeClass('state-selected');
         $tabEdit.addClass('state-selected');
 
@@ -43,7 +43,7 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils) {
       });
 
       $container.bind('contentDiff-sideBySide', function() {
-        $container.add($('.widget-publishing')).removeClass('contentDiff-edit').addClass('contentDiff-sideBySide');
+        $container.removeClass('contentDiff-edit').addClass('contentDiff-sideBySide');
         $tabs.find('li').removeClass('state-selected');
         $tabSideBySide.addClass('state-selected');
         $container.resize();

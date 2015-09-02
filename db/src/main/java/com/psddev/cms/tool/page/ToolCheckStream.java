@@ -28,7 +28,7 @@ import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.TypeDefinition;
 
 /**
- * @deprecated Use {@link RtcFilter} instead.
+ * @deprecated Use {@link com.psddev.cms.rtc.RtcFilter} instead.
  */
 @Deprecated
 @RoutingFilter.Path(application = "cms", value = "toolCheckStream")

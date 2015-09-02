@@ -1,8 +1,11 @@
 package com.psddev.cms.tool;
 
+import com.psddev.cms.db.Content;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Recordable;
+import com.psddev.dari.db.State;
+import com.psddev.dari.util.ObjectUtils;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -54,6 +57,27 @@ public interface SearchResultSelectionGeneratable extends Recordable {
 
         public void setItemTypes(List<ObjectType> itemTypes) {
             this.itemTypes = itemTypes;
+        }
+    }
+
+    /**
+     * {@link Modification} of SearchResultSelectionGeneratable classes to prevent
+     * {@link com.psddev.dari.db.ValidationException ValidationException} from being
+     * thrown on draft creation by the {@link com.psddev.cms.tool.page.CreateDraft} servlet.
+     */
+    public static class Data extends Modification<SearchResultSelectionGeneratable> {
+
+        public static final String IGNORE_VALIDATION_EXTRA = "cms.ignoreValidation";
+
+        @Override
+        protected void onValidate() {
+
+            State state = getState();
+
+            if (ObjectUtils.to(boolean.class, state.getExtra(IGNORE_VALIDATION_EXTRA)) && state.as(Content.ObjectModification.class).isDraft()) {
+
+                state.clearAllErrors();
+            }
         }
     }
 }

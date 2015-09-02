@@ -371,7 +371,7 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                         }
 
                         Draft draft = (Draft) d;
-                        Object draftObject = draft.getObject();
+                        Object draftObject = draft.recreate();
 
                         page.writeStart("tr", "data-preview-url", "/_preview?_cms.db.previewId=" + draft.getId());
                         page.writeStart("td", "class", "time");

@@ -110,6 +110,7 @@ if (selected instanceof Page) {
     }
 }
 
+Map<String, Object> editingOldValues = Draft.findOldValues(editing);
 WorkStream workStream = Query.from(WorkStream.class).where("_id = ?", wp.param(UUID.class, "workStreamId")).first();
 
 if (workStream != null) {
@@ -131,14 +132,13 @@ if (workStream != null) {
     State.getInstance(workstreamObject).as(WorkStream.Data.class).complete(workStream, wp.getUser());
 }
 
-Map<String, Object> editingOldValues = State.getInstance(editing).getSimpleValues();
-
 if (wp.tryDelete(editing) ||
         wp.tryNewDraft(editing) ||
         wp.tryDraft(editing) ||
         wp.tryPublish(editing) ||
         wp.tryRestore(editing) ||
         wp.tryTrash(editing) ||
+        wp.tryMerge(editing) ||
         wp.tryWorkflow(editing)) {
     return;
 }
@@ -185,6 +185,14 @@ if (!wp.getCmsTool().isDisableContentLocking()) {
 
 // --- Presentation ---
 
+Content.ObjectModification contentData = editingState.as(Content.ObjectModification.class);
+Object oldObject = Query.fromAll().where("_id = ?", editingState.getId()).noCache().first();
+boolean visible = false;
+
+if (oldObject != null) {
+    visible = State.getInstance(oldObject).isVisible();
+}
+
 %>
 <%
 wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel() : null);
@@ -213,6 +221,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     "action-trash", null,
                     "published", null) %>"
             autocomplete="off"
+            data-rtc-content-id="<%= draft != null ? draft.getId() : editingState.getId() %>"
             data-new="<%= State.getInstance(editing).isNew() %>"
             data-o-id="<%= State.getInstance(selected).getId() %>"
             data-o-label="<%= wp.h(State.getInstance(selected).getLabel()) %>"
@@ -227,7 +236,27 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 <h1 class="breadcrumbs"><%
 
                     wp.writeStart("span", "class", "breadcrumbItem icon icon-object");
-                        wp.writeHtml(state.as(Content.ObjectModification.class).isDraft() ? "Draft " : (state.isNew() ? "New " : "Edit "));
+                        if (state.isNew()) {
+                            wp.writeHtml("New");
+
+                        } else {
+                            if (draft != null) {
+                                wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+                                wp.writeHtml(" for");
+
+                                if (!visible) {
+                                    wp.writeHtml(" Initial Draft of");
+                                }
+
+                            } else if (!visible) {
+                                wp.writeHtml("Initial Draft of");
+
+                            } else {
+                                wp.writeHtml("Edit");
+                            }
+                        }
+
+                        wp.writeHtml(" ");
 
                         if (compatibleTypes.size() < 2) {
                             wp.write(wp.objectLabel(state.getType()));
@@ -344,8 +373,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         }
                     wp.writeEnd();
 
-                } else if (!editingState.as(Content.ObjectModification.class).isDraft() &&
-                        (history != null || draft != null)) {
+                } else if (history != null || draft != null) {
                     State original = State.getInstance(Query.
                             from(Object.class).
                             where("_id = ?", editing).
@@ -356,7 +384,9 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         wp.writeStart("div", "class", "contentDiff");
                             if (history != null) {
                                 wp.writeStart("div", "class", "contentDiffOld contentDiffLeft");
-                                    wp.writeStart("h2").writeHtml("History").writeEnd();
+                                    wp.writeStart("h2");
+                                        wp.writeObjectLabel(ObjectType.getInstance(History.class));
+                                    wp.writeEnd();
                                     wp.writeSomeFormFields(editing, true, null, null);
                                 wp.writeEnd();
                             }
@@ -365,7 +395,9 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.disableFormFields();
 
                                 wp.writeStart("div", "class", "contentDiffCurrent " + (history != null ? "contentDiffRight" : "contentDiffLeft"));
-                                    wp.writeStart("h2").writeHtml("Current").writeEnd();
+                                    wp.writeStart("h2");
+                                        wp.writeHtml(!visible ? "Initial Draft" : "Live");
+                                    wp.writeEnd();
                                     wp.writeSomeFormFields(original.getOriginalObject(), true, null, null);
                                 wp.writeEnd();
 
@@ -375,7 +407,9 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                             if (draft != null) {
                                 wp.writeStart("div", "class", "contentDiffNew contentDiffRight");
-                                    wp.writeStart("h2").writeHtml("Draft").writeEnd();
+                                    wp.writeStart("h2");
+                                        wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+                                    wp.writeEnd();
                                     wp.writeSomeFormFields(editing, true, null, null);
                                 wp.writeEnd();
                             }
@@ -396,7 +430,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
         <div class="contentForm-aside">
             <div class="widget widget-publishing">
-                <h1 class="icon icon-action-publish">Publishing</h1>
+                <h1 class="icon icon-action-publish"><%= wp.h(wp.localize(null, "publishing")) %></h1>
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
@@ -511,7 +545,6 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 }
 
                 boolean isWritable = wp.hasPermission("type/" + editingState.getTypeId() + "/write");
-                Content.ObjectModification contentData = State.getInstance(editing).as(Content.ObjectModification.class);
                 boolean isDraft = !editingState.isNew() && (contentData.isDraft() || draft != null);
                 boolean isHistory = history != null;
                 boolean isTrash = contentData.isTrash();
@@ -527,17 +560,26 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         wp.writeStart("div", "class", "message message-warning");
                             wp.writeStart("p");
-                                wp.writeHtml("Draft last saved ");
+                                if (draft != null) {
+                                    wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+
+                                } else {
+                                    wp.writeHtml("Initial Draft");
+                                }
+
+                                wp.writeHtml(" last saved ");
                                 wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                                 wp.writeHtml(" by ");
                                 wp.writeObjectLabel(draftContentData.getUpdateUser());
                                 wp.writeHtml(".");
+                            wp.writeEnd();
 
-                                if (schedule != null) {
-                                    Date triggerDate = schedule.getTriggerDate();
-                                    ToolUser triggerUser = schedule.getTriggerUser();
+                            if (schedule != null) {
+                                Date triggerDate = schedule.getTriggerDate();
+                                ToolUser triggerUser = schedule.getTriggerUser();
 
-                                    if (triggerDate != null || triggerUser != null) {
+                                if (triggerDate != null || triggerUser != null) {
+                                    wp.writeStart("p");
                                         wp.writeHtml(" Scheduled to be published");
 
                                         if (triggerDate != null) {
@@ -551,16 +593,17 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                         }
 
                                         wp.writeHtml(".");
-                                    }
+                                    wp.writeEnd();
                                 }
-                            wp.writeEnd();
+                            }
 
                             wp.writeStart("div", "class", "actions");
                                 if (draft != null) {
                                     wp.writeStart("a",
                                             "class", "icon icon-action-edit",
                                             "href", wp.url("", "draftId", null));
-                                        wp.writeHtml("Current");
+                                        wp.writeHtml("Back to ");
+                                        wp.writeHtml(!visible ? "Initial Draft" : "Live");
                                     wp.writeEnd();
                                 }
 
@@ -603,7 +646,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeStart("a",
                                         "class", "icon icon-action-edit",
                                         "href", wp.url("", "historyId", null));
-                                    wp.writeHtml("Current");
+                                    wp.writeHtml("Live");
                                 wp.writeEnd();
 
                                 wp.writeHtml(" ");
@@ -688,7 +731,8 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             }
 
                             if (workflow != null) {
-                                Workflow.Data workflowData = editingState.as(Workflow.Data.class);
+                                State workflowParentState = draft != null ? draft.getState() : editingState;
+                                Workflow.Data workflowData = workflowParentState.as(Workflow.Data.class);
                                 String currentState = workflowData.getCurrentState();
                                 Map<String, String> transitionNames = new LinkedHashMap<String, String>();
 
@@ -703,7 +747,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 if (currentState != null || !transitionNames.isEmpty()) {
                                     WorkflowLog log = Query.
                                             from(WorkflowLog.class).
-                                            where("objectId = ?", editingState.getId()).
+                                            where("objectId = ?", workflowParentState.getId()).
                                             sortDescending("date").
                                             first();
 
@@ -730,7 +774,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                                     wp.writeHtml(" ");
                                                     wp.writeStart("a",
                                                             "target", "workflowLogs",
-                                                            "href", wp.cmsUrl("/workflowLogs", "objectId", editingState.getId()));
+                                                            "href", wp.cmsUrl("/workflowLogs", "objectId", workflowParentState.getId()));
                                                         if (ObjectUtils.isBlank(comment)) {
                                                             wp.writeHtml("by ");
 
@@ -747,14 +791,16 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                                     wp.writeEnd();
                                                 }
 
-                                                wp.writeStart("div", "class", "actions");
-                                                    wp.writeStart("button",
-                                                            "class", "link icon icon-action-save",
-                                                            "name", "action-draft",
-                                                            "value", "true");
-                                                        wp.writeHtml("Save");
+                                                if (draft == null) {
+                                                    wp.writeStart("div", "class", "actions");
+                                                        wp.writeStart("button",
+                                                                "class", "link icon icon-action-save",
+                                                                "name", "action-draft",
+                                                                "value", "true");
+                                                            wp.writeHtml("Save");
+                                                        wp.writeEnd();
                                                     wp.writeEnd();
-                                                wp.writeEnd();
+                                                }
                                                 wp.writeEnd();
                                             wp.writeEnd();
                                         }
@@ -780,6 +826,14 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                                                 wp.writeFormFields(newLog);
                                             wp.writeEnd();
+
+                                            if (!visible && draft != null) {
+                                                wp.writeStart("button",
+                                                        "name", "action-merge",
+                                                        "value", "true");
+                                                    wp.writeHtml("Merge with Initial Draft");
+                                                wp.writeEnd();
+                                            }
 
                                             for (Map.Entry<String, String> entry : transitionNames.entrySet()) {
                                                 wp.writeStart("button",
@@ -889,7 +943,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                     "class", "link icon icon-object-draft",
                                     "name", "action-newDraft",
                                     "value", "true");
-                                wp.writeHtml(editingState.isNew() ? "Save Draft" : "New Draft");
+
+                                if (editingState.isNew()) {
+                                    wp.writeHtml("Save Draft");
+
+                                } else {
+                                    wp.writeHtml("New ");
+                                    wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+                                }
+
                             wp.writeEnd();
                         wp.writeEnd();
                     }
@@ -964,33 +1026,30 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                     if (editingType != null) {
                         Renderer.TypeModification rendererData = editingType.as(Renderer.TypeModification.class);
+                        List<Object> refs = Query.
+                                fromAll().
+                                and("_any matches ?", editingState.getId()).
+                                and("_id != ?", editingState.getId()).
+                                and("_type != ?", Draft.class).
+                                select(0, 10).
+                                getItems();
 
-                        if (!ObjectUtils.isBlank(rendererData.getEmbedPath())) {
-                            List<Object> refs = Query.
-                                    fromAll().
-                                    and("_any matches ?", editingState.getId()).
-                                    and("_id != ?", editingState.getId()).
-                                    and("_type != ?", Draft.class).
-                                    select(0, 10).
-                                    getItems();
-
-                            if (!refs.isEmpty()) {
-                                wp.writeHtml(" ");
-                                wp.writeStart("select",
-                                        "name", "_mainObjectId",
-                                        "onchange", "$(this).closest('form').submit();",
-                                        "style", "width:200px;");
-                                    wp.writeStart("option", "value", "");
-                                        wp.writeTypeObjectLabel(editing);
-                                    wp.writeEnd();
-
-                                    for (Object ref : refs) {
-                                        wp.writeStart("option", "value", State.getInstance(ref).getId());
-                                            wp.writeTypeObjectLabel(ref);
-                                        wp.writeEnd();
-                                    }
+                        if (!refs.isEmpty()) {
+                            wp.writeHtml(" ");
+                            wp.writeStart("select",
+                                    "name", "_mainObjectId",
+                                    "onchange", "$(this).closest('form').submit();",
+                                    "style", "width:200px;");
+                                wp.writeStart("option", "value", "");
+                                    wp.writeTypeObjectLabel(editing);
                                 wp.writeEnd();
-                            }
+
+                                for (Object ref : refs) {
+                                    wp.writeStart("option", "value", State.getInstance(ref).getId());
+                                        wp.writeTypeObjectLabel(ref);
+                                    wp.writeEnd();
+                                }
+                            wp.writeEnd();
                         }
 
                         List<Context> contexts = new ArrayList<Context>();

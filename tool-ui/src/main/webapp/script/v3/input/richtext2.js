@@ -232,6 +232,51 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
         },
 
+        
+        /**
+         * Rules for cleaning up the clipboard data when content is pasted
+         * from outside the RTE.
+         *
+         * This is an object of key/value pairs, where the key is a jQuery selector,
+         * and value is one of the following:
+         * {String} a style name that defines how element should be styled (refer to the "styles" parameter)
+         */
+        clipboardSanitizeRules: {
+
+            // Any <b> or '<strong>' element should be treated as bold even if it has extra attributes
+            // Example MSWord:  <b style="mso-bidi-font-weight:normal">
+            // Note: Google docs encloses the entire document in a 'b' element so we must exclude that one
+            'b:not([id^=docs-internal-guid])': 'bold',
+            'strong': 'bold',
+
+            // Any '<i>' or '<em>' element should be treated as italic even if it has extra attributes
+            // Example: <i style="mso-bidi-font-style:normal">
+            'i': 'italic',
+            'em': 'italic',
+
+            // Google docs styles
+            'span[style*="font-style:italic"]': 'italic',
+            'span[style*="font-weight:700"]': 'bold',
+            'span[style*="font-weight:bold"]': 'bold',
+            'span[style*="font-weight: bold"]': 'bold',
+            'span[style*="text-decoration:underline"]': 'underline',
+            'span[style*="vertical-align:super"]': 'superscript',
+            'span[style*="vertical-align:sub"]': 'subscript',
+            'li[style*="list-style-type:disc"] > p': 'ul',
+            'li[style*="list-style-type:decimal"] > p': 'ol',
+
+            'p[style*="text-align: right"]': 'alignRight',
+            'p[style*="text-align: center"]': 'alignCenter',
+            
+            'p[style*="text-align:right"]': 'alignRight',
+            'p[style*="text-align:center"]': 'alignCenter',
+            
+            // Any 'p' element should be treated as a new line
+            // Note: we also add an extra <br> element after the <p> elements.
+            'p': 'linebreak'
+            
+        },
+
 
         /**
          * Which buttons are in the toolbar?
@@ -572,7 +617,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             self.rte = Object.create(CodeMirrorRte);
 
             // Add our styles to the styles that are already built into the rich text editor
-            self.rte.styles = $.extend(true, self.rte.styles, self.styles);
+            self.rte.styles = $.extend(true, {}, self.rte.styles, self.styles);
+
+            // Add our clipboard sanitize rules
+            self.rte.clipboardSanitizeRules = $.extend(true, {}, self.rte.clipboardSanitizeRules, self.clipboardSanitizeRules);
 
             // Create a div under the text area to display the toolbar and the editor
             self.$container = $('<div/>', {
@@ -583,7 +631,22 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             // This is useful for when the external code doesn't know the self.$el (textarea)
             self.$container.data('rte2', self);
 
-            self.$editor = $('<div/>').appendTo(self.$container);
+            // Since the rte will trigger special events on the container,
+            // we should catch them and pass them to the textarea
+            self.$container.on('rteFocus', function(){
+                self.$el.trigger('rteFocus', [self]);
+                return false;
+            });
+            self.$container.on('rteBlur', function(){
+                self.$el.trigger('rteBlur', [self]);
+                return false;
+            });
+            self.$container.on('rteChange', function(){
+                self.$el.trigger('rteChange', [self]);
+                return false;
+            });
+
+            self.$editor = $('<div/>', {'class':'rte2-codemirror'}).appendTo(self.$container);
                 
             // Hide the textarea
             self.$el.hide();
@@ -609,6 +672,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             // Set the content into the editor
             self.rte.fromHTML(content);
 
+            // Adding HTML to the editor tends to create multiple undo history events,
+            // so clear the history to start.
+            self.rte.historyClear();
+            
             // Set up periodic update of the textarea
             self.previewInit();
         },
@@ -1575,6 +1642,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 // Close the popup - this will also trigger the enhancement display to be updated (see 'close' event below)
                 $target.popup('close');
                 
+                // Put focus back on the editor
+                self.focus();
+
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 return false;
@@ -1583,7 +1653,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
             // Set up a global close event to determine when the enhancement popup is closed
             // so we can update the enhancement display (or remove the enhancement)
-            $(document).on('close', '.popup[name^="contentEnhancement-"]', function() {
+            $(document.body).on('close', '.popup[name^="contentEnhancement-"]', function() {
 
                 var $enhancement, $popupTrigger, $popup;
 
@@ -1606,7 +1676,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 // Update the enhancement to show a preview of the content.
                 // This will also remove the enhancement if it is empty.
                 self.enhancementUpdate($enhancement);
-
+                
             });
         },
 
@@ -1646,6 +1716,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 $enhancement.addClass('rte2-marker');
             }
 
+            // Clicking on the enhancement should focus back on the editor
+            // and place the cursor at the start of the line that contains the enhancement
+            $enhancement.on('click', function(){
+                self.enhancementSetCursor(this);
+                self.focus();
+            });
+            
             // Add the label (preview image and label text)
             $('<div/>', {'class': 'rte2-enhancement-label' }).appendTo($enhancement);
 
@@ -1693,7 +1770,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             reference = self.enhancementGetReference($enhancement);
             emptyText = self.enhancementIsMarker($enhancement) ? 'Empty Marker' : 'Empty Enhancement';
 
-            if (!reference) {
+            if (!reference.record) {
                 self.enhancementRemoveCompletely($enhancement);
                 return;
             }
@@ -2061,7 +2138,26 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             }
         },
 
+        
+        /**
+         * Set the editor cursor to the same line that contains the enhancement.
+         */
+        enhancementSetCursor: function(el) {
+            var line, mark, self;
 
+            self = this;
+            
+            mark = self.enhancementGetMark(el);
+            if (!mark) {
+                return;
+            }
+
+            line = self.rte.enhancementGetLineNumber(mark);
+            
+            self.rte.setCursor(line, 0);
+        },
+
+        
         /**
          * Sets the position for an enhancement.
          *
@@ -2514,12 +2610,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
                 // Add a placeholder attribute to the container.
                 // CSS rules will overlay the text on top of the editor.
-                self.$container.attr(attrName, placeholder);
+                self.$editor.attr(attrName, placeholder);
                 
             } else {
 
                 // Remove the attribute so the text will not be overlayed
-                self.$container.removeAttr(attrName);
+                self.$editor.removeAttr(attrName);
             }
         },
 
@@ -2587,11 +2683,24 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             return html;
         },
 
+        toText: function() {
+            var self, text;
+            self = this;
+            text = self.rte.toText();
+            return text;
+        },
+
         focus: function() {
             var self;
             self = this;
             self.rte.focus();
             self.toolbarUpdate();
+            self.rte.refresh();
+        },
+
+        setCursor: function(line, ch) {
+            var self;
+            self.rte.setCursor(line, ch);
         }
 
     };

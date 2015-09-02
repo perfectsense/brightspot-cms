@@ -959,7 +959,7 @@ public class ToolUser extends Record implements ToolEntity {
 
             if (compareObject != null) {
                 if (compareObject instanceof Draft) {
-                    return ((Draft) compareObject).getObject();
+                    return ((Draft) compareObject).recreate();
 
                 } else if (compareObject instanceof History) {
                     return ((History) compareObject).getObject();

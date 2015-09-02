@@ -364,8 +364,22 @@
     box-shadow: 0 40px 80px -40px black !important;
     padding: 0 !important;
 
-    > .closeButton,
     > .marker {
+      border-color: transparent transparent @color-separator transparent;
+      left: 24px !important;
+
+      &:before {
+        border-color: transparent transparent white transparent;
+        border-style: solid;
+        border-width: 8px;
+        content: '';
+        left: -8px;
+        position: absolute;
+        top: -5px;
+      }
+    }
+
+    > .closeButton {
       display: none;
     }
   }

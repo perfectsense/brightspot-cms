@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.psddev.dari.db.DatabaseEnvironment;
 import com.psddev.dari.db.ForwardingDatabase;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
@@ -17,7 +18,7 @@ import com.psddev.dari.util.PaginatedResult;
 public class PreviewDatabase extends ForwardingDatabase {
 
     private Date date;
-    private final Map<UUID, Map<String, Object>> changesById = new HashMap<UUID, Map<String, Object>>();
+    private final Map<UUID, Map<String, Map<String, Object>>> differencesById = new HashMap<>();
 
     private Date getDate() {
         return date;
@@ -32,7 +33,7 @@ public class PreviewDatabase extends ForwardingDatabase {
                 .from(Draft.class)
                 .where("schedule = ?", schedule)
                 .selectAll()) {
-            changesById.put(draft.getObjectId(), draft.getObjectChanges());
+            differencesById.put(draft.getObjectId(), draft.getDifferences());
         }
     }
 
@@ -42,6 +43,7 @@ public class PreviewDatabase extends ForwardingDatabase {
         if (object != null) {
             State state = State.getInstance(object);
             Date date = getDate();
+            DatabaseEnvironment environment = state.getDatabase().getEnvironment();
 
             if (date != null) {
                 Draft draft = null;
@@ -70,14 +72,20 @@ public class PreviewDatabase extends ForwardingDatabase {
                 }
 
                 if (draft != null) {
-                    state.putAll(draft.getObjectChanges());
+                    state.setValues(Draft.mergeDifferences(
+                            environment,
+                            state.getSimpleValues(),
+                            draft.getDifferences()));
                 }
 
             } else {
-                Map<String, Object> changes = changesById.get(state.getId());
+                Map<String, Map<String, Object>> differences = differencesById.get(state.getId());
 
-                if (changes != null) {
-                    state.putAll(changes);
+                if (differences != null) {
+                    state.setValues(Draft.mergeDifferences(
+                            environment,
+                            state.getSimpleValues(),
+                            differences));
                 }
             }
         }

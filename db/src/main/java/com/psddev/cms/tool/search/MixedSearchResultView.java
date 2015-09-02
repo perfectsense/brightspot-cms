@@ -16,12 +16,12 @@ public class MixedSearchResultView extends ListSearchResultView {
 
     @Override
     public String getIconName() {
-        return "list-ul";
+        return "asterisk";
     }
 
     @Override
     public String getDisplayName() {
-        return "List";
+        return "Mixed";
     }
 
     @Override

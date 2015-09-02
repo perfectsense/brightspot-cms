@@ -1,4 +1,4 @@
-package com.psddev.cms.tool.page;
+package com.psddev.cms.rtc;
 
 import com.google.common.collect.ImmutableMap;
 import com.psddev.dari.db.Database;
@@ -10,7 +10,6 @@ import org.atmosphere.cpr.AtmosphereFrameworkInitializer;
 import org.atmosphere.cpr.AtmosphereRequest;
 import org.atmosphere.cpr.AtmosphereResponse;
 import org.atmosphere.interceptor.AtmosphereResourceLifecycleInterceptor;
-import org.atmosphere.interceptor.BroadcastOnPostAtmosphereInterceptor;
 import org.atmosphere.util.VoidAnnotationProcessor;
 
 import javax.servlet.Filter;
@@ -95,7 +94,6 @@ public class RtcFilter extends AbstractFilter implements AbstractFilter.Auto {
                 new RtcHandler(),
                 Arrays.asList(
                         new AtmosphereResourceLifecycleInterceptor(),
-                        new BroadcastOnPostAtmosphereInterceptor(),
                         new TrackMessageSizeInterceptor()
                 )
         );

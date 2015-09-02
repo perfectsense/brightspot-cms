@@ -851,7 +851,7 @@ public class BulkWorkflow extends PageServlet {
 
                         } else {
                             draft.as(Workflow.Data.class).changeState(transition, getUser(), log);
-                            draft.setObject(object);
+                            draft.update(Draft.findOldValues(object), object);
                             publish(draft);
                         }
 

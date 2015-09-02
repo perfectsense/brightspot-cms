@@ -51,16 +51,7 @@ if (fieldValue == null) {
 }
 
 final List<ObjectType> validTypes = field.as(ToolUi.class).findDisplayTypes();
-boolean isValueExternal = !field.isEmbedded();
-if (isValueExternal && validTypes != null && validTypes.size() > 0) {
-    isValueExternal = false;
-    for (ObjectType type : validTypes) {
-        if (!type.isEmbedded()) {
-            isValueExternal = true;
-            break;
-        }
-    }
-}
+boolean isValueExternal = ToolUi.isValueExternal(field);
 
 Collections.sort(validTypes, new ObjectFieldComparator("_label", false));
 
@@ -110,8 +101,8 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                 wp.updateUsingParameters(item);
             }
 
-            itemState.putValue(Content.PUBLISH_DATE_FIELD, publishDates[i] != null ? publishDates[i] : new Date());
-            itemState.putValue(Content.UPDATE_DATE_FIELD, new Date());
+            itemState.remove(Content.PUBLISH_DATE_FIELD);
+            itemState.remove(Content.UPDATE_DATE_FIELD);
             fieldValue.add(item);
 
             if (field.isEmbedded() && !itemState.isNew()) {
@@ -148,7 +139,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
     Set<ObjectType> types = field.getTypes();
     final StringBuilder typeIdsCsv = new StringBuilder();
     StringBuilder typeIdsQuery = new StringBuilder();
-    boolean previewable = false;
+    boolean previewable = field.as(ToolUi.class).isDisplayGrid();
 
     if (types != null && !types.isEmpty()) {
         for (ObjectType type : types) {
@@ -567,6 +558,8 @@ if (!isValueExternal) {
         }
     }
 
+    boolean displayGrid = field.as(ToolUi.class).isDisplayGrid();
+
     StringBuilder genericArgumentsString = new StringBuilder();
     List<ObjectType> genericArguments = field.getGenericArguments();
 
@@ -580,7 +573,7 @@ if (!isValueExternal) {
     }
 
     wp.writeStart("div",
-            "class", "inputLarge repeatableForm" + (!bulkUploadTypes.isEmpty() ? " repeatableForm-previewable" : ""),
+            "class", "inputLarge repeatableForm" + (displayGrid ? " repeatableForm-previewable" : ""),
             "foo", "bar",
             "data-generic-arguments", genericArgumentsString);
 
@@ -641,7 +634,7 @@ if (!isValueExternal) {
             for (ObjectType type : validTypes) {
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
-                            "class", !bulkUploadTypes.isEmpty() ? "collapsed" : null,
+                            "class", displayGrid ? "collapsed" : null,
                             "data-sortable-item-type", type.getId(),
                             "data-type", wp.getObjectLabel(type),
                             // Add the name of the preview field so the front end knows
@@ -676,28 +669,25 @@ if (!isValueExternal) {
     wp.writeEnd();
 
 } else {
-    Set<ObjectType> types = field.getTypes();
+    Set<ObjectType> valueTypes = field.getTypes();
     final StringBuilder typeIdsCsv = new StringBuilder();
     StringBuilder typeIdsQuery = new StringBuilder();
-    boolean previewable = false;
 
-    if (types != null && !types.isEmpty()) {
-        for (ObjectType type : types) {
-            typeIdsCsv.append(type.getId()).append(",");
-            typeIdsQuery.append("typeId=").append(type.getId()).append("&");
-
-            if (!ObjectUtils.isBlank(type.getPreviewField())) {
-                previewable = true;
-            }
+    if (valueTypes != null && !valueTypes.isEmpty()) {
+        for (ObjectType valueType : valueTypes) {
+            typeIdsCsv.append(valueType.getId()).append(",");
+            typeIdsQuery.append("typeId=").append(valueType.getId()).append("&");
         }
 
         typeIdsCsv.setLength(typeIdsCsv.length() - 1);
         typeIdsQuery.setLength(typeIdsQuery.length() - 1);
     }
 
+    boolean displayGrid = field.as(ToolUi.class).isDisplayGrid();
+
     PageWriter writer = wp.getWriter();
 
-    writer.start("div", "class", "inputSmall repeatableObjectId" + (previewable ? " repeatableObjectId-previewable" : ""));
+    writer.start("div", "class", "inputSmall repeatableObjectId" + (displayGrid ? " repeatableObjectId-previewable" : ""));
 
         if (fieldValue == null || fieldValue.isEmpty()) {
 
@@ -736,7 +726,7 @@ if (!isValueExternal) {
             writer.writeEnd();
         writer.end();
 
-        if (previewable && !field.as(ToolUi.class).isReadOnly()) {
+        if (displayGrid && !field.as(ToolUi.class).isReadOnly()) {
             writer.start("a",
                     "class", "action-upload",
                     "href", wp.url("/content/uploadFiles?" + typeIdsQuery, "containerId", containerObjectId),

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @deprecated Use {@link com.psddev.cms.tool.page.RtcAction} instead.
+ * @deprecated Use {@link com.psddev.cms.rtc.RtcAction} instead.
  */
 @Deprecated
 public class ToolCheckResponse extends HashMap<String, Object> {

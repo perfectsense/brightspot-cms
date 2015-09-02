@@ -1,8 +1,8 @@
 package com.psddev.cms.tool.page.content;
 
 import com.google.common.base.Preconditions;
+import com.psddev.cms.rtc.RtcEvent;
 import com.psddev.dari.db.Database;
-import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.UuidUtils;
@@ -16,7 +16,7 @@ import java.util.UUID;
  *
  * @since 3.1
  */
-public class EditFieldUpdate extends Record {
+public class EditFieldUpdate extends Record implements RtcEvent {
 
     @Indexed
     private UUID userId;
@@ -26,15 +26,15 @@ public class EditFieldUpdate extends Record {
 
     private Map<String, Set<String>> fieldNamesByObjectId;
 
-    private static UUID createId(UUID userId, UUID contentId) {
-        return UuidUtils.createVersion3Uuid(EditFieldUpdate.class.getName() + "/" + userId + "/" + contentId);
-    }
-
     /**
      * Saves the given {@code fieldNamesByObjectId} update information and
-     * associates it to the given {@code userId} and {@code contentId}.
+     * associates it to the given {@code userId}, {@code sessionId},
+     * and {@code contentId}.
      *
      * @param userId
+     *        Can't be {@code null}.
+     *
+     * @param sessionId
      *        Can't be {@code null}.
      *
      * @param contentId
@@ -43,52 +43,19 @@ public class EditFieldUpdate extends Record {
      * @param fieldNamesByObjectId
      *        If {@code null}, equivalent to an empty map.
      */
-    public static void save(UUID userId, UUID contentId, Map<String, Set<String>> fieldNamesByObjectId) {
+    public static void save(UUID userId, UUID sessionId, UUID contentId, Map<String, Set<String>> fieldNamesByObjectId) {
         Preconditions.checkNotNull(userId);
+        Preconditions.checkNotNull(sessionId);
         Preconditions.checkNotNull(contentId);
 
         EditFieldUpdate update = new EditFieldUpdate();
 
-        update.getState().setId(createId(userId, contentId));
+        update.getState().setId(UuidUtils.createVersion3Uuid(EditFieldUpdate.class.getName() + "/" + sessionId + "/" + contentId));
         update.setUserId(userId);
+        update.as(RtcEvent.Data.class).setSessionId(sessionId);
         update.setContentId(contentId);
         update.setFieldNamesByObjectId(fieldNamesByObjectId);
         update.saveImmediately();
-    }
-
-    /**
-     * Deletes the update associated with the given {@code userId} and
-     * {@code contentId}.
-     *
-     * @param userId
-     *        Can't be {@code null}.
-     *
-     * @param contentId
-     *        Can't be {@code null}.
-     */
-    public static void delete(UUID userId, UUID contentId) {
-        Preconditions.checkNotNull(userId);
-        Preconditions.checkNotNull(contentId);
-
-        for (EditFieldUpdate update : Query.from(EditFieldUpdate.class)
-                .where("_id = ?", createId(userId, contentId))
-                .selectAll()) {
-
-            update.setFieldNamesByObjectId(null);
-            update.saveImmediately();
-
-            Database db = Database.Static.getDefault();
-
-            db.beginIsolatedWrites();
-
-            try {
-                update.delete();
-                db.commitWrites();
-
-            } finally {
-                db.endWrites();
-            }
-        }
     }
 
     public UUID getUserId() {
@@ -119,5 +86,23 @@ public class EditFieldUpdate extends Record {
 
     public void setFieldNamesByObjectId(Map<String, Set<String>> fieldsByObjectId) {
         this.fieldNamesByObjectId = fieldsByObjectId;
+    }
+
+    @Override
+    public void onDisconnect() {
+        setFieldNamesByObjectId(null);
+        saveImmediately();
+
+        Database db = Database.Static.getDefault();
+
+        db.beginIsolatedWrites();
+
+        try {
+            delete();
+            db.commitWrites();
+
+        } finally {
+            db.endWrites();
+        }
     }
 }

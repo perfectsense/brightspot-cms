@@ -330,16 +330,22 @@ function() {
 
     // For new rich text editor, special handling for the word count.
     // Note this counts only the text content not the final output which includes extra HTML elements.
-    $doc.on('rteChange', function(event, rte) {
+    $doc.on('rteChange', $.throttle(1000, function(event, rte) {
           
-        var $input, $container, count, text;
+        var $input, $container, html, $html, text;
 
         $input = rte.$el;
         $container = $input.closest('.inputContainer');
-        text = rte.toText();
-          
+        
+        html = rte.toHTML();
+        $html = $(new DOMParser().parseFromString(html, "text/html").body);
+        $html.find('del').remove();
+        $html.find('br,p,div,ul,ol,li').after('\n');
+        text = $html.text();
+
         updateWordCount($container, $input, text);
-    });
+
+    }));
 
   })();
 

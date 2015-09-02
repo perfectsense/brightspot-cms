@@ -31,12 +31,18 @@ import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.RemoteWidgetFilter;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.view.JsonViewRenderer;
+import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.ViewOutput;
+import com.psddev.cms.view.ViewRequest;
+import com.psddev.cms.view.ViewRenderer;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.ApplicationFilter;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
+import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.AbstractFilter;
 import com.psddev.dari.util.ErrorUtils;
@@ -673,6 +679,10 @@ public class PageFilter extends AbstractFilter {
                     ((Renderer) mainObject).renderObject(request, response, (HtmlWriter) writer);
                 }
 
+                if (!rendered && tryRenderView(request, response, writer, mainObject)) {
+                    rendered = true;
+                }
+
             } finally {
                 ContextTag.Static.popContext(request);
             }
@@ -1069,6 +1079,62 @@ public class PageFilter extends AbstractFilter {
         }
     };
 
+    private static boolean tryRenderView(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Writer writer,
+                                        Object object)
+                                        throws IOException, ServletException {
+
+        ViewRequest viewRequest = new ServletViewRequest(request);
+
+        PageViewClass annotation = object.getClass().getAnnotation(PageViewClass.class);
+
+        Class<?> layoutViewClass = annotation != null ? annotation.value() : null;
+        if (layoutViewClass != null) {
+
+            Object view = viewRequest.createView(layoutViewClass, object);
+            if (view != null) {
+
+                ViewRenderer renderer;
+                if ("json".equals(request.getParameter("_renderer"))) {
+
+                    JsonViewRenderer jsonViewRenderer = new JsonViewRenderer();
+                    jsonViewRenderer.setIndented(!Settings.isProduction());
+                    jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+                    renderer = jsonViewRenderer;
+
+                    response.setContentType("application/json");
+
+                } else {
+                    renderer = ViewRenderer.createRenderer(view);
+                }
+
+                if (renderer != null) {
+
+                    ViewOutput result = renderer.render(view);
+                    String output = result.get();
+                    if (output != null) {
+                        writer.write(output);
+                    }
+
+                } else {
+                    LOGGER.warn("Could not create renderer for view of type ["
+                            + view.getClass().getName() + "]!");
+                }
+
+            } else {
+                LOGGER.warn("Could not create view of type ["
+                        + layoutViewClass.getName() + "] for object of type ["
+                        + object.getClass() + "]!");
+            }
+
+            return true;
+
+        } else {
+            return false;
+        }
+    }
+
     /** Renders the given {@code object}. */
     public static void renderObject(
             HttpServletRequest request,
@@ -1077,11 +1143,14 @@ public class PageFilter extends AbstractFilter {
             Object object)
             throws IOException, ServletException {
 
-        if (object instanceof Section) {
-            renderSection(request, response, writer, (Section) object);
+        if (!tryRenderView(request, response, writer, object)) {
 
-        } else {
-            renderObjectWithSection(request, response, writer, object, null);
+            if (object instanceof Section) {
+                renderSection(request, response, writer, (Section) object);
+
+            } else {
+                renderObjectWithSection(request, response, writer, object, null);
+            }
         }
     }
 
@@ -1377,7 +1446,7 @@ public class PageFilter extends AbstractFilter {
                         }
 
                         if (preview instanceof Draft) {
-                            mainObject = ((Draft) preview).getObject();
+                            mainObject = ((Draft) preview).recreate();
 
                         } else if (preview instanceof History) {
                             mainObject = ((History) preview).getObject();
@@ -1683,7 +1752,7 @@ public class PageFilter extends AbstractFilter {
                 for (int i = objects.size() - 1; i >= 0; -- i) {
                     Object object = objects.get(i);
 
-                    if (!State.getInstance(object).isNew()) {
+                    if (object instanceof Recordable && !State.getInstance(object).isNew()) {
                         return object;
                     }
                 }

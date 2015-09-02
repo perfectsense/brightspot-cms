@@ -135,8 +135,48 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                 // It does not create an element for output.
                 className: 'rte2-style-track-display',
                 internal:true
+            },
+
+            linebreak: {
+                line:true
             }
         }, // styles
+
+        
+        /**
+         * Rules for cleaning up the clipboard data when content is pasted
+         * from outside the RTE.
+         *
+         * This is an object of key/value pairs, where the key is a jQuery selector,
+         * and value is a style name from the styles object.
+         *
+         * @example
+         * {'span[style*="font-style:italic"]': 'italic',
+         *  'span[style*="font-weight:700"]': 'bold'}
+         */
+        clipboardSanitizeRules: {},
+
+        
+        /**
+         * Function for cleaning up the clipboard data when content is pasted
+         * from outside the RTE.
+         *
+         * @param {jQuery} $content
+         * The content that was pasted.
+         *
+         * @returns {jQuery}
+         * The modified content.
+         *
+         * @example
+         * function($content) {
+         *     // Remove anything with class "badclass"
+         *     $content.find('.badclass').remove();
+         *     return $content;
+         * }
+         */
+        clipboardSanitizeFunction: function($content) {
+            return $content;
+        },
 
         
         /**
@@ -232,6 +272,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             self.initListListeners();
             self.initClickListener();
             self.initEvents();
+            self.clipboardInit();
             self.trackInit();
         },
 
@@ -420,11 +461,11 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
          * Trigger an rteChange event.
          * This can happen when user types changes into the editor, or if some kind of mark is modified.
          */
-        triggerChange: function() {
+        triggerChange: $.throttle(200, function() {
             var self;
             self = this;
             self.$el.trigger('rteChange', [self]);
-        },
+        }),
 
         
         //==================================================
@@ -656,10 +697,6 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
          * @param Object [options.includeTrack=false]
          * Set to true if you want to include the "track changes" classes.
          * Otherwise will ignore those classes.
-         *
-         * @param Boolean [deleteText=false]
-         * Set to true to also delete the text within the mark.
-         *
          */
         inlineRemoveStyle: function(styleKey, range, options) {
 
@@ -724,7 +761,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                     }
 
                     markerOpts = mark.marker;
-                    markerOpts.addToHistory = true;
+                    markerOpts.addToHistory = false;
 
                     markerOptsNotInclusive = $.extend(true, {}, markerOpts);
                     markerOptsNotInclusive.inclusiveLeft = markerOptsNotInclusive.inclusiveRight = false;
@@ -884,17 +921,27 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                     position = mark.find();
                     if (position) {
                         editor.replaceRange('', position.from, position.to, '+brightspotFormatRemoveClass');
+
+                        // Trigger a change event for the editor
+                        if (options.triggerChange !== false) {
+                            self.triggerChange();
+                        }
                     }
                 }
                 if (mark.shouldRemove) {
+                    
                     mark.clear();
+                    
+                    // Trigger a change event for the editor
+                    if (options.triggerChange !== false) {
+                        self.triggerChange();
+                    }
                 }
             });
 
             // Trigger a cursor activity event so the toolbar can update
             CodeMirror.signal(editor, "cursorActivity");
-            
-            self.triggerChange();
+
         },
 
 
@@ -999,7 +1046,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
          * The range of positions {from,to} 
          *
          * @returns Boolean
-         * True if all charcters in the range are styled with className.
+         * True if any charcter in the range is styled with className.
          */
         inlineHasStyle: function(styleKey, range) {
             
@@ -1385,7 +1432,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                     to = pos.to;
 
                     // Clear other styles
-                    self.inlineRemoveStyle('', {from:from, to:to}, {includeTrack:true, except:mark.className});
+                    self.inlineRemoveStyle('', {from:from, to:to}, {includeTrack:true, except:mark.className, triggerChange:false});
                 }
                 
             });
@@ -1409,7 +1456,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             
             // Get the start and end positions for this mark
             pos = mark.find();
-            if (!pos.from) {
+            if (!pos || !pos.from) {
                 return;
             }
             
@@ -2013,19 +2060,20 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
 
         /**
          * @returns Number
-         * The line number of the mark.
+         * The line number of the mark, or 0 if the mark is not in the document.
          */
         enhancementGetLineNumber: function(mark) {
             
             var lineNumber, position;
 
+            lineNumber = undefined;
             if (mark.line) {
-                lineNumber = mark.line.lineNo() || 0;
+                lineNumber = mark.line.lineNo();
             } else if (mark.find) {
                 position = mark.find();
-                lineNumber = position.line;
-            } else {
-                lineNumber = 0;
+                if (position) {
+                    lineNumber = position.line;
+                }
             }
             
             return lineNumber;
@@ -2218,7 +2266,13 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                     if (textOriginal === '\n') {
                         return;
                     }
-                    
+
+                    // Determine if *every* character in the range is already marked as an insertion.
+                    // In this case we can just delete the content and don't need to mark it as deleted.
+                    if (self.inlineGetStyles(changeObj).trackInsert === true) {
+                        return;
+                    }
+
                     // Do not actually delete the text because we will mark it instead
                     changeObj.cancel();
 
@@ -2346,9 +2400,12 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             if (textOriginal === '\n') {
                 return;
             }
-            
-            // Add formatting to show the deleted area
-            self.inlineSetStyle('trackDelete', range);
+
+            // Determine if every character in the range is already marked as an insertion.
+            // In this case we can just delete the content and don't need to mark it as deleted.
+            if (self.inlineGetStyles(range).trackInsert !== true) {
+                self.inlineSetStyle('trackDelete', range);
+            }
 
             // Remove any text within the range that is marked as inserted
             self.inlineRemoveStyle('trackInsert', range, {deleteText:true});
@@ -2415,6 +2472,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             }
             
             mark.clear();
+            self.triggerChange();
         },
 
 
@@ -2435,6 +2493,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             }
             
             mark.clear();
+            self.triggerChange();
         },
 
 
@@ -2535,7 +2594,254 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             });
         },
 
+        
+        //==================================================
+        // Clipboard 
+        //==================================================
+        
+        clipboardInit: function() {
+            
+            var editor, isFirefox, isWindows, self, $wrapper;
+            self = this;
 
+            editor = self.codeMirror;
+            $wrapper = $(editor.getWrapperElement());
+
+            // Set up copy event
+            $wrapper.on('cut copy', function(e){
+                self.clipboardCopy(e.originalEvent);
+            });
+
+            // Set up paste event
+            // Note if using hte workaround below this will not fire on Ctrl-V paste
+            $wrapper.on('paste', function(e){
+                self.clipboardPaste(e.originalEvent);
+            });
+
+            // Workaround for problem in Firefox clipboard not supporting styled content from Microsoft Word
+            // Bug is described here: https://bugzilla.mozilla.org/show_bug.cgi?id=586587
+            isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+            isWindows = navigator.platform.toUpperCase().indexOf('WIN') > -1;
+            if (isFirefox && isWindows) {
+                
+                self.clipboardUsePasteWorkaround = true;
+      
+                // Create a contenteditable div to be used for pasting data hack
+                self.$clipboardDiv = $('<div/>', {'class':'rte2-clipboard'})
+                    .attr('contenteditable', 'true')
+                    .appendTo(self.$el)
+                    .on('paste', function(e){
+                        self.clipboardPaste(e.originalEvent);
+                    });
+
+                // If user presses Ctrl-v to paste, change the focus
+                // to the contenteditable div we previously created,
+                // so the pasted content will go there instead.
+                // This is because contenteditable properly handles
+                // the content that is pasted in from Microsoft Word
+                // while the clipboard API does not have access to the text/html.
+                $wrapper.on('keydown', function(e) {
+
+                    var x, y;
+                    
+                    if ((e.ctrlKey || e.metaKey) && e.keyCode == 86) {
+
+                        // Problem with calling .focus() on an element is it scrolls the page!
+                        // Save the scroll positions so we can scroll back to original position
+                        self.clipboardX = window.scrollX;
+                        self.clipboardY = window.scrollY;
+
+                        self.$clipboardDiv.focus();
+
+                    }
+                });
+            }
+        },
+
+        
+        /**
+         * Paste the contents of the clipboard into the currently selected region.
+         * This can only be performed during a user-generated paste event!
+         *
+         * @param {Event} e
+         * The paste event. This is required because you can only access the clipboardData from one of these events.
+         */
+        clipboardPaste: function(e) {
+            
+            var allowRaw, isWorkaround, self, value, valueHTML, valueRTE, valueText;
+            self = this;
+
+            // If we are using the workaround:
+            // Check to see if the focus has been moved to the hidden contenteditable div
+            // Normally this will happen when user types Ctrl-V to paste,
+            // but not when user selects Paste from a menu
+            isWorkaround = self.$clipboardDiv && self.$clipboardDiv.is(e.target);
+
+            // Check if the browser supports clipboard API
+            if (e && e.clipboardData && e.clipboardData.getData) {
+
+                // See what type of data is on the clipboard:
+                // data that was copied from the RTE? Or HTML or text data from elsewhere
+                valueRTE = e.clipboardData.getData('text/brightspot-rte2');
+                valueHTML = e.clipboardData.getData('text/html');
+                valueText = e.clipboardData.getData('text/plain');
+
+                if (valueRTE) {
+
+                    // If we copied data from the RTE use is as-is
+                    value = valueRTE;
+                    
+                } else if (valueHTML) {
+
+                    // For HTML copied from outside sources, clean it up first
+                    value = self.clipboardSanitize(valueHTML);
+                    
+                    // If we got data from outside the RTE, then don't allow raw HTML,
+                    // instead strip out any HTML elements we don't understand
+                    allowRaw = false;
+
+                } else if (valueText && !isWorkaround) {
+
+                    // If the clipboard only contains text, encode any special characters, and add line breaks.
+                    // Note because of the hidden div hack, if we get text/plain in the clipboard
+                    // we normally won't use it because we have to assume that there was some html that was missed.
+                    // So this will only be reached if the user selects Paste from a menu using the mouse
+                    // and CodeMirror handles the paste operation.
+                    
+                    value = self.htmlEncode(valueText).replace(/[\n\r]/g, '<br/>');
+                }
+            }
+
+            // Check if we were able to get a value from the clipboard API
+            if (value) {
+                
+                self.fromHTML(value, self.getRange(), allowRaw);
+                if (isWorkaround) {
+                    self.focus();
+                }
+                e.stopPropagation();
+                e.preventDefault();
+                
+            } else if (isWorkaround) {
+
+                // We didn't find an HTML value from the clipboard.
+                // If the user is on Windows and was pasting from Microsoft Word
+                // we can try an alternate method of retrieving the HTML.
+
+                // When the user typed Ctrl-V we should have previously intercepted it,
+                // so the focus should be on the hidden contenteditable div.
+                // However, if the user selected Paste from a menu the focus will not
+                // be on the div :-(
+                
+                // We will let the paste event continue
+                // and the content should be pasted into our hidden
+                // contenteditable div.
+
+                // Then after a timeout to allow the paste to complete,
+                // we will get the HTML content from the contenteditable div
+                // and copy it into the editor.
+                
+                self.$clipboardDiv.empty();
+
+                setTimeout(function(){
+                    
+                    // Get the content that was pasted into the hidden div
+                    value = self.$clipboardDiv.html();
+                    self.$clipboardDiv.empty();
+
+                    // Clean up the pasted HTML
+                    value = self.clipboardSanitize(value);
+
+                    // Add the cleaned HTML to the editor. Do not allow raw HTML.
+                    self.fromHTML(value, self.getRange(), false);
+
+                    // Since we changed focus to the hidden div before the paste operation,
+                    // put focus back on the editor
+                    self.focus();
+
+                    
+                }, 1);
+            }
+
+            if (isWorkaround) {
+                // Since setting focus() on the hidden div moves the page, scroll page back to original position.
+                // We seem to need a long delay for this to work successfully, but hopefully this can be improved.
+                setTimeout(function(){
+                    window.scrollTo(self.clipboardX, self.clipboardY);
+                }, 100);
+            }
+
+        },
+
+
+        /**
+         * @returns {DOM}
+         * Returns a DOM structure for the new HTML.
+         */
+        clipboardSanitize: function(html) {
+            
+            var dom, $el, self;
+            
+            self = this;
+            dom = self.htmlParse(html);
+            $el = $(dom);
+
+            // Apply the clipboard sanitize rules (if any)
+            if (self.clipboardSanitizeRules) {
+                $el.find('p').after('<br/>');
+                $.each(self.clipboardSanitizeRules, function(selector, style) {
+                    $el.find(selector).wrapInner( $('<span>', {'data-rte2-sanitize': style}) );
+                });
+            }
+
+            // Run it through the clipboard sanitize function (if it exists)
+            if (self.clipboardSanitizeFunction) {
+                $el = self.clipboardSanitizeFunction($el);
+            }
+
+            return $el[0];
+        },
+
+        
+        /**
+         * @param {Event} e
+         * The cut/copy event. This is required because you can only access the clipboardData from one of these events.
+         *
+         * @param {String} value
+         * The HTML text to save in the clipboard.
+         */
+        clipboardCopy: function(e) {
+            
+            var editor, html, range, self, text;
+            self = this;
+            editor = self.codeMirror;
+            
+            range = self.getRange();
+            text = editor.getRange(range.from, range.to);
+            html = self.toHTML(range);
+            
+            if (e && e.clipboardData && e.clipboardData.setData) {
+                
+                e.clipboardData.setData('text/plain', text);
+                e.clipboardData.setData('text/html', html);
+
+                // We set the html using mime type text/brightspot-rte
+                // so we can get it back from the clipboard without browser modification
+                // (since browser tends to add a <meta> element to text/html)
+                e.clipboardData.setData('text/brightspot-rte2', html);
+
+                // Clear the cut area
+                if (e.type === 'cut') {
+                    editor.replaceRange('', range.from, range.to);
+                }
+
+                // Don't let the actual cut/copy event occur
+                // (or it will overwrite the clipboard)
+                e.preventDefault();
+            }
+        },
+
+        
         //==================================================
         // Miscelaneous Functions
         //==================================================
@@ -2706,6 +3012,13 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
         },
 
 
+        setCursor: function(line, ch) {
+            var self;
+            self = this;
+            self.codeMirror.setCursor(line, ch);
+        },
+
+        
         /**
          * Determine if an element is a "container" for another element.
          * For example, element "li" is contained within a "ul" or "ol" element.
@@ -2787,8 +3100,12 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
         /**
          * Get content from codemirror, analyze the marked up regions,
          * and convert to HTML.
+         *
+         * @param {Object} [range=entire document]
+         * If this parameter is provided, it is a selection range within the documents.
+         * Only the selected characters will be converted to HTML.
          */
-        toHTML: function() {
+        toHTML: function(range) {
 
             /**
              * Create the opening HTML element for a given style object.
@@ -2831,6 +3148,8 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
 
             self = this;
 
+            range = range || self.getRangeAll();
+            
             // Before beginning make sure all the marks are cleaned up and simplified.
             // This will ensure that none of the marks span across lines.
             self.inlineCleanup();
@@ -2855,11 +3174,14 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                 var lineNo;
 
                 lineNo = self.enhancementGetLineNumber(mark);
-
-                // Create an array to hold the enhancements for this line, then add the current enhancement
-                enhancementsByLine[lineNo] = enhancementsByLine[lineNo] || [];
                 
-                enhancementsByLine[lineNo].push(mark);
+                if (lineNo !== undefined) {
+                    
+                    // Create an array to hold the enhancements for this line, then add the current enhancement
+                    enhancementsByLine[lineNo] = enhancementsByLine[lineNo] || [];
+                
+                    enhancementsByLine[lineNo].push(mark);
+                }
             });
 
             // Start the HTML!
@@ -2868,7 +3190,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             // Loop through the content one line at a time
             doc.eachLine(function(line) {
 
-                var annotationStart, annotationEnd, blockOnThisLine, htmlStartOfLine, htmlEndOfLine, inlineActive, inlineElementsToClose, lineNo, outputChar, raw, rawLastChar;
+                var annotationStart, annotationEnd, blockOnThisLine, charNum, charInRange, htmlStartOfLine, htmlEndOfLine, inlineActive, inlineElementsToClose, lineNo, lineInRange, outputChar, raw, rawLastChar;
 
                 lineNo = line.lineNo();
                 
@@ -2889,55 +3211,60 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                 // and the current line contains a list item, then we keep the list open.
                 // But if the current line does not contain a list item then we close the list.
                 blockOnThisLine = {};
-                
-                // Get any line classes and determine which kind of line we are on (bullet, etc)
-                // Note this does not support nesting line elements (like a list within a list)
-                // From CodeMirror, the textClass property will contain multiple line styles separated by space
-                // like 'rte2-style-ol rte2-style-align-left'
-                if (line.textClass) {
-                    
-                    $.each(line.textClass.split(' '), function() {
+
+                // If lineNo is in range
+                if (range.from.line <= lineNo && range.to.line >= lineNo) {
+
+                    // Get any line classes and determine which kind of line we are on (bullet, etc)
+                    // Note this does not support nesting line elements (like a list within a list)
+                    // From CodeMirror, the textClass property will contain multiple line styles separated by space
+                    // like 'rte2-style-ol rte2-style-align-left'
+                    if (line.textClass) {
                         
-                        var container, styleObj;
-
-                        // From a line style (like "rte2-style-ul"), determine the style name it maps to (like "ul")
-                        styleObj = self.classes[this];
-                        if (!styleObj) {
-                            return;
-                        }
-
-                        // Get the "container" element for this style (for example: ul or ol)
-                        container = styleObj.elementContainer;
-                        if (container) {
-
-                            // Mark that we found this container, so later we can close off any containers that are not active any more.
-                            // For example this will set blockOnThisLine.ul to true.
-                            blockOnThisLine[container] = true;
+                        $.each(line.textClass.split(' '), function() {
                             
-                            // Check to see if we are already inside this container element
-                            if (blockActive[container]) {
+                            var container, styleObj;
 
-                                // We are currently inside this style so we don't need to open the container element
-                                
-                            } else {
-
-                                // We are not already inside this style, so create the container element
-                                // and remember that we created it
-                                blockActive[container] = true;
-                                htmlStartOfLine += '<' + container + '>';
+                            // From a line style (like "rte2-style-ul"), determine the style name it maps to (like "ul")
+                            styleObj = self.classes[this];
+                            if (!styleObj) {
+                                return;
                             }
-                        }
 
-                        // Now determine which element to create for the line.
-                        // For example, if it is a list then we would create an 'LI' element.
-                        htmlStartOfLine += openElement(styleObj);
+                            // Get the "container" element for this style (for example: ul or ol)
+                            container = styleObj.elementContainer;
+                            if (container) {
 
-                        // Also push this style onto a stack so when we reach the end of the line we can close the element
-                        blockElementsToClose.push(styleObj);
-                        
-                    }); // .each
-                }// if line.textClass
+                                // Mark that we found this container, so later we can close off any containers that are not active any more.
+                                // For example this will set blockOnThisLine.ul to true.
+                                blockOnThisLine[container] = true;
+                                
+                                // Check to see if we are already inside this container element
+                                if (blockActive[container]) {
 
+                                    // We are currently inside this style so we don't need to open the container element
+                                    
+                                } else {
+
+                                    // We are not already inside this style, so create the container element
+                                    // and remember that we created it
+                                    blockActive[container] = true;
+                                    htmlStartOfLine += '<' + container + '>';
+                                }
+                            }
+
+                            
+                            // Now determine which element to create for the line.
+                            // For example, if it is a list then we would create an 'LI' element.
+                            htmlStartOfLine += openElement(styleObj);
+
+                            // Also push this style onto a stack so when we reach the end of the line we can close the element
+                            blockElementsToClose.push(styleObj);
+                            
+                        }); // .each
+                    }// if line.textClass
+                    
+                } // if lineNo is in range
                 
                 // Now that we know which line styles are on this line, we can tell if we need to continue a list
                 // from a previous line, or actually close the list.
@@ -2959,6 +3286,15 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                     $.each(enhancementsByLine[lineNo], function(i,mark) {
 
                         var enhancmentHTML;
+
+                        // Only include the enhancement if the first character of this line is within the selected range
+                        charInRange = (lineNo >= range.from.line) && (lineNo <= range.to.line);
+                        if (lineNo === range.from.line && 0 <= range.from.ch) {
+                            charInRange = false;
+                        }
+                        if (!charInRange) {
+                            return;
+                        }
 
                         enhancementHTML = '';
                         if (mark.options.toHTML) {
@@ -3053,15 +3389,43 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         
                         // Add the element to the start and end annotations for this character
                         annotationEnd[endCh].push(styleObj);
-
-                    });
-                }
+                        
+                    }); // each markedSpan
+                    
+                } // if markedSpans
 
                 // Loop through each character in the line string.
                 for (charNum = 0; charNum <= line.text.length; charNum++) {
+
+                    charInRange = true;
+                    if (lineNo === range.from.line && charNum < range.from.ch) {
+                        charInRange = false;
+                    }
+                    if (lineNo === range.to.line && charNum > (range.to.ch - 1)) {
+                        charInRange = false;
+                    }
+                    charInRange = charInRange && (lineNo >= range.from.line) && (lineNo <= range.to.line);
+
+                    // Special case - first element in the range.
+                    // If previous characters from before the range opened any elements, include them now.
+                    // For example, if there is a set of italic characters and the range begins in the middle
+                    // of italicized text, then we must start by displaying <I> element.
+                    if (lineNo === range.from.line && charNum === range.from.ch) {
+
+                            $.each(inlineActive, function(className, styleObj) {
+                                var element;
+                                if (!self.voidElements[ styleObj.element ]) {
+                                    inlineElementsToClose.push(styleObj.element);
+                                    html += openElement(styleObj);
+                                }
+                            });
+                    }
                     
                     // Do we need to end elements at this character?
-                    if (annotationEnd[charNum]) {
+                    // Check if there is an annotation ending on this character,
+                    // or if we are at the end of our range we need to check all the remaining characters on the line.
+                    if (annotationEnd[charNum] || 
+                        ((lineNo === range.to.line) && (range.to.ch <= charNum))) {
 
                         // Close all the active elements in the reverse order they were created
                         $.each(inlineElementsToClose.reverse(), function(i, element) {
@@ -3072,7 +3436,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         inlineElementsToClose = [];
 
                         // Find out which elements are no longer active
-                        $.each(annotationEnd[charNum], function(i, styleObj) {
+                        $.each(annotationEnd[charNum] || {}, function(i, styleObj) {
                             
                             // If any of the styles is "raw" mode, clear the raw flag
                             if (styleObj.raw) {
@@ -3083,16 +3447,24 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         });
 
                         // Re-open elements that are still active
-                        $.each(inlineActive, function(className, styleObj) {
-                            var element;
-                            if (!self.voidElements[ styleObj.element ]) {
-                                inlineElementsToClose.push(styleObj.element);
-                                html += openElement(styleObj);
-                            }
-                        });
+                        // if we are still in the range
+                        if (charInRange) {
+                            
+                            $.each(inlineActive, function(className, styleObj) {
+                                var element;
+                                if (!self.voidElements[ styleObj.element ]) {
+                                    inlineElementsToClose.push(styleObj.element);
+                                    html += openElement(styleObj);
+                                }
+                            });
+                        }
+                        
+                    } // if annotationEnd
 
-                    }
-
+                    // Check if there are any elements that start on this character
+                    // Note even if this character is not in our range, we still need
+                    // to remember which elements have opened, in case our range has characters
+                    // in the middle of an opened element.
                     if (annotationStart[charNum]) {
                         
                         $.each(annotationStart[charNum], function(i, styleObj) {
@@ -3101,22 +3473,26 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                             if (styleObj.raw) {
                                 raw = true;
                             }
-                            
+
+                            // Make sure this element is not already opened
                             if (!inlineActive[styleObj.className]) {
 
                                 // Save this element on the list of active elements
                                 inlineActive[styleObj.className] = styleObj;
 
-                                // Also push it on a stack so we can close elements in reverse order
-                                if (!self.voidElements[ styleObj.element ]) {
-                                    inlineElementsToClose.push(styleObj.element);
-                                }
-
                                 // Open the new element
-                                html += openElement(styleObj);
+                                if (charInRange) {
+
+                                    // Also push it on a stack so we can close elements in reverse order.
+                                    if (!self.voidElements[ styleObj.element ]) {
+                                        inlineElementsToClose.push(styleObj.element);
+                                    }
+
+                                    html += openElement(styleObj);
+                                }
                             }
                         });
-                    }
+                    } // if annotationStart
 
                     outputChar = line.text.charAt(charNum);
 
@@ -3148,34 +3524,42 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                             rawLastChar = false;
                         }
                         
-                        html += outputChar;
+                        if (charInRange) {
+                            html += outputChar;
+                        }
+                    } // if outputchar
+                    
+                } // for char
+
+                
+                if (range.from.line <= lineNo && range.to.line >= lineNo) {
+                    
+                    // If we reached end of line, close all the open block elements
+                    if (blockElementsToClose.length) {
+                    
+                        $.each(blockElementsToClose.reverse(), function() {
+                            var element;
+                            element = this.element;
+                            if (element) {
+                                html += '</' + element + '>';
+                            }
+                        });
+                        blockElementsToClose = [];
+
+                    } else if (charInRange && rawLastChar && !self.rawBr) {
+                        html += '\n';
+                    } else if (charInRange) {
+                        // No block elements so add a line break
+                        html += '<br/>';
+                    }
+
+                    // Add any content that needs to go after the line
+                    // for example, enhancements that are positioned below the line.
+                    if (htmlEndOfLine) {
+                        html += htmlEndOfLine;
                     }
                 }
-
-                // If we reached end of line, close all the open block elements
-                if (blockElementsToClose.length) {
-                    
-                    $.each(blockElementsToClose.reverse(), function() {
-                        var element;
-                        element = this.element;
-                        if (element) {
-                            html += '</' + element + '>';
-                        }
-                    });
-                    blockElementsToClose = [];
-
-                } else if (rawLastChar && !self.rawBr) {
-                    html += '\n';
-                } else {
-                    // No block elements so add a line break
-                    html += '<br/>';
-                }
-
-                // Add any content that needs to go after the line
-                // for example, enhancements that are positioned below the line.
-                if (htmlEndOfLine) {
-                    html += htmlEndOfLine;
-                }
+                
             });
 
             // When we finish with the final line close any block elements that are still open
@@ -3202,18 +3586,28 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
         /**
          * Import HTML content into the editor.
          *
-         * @param {String} html
+         * @param {String|jQuery} html
+         * An html string or a jquery object that contains the HTML content.
+         *
+         * @param {Object} [range=complete document]
+         * A selected range where the HTML should be inserted.
+         *
+         * @param {Boolean} [allowRaw=true]
+         * If this is set explicitly to false, then any elements
+         * that are not recognized will be ommited.
+         * By default (or if this is set to true), elements that
+         * are not recognized are output and marked as raw HTML.
          */
-        fromHTML: function(html) {
+        fromHTML: function(html, range, allowRaw) {
 
-            var annotations, editor, enhancements, el, map, self, val;
+            var annotations, editor, enhancements, el, history, map, self, val;
 
             self = this;
-
-            self.empty();
             
             editor = self.codeMirror;
 
+            allowRaw = (allowRaw === false ? false : true);
+            
             // Convert the styles object to an object that is indexed by element,
             // so we can quickly map an element to a style.
             // Note there might be more than one style for an element, in which
@@ -3221,7 +3615,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
             map = self.getElementMap();
 
             // Convert HTML into a DOM element so we can parse it using the browser node functions
-            el = $("<div/>").append(html)[0];
+            el = self.htmlParse(html);
 
             // Text for the editor
             val = '';
@@ -3247,32 +3641,38 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         // Remove "zero width space" character that the previous editor sometimes used
                         text = text.replace(/\u200b|\u8203/g, '');
 
-                        // Convert newlines to a carriage return character and annotate it
-                        text = text.replace(/[\n\r]/g, function(match, offset, string){
+                        if (allowRaw) {
+                            
+                            // Convert newlines to a carriage return character and annotate it
+                            text = text.replace(/[\n\r]/g, function(match, offset, string){
 
-                            var from, split, to;
-                            
-                            // Create an annotation to mark the newline as "raw html" so we can distinguish it
-                            // from any other user of the carriage return character
-                            
-                            split = val.split("\n");
-                            from =  {
-                                line: split.length - 1,
-                                ch: split[split.length - 1].length + offset
-                            };
-                            to = {
-                                line: from.line,
-                                ch: from.ch + 1
-                            };
-                            annotations.push({
-                                styleObj: self.styles.newline,
-                                from:from,
-                                to:to
+                                var from, split, to;
+                                
+                                // Create an annotation to mark the newline so we can distinguish it
+                                // from any other user of the carriage return character
+                                
+                                split = val.split("\n");
+                                from =  {
+                                    line: split.length - 1,
+                                    ch: split[split.length - 1].length + offset
+                                };
+                                to = {
+                                    line: from.line,
+                                    ch: from.ch + 1
+                                };
+                                annotations.push({
+                                    styleObj: self.styles.newline,
+                                    from:from,
+                                    to:to
+                                });
+                                
+                                return '\u21b5';
                             });
-                             
-                            return '\u21b5';
-                        });
-
+                            
+                        } else {
+                            text = text.replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ');
+                        }
+                        
                         val += text;
 
                     } else if (next.nodeType === 1) {
@@ -3307,10 +3707,15 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                             // Determine if the element maps to one of our defined styles
                             matchStyleObj = false;
 
+                            // If a data-rte2-sanitize attribute is found on the element, then we are getting this
+                            // html as pasted data from another source. Our sanitzie rules have marked this element
+                            // as being a particular style, so we should force that style to be used.
+                            matchStyleObj = self.styles[ $(next).attr('data-rte2-sanitize') ];
+                            
                             // Multiple styles might map to a particular element name (like <b> vs <b class=foo>)
                             // so first we get a list of styles that map just to this element name
                             matchArray = map[elementName];
-                            if (matchArray) {
+                            if (matchArray && !matchStyleObj) {
 
                                 $.each(matchArray, function(i, styleObj) {
 
@@ -3360,16 +3765,6 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                                         
                                         // There were no attributes specified for this style so we might have a match just on the element
                                         matchStyleObj = styleObj;
-/***
-                                        // Check to verify the element doesn't have any unexpected attributes.
-                                        // For example, if we are looking for <b> we should not match <b class="foo">
-                                        if (!styleObj.elementAttrAny) {
-                                            $.each(elementAttributes, function(attr, value) {
-                                                matchStyleObj = false;
-                                                return false;
-                                            });
-                                        }
-***/
                                     }
 
                                     // Check if the element has other attributes that are unexpected
@@ -3402,7 +3797,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         };
 
                         // Special case - is this an enhancement?
-                        if (elementName === 'span' && $(next).hasClass('enhancement')) {
+                        if ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement')) {
 
                             enhancements.push({
                                 line: from.line,
@@ -3439,7 +3834,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                             raw = false;
                         }
                         
-                        if (raw) {
+                        if (raw && allowRaw) {
                             
                             matchStyleObj = self.styles.html;
                             
@@ -3557,21 +3952,98 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
 
             processNode(el);
 
-            // Set the text in the editor
-            val = val.replace(/[\n\r]+$/, '');
-            editor.setValue(val);
+            // Replace multiple newlines at the end with single newline
+            val = val.replace(/[\n\r]+$/, '\n');
 
+            if (range) {
+
+                // Remove the styles from the range so for example we don't paste content
+                // into a bold region and make all the pasted content bold.
+                
+                // There seems to be a problem if the range is a single cursor position
+                // and we can't remove the styles for that.
+                // So instead we'll insert a space, then remove the styles from that space character,
+                // then call an undo() to remove the space from the document (and the undo history).
+
+                if (range.from.line === range.to.line && range.from.ch === range.to.ch) {
+
+                    editor.replaceRange(' ', range.from, range.to);
+                
+                    // Remove styles from the single character
+                    self.removeStyles({
+                        from: { line:range.from.line, ch:range.from.ch },
+                        to: { line:range.from.line, ch:range.from.ch + 1}
+                    });
+
+                    // Undo the insertion of the single character so it doesn't appear in the undo history
+                    editor.undo();
+
+                } else {
+
+                    // Remove styles from the range
+                    self.removeStyles(range);
+
+                }
+                
+            } else {
+                
+                // Replace the entire document
+                self.empty();
+
+                // Set the range at the beginning of the document
+                range = {
+                    from: { line:0, ch:0 },
+                    to:{ line:0, ch:0 }
+                };
+            }
+
+            // Add the plain text into the selected range
+            editor.replaceRange(val, range.from, range.to);
+
+            // Before we start adding styles, save the current history.
+            // After we add the styles we will restore the history.
+            // This will prevent lots of undo history being added,
+            // so user can undo this new content all in one shot.
+            history = editor.getHistory();
+            
             // Set up all the annotations
             $.each(annotations, function(i, annotation) {
 
-                var range, styleObj;
+                var styleObj;
 
                 styleObj = annotation.styleObj;
 
+                // Adjust the position of the annotation based on the range where we're inserting the text
+                if (range.from.line !== 0 || range.from.ch !== 0) {
+
+                    // Only if the annotation is on the first line of new content,
+                    // we should adjust the starting character in case the selected range
+                    // does not start at character zero.
+                    // For annotations on subsequent lines we don't need to adjust the starting character.
+                    if (annotation.from.line === 0) {
+                        
+                        annotation.from.ch += range.from.ch;
+
+                        // If the annotation also ends on this line, adjust the ending character.
+                        // For annotations on subsequent lines we don't need to adjust the ending character
+                        // because a new line will have been created.
+                        
+                        if (annotation.to.line === 0) {
+                            annotation.to.ch += range.from.ch;
+                        }
+                    }
+
+                    // Since we are replacing a range that is not at the start
+                    // of the document, the lines for all annotations should be adjusted
+                    annotation.from.line += range.from.line;
+                    annotation.to.line += range.from.line;
+
+                }
+                
                 if (styleObj.line) {
                     self.blockSetStyle(styleObj, annotation);
                 } else {
-                    self.inlineSetStyle(styleObj, annotation);
+                    self.inlineSetStyle(styleObj, annotation, {addToHistory:false});
                 }
             });
 
@@ -3582,8 +4054,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                 
             });
 
-            // Clear the undo history
-            editor.clearHistory();
+            editor.setHistory(history);
             
         }, // fromHTML()
 
@@ -3624,7 +4095,39 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                 .replace(/>/g, '&gt;');
         },
 
+        
+        /**
+         * Parse an HTML string and return a DOM structure.
+         *
+         * @param {String|DOM} html
+         * An HTML string or a DOM structure.
+         *
+         * @returns {DOM}
+         */
+        htmlParse: function(html) {
+            var dom, self;
+            self = this;
 
+            if ($.type(html) === 'string') {
+                dom = new DOMParser().parseFromString(html, "text/html").body;     
+            } else {
+                dom = html;
+            }
+            return dom;
+        },
+
+
+        /**
+         * Clear the undo history for the editor.
+         * For example, you can call this after setting the initial content in the editor.
+         */
+        historyClear: function(){
+            var self;
+            self = this;
+            self.codeMirror.clearHistory();
+        },
+
+        
         /**
          * Get all the attributes for an element.
          *

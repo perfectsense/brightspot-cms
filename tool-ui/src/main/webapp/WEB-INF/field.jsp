@@ -151,6 +151,8 @@ try {
         wp.write(wp.h(state.getId()));
         wp.write("/");
         wp.write(wp.h(fieldName));
+        wp.write("\" data-field-name=\"");
+        wp.write(wp.h(fieldName));
         wp.write("\" data-standard-image-sizes=\"");
         for (String size : ui.getStandardImageSizes()) {
             wp.write(" ");

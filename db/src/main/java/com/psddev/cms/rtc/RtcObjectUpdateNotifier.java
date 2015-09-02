@@ -1,4 +1,4 @@
-package com.psddev.cms.tool.page;
+package com.psddev.cms.rtc;
 
 import com.psddev.dari.db.UpdateNotifier;
 import org.atmosphere.cpr.Broadcaster;

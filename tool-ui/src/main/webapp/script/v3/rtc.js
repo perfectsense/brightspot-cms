@@ -21,9 +21,7 @@ define([ 'jquery', 'bsp-utils', 'atmosphere' ], function($, bsp_utils, atmospher
   var offlineMessages = [ ];
   var onlineMessages = {
     push: function(message) {
-      socket.push(JSON.stringify($.extend(message, {
-        resource: socket.getUUID()
-      })));
+      socket.push(JSON.stringify(message));
     }
   };
 
@@ -57,15 +55,25 @@ define([ 'jquery', 'bsp-utils', 'atmosphere' ], function($, bsp_utils, atmospher
     subscribe();
   };
 
-  request.onMessage = function(response) {
-    var message = JSON.parse(response.responseBody);
-    var callbacks = broadcastCallbacks[message.broadcast];
+  function processMessage(message) {
+    var messageJson = JSON.parse(message);
+    var callbacks = broadcastCallbacks[messageJson.broadcast];
 
     if (callbacks) {
       $.each(callbacks, function(i, callback) {
-        callback(message.data);
+        callback(messageJson.data);
       });
     }
+  }
+
+  request.onMessage = function(response) {
+    processMessage(response.responseBody);
+  };
+
+  request.onMessagePublished = function(response) {
+    $.each(response.messages, function(i, message) {
+      processMessage(message);
+    });
   };
 
   subscribe();
@@ -75,7 +83,8 @@ define([ 'jquery', 'bsp-utils', 'atmosphere' ], function($, bsp_utils, atmospher
       restores.push({
         callback: callback,
         message: {
-          state: state,
+          type: 'state',
+          className: state,
           data: data
         }
       });
@@ -87,7 +96,8 @@ define([ 'jquery', 'bsp-utils', 'atmosphere' ], function($, bsp_utils, atmospher
 
     execute: function(action, data) {
       (isOnline ? onlineMessages : offlineMessages).push({
-        action: action,
+        type: 'action',
+        className: action,
         data: data
       });
     }

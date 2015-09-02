@@ -1,6 +1,6 @@
 package com.psddev.cms.tool.page.content;
 
-import com.psddev.cms.tool.page.RtcState;
+import com.psddev.cms.rtc.RtcState;
 import com.psddev.dari.db.Query;
 
 import java.util.Map;

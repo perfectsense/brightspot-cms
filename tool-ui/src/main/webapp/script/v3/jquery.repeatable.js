@@ -418,9 +418,9 @@ The HTML within the repeatable element must conform to these standards:
                 // Collapse the item unless it has an error message within it
                 // Do not collapse "preview" or "object" mode
                 if ($item.find('.message-error').length === 0
+                    && $item.find('> .layouts').length === 0
                     && !self.modeIsPreview()
                     && !self.modeIsObject()) {
-                    
                     self.itemCollapse($item);
                 }
 
@@ -590,6 +590,16 @@ The HTML within the repeatable element must conform to these standards:
                     self.dom.$list.append($addedItem);
                     
                     // Initialize stuff on the new item
+                    // If there was a custom callback provided, call it now.
+                    // This is used for example, in Image Upload.
+                    // After the image is uploaded a new repeatable item is added,
+                    // then the callback inserts values into the template.
+                    if (customCallback) {
+                        
+                        // Call the customcallback funtion, setting "this" to be the element for the new item
+                        customCallback.call( $addedItem[0] );
+                    }
+
                     // Note this will collapse the item as well so we will uncollapse it below
                     self.initItem($addedItem);
                     
@@ -621,16 +631,6 @@ The HTML within the repeatable element must conform to these standards:
                         
                         return newAttr;
                     });
-
-                    // If there was a custom callback provided, call it now.
-                    // This is used for example, in Image Upload.
-                    // After the image is uploaded a new repeatable item is added,
-                    // then the callback inserts values into the template.
-                    if (customCallback) {
-                        
-                        // Call the customcallback funtion, setting "this" to be the element for the new item
-                        customCallback.call( $addedItem[0] );
-                    }
 
                     // Trigger a custom "create" event for the item
                     // So other code can act on this if necessary

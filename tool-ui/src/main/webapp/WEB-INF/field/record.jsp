@@ -96,8 +96,8 @@ if ((Boolean) request.getAttribute("isFormPost")) {
             State fieldValueState = State.getInstance(fieldValue);
             fieldValueState.setId(id);
             wp.updateUsingParameters(fieldValue);
-            fieldValueState.putValue(Content.PUBLISH_DATE_FIELD, publishDate != null ? publishDate : new Date());
-            fieldValueState.putValue(Content.UPDATE_DATE_FIELD, new Date());
+            fieldValueState.remove(Content.PUBLISH_DATE_FIELD);
+            fieldValueState.remove(Content.UPDATE_DATE_FIELD);
 
             if (field.isEmbedded() && !fieldValueState.isNew()) {
                 fieldValueState.setId(null);

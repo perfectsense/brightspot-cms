@@ -173,13 +173,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       $tabs.append($tabWorkflow);
       $tabs.append($tabPublish);
       $workflow.before($tabs);
-
-      if ($('.widget-publishingWorkflowState').length > 0) {
-        $tabWorkflow.find('a').click();
-
-      } else {
-        $tabPublish.find('a').click();
-      }
+      $tabWorkflow.find('a').click();
     }
   });
 

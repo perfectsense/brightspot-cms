@@ -92,7 +92,8 @@
     white-space: nowrap;
   }
 
-  .action-pullRight {
+  .action-pullRight,
+  [name='action-delete'] {
     float: right;
     margin-left: 10px;
     margin-right: 0;
@@ -258,7 +259,8 @@
   opacity: 0.6;
   pointer-events: none;
 
-  .inputStatus a,
+  .inputPending a,
+  .inputUpdated a,
   .objectId-edit,
   .repeatableLabel,
   .tabs,
@@ -391,7 +393,8 @@
   }
 }
 
-.inputStatus,
+.inputPending,
+.inputUpdated,
 .inputNote {
   display: block;
   margin-bottom: 5px;
@@ -402,9 +405,10 @@
   }
 }
 
-.inputStatus {
-    .icon;
-    .icon-lock;
+.inputPending,
+.inputUpdated {
+  .icon;
+  .icon-lock;
 }
 
 .inputLabel > .icon-beaker {
@@ -483,7 +487,7 @@
       overflow: auto;
       position: absolute;
       right: 5px;
-      top: 36px;
+      top: 41px;
     }
   }
 
@@ -500,8 +504,8 @@
   color: @color-placeholder;
   cursor: pointer;
   position: absolute;
-  right: 0;
-  top: 8px;
+  right: 7px;
+  top: 11px;
 
   &:hover {
     color: @color-text;
@@ -513,7 +517,7 @@
 }
 
 .inputContainer-listLayoutItem {
-  .background-flat(@color-heading);
+  background: @color-heading;
   margin-bottom: -30000px;
   padding: 5px 5px 30005px 5px;
 
@@ -522,13 +526,29 @@
     width: 100%;
   }
 
+  .objectId-select {
+    margin-bottom: 5px;
+  }
+
+  .objectId-edit {
+    margin-left: 0;
+  }
+
   > .inputSmall {
     margin: 0;
-    padding: 0 0 5px 0;
+    padding: 0 30px 5px 0;
+
+    .select {
+      width: 100%;
+    }
   }
 
   > .inputLarge {
     padding: 5px;
+
+    &:before {
+      display: none;
+    }
   }
 }
 

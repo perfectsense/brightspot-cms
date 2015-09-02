@@ -104,7 +104,7 @@ public class Schedule extends Record {
                 }
 
                 Draft draft = (Draft) draftObject;
-                Object object = draft.getObject();
+                Object object = draft.recreate();
 
                 LOGGER.debug("Processing [{}] draft in [{}] schedule", draft.getLabel(), getLabel());
 

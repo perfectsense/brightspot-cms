@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
+import com.google.common.collect.ImmutableSet;
 import com.psddev.cms.tool.QueryRestriction;
 import org.joda.time.DateTime;
 
@@ -112,7 +114,10 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                         "action", page.url(null));
 
                     page.writeTypeSelect(
-                            com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite()),
+                            com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite())
+                                    .stream()
+                                    .filter(page.createTypeDisplayPredicate(ImmutableSet.of("read")))
+                                    .collect(Collectors.toList()),
                             itemType,
                             "Any Types",
                             "data-bsp-autosubmit", "",

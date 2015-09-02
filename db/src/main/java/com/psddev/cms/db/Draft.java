@@ -1,22 +1,30 @@
 package com.psddev.cms.db;
 
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.psddev.dari.db.Database;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.psddev.dari.db.DatabaseEnvironment;
+import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
-import com.psddev.dari.util.ErrorUtils;
+import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.ObjectUtils;
 
 /** Unpublished object or unsaved changes to an existing object. */
 @Draft.DisplayName("Content Update")
 @ToolUi.Hidden
 public class Draft extends Content {
+
+    private static final String OLD_VALUES_EXTRA = "cms.draft.oldValues";
 
     @Indexed
     private DraftStatus status;
@@ -37,7 +45,249 @@ public class Draft extends Content {
     @Required
     private UUID objectId;
 
+    @Deprecated
     private Map<String, Object> objectChanges;
+
+    private Map<String, Map<String, Object>> differences;
+
+    /**
+     * Finds the differences between the given {@code oldValues} and
+     * {@code newValues}.
+     *
+     * @param environment
+     *        Can't be {@code null}.
+     *
+     * @param oldValues
+     *        May be {@code null}.
+     *
+     * @param newValues
+     *        May be {@code null}.
+     *
+     * @return Never {@code null}.
+     */
+    public static Map<String, Map<String, Object>> findDifferences(
+            DatabaseEnvironment environment,
+            Map<String, Object> oldValues,
+            Map<String, Object> newValues) {
+
+        Map<String, Map<String, Object>> newIdMaps = newValues != null
+                ? findIdMaps(newValues)
+                : new CompactMap<>();
+
+        if (oldValues == null) {
+            return newIdMaps;
+        }
+
+        Map<String, Map<String, Object>> oldIdMaps = findIdMaps(oldValues);
+        Map<String, Map<String, Object>> differences = new CompactMap<>();
+
+        oldIdMaps.keySet().stream().filter(newIdMaps::containsKey).forEach(id -> {
+            Map<String, Object> oldIdMap = oldIdMaps.get(id);
+            Map<String, Object> newIdMap = newIdMaps.get(id);
+            Map<String, Object> changes = new CompactMap<>();
+            ObjectType type = environment.getTypeById(ObjectUtils.to(UUID.class, newIdMap.get(State.TYPE_KEY)));
+
+            Stream.concat(oldIdMap.keySet().stream(), newIdMap.keySet().stream()).forEach(key -> {
+                Object oldValue = oldIdMap.get(key);
+                Object newValue = newIdMap.get(key);
+
+                if (ObjectUtils.equals(oldValue, newValue)) {
+                    return;
+                }
+
+                if (ObjectUtils.isBlank(oldValue)
+                        && ObjectUtils.isBlank(newValue)) {
+
+                    return;
+                }
+
+                if (type != null) {
+                    ObjectField field = type.getField(key);
+
+                    if (field == null) {
+                        field = environment.getField(key);
+                    }
+
+                    if (field != null
+                            && field.getInternalType().startsWith(ObjectField.SET_TYPE + "/")
+                            && ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
+
+                        return;
+                    }
+                }
+
+                changes.put(key, newValue);
+            });
+
+            if (!changes.isEmpty()) {
+                differences.put(id, changes);
+            }
+        });
+
+        newIdMaps.forEach((id, newIdMap) -> {
+            if (!oldIdMaps.containsKey(id)) {
+                differences.put(id, newIdMap);
+            }
+        });
+
+        return differences;
+    }
+
+    private static Map<String, Map<String, Object>> findIdMaps(Object value) {
+        Map<String, Map<String, Object>> valuesById = new CompactMap<>();
+
+        addIdMaps(valuesById, value);
+
+        for (Map.Entry<String, Map<String, Object>> entry : valuesById.entrySet()) {
+            entry.setValue(minify(entry.getValue()));
+        }
+
+        return valuesById;
+    }
+
+    private static void addIdMaps(Map<String, Map<String, Object>> valuesById, Object value) {
+        Collection<?> collection = null;
+
+        if (value instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) value;
+            String id = ObjectUtils.to(String.class, map.get(State.ID_KEY));
+
+            if (id != null) {
+                valuesById.put(id, new CompactMap<>(map));
+            }
+
+            collection = map.values();
+
+        } else if (value instanceof Collection) {
+            collection = (Collection<?>) value;
+        }
+
+        if (collection != null) {
+            collection.forEach(item -> addIdMaps(valuesById, item));
+        }
+    }
+
+    private static Map<String, Object> minify(Map<String, Object> map) {
+        Map<String, Object> minified = new CompactMap<>();
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            minified.put(entry.getKey(), minifyValue(entry.getValue()));
+        }
+
+        return minified;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object minifyValue(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> valueMap = (Map<String, Object>) value;
+            String id = ObjectUtils.to(String.class, valueMap.get(State.ID_KEY));
+
+            if (id != null) {
+                return ImmutableMap.of(State.ID_KEY, id);
+
+            } else {
+                return minify((Map<String, Object>) value);
+            }
+
+        } else if (value instanceof Collection) {
+            return ((Collection<Object>) value)
+                    .stream()
+                    .map(Draft::minifyValue)
+                    .collect(Collectors.toList());
+
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * Merges the given {@code differences} into the given {@code oldValues}.
+     *
+     * @param environment
+     *        Can't be {@code null}.
+     *
+     * @param oldValues
+     *        Can't be {@code null}.
+     *
+     * @param differences
+     *        If blank, returns the given {@code oldValues} as is.
+     *
+     * @return Never {@code null}.
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> mergeDifferences(
+            DatabaseEnvironment environment,
+            Map<String, Object> oldValues,
+            Map<String, Map<String, Object>> differences) {
+
+        Preconditions.checkNotNull(oldValues);
+
+        return differences != null && !differences.isEmpty()
+                ? (Map<String, Object>) mergeValue(environment, findIdMaps(oldValues), differences, oldValues)
+                : oldValues;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object mergeValue(
+            DatabaseEnvironment environment,
+            Map<String, Map<String, Object>> oldIdMaps,
+            Map<String, Map<String, Object>> differences,
+            Object value) {
+
+        if (value instanceof Map) {
+            Map<String, Object> valueMap = (Map<String, Object>) value;
+            String valueId = ObjectUtils.to(String.class, valueMap.get(State.ID_KEY));
+
+            if (valueId != null) {
+                Map<String, Object> oldIdMap = oldIdMaps.get(valueId);
+                Map<String, Object> changes = differences.get(valueId);
+                Map<String, Object> newIdMap = new CompactMap<>();
+
+                if (oldIdMap != null) {
+                    newIdMap.putAll(oldIdMap);
+                }
+
+                if (changes != null) {
+                    newIdMap.putAll(changes);
+                }
+
+                for (Map.Entry<String, Object> entry : newIdMap.entrySet()) {
+                    entry.setValue(mergeValue(environment, oldIdMaps, differences, entry.getValue()));
+                }
+
+                return newIdMap;
+            }
+
+        } else if (value instanceof List) {
+            return ((List<Object>) value)
+                    .stream()
+                    .map(item -> mergeValue(environment, oldIdMaps, differences, item))
+                    .collect(Collectors.toList());
+        }
+
+        return value;
+    }
+
+    /**
+     * Finds the old values of the given {@code object} before the draft
+     * differences were merged.
+     *
+     * @param object
+     *        Can't be {@code null}.
+     *
+     * @return Never {@code null}.
+     */
+    public static Map<String, Object> findOldValues(Object object) {
+        Preconditions.checkNotNull(object);
+
+        State state = State.getInstance(object);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> oldValues = (Map<String, Object>) state.getExtra(OLD_VALUES_EXTRA);
+
+        return oldValues != null ? oldValues : state.getSimpleValues();
+    }
 
     /** Returns the status. */
     public DraftStatus getStatus() {
@@ -102,7 +352,10 @@ public class Draft extends Content {
     /**
      * Returns the map of all the values to be changed on the originating
      * object.
+     *
+     * @deprecated Use {@link #getDifferences()} instead.
      */
+    @Deprecated
     public Map<String, Object> getObjectChanges() {
         if (objectChanges == null) {
             objectChanges = new LinkedHashMap<String, Object>();
@@ -113,18 +366,66 @@ public class Draft extends Content {
     /**
      * Sets the map of all the values to be changed on the originating
      * object.
+     *
+     * @deprecated Use {@link #setDifferences(Map)} instead.
      */
+    @Deprecated
     public void setObjectChanges(Map<String, Object> values) {
         this.objectChanges = values;
     }
 
     /**
-     * Returns a copy of the originating object with all the changes
-     * applied.
-     *
-     * @return {@code null} if {@code objectType} isn't set.
+     * @return Never {@code null}.
      */
+    @SuppressWarnings("deprecation")
+    public Map<String, Map<String, Object>> getDifferences() {
+        if ((differences == null
+                || differences.isEmpty())
+                && objectChanges != null
+                && !objectChanges.isEmpty()) {
+
+            ObjectType type = getObjectType();
+
+            if (type != null) {
+                UUID id = getObjectId();
+
+                if (id != null) {
+                    Map<String, Object> values = new CompactMap<>(objectChanges);
+
+                    values.put(State.ID_KEY, id.toString());
+                    values.put(State.TYPE_KEY, type.getId().toString());
+
+                    return findIdMaps(values);
+                }
+            }
+        }
+
+        if (differences == null) {
+            differences = new CompactMap<>();
+        }
+
+        return differences;
+    }
+
+    public void setDifferences(Map<String, Map<String, Object>> differences) {
+        this.differences = differences;
+    }
+
+    /**
+     * @deprecated Use {@link #recreate()} instead.
+     */
+    @Deprecated
     public Object getObject() {
+        return recreate();
+    }
+
+    /**
+     * Recreates the originating object with the differences merged.
+     *
+     * @return {@code null} if the object type is {@code null}.
+     */
+    @SuppressWarnings("deprecation")
+    public Object recreate() {
         ObjectType type = getObjectType();
 
         if (type == null) {
@@ -134,8 +435,6 @@ public class Draft extends Content {
         UUID id = getObjectId();
         Object object = Query.fromAll()
                 .where("_id = ?", id)
-                .using(getState().getDatabase())
-                .master()
                 .noCache()
                 .resolveInvisible()
                 .first();
@@ -144,53 +443,67 @@ public class Draft extends Content {
             object = type.createObject(id);
         }
 
-        State.getInstance(object).putAll(getObjectChanges());
+        merge(object);
+
         return object;
     }
 
     /**
-     * Sets all the field values based on the given {@code object}.
-     *
-     * @param object Can't be {@code null}.
+     * @deprecated Use {@link #findOldValues(Object)} and
+     *             {@link #update(Map, Object)} instead.
      */
+    @Deprecated
     public void setObject(Object object) {
-        ErrorUtils.errorIfNull(object, "object");
+        update(findOldValues(object), object);
+    }
 
-        State newState = State.getInstance(object);
-        Database db = newState.getRealDatabase();
+    /**
+     * Updates all necessary fields to recreate the object later using
+     * the differences between the given {@code oldValues} and
+     * {@code newObject}.
+     *
+     * @param oldValues
+     *        May be {@code null}.
+     *
+     * @param newObject
+     *        Can't be {@code null}.
+     */
+    public void update(Map<String, Object> oldValues, Object newObject) {
+        Preconditions.checkNotNull(newObject);
 
-        getState().setDatabase(db);
+        State newState = State.getInstance(newObject);
+
         setObjectType(newState.getType());
         setObjectId(newState.getId());
+        setDifferences(findDifferences(
+                newState.getDatabase().getEnvironment(),
+                oldValues,
+                newState.getSimpleValues()));
+    }
 
-        Object oldObject = Query.from(Object.class).where("_id = ?", object).using(db).noCache().first();
-        Map<String, Object> newValues = newState.getSimpleValues();
+    /**
+     * Merges the differences into the given {@code object}.
+     *
+     * @param object
+     *        Can't be {@code null}.
+     */
+    @SuppressWarnings("deprecation")
+    public void merge(Object object) {
+        Preconditions.checkNotNull(object);
 
-        if (oldObject != null) {
-            Map<String, Object> oldValues = State.getInstance(oldObject).getSimpleValues();
-            Set<String> keys = new HashSet<String>();
+        State state = State.getInstance(object);
+        Map<String, Object> oldValues = state.getSimpleValues();
 
-            keys.addAll(oldValues.keySet());
-            keys.addAll(newValues.keySet());
-
-            for (String key : keys) {
-                Object newValue = newValues.get(key);
-
-                if (ObjectUtils.equals(oldValues.get(key), newValue)) {
-                    newValues.remove(key);
-
-                } else if (newValue == null) {
-                    newValues.put(key, null);
-                }
-            }
-        }
-
-        setObjectChanges(newValues);
+        state.getExtras().put(OLD_VALUES_EXTRA, oldValues);
+        state.setValues(mergeDifferences(
+                state.getDatabase().getEnvironment(),
+                oldValues,
+                getDifferences()));
     }
 
     @Override
     public String getLabel() {
-        Object object = getObject();
+        Object object = recreate();
 
         if (object != null) {
             return State.getInstance(object).getLabel();

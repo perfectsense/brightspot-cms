@@ -259,13 +259,23 @@
 
   position:relative;
   
-  &::after {
-    content: attr(rte2-placeholder);
-    position:absolute;
-    left:0.5em;
-    top:0.5em;
-    color: @color-placeholder;
-    font-style: italic;
+  .rte2-codemirror {
+    position:relative;
+    &::after {
+      content: attr(rte2-placeholder);
+      position:absolute;
+      left:0.5em;
+      top:0.5em;
+      color: @color-placeholder;
+      font-style: italic;
+
+      // Temporary styles to limit palceholder to single line
+      // until we can implement editable placeholder correctly
+      width:95%;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
   }
 
   &.rte-fullscreen {
@@ -419,3 +429,9 @@
   float: right;
 }
 
+// Div that is used as a paste clipboard
+// Note this cannot be hidden because it needs to get focus
+.rte2-clipboard {
+  max-height:1px;
+  overflow:hidden;
+}

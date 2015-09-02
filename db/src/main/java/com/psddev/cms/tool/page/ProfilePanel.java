@@ -29,6 +29,9 @@ public class ProfilePanel extends PageServlet {
 
         Collections.sort(tabClasses, Comparator.<Class<? extends ProfilePanelTab>, String>comparing(Class::getSimpleName).thenComparing(Class::getName));
 
+        tabClasses.remove(ProfileTab.class);
+        tabClasses.add(0, ProfileTab.class);
+
         page.writeHeader();
             page.writeStart("div", "class", "widget p-tud");
                 page.writeStart("h1");

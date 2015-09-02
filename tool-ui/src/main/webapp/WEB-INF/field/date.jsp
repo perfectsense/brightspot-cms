@@ -18,7 +18,7 @@ State state = State.getInstance(request.getAttribute("object"));
 ObjectField field = (ObjectField) request.getAttribute("field");
 String inputName = (String) request.getAttribute("inputName");
 String fieldName = field.getInternalName();
-Date fieldValue = (Date) state.get(fieldName);
+Date fieldValue = (Date) state.getByPath(fieldName);
 
 if (Boolean.TRUE.equals(request.getAttribute("isFormPost"))) {
     fieldValue = wp.param(Date.class, inputName);
