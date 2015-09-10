@@ -1026,6 +1026,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
             $button.on('click', function(event) {
                 event.preventDefault();
+                event.stopPropagation();
                 self.toolbarHandleClick(item, event);
             });
 
