@@ -213,7 +213,7 @@ writer.start("div", "class", "searchForm");
                     !globalFilters.isEmpty() ||
                     !fieldFilters.isEmpty()) {
                 writer.writeStart("h2");
-                writer.writeHtml(wp.localize(null, "search.filter"));
+                writer.writeHtml(wp.localize(null, "search.filters"));
                 writer.writeEnd();
             }
 
@@ -290,7 +290,7 @@ writer.start("div", "class", "searchForm");
                     writer.start("button").html("Go").end();
                 writer.end();
 
-                if (selectedType == null) {
+                if (selectedType == null || selectedType.as(ToolUi.class).isDisplayGlobalFilters()) {
                     writer.start("div", "class", "searchFiltersGlobal");
                         for (ObjectType filter : globalFilters) {
                             String filterId = filter.getId().toString();

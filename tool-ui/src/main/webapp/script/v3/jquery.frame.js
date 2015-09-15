@@ -31,6 +31,7 @@ $.plugin2('frame', {
     // Finds the target frame, creating one if necessary.
     findTargetFrame = function(element, callback) {
       var $element = $(element),
+          href = $element.attr('href') || '',
           target = $element.attr('data-frame-target') || $element.attr('target'),
           $frame;
 
@@ -54,7 +55,15 @@ $.plugin2('frame', {
           }
 
         } else {
+
+          // There is no target.
           $frame = $element.frame('container');
+
+          // Special case - if the HREF is not going to a new page, don't try to load the frame again
+          if (href.indexOf('#') === 0) {
+            return true;
+          }
+          
         }
 
         if ($frame.length > 0 && $frame[0] !== doc) {

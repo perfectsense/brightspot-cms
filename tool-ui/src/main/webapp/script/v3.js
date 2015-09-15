@@ -339,7 +339,7 @@ function() {
         
         html = rte.toHTML();
         $html = $(new DOMParser().parseFromString(html, "text/html").body);
-        $html.find('del').remove();
+        $html.find('del,.rte-comment').remove();
         $html.find('br,p,div,ul,ol,li').after('\n');
         text = $html.text();
 

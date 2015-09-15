@@ -97,6 +97,9 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Integrations")
     private String dropboxApplicationKey;
 
+    @ToolUi.Tab("Integrations")
+    private String googleServerApiKey;
+
     @ToolUi.Tab("Dashboard")
     private CommonContentSettings commonContentSettings;
 
@@ -542,6 +545,14 @@ public class CmsTool extends Tool {
 
     public void setDropboxApplicationKey(String dropboxApplicationKey) {
         this.dropboxApplicationKey = dropboxApplicationKey;
+    }
+
+    public String getGoogleServerApiKey() {
+        return googleServerApiKey;
+    }
+
+    public void setGoogleServerApiKey(String googleServerApiKey) {
+        this.googleServerApiKey = googleServerApiKey;
     }
 
     public CommonContentSettings getCommonContentSettings() {

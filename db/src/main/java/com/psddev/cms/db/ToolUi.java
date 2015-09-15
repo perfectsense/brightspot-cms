@@ -39,6 +39,7 @@ public class ToolUi extends Modification<Object> {
     private Set<String> displayAfter;
     private Set<String> displayBefore;
     private boolean displayFirst;
+    private boolean displayGlobalFilters;
     private Boolean displayGrid;
     private boolean displayLast;
     private boolean dropDown;
@@ -139,6 +140,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setDisplayFirst(boolean displayFirst) {
         this.displayFirst = displayFirst;
+    }
+
+    public boolean isDisplayGlobalFilters() {
+        return displayGlobalFilters;
+    }
+
+    public void setDisplayGlobalFilters(boolean displayGlobalFilters) {
+        this.displayGlobalFilters = displayGlobalFilters;
     }
 
     public Boolean getDisplayGrid() {
@@ -795,6 +804,27 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, DisplayFirst annotation) {
             field.as(ToolUi.class).setDisplayFirst(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies that the target type displays global search filters.
+     */
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(DisplayGlobalFiltersProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface DisplayGlobalFilters {
+
+        boolean value() default true;
+    }
+
+    private static class DisplayGlobalFiltersProcessor implements ObjectType.AnnotationProcessor<DisplayGlobalFilters> {
+
+        @Override
+        public void process(ObjectType type, DisplayGlobalFilters annotation) {
+            type.as(ToolUi.class).setDisplayGlobalFilters(annotation.value());
         }
     }
 

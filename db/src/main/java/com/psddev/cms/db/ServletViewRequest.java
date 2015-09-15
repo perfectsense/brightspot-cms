@@ -44,6 +44,6 @@ class ServletViewRequest implements ViewRequest {
     @Override
     public <T> Stream<T> getParameter(Class<T> returnType, String name) {
         String[] values = request.getParameterValues(name);
-        return values != null ? Arrays.stream(values).map((param) -> ObjectUtils.to(returnType, param)) : Stream.empty();
+        return values != null ? Arrays.stream(values).map((param) -> ObjectUtils.to(returnType, param)).filter((value) -> value != null) : Stream.empty();
     }
 }

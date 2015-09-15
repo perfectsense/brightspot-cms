@@ -430,7 +430,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
         <div class="contentForm-aside">
             <div class="widget widget-publishing">
-                <h1 class="icon icon-action-publish"><%= wp.h(wp.localize(null, "publishing")) %></h1>
+                <h1 class="icon icon-action-publish"><%= wp.h(wp.localize(editingState.getType(), "action.publish")) %></h1>
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
@@ -914,7 +914,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                     if (type != null) {
                                         wp.writeHtml(ObjectUtils.firstNonBlank(type.as(ToolUi.class).getPublishButtonText(), "Publish"));
                                     } else {
-                                        wp.writeHtml("Publish");
+                                        wp.writeHtml(wp.localize(type, "action.publish"));
                                     }
                                 wp.writeEnd();
 

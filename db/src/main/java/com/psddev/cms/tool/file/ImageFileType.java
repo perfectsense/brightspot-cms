@@ -296,7 +296,7 @@ public class ImageFileType implements FileContentType {
                                     page.write("Sepia");
                                 page.writeEnd();
                                 page.writeStart("td");
-                                    page.writeTag("input", "type", "checkbox", "name", page.h(sepiaName), "value", page.h("true"), sepia ? "checked" : "");
+                                    page.writeTag("input", "type", "checkbox", "name", page.h(sepiaName), "value", page.h("true"), sepia ? "checked" : "", "");
                                 page.writeEnd();
                             page.writeEnd();
 

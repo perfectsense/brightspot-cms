@@ -1886,7 +1886,6 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
          *
          * @param Object [options]
          * @param Object [options.block=false]
-         * @param Object [options.above=false]
          * @param Function [options.toHTML]
          * Function to return HTML content to be placed at the point of the enhancement.
          * If not provided then the enhancement will not appear in the output.
@@ -2151,7 +2150,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
         enhancementFromHTML: function($content, line) {
             var self;
             self = this;
-            self.enhancementAdd($content, line, {above:true, toHTML: function(){
+            self.enhancementAdd($content, line, {toHTML: function(){
                 return $content.html();
             }});
         },
@@ -3289,7 +3288,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
 
                         // Only include the enhancement if the first character of this line is within the selected range
                         charInRange = (lineNo >= range.from.line) && (lineNo <= range.to.line);
-                        if (lineNo === range.from.line && 0 <= range.from.ch) {
+                        if (lineNo === range.from.line && range.from.ch > 0) {
                             charInRange = false;
                         }
                         if (!charInRange) {
@@ -3302,12 +3301,7 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                         }
 
                         if (enhancementHTML) {
-
-                            if (mark.above) {
-                                html += enhancementHTML;
-                            } else {
-                                htmlEndOfLine += enhancementHTML;
-                            }
+                            html += enhancementHTML;
                         }
                     });
                 }
@@ -3670,7 +3664,16 @@ define(['jquery', 'codemirror/lib/codemirror'], function($, CodeMirror) {
                             });
                             
                         } else {
+
+                            // Convert multiple white space to single space
                             text = text.replace(/[\n\r]/g, ' ').replace(/\s+/g, ' ');
+                            
+                            // If text node is not within an element remove leading and trailing spaces.
+                            // For example, pasting content from Word has text nodes with whitespace
+                            // between elements.
+                            if ($(next.parentElement).is('body')) {
+                                text = text.replace(/^\s*|\s*$/g, '');
+                            }
                         }
                         
                         val += text;
