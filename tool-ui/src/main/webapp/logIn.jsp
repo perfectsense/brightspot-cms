@@ -28,11 +28,11 @@ private Logger LOGGER = LoggerFactory.getLogger("logIn.jsp");
 private void logAuthRequest(String context, String userId, String domain, String ipAddress, boolean status, boolean enabled) {
     if (enabled) {
         if (status) {
-            LOGGER.info(context + " {userId:" + userId + ", status:success, domain:" + domain + ", ipAddress:"
-                    + ipAddress + "}");
+            LOGGER.info(context + " [userId:" + userId + ", status:success, domain:" + domain + ", ipAddress:"
+                    + ipAddress + "]");
         } else {
-            LOGGER.info(context + " {userId:" + userId + ", status:fail, domain:" + domain + ", ipAddress:"
-                    + ipAddress + "}");
+            LOGGER.info(context + " [userId:" + userId + ", status:fail, domain:" + domain + ", ipAddress:"
+                    + ipAddress + "]");
         }
     }
 }
