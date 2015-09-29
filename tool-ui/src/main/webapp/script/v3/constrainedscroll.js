@@ -49,6 +49,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
       // Skip the move if not visible.
       if (!$.data(element, VISIBLE_DATA_KEY) ||
+          $element.closest('.popup[data-popup-source-class="objectId-select"]').length > 0 ||
           $element.closest('.popup-objectId-edit-loaded').length > 0) {
         return;
       }

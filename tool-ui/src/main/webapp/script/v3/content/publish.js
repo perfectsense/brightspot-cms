@@ -219,6 +219,11 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       $('.contentForm-aside').each(function() {
         var aside = this;
         var $aside = $(aside);
+
+        if ($aside.closest('.popup[data-popup-source-class="objectId-select"]').length > 0) {
+          return;
+        }
+
         var $publishing = $aside.find('> .widget-publishing');
 
         $.data($publishing[0], FIXED_DATA_KEY, $publishing.outerHeight() < $window.height() * 0.4);
@@ -248,6 +253,11 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       $('.contentForm-aside').each(function() {
         var aside = this;
         var $aside = $(aside);
+
+        if ($aside.closest('.popup[data-popup-source-class="objectId-select"]').length > 0) {
+          return;
+        }
+
         var asideOffset = $.data(aside, OFFSET_DATA_KEY);
         var $widgets = $aside.find('> .contentWidgets');
         var $publishing = $aside.find('> .widget-publishing');
