@@ -40,6 +40,10 @@ public class Guide extends Record {
     @BootstrapFollowReferences
     private List<GuidePage> templatesToIncludeInGuide;
 
+    private StorageItem icon;
+
+    private String description;
+
     @ToolUi.Note("Production Guide Overview Section")
     private ReferentialText overview;
 
@@ -57,6 +61,22 @@ public class Guide extends Record {
 
     public void setOverview(ReferentialText overview) {
         this.overview = overview;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public StorageItem getIcon() {
+        return icon;
+    }
+
+    public void setIcon(StorageItem icon) {
+        this.icon = icon;
     }
 
     public List<GuidePage> getTemplatesToIncludeInGuide() {

@@ -129,7 +129,10 @@ wp.include("/WEB-INF/header.jsp"); %>
     <div class="main">
 
         <div class="widget">
-            <% wp.writeStandardForm(selected); %>
+            <% if (selected instanceof Guide && guides.contains(selected)){ %>
+                    <a class="view-guide-link" href="<%= wp.objectUrl("/admin/viewGuides.jsp", selected) %>">View Guide</a>
+            <%    }
+                wp.writeStandardForm(selected); %>
         </div>
 
     </div>

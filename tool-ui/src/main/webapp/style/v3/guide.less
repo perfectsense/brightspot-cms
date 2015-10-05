@@ -83,6 +83,10 @@
     float: none;
     width: 950px;
   }
+  img {
+    width:100%;
+    height:auto;
+  }
 }
 
 .guideDescription {
@@ -202,4 +206,65 @@
   @media print {
     visibility: visible;
   }
+}
+
+.card {
+  width: 265px;
+  display: inline-block;
+  background: #fff;
+  margin-left: 6px;
+  margin-right: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #dedede;
+  vertical-align: top;
+  height: 265px;
+  box-shadow: 0 0 5px 0 #dedede;
+  text-align: center;
+}
+
+.card-wrapper {
+  margin-left:-10px;
+  margin-right:-10px;
+  text-align:center;
+}
+
+.card-title {
+  color: #333;
+  font: 40px/70px 'OpenSans-Light',sans-serif;
+  text-align: center;
+  margin: 0;
+  padding-bottom: 30px;
+}
+
+.card-content {
+  text-align: center;
+  padding: 0 10px;
+  padding-bottom: 0;
+}
+
+.card-content-title {
+  font-size: 16px;
+}
+
+.card-img {
+  height: 150px;
+  display: table;
+  width: 100%;
+  font-size: 150px;
+}
+
+.card-icon {
+  max-width: 100px;
+  max-height: 100px;
+  margin-top: 14%;
+}
+
+.view-guide-link {
+  position:absolute;
+  right:5%;
+  top:10px;
+}
+
+.link-one {
+  padding-right:30px;
 }
