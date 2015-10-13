@@ -4,6 +4,7 @@
 define([
     'jquery',
     'bsp-utils',
+    'v3/input/richtext2',
     'pixastic/pixastic.core',
     'pixastic/actions/blurfast',
     'pixastic/actions/brightness',
@@ -15,7 +16,7 @@ define([
     'pixastic/actions/rotate',
     'pixastic/actions/sepia',
     'pixastic/actions/sharpen'
-], function($, bsp_utils) {
+], function($, bsp_utils, rte2) {
     
     var imageEditorUtility;
 
@@ -2673,7 +2674,7 @@ define([
                 }
 
                 textInfo[ self.textInfoIndex++ ] = {
-                    text: texts[index],
+                    text: self.htmlDecode(texts[index]),
                     x: textXs[index],
                     y: textYs[index],
                     width: textWidths[index],
@@ -2719,7 +2720,7 @@ define([
                     if ($rteInput.length) {
                         textInfo.text = $rteInput.val();
                     }
-                    
+
                     texts += self.textDelimiter + textInfo.text;
                     textXs += self.textDelimiter + parseFloat(textInfo.x).toFixed(3);
                     textYs += self.textDelimiter + parseFloat(textInfo.y).toFixed(3);
@@ -2876,64 +2877,35 @@ define([
                 'value': textInfo.text || ''
             }).appendTo($textOverlay);
 
-            $textOverlayInput.rte({
-                'initImmediately': true,
-                'useLineBreaks': true
-            });
-            
-            // Move the rich text toolbar controls to on top of the image.
-            // Note we need to wrap the toolbar inside another div,
-            // because the rte messes around with the styles on the toolbar,
-            // and we will need to hide and show the toolbar later.
-            
+            // Create a div below the image to hold the rich text toolbar
             $textOverlayToolbar = $('<div/>', {'class':'imageEditor-text-toolbar'})
                 .hide()
-                .append( $textOverlay.find('.rte-toolbar-container') )
                 .appendTo(self.dom.tabs.sizes);
             
-            $textOverlayInput.on('rtefocus', function(){
+            $textOverlayInput.on('rteFocus', function(){
                 self.$element.find('.imageEditor-text-toolbar').hide();
                 $textOverlayToolbar.show();
                 return false;
             });
-            
-            $textOverlayInput.on('rteblur', function(){
-                $textOverlayToolbar.hide();
-                return false;
-            });
 
+            rte = Object.create(rte2);
+            rte.init($textOverlayInput, {
+                inline:true,
+                toolbarLocation: $textOverlayToolbar
+            });
+            
+            textInfo.rte = rte;
+            
             // Save the toolbar so we can delete it later
             textInfo.$toolbar = $textOverlayToolbar;
-        
-            // Try to set the font size after the rich text editor loads
-            // TODO: need a better way to do this, such as a ready event that the RTE fires
-            var wait = 5000;
             
-            var repeatResizeTextOverlayFont = function() {
-                
-                var contentDocument, iframe, loaded;
-
-                iframe = $textOverlay.find('.rte-container iframe')[0] || {};
-                contentDocument = iframe.contentDocument || {};
-                loaded = $(contentDocument.body).is('.rte-loaded');
-                
-                if (loaded) {
-                    self.textOverlaySetFont(groupName, textInfoKey);
-                } else {
-                    // The RTE isn't loaded.
-                    // Try again after a delay, but give up after a certain number of tries.
-                    wait -= 100;
-                    if (wait > 0) {
-                        setTimeout(repeatResizeTextOverlayFont, 100);
-                    }
-                }
-            };
-
-            repeatResizeTextOverlayFont();
+            //repeatResizeTextOverlayFont();
+            self.textOverlaySetFont(groupName, textInfoKey);
             
             // Focus on the text input
             if (focus) {
                 $textOverlayInput.focus();
+                self.$element.find('.imageEditor-text-toolbar').hide();
                 $textOverlayToolbar.show();
             }
 
@@ -2985,7 +2957,7 @@ define([
             // Loop through each text overlay within the sizebox
             $sizeBox.find('.imageEditor-textOverlay').each(function() {
 
-                var originalFontSize, $rteBody, sizeHeight, sizeWidth, $textOverlay, textInfoKey, textInfo;
+                var originalFontSize, $rteBody, rte, sizeHeight, sizeWidth, $textOverlay, textInfoKey, textInfo;
 
                 $textOverlay = $(this);
 
@@ -3006,9 +2978,9 @@ define([
                 originalFontSize = $textOverlay.data('imageEditor-originalFontSize');
                 
                 // Get the body of the rich text editor
-                $rteBody = $( $textOverlay.find('.rte-container iframe')[0].contentDocument.body );
+                $rteBody = $( $textOverlay );
 
-                if (!originalFontSize && $rteBody.is('.rte-loaded')) {
+                if (!originalFontSize) {
                     originalFontSize = parseFloat($rteBody.css('font-size'));
                     $.data(this, 'imageEditor-originalFontSize', originalFontSize);
                 }
@@ -3026,6 +2998,12 @@ define([
                     textInfo.originalFontSize = originalFontSize;
                 }
 
+                // Refresh the rich text editor after font size has been calculated
+                rte = $textOverlay.find('.imageEditor-textOverlayInput').data('rte2');
+                if (rte) {
+                    rte.refresh();
+                }
+                
             });
 
             // Update the hiden variables with the new textSize values
@@ -4236,7 +4214,21 @@ define([
 
             // Return a promise that can be used to continue running other code
             return deferred.promise();
+        },
+
+        /**
+         * Encode text so it is HTML safe.
+         * @param {String} s
+         * @return {String}
+         */
+        htmlDecode: function(s) {
+            return String(s)
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"');
         }
+
 
     }; // END imageEditorUtilty object
 
@@ -4526,3 +4518,6 @@ define([
 
 
 ======================================================================***/
+
+// Set filename for debugging tools to allow breakpoints even when using a cachebuster
+//# sourceURL=image.js

@@ -2726,6 +2726,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             self.rte.refresh();
         },
 
+        refresh: function() {
+            var self;
+            self = this;
+            self.rte.refresh();
+        },
+        
         setCursor: function(line, ch) {
             var self;
             self.rte.setCursor(line, ch);
