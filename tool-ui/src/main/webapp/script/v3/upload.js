@@ -68,9 +68,9 @@ function ($, bsp_utils, evaporate) {
               complete: function () {
                 _progress($inputSmall, i, 100);
                 if (isMultiple) {
-                  _afterBulkUpload($this, $inputSmall, filePath, i);
+                  _afterBulkUpload($this, file, $inputSmall, filePath, i);
                 } else {
-                  _afterUpload($this, $inputSmall, filePath);
+                  _afterUpload($this, file, $inputSmall, filePath);
                 }
               }
 
@@ -106,7 +106,7 @@ function ($, bsp_utils, evaporate) {
           $select.val('keep');
       }
 
-      function _afterUpload($this, $inputSmall, filePath) {
+      function _afterUpload($this, file, $inputSmall, filePath) {
         var $uploadPreview = $inputSmall.find('.upload-preview');
         var inputName = $this.attr('data-input-name');
         var localImg = $uploadPreview.find('img');
@@ -118,6 +118,10 @@ function ($, bsp_utils, evaporate) {
         params['typeId'] = state.typeId;
         params[inputName + '.path'] = filePath;
         params[inputName + '.storage'] = state.storage;
+        params[inputName + '.uploaded'] = true;
+        params[inputName + '.fileSize'] = file.size;
+        params[inputName + '.contentType'] = file.type;
+        params[inputName + '.originalFileName'] = file.name;
         params[inputName + '.originalWidth'] = localImg.prop('naturalWidth');
 
         $uploadPreview.removeClass('loading');
@@ -158,7 +162,7 @@ function ($, bsp_utils, evaporate) {
         })(localImg.width());
       }
 
-      function _afterBulkUpload($this, $inputSmall, filePath, index) {
+      function _afterBulkUpload($this, file, $inputSmall, filePath, index) {
         var $uploadPreview = $inputSmall.find('.upload-preview').eq(index);
         $uploadPreview.removeClass('loading');
         var inputName = "file";

@@ -70,7 +70,9 @@ public class StorageItemField extends PageServlet {
         String storageName = inputName + ".storage";
         String pathName = inputName + ".path";
         String contentTypeName = inputName + ".contentType";
-        String fileName = inputName + ".file";
+        String originalFileNameInputName = inputName + ".originalFileName";
+        String fileInputName = inputName + ".file";
+        String fileSizeInputName = inputName + ".fileSize";
         String urlName = inputName + ".url";
         String dropboxName = inputName + ".dropbox";
         String cropsName = inputName + ".crops.";
@@ -102,17 +104,18 @@ public class StorageItemField extends PageServlet {
             state = State.getInstance(ObjectType.getInstance(page.param(UUID.class, "typeId")));
         }
 
-        String storageItemPath = page.param(String.class, pathName);
-        if (!StringUtils.isBlank(storageItemPath)) {
-            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
-            newItem.setPath(storageItemPath);
-            fieldValue = newItem;
-        }
-
         String metadataFieldName = fieldName + ".metadata";
         String cropsFieldName = fieldName + ".crops";
 
         String action = page.param(actionName);
+
+        // Front end upload handling
+        boolean uploaded = page.param(boolean.class, inputName + ".uploaded");
+        if (uploaded) {
+            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
+            newItem.setPath(page.param(String.class, pathName));
+            fieldValue = newItem;
+        }
 
         Map<String, Object> fieldValueMetadata = null;
         boolean isFormPost = request.getAttribute("isFormPost") != null ? (Boolean) request.getAttribute("isFormPost") : false;
@@ -263,7 +266,21 @@ public class StorageItemField extends PageServlet {
                     } else {
                         newItem = StorageItem.Static.createIn(page.param(storageName));
                         newItem.setPath(page.param(pathName));
-                        newItem.setContentType(page.param(contentTypeName));
+                    }
+
+                    // Front end upload handling
+                    String fileContentType = page.param(String.class, contentTypeName);
+                    long fileSize = page.param(long.class, fileSizeInputName);
+                    String originalFileName = page.param(String.class, originalFileNameInputName);
+
+                    newItem.setContentType(fileContentType);
+
+                    if (!StringUtils.isBlank(originalFileName)) {
+                        fieldValueMetadata.put("originalFilename", originalFileName);
+                    }
+
+                    if (fileSize > 0) {
+                        setHttpHeaders(fieldValueMetadata, fileSize, fileContentType);
                     }
 
                 } else if ("newUpload".equals(action)
@@ -299,7 +316,7 @@ public class StorageItemField extends PageServlet {
                         }
 
                     } else if ((mpRequest = MultipartRequestFilter.Static.getInstance(request)) != null) {
-                        FileItem fileItem = mpRequest.getFileItem(fileName);
+                        FileItem fileItem = mpRequest.getFileItem(fileInputName);
 
                         if (fileItem != null) {
                             name = fileItem.getName();
@@ -390,11 +407,7 @@ public class StorageItemField extends PageServlet {
                             newItem.setPath(createStorageItemPath(state.getLabel(), name));
                             newItem.setContentType(fileContentType);
 
-                            Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
-                            httpHeaders.put("Cache-Control", Collections.singletonList("public, max-age=31536000"));
-                            httpHeaders.put("Content-Length", Collections.singletonList(String.valueOf(fileSize)));
-                            httpHeaders.put("Content-Type", Collections.singletonList(fileContentType));
-                            fieldValueMetadata.put("http.headers", httpHeaders);
+                            setHttpHeaders(fieldValueMetadata, fileSize, fileContentType);
 
                             newItem.setData(new FileInputStream(file));
 
@@ -572,7 +585,7 @@ public class StorageItemField extends PageServlet {
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUpload " + (uploader != null ? ObjectUtils.firstNonNull(uploader.getClassIdentifier(), "") : ""),
                         "type", "file",
-                        "name", page.h(fileName),
+                        "name", page.h(fileInputName),
                         "data-input-name", inputName);
 
                 page.writeTag("input",
@@ -607,6 +620,12 @@ public class StorageItemField extends PageServlet {
                     page.writeTag("input", "name", page.h(storageName), "type", "hidden", "value", page.h(fieldValue.getStorage()));
                     page.writeTag("input", "name", page.h(pathName), "type", "hidden", "value", page.h(fieldValue.getPath()));
                     page.writeTag("input", "name", page.h(contentTypeName), "type", "hidden", "value", page.h(contentType));
+
+                    // More front end uploader handling
+                    if (uploaded) {
+                        page.writeTag("input", "name", page.h(originalFileNameInputName), "type", "hidden", "value", page.param(String.class, originalFileNameInputName));
+                        page.writeTag("input", "name", page.h(fileSizeInputName), "type", "hidden", "value", page.param(String.class, fileSizeInputName));
+                    }
 
                     if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
 
@@ -693,6 +712,14 @@ public class StorageItemField extends PageServlet {
         }
 
         return storageSetting;
+    }
+
+    static void setHttpHeaders(Map<String, Object> storageItemMetadata, long fileSize, String fileContentType) {
+        Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
+        httpHeaders.put("Cache-Control", Collections.singletonList("public, max-age=31536000"));
+        httpHeaders.put("Content-Length", Collections.singletonList(String.valueOf(fileSize)));
+        httpHeaders.put("Content-Type", Collections.singletonList(fileContentType));
+        storageItemMetadata.put("http.headers", httpHeaders);
     }
 
     static void tryExtractMetadata(StorageItem storageItem, Map<String, Object> fieldValueMetadata, Optional<InputStream> optionalStream) {
