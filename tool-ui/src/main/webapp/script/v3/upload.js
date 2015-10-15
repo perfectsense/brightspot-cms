@@ -22,7 +22,6 @@ function ($, bsp_utils, evaporate) {
         }
         state.evaporateConfig = settingsMeta.attr('content');
         state.fieldName = settingsMeta.attr('data-field-name');
-        state.pathStart = settingsMeta.attr('data-path-start');
         state.storage = settingsMeta.attr('data-storage');
         state.typeId = settingsMeta.attr('data-type-id');
 
@@ -46,38 +45,58 @@ function ($, bsp_utils, evaporate) {
           }
 
           _beforeUpload($this, file, $inputSmall, i);
-          var filePath = state.pathStart + encodeURIComponent(file.name);
 
-          (function ($this, file, filePath, i) {
-            state.evaporators[state.evaporators.length - 1].add({
-              name: filePath,
-              file: file,
-              contentType: file.type,
-              notSignedHeadersAtInitiate: {
-                'Cache-Control': 'public, max-age=31536000'
-              },
-              xAmzHeadersAtInitiate: {
-                'x-amz-acl': 'public-read'
-              },
-              signParams: {
-                storageSetting: state.storage
-              },
-              progress: function (progress) {
-                _progress($inputSmall, i, Math.round(Number(progress * 100)));
-              },
-              complete: function () {
-                _progress($inputSmall, i, 100);
-                if (isMultiple) {
-                  _afterBulkUpload($this, $inputSmall, filePath, i);
-                } else {
-                  _afterUpload($this, $inputSmall, filePath);
+          (function ($this, file, i) {
+
+            _createFilePath(state.typeId, state.fieldName, file.name).done(function(json) {
+
+              var filePath = json['filePath'];
+              state.evaporators[state.evaporators.length - 1].add({
+                name: filePath,
+                file: file,
+                contentType: file.type,
+                notSignedHeadersAtInitiate: {
+                  'Cache-Control': 'public, max-age=31536000'
+                },
+                xAmzHeadersAtInitiate: {
+                  'x-amz-acl': 'public-read'
+                },
+                signParams: {
+                  storageSetting: state.storage,
+                  action: 'sign'
+                },
+                progress: function (progress) {
+                  _progress($inputSmall, i, Math.round(Number(progress * 100)));
+                },
+                complete: function () {
+                  _progress($inputSmall, i, 100);
+                  if (isMultiple) {
+                    _afterBulkUpload($this, $inputSmall, filePath, i);
+                  } else {
+                    _afterUpload($this, $inputSmall, filePath);
+                  }
                 }
-              }
 
-            });
-          })($this, file, filePath, i);
+              });
+            })
+          })($this, file, i);
         }
       });
+
+      function _createFilePath(typeId, fieldName, fileName) {
+
+        var params = {};
+        params['action'] = 'createPath';
+        params['typeId'] = typeId;
+        params['fieldName'] = fieldName;
+        params['fileName'] = fileName;
+
+        return $.ajax({
+          url: window.CONTEXT_PATH + 'amazonUploader',
+          dataType: 'json',
+          data: params
+        });
+      }
 
       function _beforeUpload($this, file, $inputSmall, index) {
         var $fileSelector = $inputSmall.find('.fileSelector').first();

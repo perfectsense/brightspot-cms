@@ -387,7 +387,7 @@ public class StorageItemField extends PageServlet {
                             fieldValueMetadata.put("originalFilename", name);
 
                             newItem = StorageItem.Static.createIn(getStorageSetting(Optional.of(field)));
-                            newItem.setPath(createStorageItemPath(state.getLabel(), name));
+                            newItem.setPath(field.as(ToolUi.class).getStoragePath(state, name));
                             newItem.setContentType(fileContentType);
 
                             Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();
@@ -628,6 +628,13 @@ public class StorageItemField extends PageServlet {
         }
     }
 
+    /**
+     * Deprecated.  Use {@link ToolUi#getStoragePath(Object, String)} instead.
+     * @param label {@link State} label for the parent object.
+     * @param fileName name of the file for which the path will be constructed.
+     * @return a constructed path for use in {@link StorageItem#setPath(String)}.
+     */
+    @Deprecated
     public static String createStorageItemPath(String label, String fileName) {
 
         String extension = "";
@@ -658,6 +665,11 @@ public class StorageItemField extends PageServlet {
         return path;
     }
 
+    /**
+     * Deprecated.  Use {@link ToolUi#getStoragePath(Object, String)} instead.
+     * @return a random-UUID constructed path prefix.
+     */
+    @Deprecated
     static String createStoragePathPrefix() {
         String idString = UUID.randomUUID().toString().replace("-", "");
         StringBuilder pathBuilder = new StringBuilder();
@@ -674,7 +686,7 @@ public class StorageItemField extends PageServlet {
 
     /**
      * Gets storageSetting for current field,
-     * if non exists, get {@code StorageItem.DEFAULT_STORAGE_SETTING}
+     * if none exists, get {@code StorageItem.DEFAULT_STORAGE_SETTING}
      *
      * @param field to check for storage setting
      */
@@ -693,6 +705,20 @@ public class StorageItemField extends PageServlet {
         }
 
         return storageSetting;
+    }
+
+    public static String getStoragePath(Optional<ObjectField> field) {
+
+        if (field.isPresent()) {
+            return field.get().as(ToolUi.class).getStoragePath(null, null);
+        } else {
+            return new ToolUi.StoragePathGenerator() {
+                @Override
+                public String generate(Object object, String fileName) {
+                    return ToolUi.StoragePathGenerator.super.generate(object, fileName);
+                }
+            }.generate(null, null);
+        }
     }
 
     static void tryExtractMetadata(StorageItem storageItem, Map<String, Object> fieldValueMetadata, Optional<InputStream> optionalStream) {

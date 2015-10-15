@@ -23,6 +23,7 @@ import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Reference;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
@@ -78,6 +79,7 @@ public class ToolUi extends Modification<Object> {
     private Number suggestedMaximum;
     private Number suggestedMinimum;
     private String tab;
+    private String storagePathGeneratorClassName;
     private String storageSetting;
     private String defaultSortField;
 
@@ -620,6 +622,51 @@ public class ToolUi extends Modification<Object> {
 
     public void setStorageSetting(String storageSetting) {
         this.storageSetting = storageSetting;
+    }
+
+    /**
+     * Gets the class of the {@link com.psddev.cms.db.ToolUi.StoragePathGenerator}
+     * associated with this field or {@code null}.
+     * @return An implementation class of {@link com.psddev.cms.db.ToolUi.StoragePathGenerator}
+     * or {@code null} if none is specified for this field.
+     */
+    @SuppressWarnings("unchecked")
+    public Class<? extends StoragePathGenerator> getStoragePathGeneratorClass() {
+        Class<?> c = ObjectUtils.getClassByName(storagePathGeneratorClassName);
+        return c != null && StoragePathGenerator.class.isAssignableFrom(c) ? (Class<? extends StoragePathGenerator>) c : null;
+    }
+
+    /**
+     * Sets the class to be used when generating a {@link com.psddev.dari.util.StorageItem}
+     * path for this field.
+     * @param storagePathGeneratorClass An implementation class of {@link com.psddev.cms.db.ToolUi.StoragePathGenerator}.
+     *                                  Can be null.
+     */
+    public void setStoragePathGeneratorClass(Class<? extends StoragePathGenerator> storagePathGeneratorClass) {
+        this.storagePathGeneratorClassName = storagePathGeneratorClass != null ? storagePathGeneratorClass.getName() : null;
+    }
+
+    /**
+     * Returns a {@link String} path for use in {@link com.psddev.dari.util.StorageItem#setPath}.
+     * Path construction is performed using either the {@link com.psddev.cms.db.ToolUi.StoragePathGenerator}
+     * specified in the {@link com.psddev.cms.db.ToolUi.StoragePathGeneratorClass} annotation
+     * of this field or a default path construction implementation in the
+     * {@link com.psddev.cms.db.ToolUi.StoragePathGenerator#generate(Object, String)} interface.
+     * @param object The parent object on which this field is stored.
+     * @param fileName The name of the file to be stored.
+     * @return A path constructed by a {@link com.psddev.cms.db.ToolUi.StoragePathGenerator}.
+     */
+    public String getStoragePath(final Object object, String fileName) {
+        Class<? extends StoragePathGenerator> storagePathGeneratorClass = getStoragePathGeneratorClass();
+
+        if (storagePathGeneratorClass == null) {
+
+            return new StoragePathGenerator() { }.generate(object, fileName);
+
+        } else {
+            StoragePathGenerator generator = TypeDefinition.getInstance(storagePathGeneratorClass).newInstance();
+            return generator.generate(object, fileName);
+        }
     }
 
     public String getDefaultSortField() {
@@ -1762,6 +1809,65 @@ public class ToolUi extends Modification<Object> {
             options.put(IS_ONLY_PATHED_OPTION, Boolean.TRUE);
         } else {
             options.remove(IS_ONLY_PATHED_OPTION);
+        }
+    }
+
+    /** Generates the path for a StorageItem field. */
+    public static interface StoragePathGenerator {
+
+        /** Generates a path for the given parent {@code object} and file name. */
+        public default String generate(Object object, String fileName) {
+
+            State state = State.getInstance(object);
+
+            String label = state != null ? state.getLabel() : "";
+
+            String extension = "";
+
+            String idString = UUID.randomUUID().toString().replace("-", "");
+            String path = idString.substring(0, 2) + '/' + idString.substring(2, 4) + '/' + idString.substring(4) + '/';
+
+            if (!StringUtils.isBlank(fileName)) {
+                int lastDotAt = fileName.indexOf('.');
+
+                if (lastDotAt > -1) {
+                    extension = fileName.substring(lastDotAt);
+                    fileName = fileName.substring(0, lastDotAt);
+
+                }
+            }
+
+            if (ObjectUtils.isBlank(label)
+                    || ObjectUtils.to(UUID.class, label) != null) {
+                label = fileName;
+            }
+
+            if (ObjectUtils.isBlank(label)) {
+                label = UUID.randomUUID().toString().replace("-", "");
+            }
+
+            path += StringUtils.toNormalized(label);
+            path += extension;
+
+            return path;
+        }
+    }
+
+    /**
+     * Specifies the class that can generate the path for the target StorageItem
+     * field.
+     */
+    @ObjectField.AnnotationProcessorClass(StoragePathGeneratorClassProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface StoragePathGeneratorClass {
+        Class<? extends StoragePathGenerator> value();
+    }
+
+    private static class StoragePathGeneratorClassProcessor implements ObjectField.AnnotationProcessor<StoragePathGeneratorClass> {
+        @Override
+        public void process(ObjectType type, ObjectField field, StoragePathGeneratorClass annotation) {
+            field.as(ToolUi.class).setStoragePathGeneratorClass(annotation.value());
         }
     }
 

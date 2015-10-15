@@ -47,11 +47,10 @@ class AmazonUploader implements Uploader {
         page.writeTag("meta",
                 "name", "evaporateSettings",
                 "content", ObjectUtils.toJson(ImmutableMap.of(
-                                "signerUrl", page.cmsUrl("/amazonAuth"),
-                                "aws_key", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + storageSetting + "/" + AmazonStorageItem.ACCESS_SETTING),
-                                "bucket", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + storageSetting + "/" + AmazonStorageItem.BUCKET_SETTING)
-                )),
-                "data-path-start", StorageItemField.createStoragePathPrefix(),
+                            "signerUrl", page.cmsUrl("/amazonUploader"),
+                            "aws_key", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + storageSetting + "/" + AmazonStorageItem.ACCESS_SETTING),
+                            "bucket", Settings.get(String.class, StorageItem.SETTING_PREFIX + "/" + storageSetting + "/" + AmazonStorageItem.BUCKET_SETTING)
+                    )),
                 "data-field-name", field.isPresent() ? field.get().getInternalName() : null,
                 "data-storage", storageSetting,
                 "data-type-id", field.isPresent() ? field.get().getParentType().getId() : null);
