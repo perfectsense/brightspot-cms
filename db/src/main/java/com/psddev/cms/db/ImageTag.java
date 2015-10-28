@@ -1,6 +1,7 @@
 package com.psddev.cms.db;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.DynamicAttributes;
 import javax.servlet.jsp.tagext.TagSupport;
 
+import com.psddev.dari.util.HtmlWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -316,6 +318,36 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             }
         }
         return dimension;
+    }
+
+    /**
+     * Returns {@code true} if the specified ImageCrop has any boundaries outside the region (0.0,0.0) to (1.0,1.0).
+     * @param imageCrop
+     * @return {@code true} if the specified ImageCrop will be processed as a padded crop.
+     */
+    protected static boolean isPaddedCrop(ImageCrop imageCrop) {
+        return imageCrop.getX() < 0.0
+                || imageCrop.getY() < 0.0
+                || imageCrop.getX() + imageCrop.getWidth() > 1.0
+                || imageCrop.getY() + imageCrop.getHeight() > 1.0;
+    }
+
+    /**
+     * Returns a new ImageCrop instance, constrained to the region (0.0,0.0) to (1.0,1.0).
+     * @param imageCrop an unconstrained ImageCrop
+     * @return a constrained ImageCrop
+     */
+    protected static ImageCrop getPaddedCrop(ImageCrop imageCrop) {
+
+        ImageCrop paddedCrop = new ImageCrop();
+        paddedCrop.getState().putAll(imageCrop.getState().getValues());
+
+        paddedCrop.setX(Math.min(Math.max(imageCrop.getX(), 0.0), 1.0));
+        paddedCrop.setY(Math.min(Math.max(imageCrop.getY(), 0.0), 1.0));
+        paddedCrop.setWidth(Math.min(Math.max(imageCrop.getX() + imageCrop.getWidth(), 0.0), 1.0) - paddedCrop.getX());
+        paddedCrop.setHeight(Math.min(Math.max(imageCrop.getY() + imageCrop.getHeight(), 0.0), 1.0) - paddedCrop.getY());
+
+        return paddedCrop;
     }
 
     /**
@@ -751,104 +783,143 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         public String toHtml() {
             String html = convertAttributesToHtml(tagName, toAttributes());
 
-            if (isOverlay()) {
-                StorageItem item = null;
-                Map<String, ImageCrop> crops = null;
+            StorageItem item = null;
+            Map<String, ImageCrop> crops = null;
 
-                if (this.state != null) {
-                    State objectState = this.state;
-                    String field = this.field;
+            if (this.state != null) {
+                State objectState = this.state;
+                String field = this.field;
 
-                    if (ObjectUtils.isBlank(field)) {
-                        field = findStorageItemField(objectState);
+                if (ObjectUtils.isBlank(field)) {
+                    field = findStorageItemField(objectState);
+                }
+
+                item = findStorageItem(objectState, field);
+
+                if (item != null) {
+                    crops = findImageCrops(objectState, field);
+                }
+
+            } else {
+                item = this.item;
+
+                if (item != null) {
+                    crops = findImageCrops(item);
+                }
+            }
+
+            ImageCrop crop = null;
+
+            if (item != null && crops != null && standardImageSize != null) {
+                crop = crops.get(standardImageSize.getId().toString());
+            }
+
+            if (crop != null) {
+
+                ImageCrop originalCrop = crop;
+
+                if (isPaddedCrop(crop)) {
+
+                    crop = getPaddedCrop(crop);
+                }
+
+                if (isOverlay()) {
+
+                    List<ImageTextOverlay> textOverlays = crop.getTextOverlays();
+                    boolean hasOverlays = false;
+
+                    for (ImageTextOverlay textOverlay : textOverlays) {
+                        if (!ObjectUtils.isBlank(textOverlay.getText())) {
+                            hasOverlays = true;
+                            break;
+                        }
                     }
 
-                    item = findStorageItem(objectState, field);
+                    if (hasOverlays) {
+                        StringBuilder overlay = new StringBuilder();
+                        CmsTool cms = Application.Static.getInstance(CmsTool.class);
+                        String defaultCss = cms.getDefaultTextOverlayCss();
+                        String id = "i" + UUID.randomUUID().toString().replace("-", "");
 
-                    if (item != null) {
-                        crops = findImageCrops(objectState, field);
-                    }
+                        overlay.append("<style type=\"text/css\">");
 
-                } else {
-                    item = this.item;
+                        if (!ObjectUtils.isBlank(defaultCss)) {
+                            overlay.append("#");
+                            overlay.append(id);
+                            overlay.append("{display:inline-block;overflow:hidden;position:relative;");
+                            overlay.append(defaultCss);
+                            overlay.append("}");
+                        }
 
-                    if (item != null) {
-                        crops = findImageCrops(item);
+                        for (CmsTool.CssClassGroup group : cms.getTextCssClassGroups()) {
+                            String groupName = group.getInternalName();
+                            for (CmsTool.CssClass cssClass : group.getCssClasses()) {
+                                overlay.append("#");
+                                overlay.append(id);
+                                overlay.append(" .cms-");
+                                overlay.append(groupName);
+                                overlay.append("-");
+                                overlay.append(cssClass.getInternalName());
+                                overlay.append("{");
+                                overlay.append(cssClass.getCss());
+                                overlay.append("}");
+                            }
+                        }
+
+                        overlay.append("</style>");
+
+                        overlay.append("<span id=\"");
+                        overlay.append(id);
+                        overlay.append("\">");
+                        overlay.append(html);
+
+                        for (ImageTextOverlay textOverlay : textOverlays) {
+                            String text = textOverlay.getText();
+
+                            overlay.append("<span style=\"left: ");
+                            overlay.append(textOverlay.getX() * 100);
+                            overlay.append("%; position: absolute; top: ");
+                            overlay.append(textOverlay.getY() * 100);
+                            overlay.append("%; font-size: ");
+                            overlay.append(textOverlay.getSize() * standardImageSize.getHeight());
+                            overlay.append("px; width: ");
+                            overlay.append(textOverlay.getWidth() != 0.0 ? textOverlay.getWidth() * 100 : 100.0);
+                            overlay.append("%;\">");
+                            overlay.append(text);
+                            overlay.append("</span>");
+                        }
+
+                        overlay.append("</span>");
+                        html = overlay.toString();
                     }
                 }
 
-                if (item != null && crops != null && standardImageSize != null) {
-                    ImageCrop crop = crops.get(standardImageSize.getId().toString());
+                if (isPaddedCrop(originalCrop)) {
 
-                    if (crop != null) {
-                        List<ImageTextOverlay> textOverlays = crop.getTextOverlays();
-                        boolean hasOverlays = false;
+                    // Calculate the horizontal (left) CSS offset for use with in rendering padded crop HTML.
+                    double offsetX = originalCrop.getX() < 0 ? -originalCrop.getX() / originalCrop.getWidth() * getPaddedCrop(originalCrop).getWidth() : 0;
+                    // Calculate the vertical (top) CSS offset for use with in rendering padded crop HTML.
+                    double offsetY = originalCrop.getY() < 0 ? -originalCrop.getY() / originalCrop.getHeight() * getPaddedCrop(originalCrop).getHeight() : 0;
 
-                        for (ImageTextOverlay textOverlay : textOverlays) {
-                            if (!ObjectUtils.isBlank(textOverlay.getText())) {
-                                hasOverlays = true;
-                                break;
-                            }
-                        }
+                    StringWriter paddedCropWriter = new StringWriter();
+                    HtmlWriter paddedCropHtml = new HtmlWriter(paddedCropWriter);
 
-                        if (hasOverlays) {
-                            StringBuilder overlay = new StringBuilder();
-                            CmsTool cms = Application.Static.getInstance(CmsTool.class);
-                            String defaultCss = cms.getDefaultTextOverlayCss();
-                            String id = "i" + UUID.randomUUID().toString().replace("-", "");
+                    try {
+                        paddedCropHtml.writeStart("span", "style", "display: inline-block; overflow: hidden; position: relative; width: " + standardImageSize.getWidth() + "px; height: " + standardImageSize.getHeight() + "px;");
 
-                            overlay.append("<style type=\"text/css\">");
+                        paddedCropHtml.writeStart("span", "style", "display: inline-block; overflow: hidden; position: absolute; left: " + offsetX * 100 + "%; top: " + offsetY * 100 + "%; ");
 
-                            if (!ObjectUtils.isBlank(defaultCss)) {
-                                overlay.append("#");
-                                overlay.append(id);
-                                overlay.append("{display:inline-block;overflow:hidden;position:relative;");
-                                overlay.append(defaultCss);
-                                overlay.append("}");
-                            }
+                        paddedCropHtml.writeRaw(html);
 
-                            for (CmsTool.CssClassGroup group : cms.getTextCssClassGroups()) {
-                                String groupName = group.getInternalName();
-                                for (CmsTool.CssClass cssClass : group.getCssClasses()) {
-                                    overlay.append("#");
-                                    overlay.append(id);
-                                    overlay.append(" .cms-");
-                                    overlay.append(groupName);
-                                    overlay.append("-");
-                                    overlay.append(cssClass.getInternalName());
-                                    overlay.append("{");
-                                    overlay.append(cssClass.getCss());
-                                    overlay.append("}");
-                                }
-                            }
+                        paddedCropHtml.writeEnd();
 
-                            overlay.append("</style>");
+                        paddedCropHtml.writeEnd();
 
-                            overlay.append("<span id=\"");
-                            overlay.append(id);
-                            overlay.append("\">");
-                            overlay.append(html);
-
-                            for (ImageTextOverlay textOverlay : textOverlays) {
-                                String text = textOverlay.getText();
-
-                                overlay.append("<span style=\"left: ");
-                                overlay.append(textOverlay.getX() * 100);
-                                overlay.append("%; position: absolute; top: ");
-                                overlay.append(textOverlay.getY() * 100);
-                                overlay.append("%; font-size: ");
-                                overlay.append(textOverlay.getSize() * standardImageSize.getHeight());
-                                overlay.append("px; width: ");
-                                overlay.append(textOverlay.getWidth() != 0.0 ? textOverlay.getWidth() * 100 : 100.0);
-                                overlay.append("%;\">");
-                                overlay.append(text);
-                                overlay.append("</span>");
-                            }
-
-                            overlay.append("</span>");
-                            html = overlay.toString();
-                        }
+                    } catch (IOException e) {
+                        // Ignore.
                     }
+
+                    html = paddedCropWriter.toString();
                 }
             }
 
@@ -984,16 +1055,21 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     if (crops != null && (crop = crops.get(standardImageSize.getId().toString())) != null
                             && originalWidth != null && originalHeight != null) {
 
+                        boolean isPaddedCrop = isPaddedCrop(crop);
+
+                        if (standardAspectRatio != null) {
+
+                            crop.setHeight(crop.getWidth() / standardAspectRatio);
+                        }
+
+                        if (isPaddedCrop) {
+                            crop = getPaddedCrop(crop);
+                        }
+
                         cropX = (int) (crop.getX() * originalWidth);
                         cropY = (int) (crop.getY() * originalHeight);
                         cropWidth = (int) (crop.getWidth() * originalWidth);
-
-                        if (standardAspectRatio != null) {
-                            cropHeight = (int) Math.round(cropWidth / standardAspectRatio);
-
-                        } else {
-                            cropHeight = (int) (crop.getHeight() * originalHeight);
-                        }
+                        cropHeight = (int) (crop.getHeight() * originalHeight);
                     }
                 }
 
