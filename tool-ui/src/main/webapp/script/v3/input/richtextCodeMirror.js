@@ -704,9 +704,12 @@ define([
          * keep one specific class. For example, for the "html" class if you want to keep the html class,
          * but remove any other style classes within.
          *
-         * @param Object [options.includeTrack=false]
+         * @param Boolean [options.includeTrack=false]
          * Set to true if you want to include the "track changes" classes.
          * Otherwise will ignore those classes.
+         *
+         * @param Boolean [options.triggerChange=true]
+         * Set to false if you want to prevent a change event from being triggered.
          */
         inlineRemoveStyle: function(styleKey, range, options) {
 
@@ -976,7 +979,7 @@ define([
                 pos = mark.find();
             
                 // Delete the text within the mark
-                self.codeMirror.replaceRange('', pos.from, pos.to);
+                self.codeMirror.replaceRange('', pos.from, pos.to, 'brightspotRemoveStyledText');
 
                 // Delete the mark
                 mark.clear();
@@ -2018,7 +2021,7 @@ define([
                 
                 // Add another line to the end of the editor
                 lineLength = editor.getLine(lineMax).length;
-                editor.replaceRange('\n', {line:lineMax, ch:lineLength});
+                editor.replaceRange('\n', {line:lineMax, ch:lineLength}, 'brightspotEnhancementMove');
                 
             }
 
@@ -2278,6 +2281,7 @@ define([
 
                 case '+delete':
                 case 'cut':
+                case 'brightspotCut':
 
                     // If we're deleting just a line just let it be deleted
                     // Because we don't have a good way to accept or reject a blank line
@@ -2308,6 +2312,7 @@ define([
 
                 case '+input':
                 case 'paste':
+                case 'brightspotPaste':
 
                     // Are we inserting at a cursor, or replacing a range?
                     if (changeObj.from.line === changeObj.to.line && changeObj.from.ch === changeObj.to.ch) {
@@ -2329,6 +2334,10 @@ define([
                         // In case we are inserting inside a deleted block,
                         // make sure the new text we are adding is not also marked as deleted
                         self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.to});
+
+                        // Some text was pasted in and already marked as new,
+                        // but we must remove any regions within that were previously marked deleted
+                        self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
 
                     } else {
 
@@ -2356,11 +2365,27 @@ define([
 
                         // Finally insert the text at the starting point (before the other text in the range that was marked deleted)
                         // Note we add at the front because we're not sure if the end is valid because we might have removed some text
-                        editor.replaceRange(changeObj.text, changeObj.from, undefined, '+brightspotTrackInsert');
-                        
+                        if (changeObj.origin === 'brightspotPaste') {
+                            
+                            editor.replaceRange(changeObj.text, changeObj.from, undefined, '+brightspotTrackInsert');
+
+                            // TODO: what if the copied region has deleted text?
+                            // Currently the entire content that is pasted will be marked as inserted text,
+                            // but it could have deleted text within it.
+                            // We need to remove that deleted text *after* the new content is pasted in.
+                        }
                     }
                     
                     break;
+
+                case '+brightspotTrackInsert':
+
+                    // Some text was pasted in and already marked as new,
+                    // but we must remove any regions within that were previously marked deleted
+                    self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
+                    
+                    break;
+
                 }
 
             } else {
@@ -2402,6 +2427,39 @@ define([
         },
 
 
+        /**
+         * Fix content after it has been pasted. When content is pasted the entire block is marked as a new change;
+         * but if the content already contains text marked as deleted, then that deleted text should be removed.
+         * Also, the "from" and "to" positions we get from the change object are positions *before* the change has been
+         * made, so we must adjust the range based on the text that is added.
+         *
+         * @param [Object] from
+         * @param [Object] to
+         * @param [Array] textArray
+         */
+        trackAfterPaste: function(from, to, textArray) {
+
+            var self, toNew;
+
+            self = this;
+            
+            // Figure out the new range based on the original range and the replacement text
+            toNew = {
+                line: from.line + textArray.length - 1,
+                ch: textArray[ textArray.length - 1 ].length
+            };
+            if (toNew.line == from.line) {
+                toNew.ch += from.ch;
+            }
+            
+            // Use a timeout so the change can be completed before we attempt to remove the deleted text
+            setTimeout(function(){
+                self.inlineRemoveStyle('trackDelete', {from:from, to:toNew}, {deleteText:true, triggerChange:false});
+            }, 1);
+            
+        },
+
+        
         /**
          * For a given range, mark everything as deleted.
          * Also remove any previously inserted content within the range.
@@ -2637,6 +2695,13 @@ define([
                 self.clipboardPaste(e.originalEvent);
             });
 
+            // Cancel any pastes handled by CodeMirror
+            editor.on('beforeChange', function(cm, change) {
+                if (change.origin == 'paste') {
+                    change.cancel();
+                }
+            });
+
             // Workaround for problem in Firefox clipboard not supporting styled content from Microsoft Word
             // Bug is described here: https://bugzilla.mozilla.org/show_bug.cgi?id=586587
             isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
@@ -2851,7 +2916,7 @@ define([
 
                 // Clear the cut area
                 if (e.type === 'cut') {
-                    editor.replaceRange('', range.from, range.to);
+                    editor.replaceRange('', range.from, range.to, 'brightspotCut');
                 }
 
                 // Don't let the actual cut/copy event occur
@@ -4470,7 +4535,7 @@ define([
 
                 if (range.from.line === range.to.line && range.from.ch === range.to.ch) {
 
-                    editor.replaceRange(' ', range.from, range.to);
+                    editor.replaceRange(' ', range.from, range.to, 'brightspotRemoveStyles');
                 
                     // Remove styles from the single character
                     self.removeStyles({
@@ -4501,7 +4566,7 @@ define([
             }
 
             // Add the plain text into the selected range
-            editor.replaceRange(val, range.from, range.to);
+            editor.replaceRange(val, range.from, range.to, 'brightspotPaste');
 
             // Before we start adding styles, save the current history.
             // After we add the styles we will restore the history.
