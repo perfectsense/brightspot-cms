@@ -132,7 +132,7 @@ Map<String, Object> editingOldValues = Draft.findOldValues(editing);
 WorkStream workStream = Query.from(WorkStream.class).where("_id = ?", wp.param(UUID.class, "workStreamId")).first();
 
 if (workStream != null) {
-    
+
     Draft draft = wp.getOverlaidDraft(editing);
     Object workstreamObject = (draft != null) ? draft : editing;
 
@@ -1012,7 +1012,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                     "value", "true");
 
                                 if (editingState.isNew()) {
-                                    wp.writeHtml("Save Initial Draft");
+                                    wp.writeHtml(wp.localize(editingState.getType(), "action.saveInitialDraft"));
 
                                 } else {
                                     wp.writeHtml(wp.localize(Draft.class, "action.newType"));
