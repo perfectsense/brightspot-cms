@@ -57,8 +57,9 @@ String removeId = wp.createId();
                     fieldName,
                     $added;
 
-            $input.attr('data-label', $link.text());
+            $input.attr('data-label', $link.clone().find('span.visibilityLabel').remove().end().text().trim());
             $input.attr('data-preview', $link.find('img').attr('src'));
+            $input.attr('data-visibility', $link.find('span.visibilityLabel').text());
             $input.val($link.attr('data-objectId'));
             $input.change();
 

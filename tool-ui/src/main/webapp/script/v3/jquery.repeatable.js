@@ -402,7 +402,7 @@ The HTML within the repeatable element must conform to these standards:
              * The LI element that contains the item HTML.
              */
             initItem: function(element) {
-                
+
                 var self = this;
                 var $item = $(element);
 
@@ -441,7 +441,7 @@ The HTML within the repeatable element must conform to these standards:
              * The item (LI element).
              */
             initItemLabel: function(element) {
-                
+
                 var self = this;
                 var $item = $(element);
                 var type = $item.attr('data-type');
@@ -459,7 +459,7 @@ The HTML within the repeatable element must conform to these standards:
                 if (self.modeIsPreview()) {
                     return;
                 }
-                
+
                 // The text for the label will be the data type such as "Slideshow Slide"
                 // And if a data-label attribute was provided append it after a colon such as "Slideshow Slide: My Slide"
                 labelText = type;
@@ -473,7 +473,7 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-text': '${content.state.getType().label}: ${content.label}'
+                    'data-dynamic-html': '${content.state.getType().label}: ${tool.getObjectLabelHtml(content)}'
                     
                 }).on('click', function() {
                     self.itemToggle($item);
@@ -531,7 +531,6 @@ The HTML within the repeatable element must conform to these standards:
              * A function to call after the new item has been added.
              */
             addItem: function(template, customCallback) {
-                
                 var self = this;
                 var $template = $(template);
                 var $addedItem;
@@ -797,7 +796,6 @@ The HTML within the repeatable element must conform to these standards:
              * myRepeatable.itemLoad(element).always(function(){ alert('Item is done loading'); });
              */
             itemLoad: function(item, location) {
-                
                 var self = this;
                 var $item = $(item);
                 var $location = location ? $(location) : $item;
@@ -1057,7 +1055,6 @@ The HTML within the repeatable element must conform to these standards:
              * TODO: needs lots of cleanup
              */
             modePreviewInit: function() {
-                
                 var self = this;
                 var $container = self.$element;
                 var carousel;
@@ -1228,7 +1225,7 @@ The HTML within the repeatable element must conform to these standards:
                     text: labelText,
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': itemId,
-                    'data-dynamic-text': '${content.label}'
+                    'data-dynamic-html': '${tool.getObjectLabelHtml(content)}'
                 }).on('click', function(){
                     self.modePreviewEdit($item);
                     return false;
@@ -1306,7 +1303,7 @@ The HTML within the repeatable element must conform to these standards:
 
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-text': '${content.label}'
+                    'data-dynamic-html': '${tool.getObjectLabelHtml(content)}'
 
                 }).appendTo($carouselTile);
 

@@ -52,6 +52,15 @@ function($) {
             $caption
           ]
         }));
+        if (visibility) {
+          $select.find('figcaption').
+              prepend(' ').
+              prepend($('<span/>', {
+                  'class': 'visibilityLabel',
+                  'text': visibility
+              }));
+        }
+
 
         if (visibility) {
           $caption.prepend(' ');

@@ -43,6 +43,7 @@ import javax.servlet.jsp.PageContext;
 
 import com.google.common.base.MoreObjects;
 import com.ibm.icu.text.MessageFormat;
+import com.psddev.cms.db.HasAvailabilityLabel;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.CascadingMap;
 import com.psddev.dari.util.CollectionUtils;
@@ -1283,43 +1284,23 @@ public class ToolPageContext extends WebPageContext {
     }
 
     /**
+     * Generates a descriptive label HTML for the given {@code object}
+     * - Per getObjectLabelOrDefault, replaces any spaces in the first 5 characters with non-breaking spaces
+     * - Splits actual label output into {@code breakable} spans
+     * @param object If {@code null}, writes {@code N/A}.
+     * @return the generated HTML
+     */
+    public String getObjectLabelHtml(Object object) {
+        return (Static.getObjectLabelHtml(object));
+    }
+
+    /**
      * Writes a descriptive label HTML for the given {@code object}.
      *
      * @param object If {@code null}, writes {@code N/A}.
      */
     public void writeObjectLabel(Object object) throws IOException {
-        if (object == null) {
-            writeHtml("N/A");
-
-        } else {
-            State state = State.getInstance(object);
-            String visibilityLabel = object instanceof Draft
-                    ? ObjectType.getInstance(Draft.class).getDisplayName()
-                    : state.getVisibilityLabel();
-
-            if (!ObjectUtils.isBlank(visibilityLabel)) {
-                writeStart("span", "class", "visibilityLabel");
-                    writeHtml(visibilityLabel);
-                writeEnd();
-
-                writeHtml(" ");
-            }
-
-            String label = getObjectLabelOrDefault(state, DEFAULT_OBJECT_LABEL);
-
-            if (WHITESPACE_PATTERN.splitAsStream(label)
-                    .filter(word -> word.length() > 41)
-                    .findFirst()
-                    .isPresent()) {
-
-                writeStart("span", "class", "breakable");
-                writeHtml(label);
-                writeEnd();
-
-            } else {
-                writeHtml(label);
-            }
-        }
+        write(Static.getObjectLabelHtml(object));
     }
 
     /**
@@ -3936,6 +3917,55 @@ public class ToolPageContext extends WebPageContext {
             }
 
             return notTooShort(defaultLabel);
+        }
+
+        /**
+         * Generates a descriptive label HTML for the given {@code object}
+         * - Per getObjectLabelOrDefault, replaces any spaces in the first 5 characters with non-breaking spaces
+         * - Splits actual label output into {@code breakable} spans
+         * @param object If {@code null}, writes {@code N/A}.
+         * @return the generated HTML
+         */
+        public static String getObjectLabelHtml(Object object) {
+            if (object == null) {
+                return "N/A";
+            }
+
+            StringBuilder result = new StringBuilder();
+
+            State state = State.getInstance(object);
+
+            String visibilityLabel;
+            if (object instanceof Draft) {
+                visibilityLabel = ObjectType.getInstance(Draft.class).getDisplayName();
+            } else if (object instanceof HasAvailabilityLabel) {
+                visibilityLabel = ((HasAvailabilityLabel) object).getAvailabilityLabel();
+            } else {
+                visibilityLabel =  state.getVisibilityLabel();
+            }
+
+            if (!ObjectUtils.isBlank(visibilityLabel)) {
+                result.append("<span class='visibilityLabel'>");
+                result.append(StringUtils.escapeHtml(visibilityLabel));
+                result.append("</span> ");
+            }
+
+            String label = getObjectLabelOrDefault(state, DEFAULT_OBJECT_LABEL);
+
+            if (WHITESPACE_PATTERN.splitAsStream(label)
+                    .filter(word -> word.length() > 41)
+                    .findFirst()
+                    .isPresent()) {
+
+                result.append("<span class='breakable'>");
+                result.append(StringUtils.escapeHtml(label));
+                result.append("</span>");
+
+            } else {
+                result.append(StringUtils.escapeHtml(label));
+            }
+
+            return result.toString();
         }
 
         /** Returns a label for the type of the given {@code object}. */
