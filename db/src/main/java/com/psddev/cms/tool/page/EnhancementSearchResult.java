@@ -31,9 +31,28 @@ public class EnhancementSearchResult extends PageServlet {
 
             @Override
             public void renderBeforeItem(Object item) throws IOException {
-                Reference enhancement = new Reference();
-                RichTextReference rt = enhancement.as(RichTextReference.class);
+                Reference enhancement = null;
+
                 State state = State.getInstance(item);
+
+                ObjectType refType = null;
+                Class<? extends Reference> referenceClass = state.getType().as(ToolUi.class).getReferenceableViaClass();
+                if (referenceClass != null) {
+                    refType = Database.Static.getDefault().getEnvironment().getTypeByClass(referenceClass);
+                }
+
+                if (refType != null) {
+                    Object refObject = refType.createObject(null);
+                    if (refObject instanceof Reference) {
+                        enhancement = (Reference) refObject;
+                    }
+                }
+
+                if (enhancement == null) {
+                    enhancement = new Reference();
+                }
+
+                RichTextReference rt = enhancement.as(RichTextReference.class);
 
                 enhancement.setObject(item);
                 rt.setLabel(state.getLabel());
