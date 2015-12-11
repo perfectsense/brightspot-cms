@@ -4735,7 +4735,8 @@ define([
                         };
 
                         // Special case - is this an enhancement?
-                        if ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement')) {
+                        // Note we are treating tables as an enhancement as well.
+                        if ((elementName === 'table') || ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement'))) {
 
                             enhancements.push({
                                 line: from.line,
@@ -4746,7 +4747,7 @@ define([
                             next = next.nextSibling;
                             continue;
                         }
-
+                        
                         // For container elements such as "ul" or "ol", do not allow nested lists within.
                         // If we find a nested list treat the whole thing as raw html
                         isContainer = self.elementIsContainer(elementName);

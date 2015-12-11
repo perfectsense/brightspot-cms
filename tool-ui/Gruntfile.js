@@ -36,8 +36,8 @@ module.exports = function(grunt) {
                 ],
 
                 'handsontable': [
-                    'dist/jquery.handsontable.full.css',
-                    'dist/jquery.handsontable.full.js'
+                    'dist/handsontable.full.css',
+                    'dist/handsontable.full.js'
                 ],
 
                 'husl': [
