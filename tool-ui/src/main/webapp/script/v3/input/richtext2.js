@@ -1,7 +1,7 @@
 /* jshint undef: true, unused: true, browser: true, jquery: true, devel: true */
 /* global define */
 
-define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extra'], function($, CodeMirrorRte) {
+define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extra', 'jquery.handsontable.full'], function($, CodeMirrorRte) {
 
     var CONTEXT_PATH, Rte;
 
@@ -337,6 +337,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             { separator:true, inline:false },
             { action:'enhancement', text: 'Enhancement', className: 'rte2-toolbar-enhancement', tooltip: 'Add Block Enhancement', inline:false },
             { action:'marker', text: 'Marker', className: 'rte2-toolbar-marker', tooltip: 'Add Marker', inline:false },
+            { action:'table', text: 'Table', className: 'rte2-toolbar-noicon', tooltip: 'Add Table', inline:false },
 
             { separator:true },
             { action:'trackChangesToggle', text: 'Track Changes', className: 'rte2-toolbar-track-changes', tooltip: 'Toggle Track Changes' },
@@ -1120,6 +1121,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     self.enhancementCreate();
                     break;
 
+                case 'table':
+                    self.tableCreate();
+                    break;
+                    
                 case 'fullscreen':
                     self.fullscreenToggle();
                     break;
@@ -2627,20 +2632,27 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             // Get enhancement options from the HTML, which looks like
             // <span data-id data-reference data-preview data-alignment/>
 
-            try {
-                config.reference = JSON.parse($content.attr('data-reference') || '') || {};
-            } catch(e) {
-                config.reference = {};
+            if ($content.is('table')) {
+
+                self.tableCreate($content, line);
+                
+            } else {
+
+                try {
+                    config.reference = JSON.parse($content.attr('data-reference') || '') || {};
+                } catch(e) {
+                    config.reference = {};
+                }
+
+                config.marker = $content.hasClass('marker');
+
+                config.id = $content.attr('data-id');
+                config.alignment = $content.attr('data-alignment');
+                config.preview = $content.attr('data-preview');
+                config.text = $content.text();
+
+                self.enhancementCreate(config, line);
             }
-
-            config.marker = $content.hasClass('marker');
-
-            config.id = $content.attr('data-id');
-            config.alignment = $content.attr('data-alignment');
-            config.preview = $content.attr('data-preview');
-            config.text = $content.text();
-
-            self.enhancementCreate(config, line);
         },
 
 
@@ -2781,6 +2793,291 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     self.rte.fromHTML(html, range);
                 }
             }
+        },
+
+        
+        /*==================================================
+         * Tables
+         *==================================================*/
+
+        
+        tableCreate: function($content, line) {
+            
+            var columns, data, $div, $placeholder, self;
+            self = this;
+
+            if ($content) {
+                data = self.tableHTMLToData($content);
+            } else {
+                data = [['','']];
+            }
+
+            if (line === undefined) {
+                line = self.rte.getRange().from.line;
+            }
+            
+            // Create wrapper element for the table and add the toolbar
+            $div = $('<div/>', {
+                'class': 'rte2-table'
+            }).append( self.tableToolbarCreate() );
+
+            // Create the placeholder div that will hold the table.
+            // Note it appears you must set the style directly on the element or table resizing doesn't work correctly.
+            $placeholder = $('<div/>', {'class':'rte2-table-placeholder', style:'overflow:hidden;height:auto;width:100%;'}).appendTo($div);
+
+            // Initialize the table.
+            $placeholder.handsontable({
+                'data': data,
+                stretchH: 'all',
+                contextMenu: ["row_above", "row_below", "col_left", "col_right", "remove_row", "remove_col", "undo", "redo"],
+                fillHandle: false,
+                renderAllRows: true,
+                autoColumnsSize:true,
+                autoRowSize:true,
+                renderer: 'html',
+                wordWrap:true
+            });
+
+            // Problem with "null" appearing in new rows, might be fixed soon with this issue
+            // https://github.com/handsontable/handsontable/issues/2816
+            
+            // Add the div to the editor
+            mark = self.rte.enhancementAdd($div[0], line, {
+                block:true,
+                // Set up a custom "toHTML" function so the editor can output the enhancement
+                toHTML:function(){
+                    if (self.tableIsToBeRemoved($div)) {
+                        return '';
+                    } else {
+                        return self.tableDataToHTML($placeholder.handsontable('getData'));
+                    }
+                }
+            });
+
+            // Table will not render when it is not visible,
+            // so tell it to render now that it has been added to the page
+            $placeholder.handsontable('render');
+        },
+
+        
+        tableToolbarCreate: function() {
+
+            var  self, $toolbar;
+
+            self = this;
+
+            $toolbar = $('<ul/>', {
+                'class': 'rte2-enhancement-toolbar'
+            });
+
+            self.enhancementToolbarAddButton({
+                text: 'Up',
+                tooltip: 'Move Up',
+                className: 'rte2-enhancement-toolbar-up',
+                onClick: function() {
+                    self.tableMove($toolbar, -1);
+                }
+            }, $toolbar);
+
+            self.enhancementToolbarAddButton({
+                text: 'Down',
+                tooltip: 'Move Down',
+                className: 'rte2-enhancement-toolbar-down',
+                onClick: function() {
+                    self.tableMove($toolbar, +1);
+                }
+            }, $toolbar);
+
+            // CSS is used to hide this when the toBeRemoved class is set on the enhancement
+            self.enhancementToolbarAddButton({
+                text: 'Remove',
+                className: 'rte2-enhancement-toolbar-remove',
+                onClick: function() {
+                    self.tableRemove($toolbar); // Mark to be removed
+                }
+            }, $toolbar);
+
+
+            // CSS is used to hide this unless the toBeRemoved class is set on the enhancement
+            self.enhancementToolbarAddButton({
+                text: 'Restore',
+                className: 'rte2-enhancement-toolbar-restore',
+                onClick: function() {
+                    self.tableRestore($toolbar, false);  // Erase the to be removed mark
+                }
+            }, $toolbar);
+
+            // CSS is used to hide this unless the toBeRemoved class is set on the enhancement
+            self.enhancementToolbarAddButton({
+                text: 'Remove Completely',
+                className: 'rte2-enhancement-toolbar-remove-completely',
+                onClick: function() {
+                    self.tableRemoveCompletely($toolbar);
+                }
+            }, $toolbar);
+
+            return $toolbar;
+        },
+
+
+        tableMove: function(el, direction) {
+
+            var $el, mark, self, topNew, topOriginal, topWindow;
+            
+            self = this;
+
+            mark = self.tableGetMark(el);
+            if (!mark) {
+                return;
+            }
+
+            if (direction === 1 || direction === -1) {
+
+                $el = self.tableGetWrapper(el);
+                
+                topOriginal = $el.offset().top;
+                    
+                mark = self.rte.enhancementMove(mark, direction);
+
+                topNew = $el.offset().top;
+
+                // Adjust the scroll position of the window so the enhancement stays in the same position relative to the mouse.
+                // This is to let the user repeatedly click the Up/Down button to move the enhancement multiple lines.
+                topWindow = $(window).scrollTop();
+                $(window).scrollTop(topWindow + topNew - topOriginal);
+
+            }
+        },
+
+        tableRemove: function (el) {
+            var $el, self;
+            self = this;
+            $el = self.tableGetWrapper(el);
+            $el.addClass('toBeRemoved');
+        },
+
+        
+        tableRemoveCompletely: function (el) {
+            var mark, self;
+            self = this;
+            mark = self.tableGetMark(el);
+            if (mark) {
+                self.rte.enhancementRemove(mark);
+            }
+        },
+
+
+        tableRestore: function (el) {
+            var $el, self;
+            self = this;
+            $el = self.tableGetWrapper(el);
+            $el.removeClass('toBeRemoved');
+        },
+
+
+        tableIsToBeRemoved: function(el) {
+            var $el, self;
+            self = this;
+            $el = self.tableGetWrapper(el);
+            return $el.hasClass('toBeRemoved');
+        },
+
+        /**
+         * Given the element for the enhancement (or an element within that)
+         * returns the wrapper element for the enhancement.
+         *
+         * @param Element el
+         * The enhancement element, or an element within the enhancement.
+         */
+        tableGetWrapper: function(el) {
+            var self;
+            self = this;
+            return $(el).closest('.rte2-table');
+        },
+
+
+        /**
+         * Given the element for the enhancement (or an element within that)
+         * returns the mark for that enhancement.
+         *
+         * @param Element el
+         * The enhancement element, or an element within the enhancement.
+         */
+        tableGetMark: function(el) {
+            var self;
+            self = this;
+            el = self.tableGetWrapper(el);
+            return self.rte.enhancementGetMark(el);
+        },
+
+        
+        /**
+         * @param [String|Object] $content
+         * HTML for the table element, or a DOM or jQuery object
+         *
+         * @returns Object
+         * Data from the table to be passed to handsontable plugin
+         */
+        tableHTMLToData: function($content) {
+            
+            var data, self;
+
+            self = this;
+            
+            // Just in case HTML or a DOM element is passed in
+            $content = $($content);
+
+            data = [];
+
+            // Loop through the rows in the table
+            $content.find('>tr,>tbody >tr').each(function(i, tr) {
+                
+                var dataRow;
+                
+                dataRow = [];
+
+                // Loop through all the columns in the row
+                $(tr).find('>td,>th').each(function(i, cell) {
+
+                    // Get the HTML in the column and add it to the row
+                    dataRow.push( $(cell).html() );
+                });
+
+                // Add the row to the table data
+                data.push(dataRow);
+                
+            });
+
+            return data;
+        },
+
+        
+        /**
+         * @param Object data
+         * Data from the handsontable plugin
+         *
+         * @returns String
+         * The HTML for the table.
+         */
+        tableDataToHTML: function(data) {
+
+            var html, self;
+
+            self = this;
+
+            html = '<table>';
+            
+            $.each(data, function(i, row) {
+                html += '<tr>';
+                $.each(row, function(i, cell) {
+                    html += '<td>' + cell + '</td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</table>';
+
+            return html;
         },
 
         

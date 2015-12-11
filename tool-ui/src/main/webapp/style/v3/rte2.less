@@ -182,12 +182,22 @@
   .rte2-enhancement-toolbar-size { width:auto; }
 }
 
-.rte2-enhancement.toBeRemoved {
+.rte2-enhancement.toBeRemoved, .rte2-table.toBeRemoved {
   .rte2-enhancement-toolbar-remove { display:none; }
   .rte2-enhancement-toolbar-restore { display:inline-block; }
   .rte2-enhancement-toolbar-remove-completely { display:inline-block; }
 }
-
+.rte2-table {
+  box-sizing: border-box;
+  padding: .5em 5px;
+  position: relative;
+  .background-striped(@color-heading);
+}
+.rte2-table-placeholder {
+  overflow:hidden;
+  height:auto;
+  width:100%;
+}
 .rte2-style-html {
   font-family: @fontFamily-code;
   background-color:fade(black, 10%);
@@ -246,7 +256,7 @@
   background-color:rgba(180, 180, 180, 0.3);
   outline:1px solid rgba(100, 100, 100, 0.5);
 }
-.rte2-style-enhancement {
+.rte2-style-enhancement, .rte2-style-table {
   display:inline-block;
   padding:2em;
   background-color:#ddd;
