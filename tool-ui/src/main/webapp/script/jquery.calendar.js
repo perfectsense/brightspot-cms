@@ -124,6 +124,7 @@ getCalendar = function() {
                         newDate.setDate(1);
                         newDate.setYear(newYear);
                         updateCalendarView(newDate);
+                        $calendar.data('selectedDate').setYear(newYear);
                         $year.removeClass('invalid');
                     }
                 }
