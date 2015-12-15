@@ -2800,7 +2800,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
          * Tables
          *==================================================*/
 
-        
+
+        /**
+         * 
+         */
         tableCreate: function($content, line) {
             
             var columns, data, $div, $placeholder, self;
@@ -2828,14 +2831,35 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             // Initialize the table.
             $placeholder.handsontable({
                 'data': data,
+                minCols:2,
+                minRows:1,
                 stretchH: 'all',
-                contextMenu: ["row_above", "row_below", "col_left", "col_right", "remove_row", "remove_col", "undo", "redo"],
+                contextMenu: {
+                    callback: function (key, options) {
+                        if (key === 'edit') {
+                            self.tableEditSelection($placeholder);
+                        }
+                    },
+                    items: {
+                        "edit":{name:'Edit'},
+                        "row_above":{},
+                        "row_below":{},
+                        "col_left":{},
+                        "col_right":{},
+                        "remove_row":{},
+                        "remove_col":{},
+                        "undo":{},
+                        "redo":{}
+                    }
+                },
                 fillHandle: false,
                 renderAllRows: true,
                 autoColumnsSize:true,
                 autoRowSize:true,
                 renderer: 'html',
-                wordWrap:true
+                wordWrap:true,
+                outsideClickDeselects:false,
+                editor:false
             });
 
             // Problem with "null" appearing in new rows, might be fixed soon with this issue
@@ -2860,6 +2884,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         },
 
         
+        /**
+         * 
+         */
         tableToolbarCreate: function() {
 
             var  self, $toolbar;
@@ -2920,6 +2947,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         },
 
 
+        /**
+         * 
+         */
         tableMove: function(el, direction) {
 
             var $el, mark, self, topNew, topOriginal, topWindow;
@@ -2949,6 +2979,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             }
         },
 
+        
+        /**
+         * 
+         */
         tableRemove: function (el) {
             var $el, self;
             self = this;
@@ -2957,6 +2991,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         },
 
         
+        /**
+         * 
+         */
         tableRemoveCompletely: function (el) {
             var mark, self;
             self = this;
@@ -2967,6 +3004,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         },
 
 
+        /**
+         * 
+         */
         tableRestore: function (el) {
             var $el, self;
             self = this;
@@ -2975,6 +3015,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         },
 
 
+        /**
+         * 
+         */
         tableIsToBeRemoved: function(el) {
             var $el, self;
             self = this;
@@ -3080,6 +3123,63 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             return html;
         },
 
+        
+        /**
+         * 
+         */
+        tableEditInit: function() {
+            
+            var self;
+
+            self = this;
+
+            if (self.$tableEditDiv) {
+                return;
+            }
+            
+            // Create popup used to display the editor
+            self.$tableEditDiv = $('<div>', {'class':'rte2-table-editor'}).appendTo(document.body);
+            self.$tableEditTextarea = $('<textarea>').appendTo(self.$tableEditDiv);
+            self.tableEditRte = Object.create(Rte);
+            self.tableEditRte.init(self.$tableEditTextarea);
+            
+            self.$tableEditDiv.popup().popup('close');
+        },
+
+        
+        /**
+         * @param jQuery $el
+         * The placeholder div that contains the handsontable
+         */
+        tableEditSelection: function($el) {
+
+            var self, value;
+
+            self = this;
+
+            // Set up a nested rich text editor in a popup
+            // (but only do this once)
+            self.tableEditInit();
+
+            value = $el.handsontable('getValue');
+
+            self.$tableEditDiv.popup('open');
+            self.tableEditRte.fromHTML(value);
+            self.tableEditRte.focus();
+            self.tableEditRte.refresh();
+
+            // Give the popup a name so we can control the width
+            self.$tableEditDiv.popup('container').attr('name', 'rte2-frame-table-editor');
+            
+            self.$tableEditDiv.popup('container').one('closed', function(){
+                var range;
+                value = self.tableEditRte.toHTML();
+                range = $el.handsontable('getSelected');
+                $el.handsontable('setDataAtCell', range[0], range[1], value);
+            });
+
+        },
+        
         
         /*==================================================
          * Placeholder

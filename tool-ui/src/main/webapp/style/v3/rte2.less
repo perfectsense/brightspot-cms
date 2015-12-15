@@ -575,7 +575,24 @@ li.CodeMirror-hint-active {
   max-width:1000px;
   width:70%;
 }
+
+.popup[name=rte2-frame-table-editor] {
+  max-width:1000px;
+  width: 60%;
+  margin-left:-40%;
+}
+
+.rte2-table-editor {
+  margin-top:1em;
+}
+
+.rte2-table {
+  u { text-decoration:underline; }
+  strike { text-decoration:line-through;}
   
+  // Within the table do not let users click link or button elements
+  a, button { pointer-events:none; }
+}
 
 // Div that is used as a paste clipboard
 // Note this cannot be hidden because it needs to get focus
