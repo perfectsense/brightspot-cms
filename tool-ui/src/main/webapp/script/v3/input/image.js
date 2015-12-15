@@ -4,6 +4,7 @@
 define([
     'jquery',
     'bsp-utils',
+    'v3/input/richtext2',
     'pixastic/pixastic.core',
     'pixastic/actions/blurfast',
     'pixastic/actions/brightness',
@@ -15,7 +16,7 @@ define([
     'pixastic/actions/rotate',
     'pixastic/actions/sepia',
     'pixastic/actions/sharpen'
-], function($, bsp_utils) {
+], function($, bsp_utils, rte2) {
     
     var imageEditorUtility;
 
@@ -1465,9 +1466,11 @@ define([
 
             // Show the text overlays for this group
             self.textSelectGroup(groupName);
+
+            // Create the "Reset Crop" button within the group
+            self.resetCropShow(groupName);
         },
 
-        
         /**
          * Unselect the currently selected size.
          */
@@ -1483,6 +1486,9 @@ define([
 
             // Remove the "Add Text" button
             self.textUnselect();
+
+            // Remove the "Reset Crop" button
+            self.resetCropHide();
         },
 
         
@@ -2036,6 +2042,16 @@ define([
             });
         },
 
+        /**
+         * Refreshes the sizebox to display updated bounds.
+         */
+        sizeBoxRefresh: function(groupName) {
+            var self;
+            self = this;
+            self.sizeBoxHide();
+            self.sizeBoxShow(groupName);
+        },
+
         
         /**
          * Create a mousedown handler function that lets the user drag the size box
@@ -2517,6 +2533,33 @@ define([
         },
 
         //--------------------------------------------------
+        // SIZES - RESET CROP
+        //--------------------------------------------------
+
+        resetCropShow: function (groupName) {
+            var self;
+
+            self = this;
+
+            $('<a/>', {
+                'class': 'imageEditor-resetCrop',
+                'text': 'Reset Crop',
+                'click': function () {
+                    self.sizesResetGroup(groupName);
+                    self.sizesUpdatePreview(groupName);
+                    self.sizeBoxRefresh(groupName);
+                    return false;
+                }
+            }).insertAfter(self.sizeGroups[groupName].$groupLabel);
+        },
+
+        resetCropHide: function () {
+            var self;
+            self = this;
+            self.$element.find('.imageEditor-resetCrop').remove();
+        },
+
+        //--------------------------------------------------
         // SIZES - TEXT OVERLAYS
         //--------------------------------------------------
 
@@ -2673,7 +2716,7 @@ define([
                 }
 
                 textInfo[ self.textInfoIndex++ ] = {
-                    text: texts[index],
+                    text: self.htmlDecode(texts[index]),
                     x: textXs[index],
                     y: textYs[index],
                     width: textWidths[index],
@@ -2712,14 +2755,15 @@ define([
                 // Loop  through all the text blocks within this group
                 $.each(self.sizeGroups[groupName].textInfos, function(textInfoKey, textInfo) {
 
-                    var fontSize, $rteInput;
+                    var fontSize, $rteInput, rte;
 
                     // Update the text from the rich text editor
                     $rteInput = textInfo.$textOverlay.find('.imageEditor-textOverlayInput');
                     if ($rteInput.length) {
-                        textInfo.text = $rteInput.val();
+                        rte = $rteInput.data('rte2');
+                        textInfo.text = rte ? rte.toHTML() : $rteInput.val();
                     }
-                    
+
                     texts += self.textDelimiter + textInfo.text;
                     textXs += self.textDelimiter + parseFloat(textInfo.x).toFixed(3);
                     textYs += self.textDelimiter + parseFloat(textInfo.y).toFixed(3);
@@ -2876,64 +2920,36 @@ define([
                 'value': textInfo.text || ''
             }).appendTo($textOverlay);
 
-            $textOverlayInput.rte({
-                'initImmediately': true,
-                'useLineBreaks': true
-            });
-            
-            // Move the rich text toolbar controls to on top of the image.
-            // Note we need to wrap the toolbar inside another div,
-            // because the rte messes around with the styles on the toolbar,
-            // and we will need to hide and show the toolbar later.
-            
+            // Create a div below the image to hold the rich text toolbar
             $textOverlayToolbar = $('<div/>', {'class':'imageEditor-text-toolbar'})
-                .hide()
-                .append( $textOverlay.find('.rte-toolbar-container') )
-                .appendTo(self.dom.tabs.sizes);
+                .hide();
+
+            self.dom.tabs.sizes.before($textOverlayToolbar);
             
-            $textOverlayInput.on('rtefocus', function(){
+            $textOverlayInput.on('rteFocus', function(){
                 self.$element.find('.imageEditor-text-toolbar').hide();
                 $textOverlayToolbar.show();
                 return false;
             });
-            
-            $textOverlayInput.on('rteblur', function(){
-                $textOverlayToolbar.hide();
-                return false;
-            });
 
+            rte = Object.create(rte2);
+            rte.init($textOverlayInput, {
+                inline:true,
+                toolbarLocation: $textOverlayToolbar
+            });
+            
+            textInfo.rte = rte;
+            
             // Save the toolbar so we can delete it later
             textInfo.$toolbar = $textOverlayToolbar;
-        
-            // Try to set the font size after the rich text editor loads
-            // TODO: need a better way to do this, such as a ready event that the RTE fires
-            var wait = 5000;
             
-            var repeatResizeTextOverlayFont = function() {
-                
-                var contentDocument, iframe, loaded;
-
-                iframe = $textOverlay.find('.rte-container iframe')[0] || {};
-                contentDocument = iframe.contentDocument || {};
-                loaded = $(contentDocument.body).is('.rte-loaded');
-                
-                if (loaded) {
-                    self.textOverlaySetFont(groupName, textInfoKey);
-                } else {
-                    // The RTE isn't loaded.
-                    // Try again after a delay, but give up after a certain number of tries.
-                    wait -= 100;
-                    if (wait > 0) {
-                        setTimeout(repeatResizeTextOverlayFont, 100);
-                    }
-                }
-            };
-
-            repeatResizeTextOverlayFont();
+            //repeatResizeTextOverlayFont();
+            self.textOverlaySetFont(groupName, textInfoKey);
             
             // Focus on the text input
             if (focus) {
                 $textOverlayInput.focus();
+                self.$element.find('.imageEditor-text-toolbar').hide();
                 $textOverlayToolbar.show();
             }
 
@@ -2985,7 +3001,7 @@ define([
             // Loop through each text overlay within the sizebox
             $sizeBox.find('.imageEditor-textOverlay').each(function() {
 
-                var originalFontSize, $rteBody, sizeHeight, sizeWidth, $textOverlay, textInfoKey, textInfo;
+                var originalFontSize, $rteBody, rte, sizeHeight, sizeWidth, $textOverlay, textInfoKey, textInfo;
 
                 $textOverlay = $(this);
 
@@ -3006,9 +3022,9 @@ define([
                 originalFontSize = $textOverlay.data('imageEditor-originalFontSize');
                 
                 // Get the body of the rich text editor
-                $rteBody = $( $textOverlay.find('.rte-container iframe')[0].contentDocument.body );
+                $rteBody = $( $textOverlay );
 
-                if (!originalFontSize && $rteBody.is('.rte-loaded')) {
+                if (!originalFontSize) {
                     originalFontSize = parseFloat($rteBody.css('font-size'));
                     $.data(this, 'imageEditor-originalFontSize', originalFontSize);
                 }
@@ -3026,6 +3042,12 @@ define([
                     textInfo.originalFontSize = originalFontSize;
                 }
 
+                // Refresh the rich text editor after font size has been calculated
+                rte = $textOverlay.find('.imageEditor-textOverlayInput').data('rte2');
+                if (rte) {
+                    rte.refresh();
+                }
+                
             });
 
             // Update the hiden variables with the new textSize values
@@ -3277,21 +3299,27 @@ define([
             self.hotspotOverlayRemoveAll();
 
             // Loop through all the hotspot inputs that have not yet been moved into popups
-            self.dom.$hotspots.find('.objectInputs').each(function(){
+            //
+            // Note there is a possibility that the .objectInputs div might have nested
+            // within it more .objectInputs divs, so we need to be sure only to get the
+            // parent div for the entire hotspot and not any internal divs
+            self.dom.$hotspots.find('> ul > li > .objectInputs').each(function(){
                 
                 var $hotspot, $objectInput;
                 
                 $objectInput = $(this);
 
                 // Hide the width, height, x, y inputs
-                $objectInput.find(':input[name$=".x"], :input[name$=".y"], :input[name$=".width"], :input[name$=".height"]').closest('.inputContainer').hide();
-                
+                $objectInput.find(':input[name$="cms.image.x"], :input[name$="cms.image.y"], :input[name$="cms.image.width"], :input[name$="cms.image.height"]')
+                    .closest('.inputContainer').hide();
+
+                // Create a new list for the hotspot LI and move it into a popup
                 $hotspot = $('<ul/>').append( $objectInput.closest('li') );
                 $hotspot.popup({parent:self.dom.$hotspotPopups}).popup('close');
             });
 
             // Loop through all the hotspot data in the popups
-            self.dom.$hotspotPopups.find('.objectInputs').each(function(){
+            self.dom.$hotspotPopups.find('ul > li > .objectInputs').each(function(){
 
                 var data, $objectInput;
 
@@ -4230,7 +4258,21 @@ define([
 
             // Return a promise that can be used to continue running other code
             return deferred.promise();
+        },
+
+        /**
+         * Encode text so it is HTML safe.
+         * @param {String} s
+         * @return {String}
+         */
+        htmlDecode: function(s) {
+            return String(s)
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"');
         }
+
 
     }; // END imageEditorUtilty object
 
@@ -4520,3 +4562,6 @@ define([
 
 
 ======================================================================***/
+
+// Set filename for debugging tools to allow breakpoints even when using a cachebuster
+//# sourceURL=image.js

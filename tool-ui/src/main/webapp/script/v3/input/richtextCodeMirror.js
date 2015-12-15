@@ -1,4 +1,12 @@
-define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint', 'v3/spellcheck'], function($, CodeMirror, CodeMirrorShowHint, spellcheckAPI) {
+define([
+    'jquery',
+    'v3/spellcheck',
+    'codemirror/lib/codemirror',
+    'codemirror/addon/hint/show-hint',
+    'codemirror/addon/dialog/dialog',
+    'codemirror/addon/search/searchcursor',
+    'codemirror/addon/search/search'
+], function($, spellcheckAPI, CodeMirror) {
     
     var CodeMirrorRte;
 
@@ -271,7 +279,7 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
 
             self.enhancementInit();
             self.initListListeners();
-            self.initClickListener();
+            self.onClickInit();
             self.initEvents();
             self.clipboardInit();
             self.trackInit();
@@ -378,51 +386,6 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
 
             });
         }, // initListListeners
-
-
-        /**
-         * Set up listener for clicks.
-         * If a style has an onClick parameter, then when user clicks that
-         * style we will call the onClick function and pass it the mark.
-         */
-        initClickListener: function() {
-
-            var editor, now, self;
-
-            self = this;
-            
-            editor = self.codeMirror;
-
-            // CodeMirror doesn't handle double clicks reliably,
-            // so we will simulate a double click event using mousedown.
-            $(editor.getWrapperElement()).on('mousedown', function(event) {
-
-                var $el, marks, now, pos;
-
-                // Generate timestamp
-                now = Date.now();
-
-                if (self.doubleClickTimestamp && (now - self.doubleClickTimestamp < 500) ) {
-
-                    // Figure out the line and character based on the mouse coord that was clicked
-                    pos = editor.coordsChar({left:event.pageX, top:event.pageY}, 'page');
-
-                    // Loop through all the marks for the clicked position
-                    marks = editor.findMarksAt(pos);
-                    $.each(marks, function(i, mark) {
-                        var styleObj;
-                        styleObj = self.classes[mark.className];
-                        if (styleObj && styleObj.onClick) {
-                            styleObj.onClick(event, mark);
-                        }
-                    });
-
-                } else {
-                    self.doubleClickTimestamp = now;
-                }
-            });
-
-        }, // initClickListener
 
 
         /**
@@ -2246,6 +2209,181 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
             return $(el).data('enhancementMark');
         },
 
+
+        //==================================================
+        // OnClick Handlers
+        //==================================================
+        
+        /**
+         * Set up listener for clicks.
+         * If a style has an onClick parameter, then when user clicks that
+         * style we will call the onClick function and pass it the mark.
+         */
+        onClickInit: function() {
+
+            var editor, now, self;
+
+            self = this;
+            
+            editor = self.codeMirror;
+
+            // CodeMirror doesn't handle double clicks reliably,
+            // so we will simulate a double click event using mousedown.
+            $(editor.getWrapperElement()).on('mousedown', function(event) {
+
+                var $el, marks, now, pos;
+
+                // Generate timestamp
+                now = Date.now();
+
+                if (self.doubleClickTimestamp && (now - self.doubleClickTimestamp < 500) ) {
+
+                    // Figure out the line and character based on the mouse coord that was clicked
+                    pos = editor.coordsChar({left:event.pageX, top:event.pageY}, 'page');
+
+                    // Find all the marks for the clicked position
+                    marks = editor.findMarksAt(pos);
+
+                    // Only keep the marks that have onClick configs
+                    marks = $.map(marks, function(mark, i) {
+                        var styleObj;
+                        styleObj = self.classes[mark.className];
+                        if (styleObj && styleObj.onClick) {
+                            // Keep in the array
+                            return mark;
+                        } else {
+                            // Remove from the array
+                            return null;
+                        }
+                    });
+
+                    if (marks.length === 1) {
+
+                        self.onClickDoMark(event, marks[0]);
+                        
+                    } else if (marks.length > 1) {
+
+                        // Unselect the current selection
+                        range = self.markGetRange(marks[0]);
+                        self.codeMirror.setCursor(range.from);
+
+                        // Give time for the click event to complete
+                        // so the resulting popup doesn't get closed accidentally
+                        setTimeout(function(){
+
+                            // Pop up a div that lets user choose which mark to edit
+                            self.onClickSelectMark(event, marks);
+                        }, 100);
+                        
+                    }
+                    
+                }
+
+                self.doubleClickTimestamp = now;
+            });
+
+        }, // onClickInit
+
+        
+        /**
+         * Do the onclick event for a mark.
+         * For example, a link or inline enhancement mark might have an onclick handler
+         *
+         * @param Object event
+         * The click event.
+         *
+         * @param Object mark
+         * The CodeMirror mark. Note this mark must have a className, which will be used
+         * to find the style object that contains the onclick handler.
+         */
+        onClickDoMark: function(event, mark) {
+            
+            var range, self, styleObj;
+
+            self = this;
+
+            styleObj = self.classes[mark.className];
+            if (styleObj && styleObj.onClick) {
+                            
+                // Make this mark the current selection
+                range = self.markGetRange(mark);
+                self.codeMirror.setSelection(range.from, range.to);
+
+                styleObj.onClick(event, mark);
+            }
+        },
+
+        
+        /**
+         * In case a cursor position resides within several marks with onclick events,
+         * display a popup that lets the user select which mark to click.
+         *
+         * @param Object event
+         * The click event.
+         *
+         * @param Object mark
+         * The CodeMirror mark. Note this mark must have a className, which will be used
+         * to find the style object that contains the onclick handler. In addition the
+         * style object can have a getLabel() function that returns a label to be used
+         * in the slection popup.
+         */
+        onClickSelectMark: function(event, marks) {
+            var $div, $divPosition, $li, self, $ul;
+            self = this;
+
+            event.stopPropagation();
+            event.preventDefault();
+            
+            // Display a pop-up list of marks that can be edited
+            $div = $('<div/>', {'class': 'rte2-onclick-selector'});
+            $('<h2/>', {text:'Select a mark to edit:'}).appendTo($div);
+            $ul = $('<ul/>').appendTo($div);
+            
+            $.each(marks.reverse(), function(i, mark) {
+                
+                var label, $li, styleObj;
+
+                // Get the label to display for this mark.
+                // It defaults to the className of the style.
+                // Of if the style definition has a getLabel() function
+                // call that and use the return value
+                styleObj = self.classes[mark.className] || {};
+                label = styleObj.enhancementName || mark.className;
+                if (styleObj.getLabel) {
+                    label = styleObj.getLabel(mark);
+                }
+                
+                $li = $('<li/>', {
+                    html: $('<a/>', {text:label})
+                }).on('click', function(eventClick) {
+                    eventClick.stopPropagation();
+                    eventClick.preventDefault();
+                    $(this).popup('close');
+                    self.onClickDoMark(event, mark);
+                }).appendTo($ul);
+            });
+
+            $div.appendTo('body').popup();
+
+            // Create an element that the popup can use to position itself
+            // and position it at the point of the click
+            $divPosition = $('<div/>', {
+                'style': 'position:absolute;top:0;left:0;height:1px;overflow:hidden;'
+            }).appendTo('body').css({
+                'top': event.pageY + 12,
+                'left': event.pageX
+            });
+            $div.popup('source', $divPosition)
+
+            $div.popup('container').on('close', function() {
+                // If the popup is canceled with Esc or otherwise, do some cleanup
+                $div.remove();
+                $divPosition.remove();
+            });
+
+            $div.popup('open');
+        },
+        
         
         //--------------------------------------------------
         // Track Changes
@@ -3328,6 +3466,163 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
         },
         
         //==================================================
+        // Case Functions (lower case and uppper case)
+        //
+        // Note we can't just change the text directly in CodeMirror,
+        // because that would obliterate the markers we use for styling.
+        // So instead we copy the range as HTML, change the case of
+        // the text nodes in the HTML, then paste the HTML back into
+        // the same range.
+        //==================================================
+
+        /**
+         * Toggle the case "smartly".
+         * If the text is all uppercase, change to all lower case.
+         * If the text is all lowercase, or a mix, then change to all uppercase.
+         * @param {Object} [range=current range]
+         */
+        caseToggleSmart: function(range) {
+            
+            var editor, self, text, textUpper;
+
+            self = this;
+            
+            range = range || self.getRange();
+
+            editor = self.codeMirror;
+
+            // Get the text for the range
+            text = editor.getRange(range.from, range.to) || '';
+            textUpper = text.toUpperCase();
+
+            if (text === textUpper) {
+                return self.caseToLower(range);
+            } else {
+                return self.caseToUpper(range);
+            }
+        },
+
+        
+        /**
+         * Change to lower case.
+         * @param {Object} [range=current range]
+         */
+        caseToLower: function(range) {
+            
+            var html, node, self;
+
+            self = this;
+
+            range = range || self.getRange();
+
+            // Get the HTML for the range
+            html = self.toHTML(range);
+
+            // Convert the text nodes to lower case
+            node = self.htmlToLowerCase(html);
+            
+            // Save it back to the range as lower case text
+            self.fromHTML(node, range, true);
+
+            // Reset the selection range since it will be wiped out
+            self.setSelection(range);
+        },
+
+        
+        /**
+         * Change to upper case.
+         * @param {Object} [range=current range]
+         */
+        caseToUpper: function(range) {
+            
+            var html, node, self;
+
+            self = this;
+
+            range = range || self.getRange();
+
+            // Get the HTML for the range
+            html = self.toHTML(range);
+
+            // Convert the text nodes to upper case
+            node = self.htmlToUpperCase(html);
+            
+            // Save it back to the range as lower case text
+            self.fromHTML(node, range, true);
+            
+            // Reset the selection range since it will be wiped out
+            self.setSelection(range);
+        },
+
+        
+        /**
+         * Change the text nodes to lower case within some HTML.
+         * @param {String|DOM} html
+         */
+        htmlToLowerCase: function(html) {
+            var self;
+            self = this;
+            return self.htmlChangeCase(html, false);
+        },
+
+        
+        /**
+         * Change the text nodes to lower case within some HTML.
+         * @param {String|DOM} html
+         */
+        htmlToUpperCase: function(html) {
+            var self;
+            self = this;
+            return self.htmlChangeCase(html, true);
+        },
+
+        
+        /**
+         * Change the text nodes to lower or upper case within some HTML.
+         * @param {String|DOM} html
+         */
+        htmlChangeCase: function(html, upper) {
+            var node, self;
+            
+            self = this;
+            
+            // Call recursive function to change all the text nodes
+            node = self.htmlParse(html);
+            if (node) {
+                self.htmlChangeCaseProcessNode(node, upper);
+            }
+            return node;
+        },
+
+        /**
+         * Recursive function to change case of text nodes.
+         * @param {DOM} node
+         * @param {Boolean} upper
+         * Set to true for upper case, or false for lower case.
+         */
+        htmlChangeCaseProcessNode: function(node, upper) {
+            var childNodes, i, length, self;
+            self = this;
+            
+            if (node.nodeType === 3) {
+                if (node.nodeValue) {
+                    node.nodeValue = upper ? node.nodeValue.toUpperCase() : node.nodeValue.toLowerCase();
+                }
+            } else {
+                childNodes = node.childNodes;
+                length = childNodes.length;
+                for (i = 0; i < length; ++ i) {
+                    self.htmlChangeCaseProcessNode(childNodes[i], upper);
+                }
+            }
+        },
+        
+        // Other possibilities for the future?
+        // caseToggle (toggle case of each character)
+        // caseSentence (first word cap, others lower)
+        // caseTitle (first letter of each word)
+        
+        //==================================================
         // Miscelaneous Functions
         //==================================================
 
@@ -3406,6 +3701,20 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                 from: self.codeMirror.getCursor('from'),
                 to: self.codeMirror.getCursor('to')
             };
+        },
+        
+        /**
+         * Sets the selection to a range.
+         */
+        setSelection: function(range){
+
+            var editor, self;
+
+            self = this;
+
+            editor = self.codeMirror;
+
+            editor.setSelection(range.from, range.to);
         },
 
 
@@ -3539,6 +3848,47 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
             self.codeMirror.setCursor(line, ch);
         },
 
+
+        /**
+         * Returns the range for a mark.
+         * @returns {Object}
+         * The range of the mark (with from and to parameters)
+         * or an empty object if the mark has been cleared.
+         */
+        markGetRange: function(mark) {
+            var pos, self;
+            self = this;
+            pos = {};
+            if (mark.find) {
+                pos = mark.find() || {};
+            }
+            return pos;
+        },
+
+        
+        /**
+         * Given a CodeMirror mark, replace the text within it
+         * without destroying the mark.
+         * Normally if you were to use the CodeMirror functions to replace a range,
+         * the mark would be destroyed.
+         */
+        replaceMarkText: function(mark, text) {
+            var pos, self;
+
+            self = this;
+
+            pos = self.markGetRange(mark);
+            if (!pos.from) {
+                return;
+            }
+
+            // Replacing the entire mark range will remove the mark so we need
+            // to add text at the end of the mark, then remove the original text
+            self.codeMirror.replaceRange(text, pos.to, pos.to);
+            if (!(pos.from.line === pos.to.line && pos.from.ch === pos.to.ch)) {
+                self.codeMirror.replaceRange('', pos.from, pos.to);
+            }
+        },
         
         /**
          * Determine if an element is a "container" for another element.
@@ -3643,10 +3993,12 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
              * An object containing additional attributes to add to the element.
              * For example: {'style': 'font-weight:bold'}
              */
-            function openElement(styleObj) {
+            function openElement(styleObj, attributes) {
                 
                 var html = '';
 
+                attributes = attributes || {};
+                
                 if (styleObj.markToHTML) {
                     html = styleObj.markToHTML();
                 } else if (styleObj.element) {
@@ -3654,9 +4006,19 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
 
                     if (styleObj.elementAttr) {
                         $.each(styleObj.elementAttr, function(attr, value) {
-                            html += ' ' + attr + '="' + value + '"';
+                            html += ' ' + attr + '="' + self.htmlEncode(value) + '"';
                         });
                     }
+                    
+                    if (styleObj.attributes) {
+                        $.each(styleObj.attributes, function(attr, value) {
+                            html += ' ' + attr + '="' + self.htmlEncode(value) + '"';
+                        });
+                    }
+                    
+                    $.each(attributes, function(attr, value) {
+                        html += ' ' + attr + '="' + self.htmlEncode(value) + '"';
+                    });
 
                     // For void elements add a closing slash when closing, like <br/>
                     if (self.voidElements[ styleObj.element ]) {
@@ -3903,8 +4265,10 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                         } else {
 
                             // There is no custom toHTML function for this
-                            // style, so we'll just use the style object
-                            annotationStart[startCh].push(styleObj);
+                            // style, so we'll just use the style object,
+                            // but we'll also include any attributes that
+                            // were stored on the mark
+                            annotationStart[startCh].push( $.extend(true, {}, styleObj, {attributes:mark.attributes}) );
                         }
                         
                         // Add the element to the start and end annotations for this character
@@ -4188,6 +4552,8 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
 
                 while (next) {
 
+                    elementAttributes = {};
+
                     // Check if we got a text node or an element
                     if (next.nodeType === 3) {
 
@@ -4332,6 +4698,12 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                                         matchStyleObj = styleObj;
                                     }
 
+                                    /***
+
+                                        // Not needed anymore (?) since we assume that rules are set up to match elements with specified
+                                        // attribues. You can match <span myattr1> and <span myattr2> but if you tried to match
+                                        // just <span> then that might match in a different order so it might cause problems.
+
                                     // Check if the element has other attributes that are unexpected
                                     if (matchStyleObj && !styleObj.elementAttrAny) {
                                         $.each(elementAttributes, function(attr, value) {
@@ -4343,6 +4715,7 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                                             }
                                         });
                                     }
+                                    ***/
 
 
                                     // Stop after the first style that matches
@@ -4496,7 +4869,8 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                                 annotations.push({
                                     styleObj:matchStyleObj,
                                     from:from,
-                                    to:to
+                                    to:to,
+                                    attributes: elementAttributes
                                 });
                             }
                         }
@@ -4572,7 +4946,10 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
             history = editor.getHistory();
             
             // Set up all the annotations
-            $.each(annotations, function(i, annotation) {
+            // We reverse the order of the annotations because the parsing was done
+            // depth first, and we want to create the marks for parent elements before
+            // the marks for child elements (so elements can later be created in the same order)
+            $.each(annotations.reverse(), function(i, annotation) {
 
                 var styleObj;
 
@@ -4608,7 +4985,7 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
                 if (styleObj.line) {
                     self.blockSetStyle(styleObj, annotation, {triggerChange:false});
                 } else {
-                    self.inlineSetStyle(styleObj, annotation, {addToHistory:false, triggerChange:false});
+                    self.inlineSetStyle(styleObj, annotation, {addToHistory:false, triggerChange:false, attributes:annotation.attributes});
                 }
             });
 
@@ -4691,6 +5068,20 @@ define(['jquery', 'codemirror/lib/codemirror', 'codemirror/addon/hint/show-hint'
             var self;
             self = this;
             self.codeMirror.clearHistory();
+        },
+
+
+        find: function(){
+            var self;
+            self = this;
+            self.codeMirror.execCommand('find');
+        },
+
+        
+        replace: function(){
+            var self;
+            self = this;
+            self.codeMirror.execCommand('replace');
         },
 
         

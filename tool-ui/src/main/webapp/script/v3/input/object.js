@@ -40,16 +40,26 @@ function($) {
       value = $input.val();
 
       if (preview) {
+        var $caption = $('<figcaption>', {
+          'text': label
+        });
+
         $select.html($('<figure/>', {
           'html': [
             $('<img/>', {
               'src': preview
             }),
-            $('<figcaption>', {
-              'text': label
-            })
+            $caption
           ]
         }));
+
+        if (visibility) {
+          $caption.prepend(' ');
+          $caption.prepend($('<span/>', {
+            'class': 'visibilityLabel',
+            'text': visibility
+          }));
+        }
 
       } else {
         if (label) {

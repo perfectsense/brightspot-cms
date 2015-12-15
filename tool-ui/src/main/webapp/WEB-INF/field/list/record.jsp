@@ -588,8 +588,10 @@ if (!isValueExternal) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
+                boolean expanded = itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
 
                 wp.writeStart("li",
+                        "class", expanded ? "expanded" : null,
                         "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
                         "data-label", wp.getObjectLabel(item),
@@ -615,7 +617,7 @@ if (!isValueExternal) {
                             "name", publishDateName,
                             "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
 
-                    if (!itemState.hasAnyErrors()) {
+                    if (!expanded && !itemState.hasAnyErrors()) {
                         wp.writeElement("input",
                                 "type", "hidden",
                                 "name", dataName,

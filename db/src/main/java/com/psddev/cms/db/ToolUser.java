@@ -39,6 +39,7 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StorageItem;
 
 /** User that uses the CMS and other related tools. */
+@ToolUi.DefaultSortField("name")
 @ToolUi.IconName("object-toolUser")
 @Record.BootstrapPackages("Users and Roles")
 @Record.BootstrapTypeMappable(groups = Content.class, uniqueKey = "email")
@@ -47,6 +48,7 @@ public class ToolUser extends Record implements ToolEntity {
     private static final long TOKEN_CHECK_EXPIRE_MILLISECONDS = 30000L;
 
     @Indexed
+    @ToolUi.DefaultSearchResult
     @ToolUi.Note("If left blank, the user will have full access to everything.")
     private ToolRole role;
 

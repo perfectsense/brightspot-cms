@@ -56,7 +56,14 @@ if (wp.requireUser()) {
 
 Object selected = wp.findOrReserve();
 if (selected == null) {
-    wp.redirect("/", "reason", "no-object");
+    wp.writeHeader();
+    wp.writeStart("div", "class", "message message-warning");
+    wp.writeHtml(wp.localize(
+            "com.psddev.cms.tool.page.content.Edit",
+            ImmutableMap.of("queryString", request.getQueryString()),
+            "message.missing"));
+    wp.writeEnd();
+    wp.writeFooter();
     return;
 }
 
@@ -65,7 +72,18 @@ Site site = wp.getSite();
 
 if (selected != null) {
     if (!(site == null || Site.Static.isObjectAccessible(site, selected))) {
-        wp.redirect("/", "reason", "not-accessible");
+        wp.writeHeader();
+        wp.writeStart("div", "class", "message message-warning");
+        wp.writeHtml(wp.localize(
+                "com.psddev.cms.tool.page.content.Edit",
+                ImmutableMap.of(
+                        "typeLabel", wp.getTypeLabel(selected),
+                        "objectLabel", wp.getObjectLabel(selected),
+                        "siteName", site.getName()
+                ),
+                "message.notAccessible"));
+        wp.writeEnd();
+        wp.writeFooter();
         return;
     }
 }

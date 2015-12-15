@@ -4,7 +4,7 @@
     "bsp-autoexpand": "1.0.2",
     "bsp-autosubmit": "1.0.0",
     "bsp-utils": "2.0.2",
-    "codemirror": "5.2.0",
+    "codemirror": "5.7.0",
     "css-element-queries": "4250c87c5ab2efd467f99d901252c73eb6bb80ea",
     "d3": "3.4.6",
     "evaporate": "ttlabs/evaporatejs",

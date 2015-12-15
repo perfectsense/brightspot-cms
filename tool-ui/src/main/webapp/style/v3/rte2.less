@@ -53,9 +53,11 @@
       }
     }
 
-    &:last-of-type {
+  }
+
+  // To leave room for the word count, make sure there is space after the last toolbar item
+  > li:last-of-type {
       margin-right: 7em;
-    }
   }
   
   a, span, .rte2-toolbar-separator {
@@ -98,6 +100,7 @@
     }
   }
 
+  .rte2-toolbar-noicon { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-bold { .icon; .icon-bold; }
   .rte2-toolbar-italic { .icon; .icon-italic; }
   .rte2-toolbar-underline { .icon; .icon-underline; }
@@ -119,6 +122,8 @@
   
   .rte2-toolbar-enhancement { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-marker { width:auto; padding-left:0.5em; padding-right:0.5em; }
+
+  .rte2-toolbar-enhancement-inline { width:auto; padding-left:0.5em; padding-right:0.5em; }
 
   .rte2-toolbar-track-changes { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-track-changes-accept { .icon; .icon-ok; }
@@ -236,6 +241,11 @@
   padding:0.1em 0.5em;
   background-color:#ddd;
 }
+.rte2-style-enhancement-inline {
+  padding:0;
+  background-color:rgba(180, 180, 180, 0.3);
+  outline:1px solid rgba(100, 100, 100, 0.5);
+}
 .rte2-style-enhancement {
   display:inline-block;
   padding:2em;
@@ -305,6 +315,39 @@
 li.CodeMirror-hint-active {
   background: #08f;
   color: white;
+}
+
+.CodeMirror-dialog {
+  position: absolute;
+  left: 0; right: 0;
+  background: white;
+  z-index: 15;
+  padding: .1em .8em;
+  overflow: hidden;
+  color: #333;
+}
+
+.CodeMirror-dialog-top {
+  border-bottom: 1px solid #eee;
+  top: 0;
+}
+
+.CodeMirror-dialog-bottom {
+  border-top: 1px solid #eee;
+  bottom: 0;
+}
+
+.CodeMirror-dialog input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 20em;
+  color: inherit;
+  font-family: monospace;
+}
+
+.CodeMirror-dialog button {
+  font-size: 70%;
 }
 
 // For enhancements, let the enhancement toolbar overflow the codemirror widget,
@@ -518,9 +561,21 @@ li.CodeMirror-hint-active {
   float: right;
 }
 
+.popup[name=rte2-frame-enhancement-inline] {
+  max-width:1000px;
+  width:70%;
+}
+  
+
 // Div that is used as a paste clipboard
 // Note this cannot be hidden because it needs to get focus
 .rte2-clipboard {
   max-height:1px;
   overflow:hidden;
+}
+
+.rte2-onclick-selector {
+  ul {
+    margin:0 1em;
+  }
 }

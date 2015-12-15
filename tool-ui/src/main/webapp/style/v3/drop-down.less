@@ -18,17 +18,32 @@
     background: linear-gradient(to top, white 0, transparent 100%);
     bottom: 2px;
   }
+
+  &.dropDown-input-bottom {
+    &:before {
+      top: 2px;
+    }
+
+    &:after {
+      bottom: 0;
+    }
+  }
 }
 
 .dropDown-input {
   &:extend(.select all);
 
+  max-width: 300px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
   &.dropDown-list-open {
     border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
     border-color: @color-focus;
 
-    &:not(.dropDown-input-larger) {
-      border-bottom-right-radius: 0;
+    &.dropDown-input-bottom {
+      border-radius: 0 0 2px 2px;
     }
   }
 
@@ -73,11 +88,10 @@ input[type="text"].dropDown-search {
     position: absolute;
     right: 1px;
     top: -3px;
-  }
 
-  &.dropDown-input-larger:before {
-    top: -4px;
-    right: 40px;
+    .dropDown-input-bottom & {
+      top: -1px;
+    }
   }
 }
 
@@ -94,8 +108,9 @@ input[type="text"].dropDown-search {
   position: relative;
   top: -1px;
 
-  &.dropDown-input-larger {
-    border-top-color: transparent;
+  .dropDown-input-bottom & {
+    border-radius: 2px 2px 0 0;
+    top: 1px;
   }
 }
 

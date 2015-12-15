@@ -30,7 +30,7 @@ public class ContentRevisions extends Widget {
 
     {
         setDisplayName("Revisions");
-        setInternalName("cms.contentRevisison");
+        setInternalName("cms.contentRevision");
         addPosition(CmsTool.CONTENT_RIGHT_WIDGET_POSITION, 0, 3);
     }
 
