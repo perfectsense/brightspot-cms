@@ -41,16 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
-import com.google.common.base.MoreObjects;
-import com.ibm.icu.text.MessageFormat;
-import com.psddev.cms.db.PageFilter;
-import com.psddev.cms.db.RichTextElement;
-import com.psddev.cms.view.PageViewClass;
-import com.psddev.cms.view.ViewCreator;
-import com.psddev.dari.db.Recordable;
-import com.psddev.dari.util.CascadingMap;
-import com.psddev.dari.util.ClassFinder;
-import com.psddev.dari.util.CollectionUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -60,7 +50,10 @@ import org.apache.http.util.EntityUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
+
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
+import com.ibm.icu.text.MessageFormat;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentField;
 import com.psddev.cms.db.ContentType;
@@ -69,8 +62,10 @@ import com.psddev.cms.db.History;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.LayoutTag;
 import com.psddev.cms.db.Page;
+import com.psddev.cms.db.PageFilter;
 import com.psddev.cms.db.Renderer;
 import com.psddev.cms.db.ResizeOption;
+import com.psddev.cms.db.RichTextElement;
 import com.psddev.cms.db.Schedule;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.StandardImageSize;
@@ -86,6 +81,8 @@ import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowLog;
 import com.psddev.cms.db.WorkflowState;
 import com.psddev.cms.db.WorkflowTransition;
+import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.ViewCreator;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.db.Database;
@@ -97,11 +94,15 @@ import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Predicate;
 import com.psddev.dari.db.PredicateParser;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.Singleton;
 import com.psddev.dari.db.State;
 import com.psddev.dari.db.StateStatus;
 import com.psddev.dari.db.ValidationException;
+import com.psddev.dari.util.CascadingMap;
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CodeUtils;
+import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.DebugFilter;
 import com.psddev.dari.util.DependencyResolver;
@@ -2847,14 +2848,19 @@ public class ToolPageContext extends WebPageContext {
         writeSomeFormFields(object, false, null, null);
     }
 
+    public void writeStandardForm(Object object, boolean displayTrashAction) throws IOException, ServletException {
+        writeStandardForm(object, displayTrashAction, false);
+    }
+
     /**
      * Writes a standard form for the given {@code object}.
      *
      * @param object Can't be {@code null}.
      * @param displayTrashAction If {@code null}, displays the trash action
      * instead of the delete action.
+     * @param displayCopyAction If {@code true}, displays the create a copy action
      */
-    public void writeStandardForm(Object object, boolean displayTrashAction) throws IOException, ServletException {
+    public void writeStandardForm(Object object, boolean displayTrashAction, boolean displayCopyAction) throws IOException, ServletException {
         State state = State.getInstance(object);
         ObjectType type = state.getType();
 
@@ -2863,6 +2869,29 @@ public class ToolPageContext extends WebPageContext {
         writeStart("div", "class", "widgetControls");
             includeFromCms("/WEB-INF/objectVariation.jsp", "object", object);
         writeEnd();
+
+        if (displayCopyAction
+                && !State.getInstance(object).isNew()
+                && !(object instanceof com.psddev.dari.db.Singleton)) {
+
+            writeStart("div", "class", "widget-contentCreate");
+                writeStart("div", "class", "action action-create");
+                    writeHtml(h(localize("com.psddev.cms.tool.page.content.Edit", "action.new")));
+                writeEnd();
+                writeStart("ul");
+                    writeStart("li");
+                        writeStart("a", "class", "action action-create", "href", typeUrl(null, type.getId()));
+                            writeHtml(h(localize(state.getType(), "action.newType")));
+                        writeEnd();
+                    writeEnd();
+                    writeStart("li");
+                        writeStart("a", "class", "action action-copy", "href", typeUrl(null, type.getId(), "copyId", state.getId()), "target", "_top");
+                            writeHtml(h(localize(state.getType(), "action.copy")));
+                        writeEnd();
+                    writeEnd();
+                writeEnd();
+            writeEnd();
+        }
 
         includeFromCms("/WEB-INF/objectMessage.jsp", "object", object);
 
@@ -3513,7 +3542,8 @@ public class ToolPageContext extends WebPageContext {
             state.save();
             redirectOnSave("",
                     "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
-                    "id", state.getId());
+                    "id", state.getId(),
+                    "copyId", null);
             return true;
 
         } catch (Exception error) {
