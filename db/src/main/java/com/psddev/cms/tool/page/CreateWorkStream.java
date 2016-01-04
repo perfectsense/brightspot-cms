@@ -74,16 +74,17 @@ public class CreateWorkStream extends PageServlet {
 
             String searchString = page.param(String.class, "search");
 
+            Query<?> query;
+
             if (!ObjectUtils.isBlank(searchString)) {
                 Search search = new Search();
                 search.getState().setValues((Map<String, Object>) ObjectUtils.fromJson(searchString));
-                object.setSearch(search);
+                query = search.toQuery(page.getSite());
 
             } else {
                 String queryString = page.param(String.class, "query");
-                Query<?> query = Query.fromAll();
+                query = Query.fromAll();
                 query.getState().setValues((Map<String, Object>) ObjectUtils.fromJson(queryString));
-                object.setQuery(query);
 
                 UUID selectionId = page.param(UUID.class, "selectionId");
 
@@ -93,6 +94,7 @@ public class CreateWorkStream extends PageServlet {
                 }
             }
 
+            object.setQuery(query);
             object.setIncompleteIfMatching(page.param(boolean.class, "incompleteIfMatching"));
 
             page.publish(object);
