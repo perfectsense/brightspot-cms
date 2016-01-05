@@ -125,10 +125,6 @@
   }
 }
 
-.imageEditor-text-toolbar {
-  margin-right:@imageEditor-margin-right;
-}
-
 .imageEditor-cover {
   background-color: rgba(0, 0, 0, 0.5);
 }
@@ -195,6 +191,19 @@
   right: -5px;
 }
 
+.imageEditor-resetCrop {
+  .icon;
+  .icon-action-cancel;
+
+  display: none;
+
+  font-size: 11px;
+
+  .imageEditor-sizeSelected & {
+    display: block;
+  }
+}
+
 .imageEditor-addTextOverlay {
   .icon;
   .icon-plus;
@@ -248,6 +257,8 @@
   top: -15px;
   user-select: none;
 
+  font-size:1rem;
+  
   &:before {
     padding-left: 3px;
   }

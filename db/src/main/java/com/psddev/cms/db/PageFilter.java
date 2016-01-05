@@ -106,8 +106,9 @@ public class PageFilter extends AbstractFilter {
 
     public static final String MAIN_OBJECT_RENDERER_CONTEXT = "_main";
     public static final String EMBED_OBJECT_RENDERER_CONTEXT = "_embed";
-
     public static final String PAGE_VIEW_TYPE = "cms.page";
+
+    private boolean poweredBy;
 
     /**
      * Returns {@code true} if rendering the given {@code request} has
@@ -244,6 +245,11 @@ public class PageFilter extends AbstractFilter {
     }
 
     @Override
+    protected void doInit() throws Exception {
+        poweredBy = Settings.getOrDefault(boolean.class, "brightspot/poweredBy", Boolean.TRUE);
+    }
+
+    @Override
     protected void doError(
             HttpServletRequest request,
             HttpServletResponse response,
@@ -294,6 +300,10 @@ public class PageFilter extends AbstractFilter {
             HttpServletResponse response,
             FilterChain chain)
             throws IOException, ServletException {
+
+        if (poweredBy) {
+            response.setHeader("X-Powered-By", "Brightspot");
+        }
 
         if (request.getMethod().equalsIgnoreCase("HEAD")
                 && ObjectUtils.to(boolean.class, request.getHeader("Brightspot-Main-Object-Id-Query"))) {
@@ -398,6 +408,11 @@ public class PageFilter extends AbstractFilter {
                 }
             }
 
+            if (Static.isPreview(request) || user != null) {
+                response.setHeader("Cache-Control", "private, no-cache");
+                response.setHeader("Brightspot-Cache", "none");
+            }
+
             // Not handled by the CMS.
             if (mainObject == null) {
                 chain.doFilter(request, response);
@@ -465,11 +480,6 @@ public class PageFilter extends AbstractFilter {
             }
 
             Static.pushObject(request, mainObject);
-
-            if (Static.isPreview(request) || user != null) {
-                response.setHeader("Cache-Control", "private, no-cache");
-                response.setHeader("Brightspot-Cache", "none");
-            }
 
             final State mainState = State.getInstance(mainObject);
 

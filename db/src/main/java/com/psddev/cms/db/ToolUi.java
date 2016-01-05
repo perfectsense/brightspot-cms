@@ -36,6 +36,7 @@ public class ToolUi extends Modification<Object> {
     private String codeType;
     private Boolean colorPicker;
     private String cssClass;
+    private Boolean defaultSearchResult;
     private Set<String> displayAfter;
     private Set<String> displayBefore;
     private boolean displayFirst;
@@ -110,6 +111,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setCssClass(String cssClass) {
         this.cssClass = cssClass;
+    }
+
+    public Boolean getDefaultSearchResult() {
+        return defaultSearchResult;
+    }
+
+    public void setDefaultSearchResult(Boolean defaultSearchResult) {
+        this.defaultSearchResult = defaultSearchResult;
     }
 
     public Set<String> getDisplayAfter() {
@@ -757,6 +766,26 @@ public class ToolUi extends Modification<Object> {
         }
     }
 
+    /**
+     * Specifies that the target field should display in the search result
+     * by default.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(DefaultSearchResultProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface DefaultSearchResult {
+        boolean value() default true;
+    }
+
+    private static class DefaultSearchResultProcessor implements ObjectField.AnnotationProcessor<DefaultSearchResult> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, DefaultSearchResult annotation) {
+            field.as(ToolUi.class).setDefaultSearchResult(annotation.value());
+        }
+    }
+
     @Documented
     @ObjectField.AnnotationProcessorClass(DisplayAfterProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
@@ -1345,10 +1374,11 @@ public class ToolUi extends Modification<Object> {
 
     /** Specifies whether the target is read-only. */
     @Documented
+    @Inherited
     @ObjectField.AnnotationProcessorClass(ReadOnlyProcessor.class)
     @ObjectType.AnnotationProcessorClass(ReadOnlyProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
+    @Target({ ElementType.FIELD, ElementType.TYPE })
     public @interface ReadOnly {
         boolean value() default true;
     }

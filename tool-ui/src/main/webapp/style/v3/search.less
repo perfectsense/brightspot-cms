@@ -266,6 +266,62 @@
       right: ((@input-height - @iconSize-default) / 2);
     }
   }
+
+  &.searchFilter-missing {
+    &:before,
+    &:after,
+    > * {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    > input[type='checkbox'][name$='.m'] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  &.searchFilter-multiple {
+    padding-left: 20px;
+    position: relative;
+
+    &:before {
+      border-color: @color-border;
+      border-style: solid;
+      border-width: 1px 0 1px 1px;
+      bottom: 14px;
+      content: '';
+      left: 9px;
+      position: absolute;
+      top: 14px;
+      width: 5px;
+    }
+
+    &:after {
+      background-color: white;
+      color: @color-placeholder;
+      content: 'Any';
+      font-size: 10px;
+      height: 20px;
+      left: -5px;
+      line-height: 20px;
+      margin-top: -10px;
+      top: 50%;
+      position: absolute;
+      text-align: center;
+      text-transform: uppercase;
+      transform: rotate(-90deg);
+      width: 30px;
+    }
+  }
+}
+
+.searchFilterItem {
+  position: relative;
+
+  &:not(:first-child) {
+    margin-top: 5px;
+  }
 }
 
 .searchFiltersLocal {
@@ -283,10 +339,6 @@
 
   .searchFilter {
     padding-right: 25px;
-  }
-
-  .objectId-clear {
-    right: 45px;
   }
 }
 

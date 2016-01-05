@@ -56,6 +56,7 @@
       });
 
       $container.bind('close.popup', function() {
+
         if ($container.is(':visible') &&
             $container.find('.enhancementForm, .contentForm').find('.inputContainer.state-changed').length > 0 &&
             !confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {
@@ -64,15 +65,25 @@
         }
 
         $.removeData($container[0], 'popup-close-cancelled');
+          
         var $original = $(this);
-        $original.removeClass('popup-show');
-        $('.popup').each(function() {
-          var $popup = $(this);
-          var $source = $popup.popup('source');
-          if ($source && $.contains($original[0], $source[0])) {
-            $popup.popup('close');
-          }
-        });
+
+        // Prevent infinite looping for nested popups
+        if ($original.hasClass('popup-show')) {
+
+          $original.removeClass('popup-show');
+          $original.trigger('closed');  
+          $('.popup').each(function() {
+            var $popup = $(this);
+            var $source = $popup.popup('source');
+
+            // If the popup we are closing ($original) contains the link that opened a different popup,
+            // then also close that different popup
+            if ($source && $.contains($original[0], $source[0])) {
+              $popup.popup('close');
+            }
+          });
+        }
       });
 
       $closeButton.bind('click.popup', function() {

@@ -18,10 +18,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
@@ -129,7 +132,10 @@ public class Search extends Record {
 
         for (String name : page.paramNamesList()) {
             if (name.startsWith(GLOBAL_FILTER_PARAMETER_PREFIX)) {
-                getGlobalFilters().put(name.substring(GLOBAL_FILTER_PARAMETER_PREFIX.length()), page.param(String.class, name));
+                putFilterValues(
+                        getGlobalFilters(),
+                        name.substring(GLOBAL_FILTER_PARAMETER_PREFIX.length()),
+                        page.params(String.class, name));
 
             } else if (name.startsWith(FIELD_FILTER_PARAMETER_PREFIX)) {
                 String filterName = name.substring(FIELD_FILTER_PARAMETER_PREFIX.length());
@@ -157,7 +163,12 @@ public class Search extends Record {
                     getFieldFilters().put(filterName, filterValue);
                 }
 
-                filterValue.put(filterValueKey, page.param(String.class, name));
+                if (filterValueKey.length() == 0) {
+                    putFilterValues(filterValue, filterValueKey, page.params(String.class, name));
+
+                } else {
+                    filterValue.put(filterValueKey, page.param(String.class, name));
+                }
             }
         }
 
@@ -178,6 +189,26 @@ public class Search extends Record {
 
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.initializeSearch(this, page);
+        }
+    }
+
+    private void putFilterValues(Map<String, String> map, String key, List<String> values) {
+        for (ListIterator<String> i = values.listIterator(); i.hasNext();) {
+            if (ObjectUtils.isBlank(i.next())) {
+                i.remove();
+            }
+        }
+
+        int valuesSize = values.size();
+
+        map.put(key, valuesSize > 0 ? values.get(0) : null);
+
+        if (valuesSize > 1) {
+            map.put(key + "#", String.valueOf(valuesSize));
+
+            for (int i = 0; i < valuesSize; ++i) {
+                map.put(key + String.valueOf(i), values.get(i));
+            }
         }
     }
 
@@ -768,9 +799,24 @@ public class Search extends Record {
             query.and(advancedQuery);
         }
 
-        for (String filter : getGlobalFilters().values()) {
-            if (filter != null) {
-                query.and("* matches ?", filter);
+        Map<String, String> globalFilters = getGlobalFilters();
+
+        for (Map.Entry<String, String> entry : globalFilters.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+
+            if (ObjectUtils.to(UUID.class, key) != null && value != null) {
+                int count = ObjectUtils.to(int.class, globalFilters.get(key + "#"));
+
+                if (count > 0) {
+                    query.and("* matches ?",
+                            IntStream.range(0, count)
+                                    .mapToObj(i -> globalFilters.get(key + i))
+                                    .collect(Collectors.toSet()));
+
+                } else {
+                    query.and("* matches ?", value);
+                }
             }
         }
 
@@ -830,7 +876,17 @@ public class Search extends Record {
                         query.and(fieldName + ("true".equals(fieldValue) ? " = true" : " != true"));
 
                     } else {
-                        query.and(fieldName + " = ?", fieldValue);
+                        int count = ObjectUtils.to(int.class, value.get("#"));
+
+                        if (count > 0) {
+                            query.and(fieldName + " = ?",
+                                    IntStream.range(0, count)
+                                            .mapToObj(i -> value.get(String.valueOf(i)))
+                                            .collect(Collectors.toSet()));
+
+                        } else {
+                            query.and(fieldName + " = ?", fieldValue);
+                        }
                     }
                 }
             }

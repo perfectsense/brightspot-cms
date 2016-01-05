@@ -44,10 +44,12 @@ import javax.servlet.jsp.PageContext;
 import com.google.common.base.MoreObjects;
 import com.ibm.icu.text.MessageFormat;
 import com.psddev.cms.db.PageFilter;
+import com.psddev.cms.db.RichTextElement;
 import com.psddev.cms.view.PageViewClass;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.CascadingMap;
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CollectionUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -564,8 +566,11 @@ public class ToolPageContext extends WebPageContext {
         try {
             String pattern = bundle.getString(key);
 
-            return new String(pattern.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-
+            if (bundle instanceof ObjectTypeResourceBundle) {
+                return pattern;
+            } else {
+                return new String(pattern.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+            }
         } catch (MissingResourceException error) {
             return null;
         }
@@ -1916,6 +1921,23 @@ public class ToolPageContext extends WebPageContext {
             commonTimes.add(commonTimeMap);
         }
 
+        List<Map<String, Object>> richTextElements = new ArrayList<>();
+
+        for (Class<? extends RichTextElement> c : ClassFinder.findConcreteClasses(RichTextElement.class)) {
+            RichTextElement.Tag tag = c.getAnnotation(RichTextElement.Tag.class);
+
+            if (tag != null) {
+                Map<String, Object> richTextElement = new CompactMap<>();
+                ObjectType type = ObjectType.getInstance(c);
+
+                richTextElement.put("tag", tag.value());
+                richTextElement.put("styleName", type.getInternalName().replace(".", "-"));
+                richTextElement.put("typeId", type.getId().toString());
+                richTextElement.put("displayName", type.getDisplayName());
+                richTextElements.add(richTextElement);
+            }
+        }
+
         writeStart("script", "type", "text/javascript");
             write("var CONTEXT_PATH = '", cmsUrl("/"), "';");
             write("var CSS_CLASS_GROUPS = ", ObjectUtils.toJson(cssClassGroups), ";");
@@ -1924,6 +1946,7 @@ public class ToolPageContext extends WebPageContext {
             write("var RTE_ENABLE_ANNOTATIONS = ", getCmsTool().isEnableAnnotations(), ';');
             write("var DISABLE_TOOL_CHECKS = ", getCmsTool().isDisableToolChecks(), ';');
             write("var COMMON_TIMES = ", ObjectUtils.toJson(commonTimes), ';');
+            write("var RICH_TEXT_ELEMENTS = ", ObjectUtils.toJson(richTextElements), ';');
             write("var DISABLE_CODE_MIRROR_RICH_TEXT_EDITOR = ", getCmsTool().isDisableCodeMirrorRichTextEditor(), ';');
             write("var DISABLE_RTC = ", getCmsTool().isDisableRtc(), ';');
         writeEnd();
@@ -2667,7 +2690,7 @@ public class ToolPageContext extends WebPageContext {
             }
 
             writeStart("div",
-                    "class", "objectInputs",
+                    "class", "objectInputs" + (type.as(ToolUi.class).isReadOnly() ? " objectInputs-readOnly" : ""),
                     "lang", type != null ? type.as(ToolUi.class).getLanguageTag() : null,
                     "data-type", type != null ? type.getInternalName() : null,
                     "data-id", state.getId(),
@@ -2733,6 +2756,9 @@ public class ToolPageContext extends WebPageContext {
                         fields.addAll(0, firsts);
                         fields.addAll(lasts);
                     }
+
+                    // prevents empty tab from displaying on Singletons
+                    fields.removeIf(f -> f.getInternalName().equals("dari.singleton.key"));
 
                     DependencyResolver<ObjectField> resolver = new DependencyResolver<>();
                     Map<String, ObjectField> fieldByName = fields.stream()

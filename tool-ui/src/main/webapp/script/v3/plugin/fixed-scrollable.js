@@ -14,6 +14,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       return;
     }
 
+    var oldScrollTop = $scrollable.scrollTop();
+
     $scrollable.addClass('fixedScrollableArea');
     $scrollable.css('max-height', '');
 
@@ -30,6 +32,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
         $window.scrollTop() -
         bottomPadding -
         20);
+
+    $scrollable.scrollTop(oldScrollTop);
   }
 
   return bsp_utils.plugin(window, 'bsp', 'fixedScrollable', {

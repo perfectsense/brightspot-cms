@@ -2,8 +2,10 @@
 
 com.psddev.cms.db.ToolRole,
 com.psddev.cms.db.ToolUser,
+com.psddev.cms.tool.Search,
 com.psddev.cms.tool.ToolPageContext,
 
+com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
 
@@ -40,6 +42,16 @@ if (wp.tryStandardUpdate(selected)) {
             <h1 class="icon icon-object-toolUser">
                 <%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Users", "title.users"))%>
             </h1>
+
+            <div class="widget-controls">
+                <ul class="piped">
+                    <li><a class="icon icon-action-search icon-only" href="<%= wp.cmsUrl(
+                            "/searchAdvancedFull",
+                            Search.TYPES_PARAMETER, ObjectType.getInstance(ToolUser.class).getId(),
+                            Search.LIMIT_PARAMETER, 50)
+                            %>">Search</a></li>
+                </ul>
+            </div>
 
             <ul class="links">
                 <li class="new<%= selected.getClass() == ToolUser.class && selectedState.isNew() ? " selected" : "" %>">

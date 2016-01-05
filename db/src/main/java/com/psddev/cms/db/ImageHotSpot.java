@@ -123,6 +123,9 @@ public class ImageHotSpot {
                     if (hotSpot instanceof HotSpotRegion) {
                         x2 = x2 == null || (hotSpot.as(HotSpotPoint.Data.class).getX() + hotSpot.as(HotSpotRegion.Data.class).getWidth()) > x2 ? (hotSpot.as(HotSpotPoint.Data.class).getX() +  hotSpot.as(HotSpotRegion.Data.class).getWidth()) : x2;
                         y2 = y2 == null || (hotSpot.as(HotSpotPoint.Data.class).getY() + hotSpot.as(HotSpotRegion.Data.class).getHeight()) > y2 ? (hotSpot.as(HotSpotPoint.Data.class).getY() +  hotSpot.as(HotSpotRegion.Data.class).getHeight()) : y2;
+                    } else {
+                        x2 = x1;
+                        y2 = y1;
                     }
                 }
 

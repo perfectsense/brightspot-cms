@@ -82,7 +82,7 @@
         }
       }
 
-      &.collapsed {
+      &.collapsed:not(.expanded) {
         padding-bottom: 0;
 
         > .repeatableLabel {
@@ -394,25 +394,31 @@
 .repeatableForm > ul > li.collapsed > .frame {
   min-height: 0;
 }
-.repeatableForm > ol > li.collapsed .objectInputs,
-.repeatableForm > ul > li.collapsed .objectInputs,
-.repeatableForm > ol > li.collapsed .message,
-.repeatableForm > ul > li.collapsed .message,
-.repeatableForm > ol > li.collapsed .inputContainer,
-.repeatableForm > ul > li.collapsed .inputContainer,
-.repeatableForm > ol > li.toBeRemoved .objectInputs,
-.repeatableForm > ul > li.toBeRemoved .objectInputs,
-.repeatableForm > ol > li.toBeRemoved .message,
-.repeatableForm > ul > li.toBeRemoved .message,
-.repeatableForm > ol > li.toBeRemoved .inputContainer,
-.repeatableForm > ul > li.toBeRemoved .inputContainer {
-  display: none;
-}
 
 .repeatableForm {
   > ol,
   > ul {
     > li {
+      &.expanded {
+        &.collapsed,
+        &.toBeRemoved {
+          > .objectInputs {
+            > *:not(.inputContainer-expanded) {
+              display: none;
+            }
+          }
+        }
+      }
+
+      &:not(.expanded) {
+        &.collapsed,
+        &.toBeRemoved {
+          > .objectInputs {
+            display: none;
+          }
+        }
+      }
+
       > .objectInputs > .tabs {
         margin-left: -7px;
         margin-right: -7px;

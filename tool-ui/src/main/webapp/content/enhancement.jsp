@@ -1,5 +1,6 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.RichTextElement,
 com.psddev.cms.db.RichTextReference,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
@@ -7,7 +8,6 @@ com.psddev.cms.tool.ToolPageContext,
 com.psddev.dari.db.Database,
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
-com.psddev.dari.db.Query,
 com.psddev.dari.db.Reference,
 com.psddev.dari.db.State,
 com.psddev.dari.util.ObjectUtils,
@@ -93,7 +93,20 @@ if (object != null && wp.isFormPost()) {
         wp.updateUsingParameters(ref);
 
         request.setAttribute("excludeFields", null);
-        if (wp.param(boolean.class, "isEditObject")) {
+
+        if (state != null && object instanceof RichTextElement) {
+            wp.updateUsingParameters(object);
+
+            wp.writeStart("div", "id", pageId);
+            wp.writeEnd();
+            wp.writeStart("script", "type", "text/javascript");
+            wp.writeRaw("var $page = $('#" + pageId + "');");
+            wp.writeRaw("$page.popup('source').data('mark').attributes = " + ObjectUtils.toJson(((RichTextElement) object).toAttributes()) + ";");
+            wp.writeRaw("$page.popup('close');");
+            wp.writeEnd();
+            return;
+
+        } else if (wp.param(boolean.class, "isEditObject")) {
             wp.updateUsingParameters(object);
             wp.publish(object);
         }
@@ -119,7 +132,17 @@ if (object == null) {
             );
 
 } else {
-    wp.writeFormHeading(object);
+    if (object instanceof RichTextElement) {
+        ((RichTextElement) object).fromAttributes((Map<String, String>) ObjectUtils.fromJson(wp.param(String.class, "attributes")));
+
+        wp.writeStart("h1");
+            wp.writeHtml("Edit ");
+            wp.writeTypeLabel(object);
+        wp.writeEnd();
+
+    } else {
+        wp.writeFormHeading(object);
+    }
 
     int refFieldCount = -1;
 
@@ -251,21 +274,28 @@ if (object == null) {
                 if ($edit.length > 0) {
                     $edit.attr('href', $.addQueryParameters($edit.attr('href'), 'id', id, 'reference', referenceJson));
                 }
-                
+
             } else {
 
                 // Using new RTE
+
+                // Update the label in the reference data since it might have changed and we display it on the page
+                reference.label = label;
+
+                // Trigger an event on the link that opened this popup,
+                // to notify about any changes to the enhancement data
+                $source.trigger('enhancementUpdate', [reference]);
 
                 // Get the rte2 object - this would normally be found on the textarea,
                 // but since $source is a link within the editor we'll use it to find the wrapper element
                 // and get the rte2 object from there
                 var rte2 = $source.closest('.rte2-wrapper').data('rte2');
                 if (rte2) {
-                    // Update the label in the reference data since it might have changed and we display it on the page
-                    reference.label = label;
+                    
                     // Save the enhancement data on the enhancement
-                    rte2.enhancementSetReference($source, reference);
                     // Enhancement will be updated automaticaly when the popup closes
+                    rte2.enhancementSetReference($source, reference);
+
                 }
             }
                 
