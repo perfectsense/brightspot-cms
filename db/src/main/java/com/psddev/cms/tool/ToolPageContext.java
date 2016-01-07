@@ -564,8 +564,11 @@ public class ToolPageContext extends WebPageContext {
         try {
             String pattern = bundle.getString(key);
 
-            return new String(pattern.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-
+            if (bundle instanceof ObjectTypeResourceBundle) {
+                return pattern;
+            } else {
+                return new String(pattern.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
+            }
         } catch (MissingResourceException error) {
             return null;
         }
