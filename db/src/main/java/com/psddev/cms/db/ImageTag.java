@@ -1,6 +1,7 @@
 package com.psddev.cms.db;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import javax.servlet.jsp.PageContext;
 import javax.servlet.jsp.tagext.DynamicAttributes;
 import javax.servlet.jsp.tagext.TagSupport;
 
+import com.psddev.dari.util.HtmlWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,7 +116,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
     /**
      * Sets the field that contains the image. If not set, the first
-     * field with {@value ObjectField.FILE_TYPE} type is used.
+     * field with {@value ObjectField#FILE_TYPE} type is used.
      * @deprecated No replacement
      */
     @Deprecated
@@ -152,7 +154,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
     /**
      * Sets the width. Note that this will override the width provided
-     * by the image size set with {@link #setSize(String)}.
+     * by the image size set with {@link #setSize(Object)}.
      */
     public void setWidth(String width) {
         if (width != null && width.endsWith("px")) {
@@ -163,7 +165,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
     /**
      * Sets the height. Note that this will override the height provided
-     * by the image size set with {@link #setSize(String)}.
+     * by the image size set with {@link #setSize(Object)}.
      */
     public void setHeight(String height) {
         if (height != null && height.endsWith("px")) {
@@ -174,7 +176,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
     /**
      * Sets the crop option. Note that this will override the crop option
-     * provided by the image size set with {@link #setSize(String)}.
+     * provided by the image size set with {@link #setSize(Object)}.
      */
     public void setCropOption(Object cropOptionObject) {
         CropOption cropOption = null;
@@ -188,7 +190,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
     /**
      * Sets the resize option. Note that this will override the resize option
-     * provided by the image size set with {@link #setSize(String)}.
+     * provided by the image size set with {@link #setSize(Object)}.
      */
     public void setResizeOption(Object resizeOptionObject) {
         ResizeOption resizeOption = null;
@@ -316,6 +318,36 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             }
         }
         return dimension;
+    }
+
+    /**
+     * Returns {@code true} if the specified ImageCrop has any boundaries outside the region (0.0,0.0) to (1.0,1.0).
+     * @param imageCrop
+     * @return {@code true} if the specified ImageCrop will be processed as a padded crop.
+     */
+    protected static boolean isPaddedCrop(ImageCrop imageCrop) {
+        return imageCrop.getX() < 0.0
+                || imageCrop.getY() < 0.0
+                || imageCrop.getX() + imageCrop.getWidth() > 1.0
+                || imageCrop.getY() + imageCrop.getHeight() > 1.0;
+    }
+
+    /**
+     * Returns a new ImageCrop instance, constrained to the region (0.0,0.0) to (1.0,1.0).
+     * @param imageCrop an unconstrained ImageCrop
+     * @return a constrained ImageCrop
+     */
+    protected static ImageCrop getPaddedCrop(ImageCrop imageCrop) {
+
+        ImageCrop paddedCrop = new ImageCrop();
+        paddedCrop.getState().putAll(imageCrop.getState().getValues());
+
+        paddedCrop.setX(Math.min(Math.max(imageCrop.getX(), 0.0), 1.0));
+        paddedCrop.setY(Math.min(Math.max(imageCrop.getY(), 0.0), 1.0));
+        paddedCrop.setWidth(Math.min(Math.max(imageCrop.getX() + imageCrop.getWidth(), 0.0), 1.0) - paddedCrop.getX());
+        paddedCrop.setHeight(Math.min(Math.max(imageCrop.getY() + imageCrop.getHeight(), 0.0), 1.0) - paddedCrop.getY());
+
+        return paddedCrop;
     }
 
     /**
@@ -589,7 +621,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         /**
          * Sets the field that contains the image. If not set, the first
-         * field with {@value ObjectField.FILE_TYPE} type is used.
+         * field with {@value ObjectField#FILE_TYPE} type is used.
          * @deprecated No replacement
          */
         @Deprecated
@@ -618,7 +650,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         /**
          * Sets the width. Note that this will override the width provided
-         * by the image size set with {@link #setSize(String)}.
+         * by the image size set with {@link #setSize(Object)}.
          */
         public Builder setWidth(Integer width) {
             this.width = width;
@@ -627,7 +659,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         /**
          * Sets the height. Note that this will override the height provided
-         * by the image size set with {@link #setSize(String)}.
+         * by the image size set with {@link #setSize(Object)}.
          */
         public Builder setHeight(Integer height) {
             this.height = height;
@@ -636,7 +668,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         /**
          * Sets the crop option. Note that this will override the crop option
-         * provided by the image size set with {@link #setSize(String)}.
+         * provided by the image size set with {@link #setSize(Object)}.
          */
         public Builder setCropOption(CropOption cropOption) {
             this.cropOption = cropOption;
@@ -645,7 +677,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
         /**
          * Sets the resize option. Note that this will override the resize option
-         * provided by the image size set with {@link #setSize(String)}.
+         * provided by the image size set with {@link #setSize(Object)}.
          */
         public Builder setResizeOption(ResizeOption resizeOption) {
             this.resizeOption = resizeOption;
@@ -751,36 +783,88 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
         public String toHtml() {
             String html = convertAttributesToHtml(tagName, toAttributes());
 
-            if (isOverlay()) {
-                StorageItem item = null;
-                Map<String, ImageCrop> crops = null;
+            StorageItem item = null;
+            Map<String, ImageCrop> crops = null;
 
-                if (this.state != null) {
-                    State objectState = this.state;
-                    String field = this.field;
+            if (this.state != null) {
+                State objectState = this.state;
+                String field = this.field;
 
-                    if (ObjectUtils.isBlank(field)) {
-                        field = findStorageItemField(objectState);
-                    }
-
-                    item = findStorageItem(objectState, field);
-
-                    if (item != null) {
-                        crops = findImageCrops(objectState, field);
-                    }
-
-                } else {
-                    item = this.item;
-
-                    if (item != null) {
-                        crops = findImageCrops(item);
-                    }
+                if (ObjectUtils.isBlank(field)) {
+                    field = findStorageItemField(objectState);
                 }
 
-                if (item != null && crops != null && standardImageSize != null) {
-                    ImageCrop crop = crops.get(standardImageSize.getId().toString());
+                item = findStorageItem(objectState, field);
 
-                    if (crop != null) {
+                if (item != null) {
+                    crops = findImageCrops(objectState, field);
+                }
+
+            } else {
+                item = this.item;
+
+                if (item != null) {
+                    crops = findImageCrops(item);
+                }
+            }
+
+            ImageCrop crop = null;
+
+            if (item != null && crops != null && standardImageSize != null) {
+                crop = crops.get(standardImageSize.getId().toString());
+            }
+
+            if (crop != null) {
+
+                ImageCrop originalCrop = crop;
+
+                if (isPaddedCrop(crop) || isOverlay()) {
+
+                    String id = "i" + UUID.randomUUID().toString().replace("-", "");
+
+                    String overlayCss = "#" + id + "{display:inline-block;overflow:hidden;position:relative;width:" + standardImageSize.getWidth() + "px;height:" + standardImageSize.getHeight() + "px;}";
+
+                    if (isPaddedCrop(crop)) {
+
+                        crop = getPaddedCrop(crop);
+
+                        // Calculate the CSS padding-top for use with in rendering padded crop HTML.
+                        double paddingTop = originalCrop.getY() < 0 ? (-originalCrop.getY() / originalCrop.getHeight()) : 0;
+
+                        // Calculate the CSS padding-left for use with in rendering padded crop HTML.
+                        double paddingLeft = originalCrop.getX() < 0 ? (-originalCrop.getX() / originalCrop.getWidth()) : 0;
+
+                        double paddingRight = (originalCrop.getX() + originalCrop.getWidth()) > 1 ? 1 - paddingLeft - crop.getWidth() / originalCrop.getWidth() : 0;
+
+                        double paddingBottom = (originalCrop.getY() + originalCrop.getHeight()) > 1 ? 1 - paddingTop - crop.getHeight() / originalCrop.getHeight() : 0;
+
+                        StringWriter paddedCropWriter = new StringWriter();
+                        HtmlWriter paddedCropHtml = new HtmlWriter(paddedCropWriter);
+
+                        try {
+
+                            paddedCropHtml.writeStart("span", "style",
+                                      "display: inline-block;"
+                                    + "overflow: hidden;"
+                                    + "position: absolute;"
+                                    + "top: " + paddingTop * 100 + "%;"
+                                    + "right: " + paddingRight * 100 + "%;"
+                                    + "bottom: " + paddingBottom * 100 + "%;"
+                                    + "left: " + paddingLeft * 100 + "%;");
+
+                            paddedCropHtml.writeRaw(html);
+
+                            paddedCropHtml.writeEnd();
+
+                        } catch (IOException e) {
+                            // Ignore.
+                        }
+
+                        html = paddedCropWriter.toString();
+                    }
+
+                    if (isOverlay()) {
+
                         List<ImageTextOverlay> textOverlays = crop.getTextOverlays();
                         boolean hasOverlays = false;
 
@@ -792,63 +876,38 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                         }
 
                         if (hasOverlays) {
-                            StringBuilder overlay = new StringBuilder();
+                            String overlayHtml = "";
                             CmsTool cms = Application.Static.getInstance(CmsTool.class);
                             String defaultCss = cms.getDefaultTextOverlayCss();
-                            String id = "i" + UUID.randomUUID().toString().replace("-", "");
-
-                            overlay.append("<style type=\"text/css\">");
 
                             if (!ObjectUtils.isBlank(defaultCss)) {
-                                overlay.append("#");
-                                overlay.append(id);
-                                overlay.append("{display:inline-block;overflow:hidden;position:relative;");
-                                overlay.append(defaultCss);
-                                overlay.append("}");
+                                overlayCss += "#" + id + "{" + defaultCss + "}";
                             }
 
                             for (CmsTool.CssClassGroup group : cms.getTextCssClassGroups()) {
                                 String groupName = group.getInternalName();
                                 for (CmsTool.CssClass cssClass : group.getCssClasses()) {
-                                    overlay.append("#");
-                                    overlay.append(id);
-                                    overlay.append(" .cms-");
-                                    overlay.append(groupName);
-                                    overlay.append("-");
-                                    overlay.append(cssClass.getInternalName());
-                                    overlay.append("{");
-                                    overlay.append(cssClass.getCss());
-                                    overlay.append("}");
+                                    overlayCss += "#" + id + " .cms-" + groupName + "-" + cssClass.getInternalName() + "{" + cssClass.getCss() + "}";
                                 }
                             }
-
-                            overlay.append("</style>");
-
-                            overlay.append("<span id=\"");
-                            overlay.append(id);
-                            overlay.append("\">");
-                            overlay.append(html);
 
                             for (ImageTextOverlay textOverlay : textOverlays) {
                                 String text = textOverlay.getText();
 
-                                overlay.append("<span style=\"left: ");
-                                overlay.append(textOverlay.getX() * 100);
-                                overlay.append("%; position: absolute; top: ");
-                                overlay.append(textOverlay.getY() * 100);
-                                overlay.append("%; font-size: ");
-                                overlay.append(textOverlay.getSize() * standardImageSize.getHeight());
-                                overlay.append("px; width: ");
-                                overlay.append(textOverlay.getWidth() != 0.0 ? textOverlay.getWidth() * 100 : 100.0);
-                                overlay.append("%;\">");
-                                overlay.append(text);
-                                overlay.append("</span>");
+                                overlayHtml += "<span style=\"";
+                                overlayHtml += "left: " + textOverlay.getX() * 100 + "%;";
+                                overlayHtml += "position: absolute;";
+                                overlayHtml += "top: " + textOverlay.getY() * 100 + "%;";
+                                overlayHtml += "font-size: " + textOverlay.getSize() * standardImageSize.getHeight() + "px;";
+                                overlayHtml += "width: " + (textOverlay.getWidth() != 0.0 ? textOverlay.getWidth() * 100 : 100.0) + "%;\">";
+                                overlayHtml += text + "</span>";
                             }
 
-                            overlay.append("</span>");
-                            html = overlay.toString();
+                            html += overlayHtml;
                         }
                     }
+
+                    html = "<style type=\"text/css\">" + overlayCss + "</style><span id=\"" + id + "\">" + html + "</span>";
                 }
             }
 
@@ -984,16 +1043,21 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     if (crops != null && (crop = crops.get(standardImageSize.getId().toString())) != null
                             && originalWidth != null && originalHeight != null) {
 
+                        boolean isPaddedCrop = isPaddedCrop(crop);
+
+                        ImageCrop originalCrop = crop;
+
+                        if (isPaddedCrop) {
+                            crop = getPaddedCrop(crop);
+                        }
+
                         cropX = (int) (crop.getX() * originalWidth);
                         cropY = (int) (crop.getY() * originalHeight);
                         cropWidth = (int) (crop.getWidth() * originalWidth);
+                        cropHeight = (int) (crop.getHeight() * originalHeight);
 
-                        if (standardAspectRatio != null) {
-                            cropHeight = (int) Math.round(cropWidth / standardAspectRatio);
-
-                        } else {
-                            cropHeight = (int) (crop.getHeight() * originalHeight);
-                        }
+                        height = (int) ((double) height * crop.getHeight() / originalCrop.getHeight());
+                        width = (int) ((double) width * crop.getWidth() / originalCrop.getWidth());
                     }
                 }
 
