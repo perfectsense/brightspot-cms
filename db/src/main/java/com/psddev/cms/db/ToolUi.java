@@ -80,6 +80,7 @@ public class ToolUi extends Modification<Object> {
     private String tab;
     private String storageSetting;
     private String defaultSortField;
+    private List<String> hiddenWidgets;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -628,6 +629,17 @@ public class ToolUi extends Modification<Object> {
 
     public void setDefaultSortField(String defaultSortField) {
         this.defaultSortField = defaultSortField;
+    }
+
+    public List<String> getHiddenWidgets() {
+        if (hiddenWidgets == null) {
+            hiddenWidgets = new ArrayList<>();
+        }
+        return hiddenWidgets;
+    }
+
+    public void setHiddenWidgets(List<String> hiddenWidgets) {
+        this.hiddenWidgets = hiddenWidgets;
     }
 
     /**
@@ -1794,6 +1806,24 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, DefaultSortField annotation) {
             type.as(ToolUi.class).setDefaultSortField(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies which {@link com.psddev.cms.tool.Widget} should be hidden.
+     * {@code value} should be {@link com.psddev.cms.tool.Widget#internalName}
+     */
+    @ObjectType.AnnotationProcessorClass(HiddenWidgetsProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface HiddenWidgets {
+        String[] value();
+    }
+
+    private static class HiddenWidgetsProcessor implements ObjectType.AnnotationProcessor<HiddenWidgets> {
+        @Override
+        public void process(ObjectType type, HiddenWidgets annotation) {
+            Collections.addAll(type.as(ToolUi.class).getHiddenWidgets(), annotation.value());
         }
     }
 
