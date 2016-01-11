@@ -1,3 +1,4 @@
+/* global scale */
 /* jshint browser:true, jquery:true, unused:true, undef:true */
 /* global Pixastic, define */
 
@@ -1393,6 +1394,27 @@ define([
                 $.each(self.inputNames, function(index, name) {
                     inputs[name] = $tr.find(':input[name$=".' + name + '"]');
                 });
+                
+                // Set focus crop info (if available) to be used 
+                // in #sizeBoxShow and #sizesUpdatePreview
+                var focusCrop = { };
+                var focusX = self.dom.$focusInputX.val();
+                var focusY = self.dom.$focusInputY.val();
+                if (focusX !== '' && focusY !== '') {
+                    
+                    var $focusImage = self.dom.$focusImage[0];
+                    
+                    focusCrop = self.focusGetCrop({
+                        x: focusX,
+                        y: focusY
+                    }, {
+                        width: $focusImage.width,
+                        height: $focusImage.height,
+                    }, {
+                        width: sizeWidth,
+                        height: sizeHeight
+                    })
+                }
 
                 // Save the size information so we can use it later
                 sizeInfo = self.sizeInfos[sizeName] = {
@@ -1402,7 +1424,8 @@ define([
                     independent: independent,
                     width: sizeWidth,
                     height: sizeHeight,
-                    aspectRatio: sizeAspectRatio
+                    aspectRatio: sizeAspectRatio,
+                    focusCrop: focusCrop
                 };
 
                 // Group the sizes according to aspect ratio
@@ -1507,6 +1530,24 @@ define([
 
             return self.sizeGroups[groupName].$element.hasClass('imageEditor-sizeSelected');
         },
+        
+        /**
+         * Determine if a group size has been set.
+         * 
+         * @param String sizeInfo
+         * 
+         * @returns Boolean
+         */
+        sizeInfoIsEmpty: function(sizeInfo) {
+            var inputs;
+            
+            inputs = sizeInfo.inputs;
+            
+            return (inputs.x.val() === '0.0' 
+                        && inputs.y.val() === '0.0'
+                        && inputs.width.val() === '0.0'
+                        && inputs.height.val() === '0.0');
+        },
 
         
         /**
@@ -1566,7 +1607,7 @@ define([
          */
         sizesUpdatePreview: function(groupName) {
             
-            var groupInfos, operations, self;
+            var groupInfos, operations, self, area;
 
             self = this;
 
@@ -1602,6 +1643,29 @@ define([
                 }
 
                 bounds = self.sizesGetSizeBounds(width, height, sizeInfoFirst);
+                
+                // Adjust image preview with padding
+                area = self.sizesGetImageArea(width, height, sizeInfoFirst);
+                var inputX, inputY, inputWidth, inputHeight;
+                inputX = Number(sizeInfoFirst.inputs.x.val());
+                inputY = Number(sizeInfoFirst.inputs.y.val());
+                inputWidth = Number(sizeInfoFirst.inputs.width.val());
+                inputHeight = Number(sizeInfoFirst.inputs.height.val()); 
+                
+                var padTop = inputY < 0 ? Math.abs(inputY) / bounds.height * height : 0;
+                var padBottom = inputY + inputHeight > 1 ? (inputY + inputHeight - 1) / bounds.height * height : 0;
+                
+                var padLeft = inputX < 0 ? Math.abs(inputX) / bounds.width * width : 0;
+                var padRight = inputX + inputWidth > 1 ? (inputX + inputWidth - 1) / bounds.width * width : 0;
+                
+                bounds.top -= area.topPadPx;
+                bounds.left -= area.leftPadPx;
+                bounds.height = bounds.height * (1 - padBottom - padTop);
+                bounds.width = bounds.width * (1 - padLeft - padRight);
+                
+                $imageWrapper.css({
+                    'padding' : (padTop * 100) + '% ' + (padRight * 100) + '% ' + (padBottom * 100) + '% ' + (padLeft * 100) + '%'
+                });
 
                 // Crop the image based on the current crop dimension,
                 // then replace the thumbnail image with the newly cropped image
@@ -1643,37 +1707,55 @@ define([
          */
         sizesGetSizeBounds: function(imageWidth, imageHeight, sizeInfo) {
             
-            var aspectRatio, height, left, self, top, width;
+            var sizeAspectRatio, height, left, self, top, width, area;
 
             self = this;
+            
+            var useFocusCrop = self.sizeInfoIsEmpty(sizeInfo); 
+            
+            if (!useFocusCrop) {
+                left = parseFloat(sizeInfo.inputs.x.val())|| 0.0;
+                top = parseFloat(sizeInfo.inputs.y.val()) || 0.0;
+                width = parseFloat(sizeInfo.inputs.width.val()) || 0.0;
+                height = parseFloat(sizeInfo.inputs.height.val()) || 0.0;
+            } else {
+                left = parseFloat(sizeInfo.focusCrop.x) || 0.0;
+                top = parseFloat(sizeInfo.focusCrop.y) || 0.0;
+                width = parseFloat(sizeInfo.focusCrop.width) || 0.0;
+                height = parseFloat(sizeInfo.focusCrop.height) || 0.0;                
+            }
 
-            left = parseFloat(sizeInfo.inputs.x.val()) || 0.0;
-            top = parseFloat(sizeInfo.inputs.y.val()) || 0.0;
-            width = parseFloat(sizeInfo.inputs.width.val()) || 0.0;
-            height = parseFloat(sizeInfo.inputs.height.val()) || 0.0;
-            aspectRatio = sizeInfo.aspectRatio;
+            sizeAspectRatio = sizeInfo.aspectRatio;
+            
+            area = self.sizesGetImageArea(imageWidth, imageHeight, sizeInfo);
 
             // Check if cropping values have been previously set
             if (width === 0 || height === 0) {
+                
+                width = sizeInfo.width;
+                height = sizeInfo.height;
 
                 // If no cropping values, and there is an aspect ratio for this size,
                 // make the crop area as big as possible while staying within the aspect ratio
-                if (aspectRatio) {
-                    
-                    width = imageHeight * aspectRatio;
-                    height = imageWidth / aspectRatio;
+                if (sizeAspectRatio) {
+
+                    width = imageHeight * sizeAspectRatio;
+                    height = imageWidth / sizeAspectRatio;
 
                     if (width > imageWidth) {
-                        width = height * aspectRatio;
+                        width = height * sizeAspectRatio;
                     } else {
-                        height = width / aspectRatio;
+                        height = width / sizeAspectRatio;
                     }
 
-                    left = (imageWidth - width) / 2;
-                    top = 0;
+                    var widthDiff = area.totalWidth - imageWidth;
+                    var heightDiff = area.totalHeight - imageHeight;
+
+                    left = widthDiff !== 0 ? widthDiff / 2 :  (imageWidth - width) / 2;
+                    top = heightDiff !== 0 ? heightDiff / 2 : (imageHeight - height) / 2;
                     
                 } else {
-
+                    
                     // There is no aspect ratio so just select the whole image
                     left = 0;
                     top = 0;
@@ -1685,8 +1767,8 @@ define([
 
                 // There was a cropping value previously set,
                 // so just convert from percentages to pixels
-                left *= imageWidth;
-                top *= imageHeight;
+                left = (left + area.left) * imageWidth;
+                top = (top + area.top) * imageHeight;
                 width *= imageWidth;
                 height *= imageHeight;
             }
@@ -1699,7 +1781,42 @@ define([
                 height: height
             };
         },
-
+        
+        /**
+         * Calculates area dimensions to displaying image for the given size.
+         * Area will be "padded" around the image on the dimension with a greater 
+         * difference in aspect ratios between the image and the crop. The numbers
+         * returned in percentages (top, left) are relative to the image, not the
+         * total area.
+         * 
+         */
+        sizesGetImageArea: function(imageWidth, imageHeight, sizeInfo) {    
+            var imageAspectRatio, sizeAspectRatio, topPad, leftPad, paddedImageHeight, paddedImageWidth;
+            
+            imageAspectRatio = imageWidth / imageHeight;
+            sizeAspectRatio = sizeInfo.aspectRatio;
+            
+            topPad = Math.max((imageAspectRatio / sizeAspectRatio - 1), 0) / 2;
+            leftPad =  Math.max((sizeAspectRatio / imageAspectRatio - 1), 0) / 2;
+            
+            if (leftPad > topPad) {
+                paddedImageHeight = imageHeight;
+                paddedImageWidth = paddedImageHeight * sizeAspectRatio;
+            } else {
+                paddedImageWidth = imageWidth;
+                paddedImageHeight = paddedImageWidth / sizeAspectRatio;
+            }
+            
+            return {
+                top: topPad,
+                left: leftPad,
+                topPadPx: topPad * imageHeight,
+                leftPadPx: leftPad * imageWidth,
+                totalWidth: paddedImageWidth,
+                totalHeight: paddedImageHeight,
+                scale: 1 / (1 + (leftPad * 2))
+            }
+        },
         
         /**
          * For a size group, update all the inputs.
@@ -1842,7 +1959,7 @@ define([
          * @param Number bounds.width
          * @param Number bounds.height
          */
-        coverUpdate: function(bounds) {
+        coverUpdate: function(bounds, sizeInfo) {
             
             var self, imageWidth, imageHeight, boundsRight, boundsBottom;
 
@@ -1850,28 +1967,34 @@ define([
             
             imageWidth = self.dom.$image.width();
             imageHeight = self.dom.$image.height();
-            boundsRight = bounds.left + bounds.width;
-            boundsBottom = bounds.top + bounds.height;
+            
+            var area = self.sizesGetImageArea(imageWidth, imageHeight, sizeInfo);
+            
+            boundsRight = bounds.left + (bounds.width * area.scale);
+            boundsBottom = bounds.top + (bounds.height * area.scale);
+            
+            var scaledAreaWidth = area.totalWidth * area.scale;
+            var scaledAreaHeight = area.totalHeight * area.scale;
 
             self.dom.$coverTop.css({
                 'height': bounds.top,
-                'width': imageWidth
+                'width': scaledAreaWidth
             });
             self.dom.$coverLeft.css({
-                'height': bounds.height,
+                'height': bounds.height * area.scale,
                 'top': bounds.top,
                 'width': bounds.left
             });
             self.dom.$coverRight.css({
-                'height': bounds.height,
+                'height': bounds.height * area.scale,
                 'left': boundsRight,
                 'top': bounds.top,
-                'width': imageWidth - boundsRight
+                'width': scaledAreaWidth - boundsRight
             });
             self.dom.$coverBottom.css({
-                'height': imageHeight - boundsBottom,
+                'height': scaledAreaHeight - boundsBottom,
                 'top': boundsBottom,
-                'width': imageWidth
+                'width': scaledAreaWidth
             });
 
             self.coverShow();
@@ -1992,7 +2115,7 @@ define([
          */
         sizeBoxShow: function(groupName) {
             
-            var bounds, self, sizeInfo;
+            var bounds, self, sizeInfo, area;
             
             self = this;
 
@@ -2000,9 +2123,36 @@ define([
             sizeInfo = self.sizesGetGroupFirstSizeInfo(groupName);
 
             // Get the boundaries for the size box, based on the current image size on the page
-            bounds = self.sizesGetSizeBounds(self.dom.$image.width(), self.dom.$image.height(), sizeInfo);
+            var imageWidth = self.dom.$image.width();
+            var imageHeight = self.dom.$image.height();
+            var imageContainer = self.dom.$imageContainer;
+            bounds = self.sizesGetSizeBounds(imageWidth, imageHeight, sizeInfo);
+            area = self.sizesGetImageArea(imageWidth, imageHeight, sizeInfo);
             
-            self.coverUpdate(bounds);
+            if (area.topPadPx < area.leftPadPx) {
+                var originalImageWidth = self.dom.$image.width();
+                var transformCss = {
+                    'transform': 'scale(' + area.scale + ')',
+                    'transform-origin': 'top left'
+                };                
+                imageContainer.css(transformCss);
+                imageContainer.css({
+                    'padding-left' :  area.leftPadPx+ 'px',
+                    'width' : (imageContainer.width() + (area.leftPadPx * 2)) + 'px',
+                });
+                self.dom.$image.width(originalImageWidth);
+            } else {
+                                
+                imageContainer.css({
+                    'padding-top' : area.topPadPx + 'px',
+                    'height' : (imageContainer.height() + (area.topPadPx * 2)) + 'px'
+                });
+            }
+            
+            bounds.left *= area.scale;
+            bounds.top *= area.scale;
+            
+            self.coverUpdate(bounds, sizeInfo);
             self.coverShow();
             
             self.sizeBoxUpdate(groupName, bounds);
@@ -2024,9 +2174,23 @@ define([
          * @param Object height
          */
         sizeBoxUpdate: function(groupName, bounds) {
-            var self;
+            var self, $imageContainer, padData, sizeInfo, sizeBox;
+            
             self = this;
-            self.sizeGroups[groupName].$sizeBox.css(bounds);
+            $imageContainer = self.dom.$imageContainer;
+            sizeInfo = self.sizesGetGroupFirstSizeInfo(groupName);
+            padData = self.sizesGetImageArea(self.dom.$image.width(), self.dom.$image.height(), sizeInfo);
+            
+            var transformCss = {
+                'transform': 'scale(' + padData.scale + ')',
+                'transform-origin': 'top left'
+            };
+            
+            sizeBox = self.sizeGroups[groupName].$sizeBox;
+            sizeBox.css(bounds);
+            sizeBox.css(transformCss);
+            sizeBox.data('exactHeight', bounds.height);
+            sizeBox.data('exactWidth', bounds.width);
         },
 
         
@@ -2040,6 +2204,9 @@ define([
             $.each(self.sizeGroups, function(groupName, groupInfo) {
                 groupInfo.$sizeBox.hide();
             });
+            
+            // Resets styles injected for padded crop
+            self.dom.$imageContainer.attr('style', '');
         },
 
         /**
@@ -2079,13 +2246,14 @@ define([
             
             mousedownHandler = function(mousedownEvent) {
 
-                var aspectRatio, element, imageWidth, imageHeight, original, sizeBoxPosition;
+                var aspectRatio, sizeInfo, element, imageWidth, imageHeight, areaWidth, areaHeight, original, sizeBoxPosition;
 
                 // The element that was dragged
                 element = this;
 
                 // Get the aspect ratio for this group
-                aspectRatio = self.sizesGetGroupAspectRatio(groupName);
+                sizeInfo = self.sizesGetGroupFirstSizeInfo(groupName);
+                aspectRatio = sizeInfo.aspectRatio;
 
                 sizeBoxPosition = $sizeBox.position();
                 
@@ -2093,14 +2261,23 @@ define([
                     'left': sizeBoxPosition.left,
                     'top': sizeBoxPosition.top,
                     'width': $sizeBox.width(),
-                    'height': $sizeBox.height(),
+                    'height': $sizeBox.width() / aspectRatio,
                     'pageX': mousedownEvent.pageX,
                     'pageY': mousedownEvent.pageY
                 };
 
                 imageWidth = self.dom.$image.width();
                 imageHeight = self.dom.$image.height();
-
+                
+                // Adjust height and width if padded crop is used
+                var area = self.sizesGetImageArea(imageWidth, imageHeight, sizeInfo);
+                areaWidth = area.totalWidth;
+                areaHeight = area.totalHeight;
+                
+                // Drag and resize boundaries are limited to scaled width/height
+                var scaledWidth = areaWidth * area.scale;
+                var scaledHeight = areaHeight * area.scale;
+                
                 // On mousedown, let the user start dragging the element
                 // The .drag() function takes the following parameters:
                 // (element, event, startCallback, moveCallback, endCallback)
@@ -2144,12 +2321,12 @@ define([
                             bounds.top = 0;
                         }
 
-                        overflow = bounds.left + bounds.width - imageWidth;
+                        overflow = bounds.left + (bounds.width * area.scale) - scaledWidth;
                         if (overflow > 0) {
                             bounds.left -= overflow;
                         }
 
-                        overflow = bounds.top + bounds.height - imageHeight;
+                        overflow = bounds.top + (bounds.height * area.scale) - scaledHeight;
                         if (overflow > 0) {
                             bounds.top -= overflow;
                         }
@@ -2190,18 +2367,18 @@ define([
                         }
 
                         // Check if the box extends past the right
-                        overflow = bounds.left + bounds.width - imageWidth;
+                        overflow = bounds.left + (bounds.width * area.scale) - scaledWidth;
                         if (overflow > 0) {
-                            bounds.width -= overflow;
+                            bounds.width -= overflow / area.scale;
                             if (aspectRatio) {
                                 bounds.height = bounds.width / aspectRatio;
                             }
                         }
 
                         // Check if the box extends past the bottom
-                        overflow = bounds.top + bounds.height - imageHeight;
+                        overflow = bounds.top + (bounds.height * area.scale) - scaledHeight;
                         if (overflow > 0) {
-                            bounds.height -= overflow;
+                            bounds.height -= overflow / area.scale;
                             if (aspectRatio) {
                                 bounds.width = bounds.height * aspectRatio;
                             }
@@ -2210,7 +2387,7 @@ define([
 
                     // Now that the bounds have been sanitized,
                     // update the sizebox display
-                    self.coverUpdate(bounds);
+                    self.coverUpdate(bounds, sizeInfo);
                     self.sizeBoxUpdate(groupName, bounds);
 
                     // Trigger an event to tell others the size box has changed size
@@ -2220,20 +2397,23 @@ define([
 
                 }, function() {
 
-                    var sizeBoxHeight, sizeBoxPosition, sizeBoxWidth;
+                    var sizeBoxHeight, sizeBoxPosition, sizeBoxWidth, x, y;
                     
                     // .drag() end callback
 
                     // Now that we're done dragging, update the size box
                     
                     sizeBoxPosition = $sizeBox.position();
-                    sizeBoxWidth = $sizeBox.width();
-                    sizeBoxHeight = $sizeBox.height();
+                    sizeBoxWidth = $sizeBox.data('exactWidth');
+                    sizeBoxHeight = $sizeBox.data('exactHeight');
+                    
+                    x = sizeBoxPosition.left / area.scale / imageWidth - area.left;
+                    y = sizeBoxPosition.top / area.scale / imageHeight - area.top;
 
                     // Set the hidden inputs to the current bounds.
                     self.sizesSetGroupBounds(groupName, {
-                        x: sizeBoxPosition.left / imageWidth,
-                        y: sizeBoxPosition.top / imageHeight,
+                        x: x,
+                        y: y,
                         width: sizeBoxWidth / imageWidth,
                         height: sizeBoxHeight / imageHeight // sizeBoxWidth / aspectRatio / imageHeight
                     });
@@ -2332,25 +2512,25 @@ define([
 
                 // Go through all sizes to get the aspect ratio of each
                 $.each(self.sizeGroups, function(groupName) {
-
-                    var aspect, crop, sizeInfo;
-
-                    // Get the aspect ratio values for this size group
-                    sizeInfo = self.sizesGetGroupFirstSizeInfo(groupName);
-                    aspect = {
-                        'width': sizeInfo.width,
-                        'height': sizeInfo.height
-                    };
-
-                    // Calculate the crop for this aspect ratio
-                    crop = self.focusGetCrop({
-                        x: focus.xPercent,
-                        y: focus.yPercent
-                    }, originalAspect, aspect);
-
-                    // Set the cropping for this size group
-                    self.sizesSetGroupBounds(groupName, crop);
-                    self.sizesUpdatePreview(groupName);
+                
+                   var aspect, crop, sizeInfo;
+                
+                   // Get the aspect ratio values for this size group
+                   sizeInfo = self.sizesGetGroupFirstSizeInfo(groupName);
+                   aspect = {
+                       'width': sizeInfo.width,
+                       'height': sizeInfo.height
+                   };
+                
+                   // Update focus crop info to be used 
+                   // in #sizeBoxShow and #sizesUpdatePreview
+                   sizeInfo.focusCrop = self.focusGetCrop({
+                       x: focus.xPercent,
+                       y: focus.yPercent
+                   }, originalAspect, aspect);
+                
+                   // Set the cropping for this size group
+                   self.sizesUpdatePreview(groupName);
                 });
 
                 // When switching to sizes tab, update the thumbnails
@@ -4284,8 +4464,8 @@ define([
         
         insert: function(element) {
 
-            // Use image2.js if Padded crops are enabled
-            if (ENABLE_PADDED_CROPS) {
+            // Use image.js if Padded crops are disabled
+            if (!ENABLE_PADDED_CROPS) {
                 return;
             }
 
@@ -4569,4 +4749,4 @@ define([
 ======================================================================***/
 
 // Set filename for debugging tools to allow breakpoints even when using a cachebuster
-//# sourceURL=image.js
+//# sourceURL=image2.js

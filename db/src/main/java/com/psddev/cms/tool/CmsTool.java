@@ -167,6 +167,9 @@ public class CmsTool extends Tool {
     private boolean enableCrossDomainInlineEditing;
 
     @ToolUi.Tab("Debug")
+    private boolean enablePaddedCrop;
+
+    @ToolUi.Tab("Debug")
     private boolean disableCodeMirrorRichTextEditor;
 
     @ToolUi.Tab("Debug")
@@ -755,6 +758,14 @@ public class CmsTool extends Tool {
 
     public void setEnableCrossDomainInlineEditing(boolean enableCrossDomainInlineEditing) {
         this.enableCrossDomainInlineEditing = enableCrossDomainInlineEditing;
+    }
+
+    public boolean isEnablePaddedCrop() {
+        return enablePaddedCrop;
+    }
+
+    public void setEnablePaddedCrop(boolean enablePaddedCrop) {
+        this.enablePaddedCrop = enablePaddedCrop;
     }
 
     public boolean isDisableCodeMirrorRichTextEditor() {

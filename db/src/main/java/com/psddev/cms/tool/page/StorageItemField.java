@@ -481,6 +481,16 @@ public class StorageItemField extends PageServlet {
 
                 // Set focus point
                 if (focusX != null && focusY != null) {
+
+                    // Handle legacy focus points stored as a value 1-100, instead of 0-1
+                    if (focusX > 1 && focusX < 100) {
+                        focusX /= 100;
+                    }
+
+                    if (focusY > 1 && focusY < 100) {
+                        focusY /= 100;
+                    }
+
                     focusPoint.put("x", focusX);
                     focusPoint.put("y", focusY);
                 }
