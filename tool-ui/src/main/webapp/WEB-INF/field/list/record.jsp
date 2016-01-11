@@ -48,6 +48,13 @@ String fieldName = field.getInternalName();
 List<Object> fieldValue = (List<Object>) state.getValue(fieldName);
 if (fieldValue == null) {
     fieldValue = new ArrayList<Object>();
+
+} else {
+    for (Iterator<Object> i = fieldValue.iterator(); i.hasNext();) {
+        if (i.next() == null) {
+            i.remove();
+        }
+    }
 }
 
 final List<ObjectType> validTypes = field.as(ToolUi.class).findDisplayTypes();

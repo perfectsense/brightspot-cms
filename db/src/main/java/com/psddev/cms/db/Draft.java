@@ -29,6 +29,7 @@ import com.psddev.dari.util.UuidUtils;
 public class Draft extends Content {
 
     private static final String OLD_VALUES_EXTRA = "cms.draft.oldValues";
+    private static final Object REMOVED = new Object();
 
     @Indexed
     private DraftStatus status;
@@ -267,6 +268,10 @@ public class Draft extends Content {
                     entry.setValue(mergeValue(environment, oldIdMaps, differences, entry.getValue()));
                 }
 
+                if (newIdMap.get(State.ID_KEY) == null) {
+                    return REMOVED;
+                }
+
             } else {
                 valueMap.forEach((k, v) -> newIdMap.put(k, mergeValue(environment, oldIdMaps, differences, v)));
             }
@@ -277,6 +282,7 @@ public class Draft extends Content {
             return ((List<Object>) value)
                     .stream()
                     .map(item -> mergeValue(environment, oldIdMaps, differences, item))
+                    .filter(item -> item != REMOVED)
                     .collect(Collectors.toList());
         }
 

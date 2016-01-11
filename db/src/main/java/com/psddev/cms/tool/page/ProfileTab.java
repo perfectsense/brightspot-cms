@@ -3,11 +3,13 @@ package com.psddev.cms.tool.page;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
+import java.util.UUID;
 import javax.servlet.ServletException;
 
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.util.ObjectUtils;
 
 public class ProfileTab extends ProfilePanelTab {
 
@@ -16,6 +18,14 @@ public class ProfileTab extends ProfilePanelTab {
 
         String tab = page.param(String.class, "tab");
         ToolUser user = page.getUser();
+
+        if (user != null
+                && user.getRole() != null
+                && !user.getRole().hasPermission("type" + ObjectType.getInstance(ToolUser.class).getId() + "/read")
+                && (ObjectUtils.isBlank(page.param(UUID.class, "id")) || user.getId().equals(page.param(UUID.class, "id")))) {
+
+            user.getRole().setPermissions(user.getRole().getPermissions().replace("-type/" + ObjectType.getInstance(ToolUser.class).getId(), ""));
+        }
 
         Collection<String> excludeFields = new ArrayList<String>();
 
