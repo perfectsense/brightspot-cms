@@ -158,7 +158,7 @@ public class ContentEditBulk extends PageServlet {
 
         page.writeHeader();
 
-            page.writeStart("div", "class", "widget");
+            page.writeStart("div", "class", "widget content-edit-bulk");
                 page.writeStart("h1");
                     page.writeHtml(page.localize(
                             ContentEditBulk.class,

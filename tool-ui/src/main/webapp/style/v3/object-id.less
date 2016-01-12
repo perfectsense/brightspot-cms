@@ -14,8 +14,11 @@
   }
 
   .objectInputs [data-dynamic-predicate]:not([data-dynamic-predicate = '']):not(.state-loaded) + & {
-    opacity: 0.5;
-    pointer-events: none;
+
+    div:not(.content-edit-bulk) > form & {
+      opacity: 0.5;
+      pointer-events: none;
+    }
   }
 }
 
