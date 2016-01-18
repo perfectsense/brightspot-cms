@@ -2,6 +2,7 @@ package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
@@ -27,6 +29,7 @@ import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Modification;
+import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Singleton;
@@ -52,11 +55,26 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         CmsTool.CommonContentSettings settings = null;
         ToolUser user = page.getUser();
 
-        if (user != null) {
-            ToolRole role = user.getRole();
+        Collection<String> includeFields = new ArrayList<>();
+        includeFields.add("commonContentSettings");
 
-            if (role != null) {
-                settings = role.getRoleCommonContentSettings();
+        ObjectType settingsObjectType = ObjectType.getInstance(CmsTool.CommonContentSettings.class);
+        if (settingsObjectType != null) {
+            includeFields.addAll(settingsObjectType.getFields().stream()
+                    .map(ObjectField::getInternalName)
+                    .collect(Collectors.toList()));
+        }
+
+        if (user != null) {
+
+            settings = user.getCommonContentSettings();
+
+            if (settings == null) {
+                ToolRole role = user.getRole();
+
+                if (role != null) {
+                    settings = role.getRoleCommonContentSettings();
+                }
             }
         }
 
@@ -139,6 +157,14 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         List<TypeTemplate> collapsed = new ArrayList<TypeTemplate>();
 
         if (page.isFormPost()) {
+
+            try {
+                page.include("/WEB-INF/objectPost.jsp", "object", user, "includeFields", includeFields);
+
+            } catch (Exception ex) {
+                page.getErrors().add(ex);
+            }
+
             Set<String> collapsedIds = new HashSet<String>();
 
             for (TypeTemplate typeTemplate : typeTemplates) {
@@ -178,6 +204,9 @@ public class CreateNewWidget extends DefaultDashboardWidget {
             page.writeEnd();
 
             if (page.param(boolean.class, "customize")) {
+
+                page.include("/WEB-INF/errors.jsp");
+
                 page.writeStart("form",
                         "method", "post",
                         "action", page.url(null));
@@ -209,6 +238,8 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                             }
                         page.writeEnd();
                     page.writeEnd();
+
+                    page.writeSomeFormFields(user, false, includeFields, null);
 
                     page.writeStart("div", "class", "actions");
                         page.writeStart("button",
