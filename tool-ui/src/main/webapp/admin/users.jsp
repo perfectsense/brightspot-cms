@@ -1,5 +1,7 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.Directory,
+com.psddev.cms.db.Site,
 com.psddev.cms.db.ToolRole,
 com.psddev.cms.db.ToolUser,
 com.psddev.cms.tool.Search,
@@ -7,9 +9,7 @@ com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
-com.psddev.dari.db.State,
-
-java.util.UUID
+com.psddev.dari.db.State
 " %><%
 
 // --- Logic ---
@@ -29,6 +29,19 @@ if (selected instanceof ToolUser && selectedState.isNew()) {
 
 if (wp.tryStandardUpdate(selected)) {
     return;
+}
+
+Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
+
+if (copy != null) {
+    State copiedState = State.getInstance(selected);
+    copiedState.setValues(State.getInstance(copy).getSimpleValues());
+    copiedState.setId(null);
+    copiedState.as(Directory.ObjectModification.class).clearPaths();
+    for (Site consumer : copiedState.as(Site.ObjectModification.class).getConsumers()) {
+        copiedState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
+    }
+    copiedState.as(Site.ObjectModification.class).setOwner(wp.getSite());
 }
 
 // --- Presentation ---
@@ -102,7 +115,7 @@ if (wp.tryStandardUpdate(selected)) {
     <div class="main">
 
         <div class="widget">
-            <% wp.writeStandardForm(selected, false); %>
+            <% wp.writeStandardForm(selected, false, true); %>
         </div>
 
     </div>

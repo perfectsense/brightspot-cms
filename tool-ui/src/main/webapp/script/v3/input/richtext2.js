@@ -3338,7 +3338,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             self = this;
 
             self.$container.on('rteChange', $.debounce(2000, function(){
-                self.previewUpdate();
+                if ($('.contentPreview').is(':visible')) {
+                    self.previewUpdate();
+                }
             }));
         },
 

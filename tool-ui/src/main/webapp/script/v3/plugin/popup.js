@@ -56,7 +56,6 @@
       });
 
       $container.bind('close.popup', function() {
-
         if ($container.is(':visible') &&
             $container.find('.enhancementForm, .contentForm').find('.inputContainer.state-changed').length > 0 &&
             !confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {

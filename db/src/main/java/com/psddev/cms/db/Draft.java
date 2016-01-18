@@ -53,6 +53,9 @@ public class Draft extends Content {
     @Deprecated
     private Map<String, Object> objectChanges;
 
+    @Indexed
+    private boolean newContent;
+
     private Map<String, Map<String, Object>> differences;
 
     /**
@@ -391,6 +394,14 @@ public class Draft extends Content {
     @Deprecated
     public void setObjectChanges(Map<String, Object> values) {
         this.objectChanges = values;
+    }
+
+    public boolean isNewContent() {
+        return newContent;
+    }
+
+    public void setNewContent(boolean newContent) {
+        this.newContent = newContent;
     }
 
     /**

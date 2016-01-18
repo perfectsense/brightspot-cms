@@ -1261,7 +1261,7 @@ The HTML within the repeatable element must conform to these standards:
                 // Create the edit container for this item below the carousel,
                 // and if this item has a form already on the page move it there
                 $editContainer = self.modePreviewCreateEditContainer($item);
-                $item.find('.objectInputs').appendTo($editContainer);
+                $item.find('> .objectInputs').appendTo($editContainer);
 
                 // If there are validation messages in the form,
                 // mark  the gride and gallery tiles to show an error state,

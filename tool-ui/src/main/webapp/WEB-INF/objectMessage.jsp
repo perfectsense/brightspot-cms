@@ -17,6 +17,7 @@ com.psddev.dari.db.State,
 com.psddev.dari.util.ObjectUtils,
 
 java.util.Date,
+java.util.Iterator,
 java.util.List,
 
 org.joda.time.DateTime
@@ -34,6 +35,14 @@ if (wp.getOverlaidDraft(object) == null) {
             .and("com.psddev.cms.db.Draft/objectId = ?", state.getId())
             .sortDescending("cms.content.updateDate")
             .selectAll();
+
+    for (Iterator<Object> i = contentUpdates.iterator(); i.hasNext();) {
+        Draft contentUpdate = (Draft) i.next();
+
+        if (contentUpdate.isNewContent()) {
+            i.remove();
+        }
+    }
 
     if (!contentUpdates.isEmpty()) {
         wp.writeStart("div", "class", "message message-info");
@@ -84,7 +93,7 @@ if (deleted != null) {
 }
 
 Draft draft = wp.getOverlaidDraft(object);
-Content.ObjectModification contentData = draft != null
+Content.ObjectModification contentData = draft != null && !draft.isNewContent()
         ? draft.as(Content.ObjectModification.class)
         : state.as(Content.ObjectModification.class);
 

@@ -4708,7 +4708,20 @@ define([
          * By default (or if this is set to true), elements that
          * are not recognized are output and marked as raw HTML.
          */
-        fromHTML: function(html, range, allowRaw) {
+        fromHTML: function() {
+            var args;
+            var self;
+            
+            self = this;
+            args = arguments;
+
+            // For performance, tell CodeMirror not to update the DOM
+            // until our fromHTML() has completed.
+            self.codeMirror.operation(function(){
+                self._fromHTML.apply(self, args);
+            });
+        },
+        _fromHTML: function(html, range, allowRaw) {
 
             var annotations, editor, enhancements, el, history, map, self, val;
 

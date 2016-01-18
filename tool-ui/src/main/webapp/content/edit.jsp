@@ -259,7 +259,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             wp.writeHtml("New");
 
                         } else {
-                            if (draft != null) {
+                            if (draft != null && !draft.isNewContent()) {
                                 wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
 
                                 String draftName = draft.getName();
@@ -417,7 +417,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         }
                     wp.writeEnd();
 
-                } else if (history != null || draft != null) {
+                } else if (history != null || (draft != null && !draft.isNewContent())) {
                     State original = State.getInstance(Query.
                             from(Object.class).
                             where("_id = ?", editing).
@@ -606,7 +606,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         wp.writeStart("div", "class", "message message-warning");
                             wp.writeStart("p");
-                                if (draft != null) {
+                                if (draft != null && !draft.isNewContent()) {
                                     wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
 
                                     String draftName = draft.getName();
@@ -652,7 +652,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             }
 
                             wp.writeStart("div", "class", "actions");
-                                if (draft != null) {
+                                if (draft != null && !draft.isNewContent()) {
                                     wp.writeStart("a",
                                             "class", "icon icon-action-edit",
                                             "href", wp.url("", "draftId", null));
