@@ -65,6 +65,16 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                     .collect(Collectors.toList()));
         }
 
+        if (page.isFormPost()) {
+
+            try {
+                page.include("/WEB-INF/objectPost.jsp", "object", user, "includeFields", includeFields);
+
+            } catch (Exception ex) {
+                page.getErrors().add(ex);
+            }
+        }
+
         if (user != null) {
 
             settings = user.getCommonContentSettings();
@@ -157,13 +167,6 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         List<TypeTemplate> collapsed = new ArrayList<TypeTemplate>();
 
         if (page.isFormPost()) {
-
-            try {
-                page.include("/WEB-INF/objectPost.jsp", "object", user, "includeFields", includeFields);
-
-            } catch (Exception ex) {
-                page.getErrors().add(ex);
-            }
 
             Set<String> collapsedIds = new HashSet<String>();
 
