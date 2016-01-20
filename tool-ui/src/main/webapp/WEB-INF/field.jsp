@@ -62,6 +62,12 @@ if (ct != null) {
 if (ObjectUtils.isBlank(tab)) {
     tab = ui.getTab();
     localizeTab = true;
+} else {
+    if (ui.getTab() != null) {
+        if (tab.equals(ui.getTab())) {
+            localizeTab = true;
+        }
+    }
 }
 
 if (!isHidden && (!ObjectUtils.isBlank(tab) && !ContentField.DEFAULT_TAB_VALUE.equals(tab)) && !wp.hasPermission("tab/" + StringUtils.toNormalized(tab))) {
