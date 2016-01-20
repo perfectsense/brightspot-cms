@@ -63,10 +63,8 @@ if (ObjectUtils.isBlank(tab)) {
     tab = ui.getTab();
     localizeTab = true;
 } else {
-    if (ui.getTab() != null) {
-        if (tab.equals(ui.getTab())) {
-            localizeTab = true;
-        }
+    if (tab.equals(ui.getTab())) {
+        localizeTab = true;
     }
 }
 
