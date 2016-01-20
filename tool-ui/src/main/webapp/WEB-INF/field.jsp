@@ -46,6 +46,7 @@ boolean isHidden = ui.isHidden();
 
 String tab = null;
 String label = null;
+boolean runLocalize = false;
 ContentType ct = type != null ? Query.from(ContentType.class).where("internalName = ?", type.getInternalName()).first() : null;
 
 if (ct != null) {
@@ -60,6 +61,7 @@ if (ct != null) {
 
 if (ObjectUtils.isBlank(tab)) {
     tab = ui.getTab();
+    runLocalize = true;
 }
 
 if (!isHidden && (!ObjectUtils.isBlank(tab) && !ContentField.DEFAULT_TAB_VALUE.equals(tab)) && !wp.hasPermission("tab/" + StringUtils.toNormalized(tab))) {
@@ -68,9 +70,12 @@ if (!isHidden && (!ObjectUtils.isBlank(tab) && !ContentField.DEFAULT_TAB_VALUE.e
 
 if (ObjectUtils.isBlank(tab)) {
     tab = "Main";
+    runLocalize = true;
 }
 
-tab = wp.localize(field, "tab." + tab);
+if (runLocalize) {
+    tab = wp.localize(field, "tab." + tab);
+}
 
 if (ObjectUtils.isBlank(label)) {
     label = wp.localize(field, "field." + field.getInternalName());
