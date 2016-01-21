@@ -39,6 +39,7 @@ public abstract class Content extends Record {
     public static final String PUBLISH_USER_FIELD = PREFIX + "publishUser";
     public static final String UPDATE_DATE_FIELD = PREFIX + "updateDate";
     public static final String UPDATE_USER_FIELD = PREFIX  + "updateUser";
+    public static final String READ_ONLY_FIELD = PREFIX + "readOnly";
 
     public static final String SEARCHABLE_GROUP = PREFIX + "searchable";
 
@@ -116,6 +117,10 @@ public abstract class Content extends Record {
         @InternalName("cms.content.scheduleDate")
         private Date scheduleDate;
 
+        @Indexed
+        @InternalName(READ_ONLY_FIELD)
+        private Boolean readOnly;
+
         /**
          * Returns {@code true} if this content is a draft.
          */
@@ -186,6 +191,20 @@ public abstract class Content extends Record {
 
         public void setScheduleDate(Date scheduleDate) {
             this.scheduleDate = scheduleDate;
+        }
+
+        /**
+         * Returns {@code true} if this content is read only.
+         */
+        public Boolean isReadOnly() {
+            return Boolean.TRUE.equals(readOnly);
+        }
+
+        /**
+         * Sets whether this content is read only.
+         */
+        public void setReadOnly(Boolean readOnly) {
+            this.readOnly = readOnly ? Boolean.TRUE : null;
         }
 
         /**
