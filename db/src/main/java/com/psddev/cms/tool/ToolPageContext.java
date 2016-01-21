@@ -1951,6 +1951,32 @@ public class ToolPageContext extends WebPageContext {
                 ObjectType type = ObjectType.getInstance(c);
 
                 richTextElement.put("tag", tag.value());
+                richTextElement.put("popup", tag.editForm());
+
+                richTextElement.put("void", tag.voidElement());
+
+                List<String> allowedParents = new ArrayList<>();
+                if (tag.allowedContexts().length > 0) {
+
+                    for (String allowedParent : tag.allowedContexts()) {
+                        if (RichTextElement.ROOT_CONTEXT.equals(allowedParent) && !allowedParents.contains(null)) {
+                            allowedParents.add(0, null);
+                        } else {
+                            String trimmedParent = allowedParent.trim();
+                            if (!ObjectUtils.isBlank(trimmedParent)) {
+                                allowedParents.add(trimmedParent);
+                            }
+                        }
+                    }
+                }
+                if (allowedParents.size() > 0) {
+                    richTextElement.put("context", allowedParents);
+                }
+
+                String subMenu = tag.subMenu().trim();
+                if (!subMenu.isEmpty()) {
+                    richTextElement.put("submenu", subMenu);
+                }
                 richTextElement.put("styleName", type.getInternalName().replace(".", "-"));
                 richTextElement.put("typeId", type.getId().toString());
                 richTextElement.put("displayName", type.getDisplayName());
