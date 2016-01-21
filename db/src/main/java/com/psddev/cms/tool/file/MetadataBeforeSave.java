@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.psddev.dari.util.AbstractStorageItem;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StorageItemBeforeSave;
 import com.psddev.dari.util.StorageItemUploadPart;
@@ -23,7 +24,7 @@ public class MetadataBeforeSave implements StorageItemBeforeSave {
             httpHeaders.put("Cache-Control", Collections.singletonList("public, max-age=31536000"));
             httpHeaders.put("Content-Length", Collections.singletonList(String.valueOf(part.getSize())));
             httpHeaders.put("Content-Type", Collections.singletonList(part.getContentType()));
-            metadata.put("http.headers", httpHeaders);
+            metadata.put(AbstractStorageItem.HTTP_HEADERS, httpHeaders);
 
             storageItem.getMetadata().putAll(metadata);
         }

@@ -19,6 +19,7 @@ public class StandardImageSize extends Record {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardImageSize.class);
 
+    @Deprecated
     private static final PullThroughValue<PeriodicValue<List<StandardImageSize>>>
             ALL = new PullThroughValue<PeriodicValue<List<StandardImageSize>>>() {
 
@@ -61,7 +62,10 @@ public class StandardImageSize extends Record {
     private CropOption cropOption;
     private ResizeOption resizeOption;
 
-    /** Returns a list of all the image sizes. */
+    /**
+     * @deprecated Use {@link Query#selectAll()} instead.
+     */
+    @Deprecated
     public static List<StandardImageSize> findAll() {
         return ALL.get().get();
     }

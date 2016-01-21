@@ -26,8 +26,6 @@ public class VideoFileType implements FileContentType {
     @Override
     public void writePreview(ToolPageContext page, State state, StorageItem fieldValue) throws IOException, ServletException {
 
-        String contentType = fieldValue.getContentType();
-
         page.writeStart("div", "style", page.cssString("margin-bottom", "5px"));
             page.writeStart("a",
                     "class", "icon icon-action-preview",
@@ -41,7 +39,7 @@ public class VideoFileType implements FileContentType {
                 "controls", "controls",
                 "preload", "auto");
             page.writeElement("source",
-                    "type", contentType,
+                    "type", fieldValue.getContentType(),
                     "src", fieldValue.getPublicUrl());
         page.writeEnd();
     }
