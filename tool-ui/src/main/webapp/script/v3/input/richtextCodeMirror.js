@@ -279,7 +279,6 @@ define([
             self.enhancementInit();
             self.initListListeners();
             self.dropdownInit();
-            self.onClickInit();
             self.initEvents();
             self.clipboardInit();
             self.trackInit();
@@ -2316,15 +2315,18 @@ define([
                     'class':'rte2-dropdown-label',
                     text: label
                 }).appendTo($div);
-                
-                $('<a/>', {
-                    'class': 'rte2-dropdown-edit',
-                    text: 'Edit'
-                }).on('click', function(event){
-                    event.preventDefault();
-                    self.onClickDoMark(event, mark);
-                    return false;
-                }).appendTo($div);
+
+                // Popup edit defaults to true, but if set to false do not include edit link
+                if (styleObj.popup !== false) {
+                    $('<a/>', {
+                        'class': 'rte2-dropdown-edit',
+                        text: 'Edit'
+                    }).on('click', function(event){
+                        event.preventDefault();
+                        self.onClickDoMark(event, mark);
+                        return false;
+                    }).appendTo($div);
+                }
                 
                 $('<a/>', {
                     'class': 'rte2-dropdown-clear',
@@ -2400,82 +2402,6 @@ define([
         //==================================================
         
         /**
-         * Set up listener for clicks.
-         * If a style has an onClick parameter, then when user clicks that
-         * style we will call the onClick function and pass it the mark.
-         */
-        onClickInit: function() {
-
-            var editor, now, self;
-
-            self = this;
-            
-            editor = self.codeMirror;
-
-            // CodeMirror doesn't handle double clicks reliably,
-            // so we will simulate a double click event using mousedown.
-            $(editor.getWrapperElement()).on('mousedown', function(event) {
-
-                var $el, marks, now, pos;
-
-                // Don't do clicks if the editor is in read only mode
-                if (self.readOnlyGet()) {
-                    return;
-                }
-                
-                // Generate timestamp
-                now = Date.now();
-
-                if (self.doubleClickTimestamp && (now - self.doubleClickTimestamp < 500) ) {
-
-                    // Figure out the line and character based on the mouse coord that was clicked
-                    pos = editor.coordsChar({left:event.pageX, top:event.pageY}, 'page');
-
-                    // Find all the marks for the clicked position
-                    marks = editor.findMarksAt(pos);
-
-                    // Only keep the marks that have onClick configs
-                    marks = $.map(marks, function(mark, i) {
-                        var styleObj;
-                        styleObj = self.classes[mark.className];
-                        if (styleObj && styleObj.onClick) {
-                            // Keep in the array
-                            return mark;
-                        } else {
-                            // Remove from the array
-                            return null;
-                        }
-                    });
-
-                    if (marks.length === 1) {
-
-                        self.onClickDoMark(event, marks[0]);
-                        
-                    } else if (marks.length > 1) {
-
-                        // Unselect the current selection
-                        range = self.markGetRange(marks[0]);
-                        self.codeMirror.setCursor(range.from);
-
-                        // Give time for the click event to complete
-                        // so the resulting popup doesn't get closed accidentally
-                        setTimeout(function(){
-
-                            // Pop up a div that lets user choose which mark to edit
-                            self.onClickSelectMark(event, marks);
-                        }, 100);
-                        
-                    }
-                    
-                }
-
-                self.doubleClickTimestamp = now;
-            });
-
-        }, // onClickInit
-
-        
-        /**
          * Do the onclick event for a mark.
          * For example, a link or inline enhancement mark might have an onclick handler
          *
@@ -2502,78 +2428,6 @@ define([
                 styleObj.onClick(event, mark);
             }
         },
-
-        
-        /**
-         * In case a cursor position resides within several marks with onclick events,
-         * display a popup that lets the user select which mark to click.
-         *
-         * @param Object event
-         * The click event.
-         *
-         * @param Object mark
-         * The CodeMirror mark. Note this mark must have a className, which will be used
-         * to find the style object that contains the onclick handler. In addition the
-         * style object can have a getLabel() function that returns a label to be used
-         * in the slection popup.
-         */
-        onClickSelectMark: function(event, marks) {
-            var $div, $divPosition, $li, self, $ul;
-            self = this;
-
-            event.stopPropagation();
-            event.preventDefault();
-            
-            // Display a pop-up list of marks that can be edited
-            $div = $('<div/>', {'class': 'rte2-onclick-selector'});
-            $('<h2/>', {text:'Select a mark to edit:'}).appendTo($div);
-            $ul = $('<ul/>').appendTo($div);
-            
-            $.each(marks.reverse(), function(i, mark) {
-                
-                var label, $li, styleObj;
-
-                // Get the label to display for this mark.
-                // It defaults to the className of the style.
-                // Of if the style definition has a getLabel() function
-                // call that and use the return value
-                styleObj = self.classes[mark.className] || {};
-                label = styleObj.enhancementName || mark.className;
-                if (styleObj.getLabel) {
-                    label = styleObj.getLabel(mark);
-                }
-                
-                $li = $('<li/>', {
-                    html: $('<a/>', {text:label})
-                }).on('click', function(eventClick) {
-                    eventClick.stopPropagation();
-                    eventClick.preventDefault();
-                    $(this).popup('close');
-                    self.onClickDoMark(event, mark);
-                }).appendTo($ul);
-            });
-
-            $div.appendTo('body').popup();
-
-            // Create an element that the popup can use to position itself
-            // and position it at the point of the click
-            $divPosition = $('<div/>', {
-                'style': 'position:absolute;top:0;left:0;height:1px;overflow:hidden;'
-            }).appendTo('body').css({
-                'top': event.pageY + 12,
-                'left': event.pageX
-            });
-            $div.popup('source', $divPosition)
-
-            $div.popup('container').on('close', function() {
-                // If the popup is canceled with Esc or otherwise, do some cleanup
-                $div.remove();
-                $divPosition.remove();
-            });
-
-            $div.popup('open');
-        },
-        
         
         //--------------------------------------------------
         // Track Changes

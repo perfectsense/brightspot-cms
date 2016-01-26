@@ -255,7 +255,10 @@ function($) {
 
         $input.hide();
         $input.after(shadow.$clear);
-        $input.after(shadow.$edit);
+        if (!$input.parents('.inputContainer-readOnly').length) {
+          $input.after(shadow.$edit);
+        }
+        //$input.after(shadow.$edit);
         $input.after(shadow.$select);
       });
 

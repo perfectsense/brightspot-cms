@@ -333,64 +333,66 @@ The HTML within the repeatable element must conform to these standards:
 
                 var self = this;
                 var $addButtonContainer;
-                
-                // Create the Add Item container
-                //   -- Initialize single input mode if necessary
-                //   -- Create an add button for each template
-                //   -- Set up click event on the add button
 
-                // Create a container where all the "Add Item" buttons will be displayed
-                // First check to see if there is already a div to place them,
-                // if not create a new div at the bottom.
-                $addButtonContainer = self.$element.find('.addButtonContainer');
-                if (!$addButtonContainer.length) {
-                    $addButtonContainer = $('<div/>', { 'class': 'addButtonContainer' }).appendTo(self.$element);
-                }
+                if (!self.$element.parents('.inputContainer-readOnly').length) {
+                    // Create the Add Item container
+                    //   -- Initialize single input mode if necessary
+                    //   -- Create an add button for each template
+                    //   -- Set up click event on the add button
 
-                // Save the add button container for later use
-                // (in single mode we will add more to it)
-                self.dom.$addButtonContainer = $addButtonContainer;
-                
-                // If we are in single input mode then we'll do some extra stuff
-                self.modeSingleInitAddButton();
-
-                // Create an "Add Item" link for each template we found
-                var idIndex = 0;
-                self.dom.$templates.each(function() {
-                    
-                    var $template = $(this);
-                    var itemType = $template.attr('data-type') || 'Item';
-                    var addButtonText;
-
-                    // Determine which text to use for the add button
-                    addButtonText = itemType;
-                    if (self.options.addButtonText) {
-                        addButtonText = self.options.addButtonText + ' ' + addButtonText;
+                    // Create a container where all the "Add Item" buttons will be displayed
+                    // First check to see if there is already a div to place them,
+                    // if not create a new div at the bottom.
+                    $addButtonContainer = self.$element.find('.addButtonContainer');
+                    if (!$addButtonContainer.length) {
+                        $addButtonContainer = $('<div/>', {'class': 'addButtonContainer'}).appendTo(self.$element);
                     }
-                    
-                    // Add an element for the "Add Button" control
-                    $('<span/>', {
-                        
-                        'class': 'addButton',
-                        text: addButtonText,
-                        
-                        // Save the template on the add button control so when user
-                        // clicks it we will know which template to add
-                        // 'data-addButtonTemplate': $template
-                        
-                    }).on('click', function(event, customCallback) {
 
-                        // The click event for the add button supports an
-                        // optional callback function that will be called after
-                        // the new item is added.
+                    // Save the add button container for later use
+                    // (in single mode we will add more to it)
+                    self.dom.$addButtonContainer = $addButtonContainer;
 
-                        // Add the new item based on this template
-                        self.addItem($template, customCallback);
+                    // If we are in single input mode then we'll do some extra stuff
+                    self.modeSingleInitAddButton();
 
-                        return false;
-                        
-                    }).appendTo($addButtonContainer);
-                });
+                    // Create an "Add Item" link for each template we found
+                    var idIndex = 0;
+                    self.dom.$templates.each(function () {
+
+                        var $template = $(this);
+                        var itemType = $template.attr('data-type') || 'Item';
+                        var addButtonText;
+
+                        // Determine which text to use for the add button
+                        addButtonText = itemType;
+                        if (self.options.addButtonText) {
+                            addButtonText = self.options.addButtonText + ' ' + addButtonText;
+                        }
+
+                        // Add an element for the "Add Button" control
+                        $('<span/>', {
+
+                            'class': 'addButton',
+                            text: addButtonText,
+
+                            // Save the template on the add button control so when user
+                            // clicks it we will know which template to add
+                            // 'data-addButtonTemplate': $template
+
+                        }).on('click', function (event, customCallback) {
+
+                            // The click event for the add button supports an
+                            // optional callback function that will be called after
+                            // the new item is added.
+
+                            // Add the new item based on this template
+                            self.addItem($template, customCallback);
+
+                            return false;
+
+                        }).appendTo($addButtonContainer);
+                    });
+                }
             },
 
             
@@ -509,14 +511,16 @@ The HTML within the repeatable element must conform to these standards:
                 
                 var self = this;
                 var $item = $(item);
-                
-                // Add the remove button to the item
-                $('<span/>', {
-                    'class': 'removeButton',
-                    'text': self.options.removeButtonText
-                }).on('click', function(){
-                    self.removeItemToggle( $item );
-                }).appendTo($item);
+
+                if (!self.$element.parents('.inputContainer-readOnly').length) {
+                    // Add the remove button to the item
+                    $('<span/>', {
+                        'class': 'removeButton',
+                        'text': self.options.removeButtonText
+                    }).on('click', function () {
+                        self.removeItemToggle($item);
+                    }).appendTo($item);
+                }
 
             },
 

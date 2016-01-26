@@ -1951,6 +1951,32 @@ public class ToolPageContext extends WebPageContext {
                 ObjectType type = ObjectType.getInstance(c);
 
                 richTextElement.put("tag", tag.value());
+                richTextElement.put("popup", type.getFields().stream()
+                        .filter(f -> !f.as(ToolUi.class).isHidden())
+                        .findFirst()
+                        .isPresent());
+
+                List<String> context = new ArrayList<>();
+
+                if (tag.root()) {
+                    context.add(null);
+                }
+
+                Stream.of(tag.parents())
+                        .map(String::trim)
+                        .filter(p -> !ObjectUtils.isBlank(p))
+                        .forEach(p -> context.add(p));
+
+                if (!context.isEmpty()) {
+                    richTextElement.put("context", context);
+                }
+
+                String menu = tag.menu().trim();
+
+                if (!menu.isEmpty()) {
+                    richTextElement.put("submenu", menu);
+                }
+
                 richTextElement.put("styleName", type.getInternalName().replace(".", "-"));
                 richTextElement.put("typeId", type.getId().toString());
                 richTextElement.put("displayName", type.getDisplayName());

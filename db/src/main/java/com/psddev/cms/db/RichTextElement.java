@@ -21,5 +21,8 @@ public abstract class RichTextElement extends Record {
     public @interface Tag {
 
         String value();
+        boolean root() default true;
+        String[] parents() default { };
+        String menu() default "";
     }
 }
