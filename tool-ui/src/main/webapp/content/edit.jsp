@@ -35,6 +35,7 @@ com.psddev.dari.util.HtmlWriter,
 com.psddev.dari.util.JspUtils,
 com.psddev.dari.util.ObjectUtils,
 com.psddev.dari.util.StringUtils,
+com.psddev.dari.util.Settings,
 
 java.io.StringWriter,
 java.util.ArrayList,
@@ -171,7 +172,12 @@ if (copy != null) {
     for (Site consumer : editingState.as(Site.ObjectModification.class).getConsumers()) {
         editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
     }
-    editingState.as(Site.ObjectModification.class).setOwner(site);
+    
+    if (site != null && 
+            !Settings.get(boolean.class, "cms/tool/copiedObjectInheritsSourceObjectsSiteOwner")) {
+        // Only set the owner to current site if not on global and no setting to dictate otherwise.
+        editingState.as(Site.ObjectModification.class).setOwner(site);
+    }
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
