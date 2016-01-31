@@ -71,6 +71,9 @@ public class ToolUser extends Record implements ToolEntity {
     @ToolUi.Tab("Dashboard")
     private Dashboard dashboard;
 
+    @ToolUi.Tab("Dashboard")
+    private CmsTool.CommonContentSettings commonContentSettings;
+
     @ToolUi.Hidden
     private Date passwordChangedDate;
 
@@ -238,6 +241,14 @@ public class ToolUser extends Record implements ToolEntity {
 
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
+    }
+
+    public CmsTool.CommonContentSettings getCommonContentSettings() {
+        return commonContentSettings;
+    }
+
+    public void setCommonContentSettings(CmsTool.CommonContentSettings commonContentSettings) {
+        this.commonContentSettings = commonContentSettings;
     }
 
     /**
