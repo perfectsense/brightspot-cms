@@ -85,23 +85,95 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
         var $rightText = $right.find('> .objectInputs > .inputContainer[data-field="' + $leftText.closest('.inputContainer').attr('data-field') + '"] textarea');
         var left = $leftText.val().replace(new RegExp('[\\r\\n]', 'g'), ' ').replace(new RegExp('<br[^>]*\/?>', 'ig'), '\n');
         var right = $rightText.val().replace(new RegExp('[\\r\\n]', 'g'), ' ').replace(new RegExp('<br[^>]*\/?>', 'ig'), '\n');
+        var rich = $leftText.is('.richtext');
+
+        if (rich) {
+          function preprocess(html, enhancements) {
+            return html.
+                replace(new RegExp('<[^>]*class="[^"]*enhancement[^"]*"[^>]*>.*?</[^>]*>', 'ig'), function (match) {
+                  var id = match.replace(/\s/g, '');
+                  enhancements[id] = match;
+
+                  return '\n\u2603' + id + '\u2603\n';
+                }).
+                replace(new RegExp('<([^>\\s]+)[^>]*>', 'ig'), function (match, tag) {
+                  return '<' + tag + '>';
+                });
+          }
+
+          var leftEnhancements = { };
+          var rightEnhancements = { };
+
+          left = preprocess(left, leftEnhancements);
+          right = preprocess(right, rightEnhancements);
+        }
+
         var diffs = JsDiff.diffWords(left, right);
         var $leftCopy = $('<div/>', { 'class': 'contentDiffCopy' });
         var $rightCopy = $('<div/>', { 'class': 'contentDiffCopy' });
 
+        function postprocess(enhancements, value) {
+          return  value.replace(new RegExp('\u2603(\\S+)\u2603', 'ig'), function (match, id) {
+            var $wrapper = $('<div/>', { html: enhancements[id] });
+            var ref = $wrapper.find('> .enhancement').attr('data-reference');
+            var label;
+            var preview;
+
+            if (ref) {
+              ref = JSON.parse(ref);
+              label = ref.label;
+              preview = ref.preview;
+            }
+
+            var $placeholder = $('<div/>', {
+              'class': 'contentDiffEnhancement'
+            });
+
+            if (preview) {
+              $placeholder.append($('<div/>', {
+                'class': 'contentDiffEnhancement-preview',
+                html: $('<img/>', {
+                  src: preview
+                })
+              }));
+            }
+
+            if (label) {
+              $placeholder.append($('<div/>', {
+                'class': 'contentDiffEnhancement-label',
+                text: label
+              }));
+            }
+
+            return $('<div/>').html($placeholder).html();
+          });
+        }
+
         $.each(diffs, function(i, diff) {
+          var value = diff.value;
+
+          if (rich) {
+            value = postprocess(leftEnhancements, value);
+          }
+
           if (!diff.added) {
             $leftCopy.append(diff.removed ?
-                $('<span/>', { 'class': 'contentDiffRemoved', 'text': diff.value }) :
-                $('<span/>', { 'text': diff.value }));
+                $('<span/>', { 'class': 'contentDiffRemoved', 'html': value }) :
+                $('<span/>', { 'html': value }));
           }
         });
 
         $.each(diffs, function(i, diff) {
+          var value = diff.value;
+
+          if (rich) {
+            value = postprocess(rightEnhancements, value);
+          }
+
           if (!diff.removed) {
             $rightCopy.append(diff.added ?
-                $('<span/>', { 'class': 'contentDiffAdded', 'text': diff.value }) :
-                $('<span/>', { 'text': diff.value }));
+                $('<span/>', { 'class': 'contentDiffAdded', 'html': value }) :
+                $('<span/>', { 'html': value }));
           }
         });
 

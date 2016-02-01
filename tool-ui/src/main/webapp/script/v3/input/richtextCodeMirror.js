@@ -1,12 +1,13 @@
 define([
     'jquery',
+    'bsp-utils',
     'v3/spellcheck',
     'codemirror/lib/codemirror',
     'codemirror/addon/hint/show-hint',
     'codemirror/addon/dialog/dialog',
     'codemirror/addon/search/searchcursor',
     'codemirror/addon/search/search'
-], function($, spellcheckAPI, CodeMirror) {
+], function($, bsp_utils, spellcheckAPI, CodeMirror) {
     
     var CodeMirrorRte;
 
@@ -65,6 +66,10 @@ define([
          * Array [clear]
          * A list of styles that should be cleared if the style is selected.
          * Use this to make mutually-exclusive styles.
+         *
+         * Boolean [void]
+         * Set this to true if the element is a "void" element, meaning it cannot
+         * contain any text or other elements within it.
          *
          * Boolean [internal]
          * Set this to true if the style is used internally (for track changes).
@@ -279,12 +284,15 @@ define([
             self.enhancementInit();
             self.initListListeners();
             self.dropdownInit();
-            self.onClickInit();
             self.initEvents();
             self.clipboardInit();
             self.trackInit();
             self.spellcheckInit();
             self.modeInit();
+
+            $(window).resize(bsp_utils.throttle(500, function () {
+                self.refresh();
+            }));
         },
 
         
@@ -606,23 +614,33 @@ define([
                 addToHistory: true
             }, options);
 
-            
             // Check for special case if no range is defined, we should still let the user
             // select a style to make the style active. Then typing more characters should
             // appear in that style.
             isEmpty = (range.from.line === range.to.line) && (range.from.ch === range.to.ch);
             if (isEmpty) {
-
                 markOptions.addToHistory = false;
                 markOptions.clearWhenEmpty = false;
                 markOptions.inclusiveLeft = true;
-                mark = editor.markText(range.from, range.to, markOptions);
-                
-            } else {
-                
-                mark = editor.markText(range.from, range.to, markOptions);
-                self.inlineSplitMarkAcrossLines(mark);
             }
+            
+            if (styleObj.void) {
+                
+                markOptions.addToHistory = true;
+                markOptions.readOnly = true;
+                markOptions.inclusiveLeft = false;
+                markOptions.inclusiveRight = false;
+                
+                // Add a space to represent the empty element because CodeMirror needs
+                // a character to display for the user to display the mark.
+                editor.replaceRange(' ', {line:range.from.line, ch:range.from.ch});
+                
+                range.to.line = range.from.line;
+                range.to.ch = range.from.ch + 1;
+            }
+
+            mark = editor.markText(range.from, range.to, markOptions);
+            self.inlineSplitMarkAcrossLines(mark);
 
             // If this is a set of mutually exclusive styles, clear the other styles
             if (styleObj.clear) {
@@ -1460,12 +1478,16 @@ define([
          */
         inlineSplitMarkAcrossLines: function(mark) {
 
-            var editor, to, lineNumber, pos, self, from;
+            var editor, to, lineNumber, pos, self, singleLine, styleObj, from;
 
             self = this;
             editor = self.codeMirror;
 
             mark = mark.marker ? mark.marker : mark;
+
+            // Get the style object for this mark so we can determine if this should be treated as a "singleLine" mark
+            styleObj = self.classes[mark.className] || {};
+            singleLine = Boolean(styleObj.singleLine);
             
             // Get the start and end positions for this mark
             pos = mark.find();
@@ -1497,6 +1519,11 @@ define([
 
                     // Copy any additional attributes that were attached to the old mark
                     newMark.attributes = mark.attributes;
+
+                    // Don't create other marks if this is a singleLine mark
+                    if (singleLine) {
+                        break;
+                    }
                 }
 
                 // Remove the old mark that went across multiple lines
@@ -2272,7 +2299,7 @@ define([
             marks = $.map(marks, function(mark, i) {
                 var styleObj;
                 styleObj = self.classes[mark.className];
-                if (styleObj && styleObj.onClick) {
+                if (styleObj && (styleObj.onClick || styleObj.void)) {
                     // Keep in the array
                     return mark;
                 } else {
@@ -2316,22 +2343,40 @@ define([
                     'class':'rte2-dropdown-label',
                     text: label
                 }).appendTo($div);
-                
-                $('<a/>', {
-                    'class': 'rte2-dropdown-edit',
-                    text: 'Edit'
-                }).on('click', function(event){
-                    event.preventDefault();
-                    self.onClickDoMark(event, mark);
-                    return false;
-                }).appendTo($div);
+
+                // Popup edit defaults to true, but if set to false do not include edit link
+                if (styleObj.popup !== false) {
+                    $('<a/>', {
+                        'class': 'rte2-dropdown-edit',
+                        text: 'Edit'
+                    }).on('click', function(event){
+                        event.preventDefault();
+                        self.onClickDoMark(event, mark);
+                        return false;
+                    }).appendTo($div);
+                }
                 
                 $('<a/>', {
                     'class': 'rte2-dropdown-clear',
                     text: 'Clear'
                 }).on('click', function(event){
+
+                    var pos;
+                    
                     event.preventDefault();
+
+                    // For void element, delete the text in the mark
+                    if (styleObj.void) {
+                        if (mark.find) {
+                            pos = mark.find();
+                            // Delete below after the mark is cleared
+                        }
+                    }
+                    
                     mark.clear();
+                    if (pos) {
+                        self.codeMirror.replaceRange('', {line:pos.from.line, ch:pos.from.ch}, {line:pos.to.line, ch:pos.to.ch});
+                    }
                     self.focus();
                     self.dropdownCheckCursor();
                     self.triggerChange();
@@ -2400,82 +2445,6 @@ define([
         //==================================================
         
         /**
-         * Set up listener for clicks.
-         * If a style has an onClick parameter, then when user clicks that
-         * style we will call the onClick function and pass it the mark.
-         */
-        onClickInit: function() {
-
-            var editor, now, self;
-
-            self = this;
-            
-            editor = self.codeMirror;
-
-            // CodeMirror doesn't handle double clicks reliably,
-            // so we will simulate a double click event using mousedown.
-            $(editor.getWrapperElement()).on('mousedown', function(event) {
-
-                var $el, marks, now, pos;
-
-                // Don't do clicks if the editor is in read only mode
-                if (self.readOnlyGet()) {
-                    return;
-                }
-                
-                // Generate timestamp
-                now = Date.now();
-
-                if (self.doubleClickTimestamp && (now - self.doubleClickTimestamp < 500) ) {
-
-                    // Figure out the line and character based on the mouse coord that was clicked
-                    pos = editor.coordsChar({left:event.pageX, top:event.pageY}, 'page');
-
-                    // Find all the marks for the clicked position
-                    marks = editor.findMarksAt(pos);
-
-                    // Only keep the marks that have onClick configs
-                    marks = $.map(marks, function(mark, i) {
-                        var styleObj;
-                        styleObj = self.classes[mark.className];
-                        if (styleObj && styleObj.onClick) {
-                            // Keep in the array
-                            return mark;
-                        } else {
-                            // Remove from the array
-                            return null;
-                        }
-                    });
-
-                    if (marks.length === 1) {
-
-                        self.onClickDoMark(event, marks[0]);
-                        
-                    } else if (marks.length > 1) {
-
-                        // Unselect the current selection
-                        range = self.markGetRange(marks[0]);
-                        self.codeMirror.setCursor(range.from);
-
-                        // Give time for the click event to complete
-                        // so the resulting popup doesn't get closed accidentally
-                        setTimeout(function(){
-
-                            // Pop up a div that lets user choose which mark to edit
-                            self.onClickSelectMark(event, marks);
-                        }, 100);
-                        
-                    }
-                    
-                }
-
-                self.doubleClickTimestamp = now;
-            });
-
-        }, // onClickInit
-
-        
-        /**
          * Do the onclick event for a mark.
          * For example, a link or inline enhancement mark might have an onclick handler
          *
@@ -2502,78 +2471,6 @@ define([
                 styleObj.onClick(event, mark);
             }
         },
-
-        
-        /**
-         * In case a cursor position resides within several marks with onclick events,
-         * display a popup that lets the user select which mark to click.
-         *
-         * @param Object event
-         * The click event.
-         *
-         * @param Object mark
-         * The CodeMirror mark. Note this mark must have a className, which will be used
-         * to find the style object that contains the onclick handler. In addition the
-         * style object can have a getLabel() function that returns a label to be used
-         * in the slection popup.
-         */
-        onClickSelectMark: function(event, marks) {
-            var $div, $divPosition, $li, self, $ul;
-            self = this;
-
-            event.stopPropagation();
-            event.preventDefault();
-            
-            // Display a pop-up list of marks that can be edited
-            $div = $('<div/>', {'class': 'rte2-onclick-selector'});
-            $('<h2/>', {text:'Select a mark to edit:'}).appendTo($div);
-            $ul = $('<ul/>').appendTo($div);
-            
-            $.each(marks.reverse(), function(i, mark) {
-                
-                var label, $li, styleObj;
-
-                // Get the label to display for this mark.
-                // It defaults to the className of the style.
-                // Of if the style definition has a getLabel() function
-                // call that and use the return value
-                styleObj = self.classes[mark.className] || {};
-                label = styleObj.enhancementName || mark.className;
-                if (styleObj.getLabel) {
-                    label = styleObj.getLabel(mark);
-                }
-                
-                $li = $('<li/>', {
-                    html: $('<a/>', {text:label})
-                }).on('click', function(eventClick) {
-                    eventClick.stopPropagation();
-                    eventClick.preventDefault();
-                    $(this).popup('close');
-                    self.onClickDoMark(event, mark);
-                }).appendTo($ul);
-            });
-
-            $div.appendTo('body').popup();
-
-            // Create an element that the popup can use to position itself
-            // and position it at the point of the click
-            $divPosition = $('<div/>', {
-                'style': 'position:absolute;top:0;left:0;height:1px;overflow:hidden;'
-            }).appendTo('body').css({
-                'top': event.pageY + 12,
-                'left': event.pageX
-            });
-            $div.popup('source', $divPosition)
-
-            $div.popup('container').on('close', function() {
-                // If the popup is canceled with Esc or otherwise, do some cleanup
-                $div.remove();
-                $divPosition.remove();
-            });
-
-            $div.popup('open');
-        },
-        
         
         //--------------------------------------------------
         // Track Changes
@@ -3699,23 +3596,11 @@ define([
          */
         caseToLower: function(range) {
             
-            var html, node, self;
+            var self;
 
             self = this;
-
-            range = range || self.getRange();
-
-            // Get the HTML for the range
-            html = self.toHTML(range);
-
-            // Convert the text nodes to lower case
-            node = self.htmlToLowerCase(html);
             
-            // Save it back to the range as lower case text
-            self.fromHTML(node, range, true);
-
-            // Reset the selection range since it will be wiped out
-            self.setSelection(range);
+            self.caseChange(range, 'toLowerCase');
         },
 
         
@@ -3729,19 +3614,63 @@ define([
 
             self = this;
 
+            self.caseChange(range, 'toUpperCase');
+        },
+
+        /**
+         * Change to upper or lower case.
+         *
+         * @param {Object} [range=current range]
+         *
+         * @param {String} [direction=toUpperCase]
+         * Can be 'toLowerCase', or 'toUpperCase'. Default is 'toUpperCase'
+         * 
+         */
+        caseChange: function(range, direction) {
+            
+            var chEnd, chStart, editor, html, line, lineRange, lineText, node, self;
+            
+            self = this;
+            editor = self.codeMirror;
+            
             range = range || self.getRange();
+            direction = (direction === 'toLowerCase') ? 'toLowerCase' : 'toUpperCase';
 
-            // Get the HTML for the range
-            html = self.toHTML(range);
+            // Loop through each line.
+            // We need to change case one line at a time because of limitations in CodeMirror
+            // (it wipes out line classes if we replace the text all at once)
+            // So this will ensure things like enhancements and tables don't get wiped
+            // out or duplicated, but other styles remain intact.
+            for (line = range.from.line; line <= range.to.line; line++) {
 
-            // Convert the text nodes to upper case
-            node = self.htmlToUpperCase(html);
+                lineText = editor.getLine(line) || '';
+                
+                // How many characters in the current line?
+                chMax = lineText.length;
+                
+                chStart = (line === range.from.line) ? range.from.ch : 0;
+                chEnd = (line === range.to.line) ? range.to.ch: chMax;
+
+                lineRange = {from:{line:line, ch:chStart}, to:{line:line, ch:chEnd}};
+                
+                // Get the HTML for the range
+                html = self.toHTML(lineRange);
+
+                // Convert the text nodes to lower case
+                if (direction === 'toLowerCase') {
+                    node = self.htmlToLowerCase(html);
+                } else {
+                    node = self.htmlToUpperCase(html);
+                }
             
-            // Save it back to the range as lower case text
-            self.fromHTML(node, range, true);
-            
+                // Save it back to the range as lower case text
+                self.fromHTML(node, lineRange, true);
+            }
+
             // Reset the selection range since it will be wiped out
             self.setSelection(range);
+            
+            return;
         },
 
         
@@ -3883,13 +3812,16 @@ define([
          */
         getRange: function(){
 
-            var self;
+            var from, self, to;
 
             self = this;
 
+            from = self.codeMirror.getCursor('from');
+            to = self.codeMirror.getCursor('to');
+            
             return {
-                from: self.codeMirror.getCursor('from'),
-                to: self.codeMirror.getCursor('to')
+                from: {line:from.line, ch:from.ch},
+                to: {line:to.line, ch:to.ch}
             };
         },
         
@@ -4222,10 +4154,11 @@ define([
                 return html;
             }
 
-            var blockElementsToClose, blockActive, doc, enhancementsByLine, html, self;
+            var blockElementsToClose, blockActive, doc, enhancementsByLine, html, rangeWasSpecified, self;
 
             self = this;
 
+            rangeWasSpecified = Boolean(range);
             range = range || self.getRangeAll();
             
             // Before beginning make sure all the marks are cleaned up and simplified.
@@ -4248,29 +4181,38 @@ define([
             blockElementsToClose = [];
 
             // Go through all enhancements and figure out which line number they are on
+            //
+            // But do not include enhancements if a range was specified and it's a single line
+            // (this is a hack to handle changing case of the text, we need to convert each
+            // individual line to HTML and copy it back in to the line, to avoid duplicating
+            // enhancements).
+            
             enhancementsByLine = {};
-            $.each(self.enhancementCache, function(i, mark) {
-
-                var lineNo;
-
-                lineNo = self.enhancementGetLineNumber(mark);
+            if (!(rangeWasSpecified && range.from.line === range.to.line)) {
                 
-                if (lineNo !== undefined) {
+                $.each(self.enhancementCache, function(i, mark) {
+
+                    var lineNo;
+
+                    lineNo = self.enhancementGetLineNumber(mark);
+                
+                    if (lineNo !== undefined) {
                     
-                    // Create an array to hold the enhancements for this line, then add the current enhancement
-                    enhancementsByLine[lineNo] = enhancementsByLine[lineNo] || [];
+                        // Create an array to hold the enhancements for this line, then add the current enhancement
+                        enhancementsByLine[lineNo] = enhancementsByLine[lineNo] || [];
                 
-                    enhancementsByLine[lineNo].push(mark);
-                }
-            });
-
+                        enhancementsByLine[lineNo].push(mark);
+                    }
+                });
+            }
+            
             // Start the HTML!
             html = '';
             
             // Loop through the content one line at a time
             doc.eachLine(function(line) {
 
-                var annotationStart, annotationEnd, blockOnThisLine, charNum, charInRange, htmlStartOfLine, htmlEndOfLine, inlineActive, inlineActiveIndex, inlineActiveIndexLast, inlineElementsToClose, lineNo, lineInRange, outputChar, raw, rawLastChar;
+                var annotationStart, annotationEnd, blockOnThisLine, charNum, charInRange, htmlStartOfLine, htmlEndOfLine, inlineActive, inlineActiveIndex, inlineActiveIndexLast, inlineElementsToClose, isVoid, lineNo, lineInRange, outputChar, raw, rawLastChar;
 
                 lineNo = line.lineNo();
                 
@@ -4513,6 +4455,11 @@ define([
                             if (styleObj.raw) {
                                 raw = false;
                             }
+                            
+                            // If any of the styles end a void element, clear the void flag
+                            if (styleObj.void) {
+                                isVoid = false;
+                            }
 
                             // Find and delete the last occurrance in inlineActive
                             inlineActiveIndex = -1;
@@ -4591,6 +4538,11 @@ define([
                                 raw = true;
                             }
 
+                            // If any of the styles is "void", set a void flag for later
+                            if (styleObj.void) {
+                                isVoid = true;
+                            }
+                            
                             // Save this element on the list of active elements
                             inlineActive.push(styleObj);
 
@@ -4629,7 +4581,11 @@ define([
                             // We need to remember if the last character is raw html because
                             // if it is we will not insert a <br> element at the end of the line
                             rawLastChar = true;
-                        
+                        } else if (isVoid) {
+
+                            // For void styles, characters within should be ignored
+                            outputChar = '';
+                            
                         } else {
                         
                             outputChar = self.htmlEncode(outputChar);

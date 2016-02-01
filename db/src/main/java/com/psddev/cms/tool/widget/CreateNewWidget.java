@@ -2,6 +2,7 @@ package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +52,16 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         String redirect = page.param(String.class, "redirect");
         CmsTool.CommonContentSettings settings = null;
         ToolUser user = page.getUser();
+        List<String> includeFields = Arrays.asList("toolUserCreateNewSettings.editExistingContents");
+
+        if (page.isFormPost()) {
+            try {
+                page.include("/WEB-INF/objectPost.jsp", "object", user, "includeFields", includeFields);
+
+            } catch (Exception ex) {
+                page.getErrors().add(ex);
+            }
+        }
 
         if (user != null) {
             ToolRole role = user.getRole();
@@ -182,6 +193,10 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                         "method", "post",
                         "action", page.url(null));
 
+                    page.writeStart("h2");
+                    page.writeHtml("\"Create New\" Types");
+                    page.writeEnd();
+
                     page.writeStart("table", "class", "table-striped");
                         page.writeStart("thead");
                             page.writeStart("tr");
@@ -209,6 +224,13 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                             }
                         page.writeEnd();
                     page.writeEnd();
+
+                    page.writeStart("h2");
+                        page.writeHtml("\"Edit Existing\" Contents");
+                    page.writeEnd();
+
+                    page.include("/WEB-INF/errors.jsp");
+                    page.writeSomeFormFields(user, false, includeFields, null);
 
                     page.writeStart("div", "class", "actions");
                         page.writeStart("button",
@@ -344,6 +366,8 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                     }
                 }
 
+                editExistingContents.addAll(user.as(ToolUserCreateNewSettings.class).getEditExistingContents());
+
                 if (!editExistingContents.isEmpty()) {
                     page.writeStart("div", "class", "p-commonContent-existing", "style", page.cssString(
                             "-moz-box-sizing", "border-box",
@@ -383,6 +407,9 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         @ToolUi.Hidden
         private Set<String> collapsedIds;
 
+        @ToolUi.Tab("Dashboard")
+        private Set<Content> editExistingContents;
+
         public Set<String> getCollapsedIds() {
             if (collapsedIds == null) {
                 collapsedIds = new LinkedHashSet<>();
@@ -392,6 +419,17 @@ public class CreateNewWidget extends DefaultDashboardWidget {
 
         public void setCollapsedIds(Set<String> collapsedIds) {
             this.collapsedIds = collapsedIds;
+        }
+
+        public Set<Content> getEditExistingContents() {
+            if (editExistingContents == null) {
+                editExistingContents = new LinkedHashSet<>();
+            }
+            return editExistingContents;
+        }
+
+        public void setEditExistingContents(Set<Content> editExistingContents) {
+            this.editExistingContents = editExistingContents;
         }
     }
 

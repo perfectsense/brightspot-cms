@@ -3,6 +3,7 @@ package com.psddev.cms.tool;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -53,6 +54,7 @@ import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.CascadingMap;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CollectionUtils;
+import com.psddev.dari.util.HtmlWriter;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -1322,43 +1324,67 @@ public class ToolPageContext extends WebPageContext {
     }
 
     /**
-     * Writes a descriptive label HTML for the given {@code object}.
+     * Creates a descriptive HTML label for the given {@code object}.
      *
-     * @param object If {@code null}, writes {@code N/A}.
+     * @param object May be {@code null}.
      */
-    public void writeObjectLabel(Object object) throws IOException {
+    public String createObjectLabelHtml(Object object) throws IOException {
+        StringWriter htmlString = new StringWriter();
+        HtmlWriter html = new HtmlWriter(htmlString);
+
         if (object == null) {
-            writeHtml("N/A");
+            html.writeStart("em");
+            html.writeHtml("N/A");
+            html.writeEnd();
 
         } else {
             State state = State.getInstance(object);
             String visibilityLabel = object instanceof Draft
-                    ? ObjectType.getInstance(Draft.class).getDisplayName()
+                    ? localize(Draft.class, "displayName")
                     : state.getVisibilityLabel();
 
             if (!ObjectUtils.isBlank(visibilityLabel)) {
-                writeStart("span", "class", "visibilityLabel");
-                    writeHtml(visibilityLabel);
-                writeEnd();
-
-                writeHtml(" ");
+                html.writeStart("span", "class", "visibilityLabel");
+                html.writeHtml(visibilityLabel);
+                html.writeEnd();
+                html.writeHtml(" ");
             }
 
-            String label = getObjectLabelOrDefault(state, DEFAULT_OBJECT_LABEL);
+            String label = state.getLabel();
 
-            if (WHITESPACE_PATTERN.splitAsStream(label)
-                    .filter(word -> word.length() > 41)
-                    .findFirst()
-                    .isPresent()) {
-
-                writeStart("span", "class", "breakable");
-                writeHtml(label);
-                writeEnd();
+            if (ObjectUtils.to(UUID.class, label) != null) {
+                html.writeStart("em");
+                html.writeHtml(localize(state.getType(), "label.untitled"));
+                html.writeEnd();
 
             } else {
-                writeHtml(label);
+                label = Static.notTooShort(label);
+
+                if (WHITESPACE_PATTERN.splitAsStream(label)
+                        .filter(word -> word.length() > 41)
+                        .findFirst()
+                        .isPresent()) {
+
+                    html.writeStart("span", "class", "breakable");
+                    html.writeHtml(label);
+                    html.writeEnd();
+
+                } else {
+                    html.writeHtml(label);
+                }
             }
         }
+
+        return htmlString.toString();
+    }
+
+    /**
+     * Writes a descriptive HTML label for the given {@code object}.
+     *
+     * @param object May be {@code null}.
+     */
+    public void writeObjectLabel(Object object) throws IOException {
+        write(createObjectLabelHtml(object));
     }
 
     /**
@@ -1951,6 +1977,33 @@ public class ToolPageContext extends WebPageContext {
                 ObjectType type = ObjectType.getInstance(c);
 
                 richTextElement.put("tag", tag.value());
+                richTextElement.put("void", tag.empty());
+                richTextElement.put("popup", type.getFields().stream()
+                        .filter(f -> !f.as(ToolUi.class).isHidden())
+                        .findFirst()
+                        .isPresent());
+
+                List<String> context = new ArrayList<>();
+
+                if (tag.root()) {
+                    context.add(null);
+                }
+
+                Stream.of(tag.parents())
+                        .map(String::trim)
+                        .filter(p -> !ObjectUtils.isBlank(p))
+                        .forEach(p -> context.add(p));
+
+                if (!context.isEmpty()) {
+                    richTextElement.put("context", context);
+                }
+
+                String menu = tag.menu().trim();
+
+                if (!menu.isEmpty()) {
+                    richTextElement.put("submenu", menu);
+                }
+
                 richTextElement.put("styleName", type.getInternalName().replace(".", "-"));
                 richTextElement.put("typeId", type.getId().toString());
                 richTextElement.put("displayName", type.getDisplayName());
@@ -2712,7 +2765,10 @@ public class ToolPageContext extends WebPageContext {
             }
 
             writeStart("div",
-                    "class", "objectInputs" + (type.as(ToolUi.class).isReadOnly() ? " objectInputs-readOnly" : ""),
+                    "class", "objectInputs"
+                            + (type.as(ToolUi.class).isReadOnly()
+                            || !ContentEditable.shouldContentBeEditable(state)
+                            ? " objectInputs-readOnly" : ""),
                     "lang", type != null ? type.as(ToolUi.class).getLanguageTag() : null,
                     "data-type", type != null ? type.getInternalName() : null,
                     "data-id", state.getId(),

@@ -220,7 +220,7 @@ public class ContentState extends PageServlet {
                 if (content != null) {
 
                     try {
-
+                        pageContext.setAttribute("toolPageContext", page);
                         pageContext.setAttribute("content", content);
 
                         ObjectField field = null;

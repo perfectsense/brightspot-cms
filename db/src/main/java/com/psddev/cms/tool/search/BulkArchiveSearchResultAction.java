@@ -12,6 +12,11 @@ import java.io.IOException;
 public class BulkArchiveSearchResultAction implements SearchResultAction {
 
     @Override
+    public int getPosition() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
     public void writeHtml(ToolPageContext page, Search search, SearchResultSelection selection) throws IOException {
 
         try {

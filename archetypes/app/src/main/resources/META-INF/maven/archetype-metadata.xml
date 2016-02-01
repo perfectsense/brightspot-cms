@@ -27,7 +27,6 @@
         </requiredProperty>
 
         <requiredProperty key="dataDirectory">
-            <!--defaultValue>${''.getClass().forName('java.lang.System').getMethod('getProperty', ''.getClass()).invoke(null, 'user.home')}</defaultValue-->
             <defaultValue>##
 #set($string = '')
 #set($stringClass = $string.getClass())
@@ -107,6 +106,18 @@ ${dataDirectory}</defaultValue>
             <directory></directory>
             <includes>
                 <include>*</include>
+            </includes>
+            <excludes>
+                <exclude>bower.json</exclude>
+                <exclude>package.json</exclude>
+            </excludes>
+        </fileSet>
+
+        <fileSet filtered="true" encoding="UTF-8">
+            <directory></directory>
+            <includes>
+                <include>bower.json</include>
+                <include>package.json</include>
             </includes>
         </fileSet>
 

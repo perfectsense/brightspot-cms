@@ -44,8 +44,9 @@ String removeId = wp.createId();
 
 <script type="text/javascript">
     if (typeof jQuery !== 'undefined') (function(win, $) {
-        var $win = $(win),
-                $page = $('#<%= pageId %>');
+        var $win = $(win);
+        var $page = $('#<%= pageId %>');
+        var $addedInputs = $();
 
         $page.delegate('[data-objectId]', 'click', function() {
             var $source = $page.popup('source'),
@@ -73,6 +74,8 @@ String removeId = wp.createId();
                     $added = $sourceContainer.nextAll('li').eq(0);
 
                     if ($added.length > 0) {
+                        $addedInputs = $addedInputs.add($added.find(':input.objectId'));
+
                         $page.popup('source', $added.find('a.objectId-select'));
                         $win.scrollTop($win.scrollTop() + $sourceContainer.outerHeight(true));
                         return false;
@@ -92,7 +95,10 @@ String removeId = wp.createId();
                             require([ 'bsp-utils' ], function (bsp_utils) {
                                 bsp_utils.onDomInsert(added, '.inputContainer[data-field-name="' + fieldName + '"] > .inputSmall > a.objectId-select', {
                                     'insert': function (select) {
-                                        $page.popup('source', $(select));
+                                        var $select = $(select);
+
+                                        $addedInputs = $addedInputs.add($select.closest('.inputSmall').find('> :input.objectId'));
+                                        $page.popup('source', $select);
                                         $win.scrollTop($win.scrollTop() + $sourceContainer.outerHeight(true));
                                     }
                                 })
@@ -116,7 +122,10 @@ String removeId = wp.createId();
                                 require([ 'bsp-utils' ], function (bsp_utils) {
                                     bsp_utils.onDomInsert($sourceContainer.parent()[0], '.objectInputs[data-object-id="' + id + '"] > .inputContainer[data-field-name="' + fieldName + '"] > .inputSmall > a.objectId-select', {
                                         'insert': function (select) {
-                                            $page.popup('source', $(select));
+                                            var $select = $(select);
+
+                                            $addedInputs = $addedInputs.add($select.closest('.inputSmall').find('> :input.objectId'));
+                                            $page.popup('source', $select);
                                         }
                                     })
                                 });
@@ -130,6 +139,30 @@ String removeId = wp.createId();
 
             $page.popup('close');
             return false;
+        });
+
+        var $popup = $page.closest('.popup');
+
+        $popup.on('close', function (event) {
+            if ($popup[0] === event.target) {
+                $addedInputs.each(function () {
+                    var $input = $(this);
+
+                    if (!$input.val()) {
+                        $input.closest('li').remove();
+
+                        var $itemEdit = $input.closest('.itemEdit');
+
+                        if ($itemEdit.length > 0) {
+                            var index = $itemEdit.parent().index($itemEdit);
+
+                            $itemEdit.closest('.viewCarousel').find('.carousel-tiles > li').eq(index).remove();
+                            $itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
+                            $itemEdit.remove();
+                        }
+                    }
+                });
+            }
         });
     })(window, jQuery);
 </script>

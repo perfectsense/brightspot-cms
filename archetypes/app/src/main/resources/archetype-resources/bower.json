@@ -1,0 +1,6 @@
+{
+  "name": "${artifactId}",
+  "private": true,
+  "dependencies": {
+  }
+}

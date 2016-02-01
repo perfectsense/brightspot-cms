@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
@@ -186,16 +186,18 @@ public class SearchResultActions extends PageServlet {
             page.writeEnd();
         }
 
-        // Sort SearchResultActions first by getClass().getSimpleName(), then by getClass().getName() for tie-breaking.
-        for (Class<? extends SearchResultAction> actionClass : ClassFinder.Static.findClasses(SearchResultAction.class)
-                .stream()
+        for (Iterator<? extends SearchResultAction> i = ClassFinder.findClasses(SearchResultAction.class).stream()
                 .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
+                .map(c -> TypeDefinition.getInstance(c).newInstance())
                 .sorted(Comparator
-                        .<Class<? extends SearchResultAction>, String>comparing(Class::getSimpleName)
-                        .thenComparing(Class::getName))
-                .collect(Collectors.toList())) {
+                        .comparing(SearchResultAction::getPosition)
+                        .thenComparing(a -> a.getClass().getSimpleName())
+                        .thenComparing(a -> a.getClass().getName()))
+                .iterator();
+                i.hasNext();
+                ) {
 
-            TypeDefinition.getInstance(actionClass).newInstance().writeHtml(page, search, count > 0 ? currentSelection : null);
+            i.next().writeHtml(page, search, count > 0 ? currentSelection : null);
         }
     }
 
