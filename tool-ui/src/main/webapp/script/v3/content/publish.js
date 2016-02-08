@@ -38,7 +38,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       // Bind command/control-S to saving a draft.
       var $draftButton = $widget.find('button[name="action-draft"]');
 
-      if ($draftButton.length > 0) {
+      if ($draftButton.length > 0 && $draftButton.closest('.widget-publishing').find('.publishing-workflow').length === 0) {
         $(document).on('keydown', function(event) {
           if (event.which === 83 && (event.ctrlKey || event.metaKey)) {
             $draftButton.click();

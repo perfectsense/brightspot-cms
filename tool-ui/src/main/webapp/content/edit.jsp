@@ -508,7 +508,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     long total = complete + incomplete + skipped;
 
                     wp.writeStart("div",
-                            "class", "block",
+                            "class", "publishing-workflow block",
                             "style", wp.cssString(
                                     "border-bottom", "1px solid #bbb",
                                     "padding-bottom", "5px"));
