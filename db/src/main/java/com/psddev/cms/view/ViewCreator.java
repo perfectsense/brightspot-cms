@@ -16,49 +16,29 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Creator of view objects from a model object.
- *
- * @param <M> the model type to create the view from.
- * @param <V> the view type to create.
+ * @deprecated Use {@link ViewModel} instead.
  */
+@Deprecated
 public interface ViewCreator<M, V, VR> {
 
     /**
-     * Creates a view based on the specified model and view request.
-     *
-     * @param model the backing model for the view to be created.
-     * @param request the current view request.
-     * @return the newly created view.
+     * @deprecated Use {@link ViewModel#onCreate(ViewResponse)} instead.
      */
+    @Deprecated
     V createView(M model, VR request);
 
     /**
-     * Processes a view {@code request} optionally updating the view
-     * {@code response}. This should be called before {@link #createView(Object,
-     * Object)} the view is created}, and only once for a given {@code request}.
-     *
-     * @param request the current view request.
-     * @param response the current view response.
-     * @return true if the request should continue to be processed, false otherwise.
+     * @deprecated Use {@link ViewModel#onCreate(ViewResponse)} instead.
      */
+    @Deprecated
     default boolean processRequest(VR request, ViewResponse response) {
         return true;
     }
 
     /**
-     * Finds an appropriate ViewCreator class based on the given model, view
-     * class, view type, and view request. If more than one class is found, the
-     * result is ambiguous and null is returned.
-     *
-     * @param model the model used to look up available view creator classes, that is also compatible with the returned view creator.
-     * @param viewClass the desired view class that is created with the returned view creator.
-     * @param viewType the desired view type that is created with the returned view creator.
-     * @param viewRequest the desired view request class compatible with the returned view creator.
-     * @param <M> the model type
-     * @param <V> the view type
-     * @param <VR> the view request type
-     * @return the view creator class that matches the bounds of the arguments.
+     * @deprecated Use {@link ViewModel#findViewModelClass(Class, String, Object)} instead.
      */
+    @Deprecated
     static <M, V, VR> Class<? extends ViewCreator<? super M, V, ? super VR>> findCreatorClass(M model, Class<V> viewClass, String viewType, VR viewRequest) {
 
         if (model == null) {

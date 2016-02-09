@@ -278,6 +278,11 @@ class ViewMap implements Map<String, Object> {
             Throwable cause = e.getCause();
             cause = cause != null ? cause : e;
 
+            ViewResponse response = ViewResponse.findInExceptionChain(cause);
+            if (response != null) {
+                throw response;
+            }
+
             LOGGER.error(message, cause);
 
             if (Settings.isProduction()) {

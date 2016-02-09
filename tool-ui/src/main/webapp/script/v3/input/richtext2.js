@@ -3544,9 +3544,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         var richTextElementsSubmenus = {};
         
         $.each(RICH_TEXT_ELEMENTS, function (index, rtElement) {
-            var tag = rtElement.tag;
             var styleName = rtElement.styleName;
             var submenu;
+            var tag = rtElement.tag;
+            var toolbarButton;
 
             Rte.styles[styleName] = {
                 className: 'rte2-style-' + styleName,
@@ -3560,6 +3561,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 context: rtElement.context
             };
 
+            toolbarButton = {
+                className: 'rte2-toolbar-noicon rte2-toolbar-' + styleName,
+                style: styleName,
+                text: rtElement.displayName
+            };
+            
             if (rtElement.submenu) {
                 
                 submenu = richTextElementsSubmenus[rtElement.submenu];
@@ -3567,17 +3574,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     submenu = [];
                     richTextElementsSubmenus[rtElement.submenu] = submenu;
                 }
-                submenu.push({
-                    className: 'rte2-toolbar-noicon',
-                    style: styleName,
-                    text: rtElement.displayName
-                });
+                submenu.push(toolbarButton);
             } else {
-                Rte.toolbarConfig.push({
-                    className: 'rte2-toolbar-noicon rte2-toolbar-' + styleName,
-                    style: styleName,
-                    text: rtElement.displayName
-                });
+                Rte.toolbarConfig.push(toolbarButton);
             }
         });
 

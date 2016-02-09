@@ -11,7 +11,7 @@ import javax.servlet.http.Cookie;
  * An abstraction of an HTTP response that contains information on how a real
  * HTTP response should be constructed.
  */
-public class ViewResponse {
+public class ViewResponse extends RuntimeException {
 
     private Integer status;
 
@@ -22,6 +22,8 @@ public class ViewResponse {
     private List<Cookie> signedCookies = new ArrayList<>();
 
     private String redirectUri;
+
+    private Boolean isRedirectPermanent;
 
     /**
      * Gets the status for the response.
@@ -63,6 +65,7 @@ public class ViewResponse {
             List<String> values = headers.get(name);
             if (values == null) {
                 values = new ArrayList<>();
+                headers.put(name, values);
             }
             values.add(value);
         }
@@ -83,6 +86,7 @@ public class ViewResponse {
 
             if (values == null) {
                 values = new ArrayList<>();
+                headers.put(name, values);
             } else {
                 values.clear();
             }
@@ -131,17 +135,9 @@ public class ViewResponse {
      * @param cookie the cookie to add that needs signing.
      */
     public void addSignedCookie(Cookie cookie) {
-        signedCookies.add(cookie);
-    }
-
-    /**
-     * Signals that the response should contain a redirect to the specified
-     * {@code uri}.
-     *
-     * @param uri the uri to redirect to.
-     */
-    public void redirect(String uri) {
-        redirectUri = uri;
+        if (cookie != null) {
+            signedCookies.add(cookie);
+        }
     }
 
     /**
@@ -151,5 +147,80 @@ public class ViewResponse {
      */
     public String getRedirectUri() {
         return redirectUri;
+    }
+
+    /**
+     * Signals that the response should contain a permanent redirect to the
+     * specified {@code uri}. Calls to this method will usually be followed
+     * by {@code throw response} to halt execution and signal that writing to
+     * the response is complete.
+     *
+     * @param uri the uri to redirect to.
+     */
+    public void redirectPermanently(String uri) {
+        redirectUri = uri;
+        isRedirectPermanent = true;
+    }
+
+    /**
+     * Signals that the response should contain a temporary redirect to the
+     * specified {@code uri}. Calls to this method will usually be followed
+     * by {@code throw response} to halt execution and signal that writing to
+     * the response is complete.
+     *
+     * @param uri the uri to redirect to.
+     */
+    public void redirectTemporarily(String uri) {
+        redirectUri = uri;
+        isRedirectPermanent = false;
+    }
+
+    /**
+     * @return true if a permanent redirect has been issued, false otherwise.
+     */
+    public boolean isRedirectPermanent() {
+        return Boolean.TRUE.equals(isRedirectPermanent);
+    }
+
+    /**
+     * @return true if a permanent redirect has been issued, false otherwise.
+     */
+    public boolean isRedirectTemporary() {
+        return Boolean.FALSE.equals(isRedirectPermanent);
+    }
+
+    @Override
+    public String getMessage() {
+        return "Request is finished.";
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
+    }
+
+    /**
+     * @deprecated Use {@link #redirectTemporarily(String)} instead.
+     */
+    @Deprecated
+    public void redirect(String uri) {
+        redirectTemporarily(uri);
+    }
+
+    /**
+     * Finds the first ViewResponse in an exception stack by traversing the
+     * causes of the {@code throwable} argument.
+     *
+     * @param throwable the exception stack to search through.
+     * @return the first ViewResponse found in the exception stack.
+     */
+    public static ViewResponse findInExceptionChain(Throwable throwable) {
+        if (throwable instanceof ViewResponse) {
+            return (ViewResponse) throwable;
+        } else if (throwable != null) {
+            return findInExceptionChain(throwable.getCause());
+        } else {
+            return null;
+        }
     }
 }

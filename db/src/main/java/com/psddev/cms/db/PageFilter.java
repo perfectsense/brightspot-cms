@@ -36,10 +36,15 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.view.AbstractViewCreator;
 import com.psddev.cms.view.JsonViewRenderer;
 import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.ViewBinding;
 import com.psddev.cms.view.ViewCreator;
+import com.psddev.cms.view.ViewMapping;
+import com.psddev.cms.view.ViewModel;
+import com.psddev.cms.view.ViewModelCreator;
 import com.psddev.cms.view.ViewOutput;
 import com.psddev.cms.view.ViewRenderer;
 import com.psddev.cms.view.ViewRequest;
+import com.psddev.cms.view.servlet.ServletViewModelCreator;
 import com.psddev.cms.view.servlet.ServletViewRequestAnnotationProcessor;
 import com.psddev.cms.view.servlet.ServletViewRequestAnnotationProcessorClass;
 import com.psddev.cms.view.ViewResponse;
@@ -1105,6 +1110,170 @@ public class PageFilter extends AbstractFilter {
     };
 
     /*
+     * 1. Find ViewModel class (check the different view types, etc.)
+     * 2. Create custom ViewModelCreator
+     * 3. Create a ViewResponse
+     * 4. Create ViewModel from ViewModelCreator and pass ViewResponse
+     * 5. Find the ViewRenderer for the ViewModel
+     * 6. Render the ViewModel
+     * 7. Update the real HTTP response headers based on the ViewResponse
+     * 8. Write the output to the real HTTP response
+     */
+    private static <T> boolean tryProcessView(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Writer writer,
+            T object)
+            throws IOException, ServletException {
+
+        if (object == null) {
+            return false;
+        }
+
+        String selectedViewType = null;
+
+        // 1. Find ViewModel class (check the different view types, etc.)
+        Class<? extends ViewModel<? super T>> viewModelClass = null;
+
+        String viewType = request.getParameter(VIEW_TYPE_PARAMETER);
+        if (!ObjectUtils.isBlank(viewType)) {
+            viewModelClass = ViewModel.findViewModelClass(null, viewType, object);
+
+            if (viewModelClass == null) {
+                LOGGER.warn("Could not find view model for object of type ["
+                        + object.getClass().getName()
+                        + "] and view of type ["
+                        + viewType
+                        + "]!");
+            } else {
+                selectedViewType = viewType;
+            }
+
+        } else {
+            List<String> viewTypes = new ArrayList<>();
+
+            // Try to create a view for the PREVIEW_VIEW_TYPE...
+            if (Static.isPreview(request)) {
+                viewModelClass = ViewModel.findViewModelClass(null, PREVIEW_VIEW_TYPE, object);
+                viewTypes.add(PREVIEW_VIEW_TYPE);
+
+                if (viewModelClass != null) {
+                    selectedViewType = PREVIEW_VIEW_TYPE;
+                }
+            }
+
+            // ...but still always fallback to PAGE_VIEW_TYPE if no preview found.
+            if (viewModelClass == null) {
+                viewModelClass = ViewModel.findViewModelClass(null, PAGE_VIEW_TYPE, object);
+                viewTypes.add(PAGE_VIEW_TYPE);
+
+                if (viewModelClass != null) {
+                    selectedViewType = PAGE_VIEW_TYPE;
+                }
+            }
+
+            if (viewModelClass == null) {
+                if (object.getClass().isAnnotationPresent(ViewBinding.class)) {
+                    LOGGER.warn("Could not find view model for object of type ["
+                            + object.getClass().getName()
+                            + "] and view of type ["
+                            + StringUtils.join(viewTypes, ", or ")
+                            + "]!");
+                }
+            }
+        }
+
+        if (viewModelClass == null) {
+            return tryProcessViewLegacy(request, response, writer, object);
+        }
+
+        // 2. Create custom ViewModelCreator
+        ViewModelCreator viewModelCreator = new ServletViewModelCreator(request);
+
+        // 3. Create a ViewResponse
+        ViewResponse viewResponse = new ViewResponse();
+
+        // 4. Create ViewModel from ViewModelCreator and pass ViewResponse
+        ViewModel<? super T> viewModel = null;
+        try {
+            viewModel = viewModelCreator.createViewModel(viewModelClass, object, viewResponse);
+
+            if (viewModel == null) {
+                LOGGER.warn("Failed to create view model of type ["
+                        + viewModelClass.getName()
+                        + "] for object of type ["
+                        + object.getClass().getName()
+                        + "] and view of type ["
+                        + selectedViewType
+                        + "]!");
+            }
+
+        } catch (RuntimeException e) {
+            ViewResponse vr = ViewResponse.findInExceptionChain(e);
+            if (vr != null) {
+                viewResponse = vr;
+            } else {
+                throw e;
+            }
+        }
+
+        String output = null;
+
+        if (viewModel != null) {
+
+            // 5. Find the ViewRenderer for the ViewModel
+            ViewRenderer renderer;
+
+            if ("json".equals(request.getParameter("_renderer"))) {
+                JsonViewRenderer jsonViewRenderer = new JsonViewRenderer();
+
+                jsonViewRenderer.setIndented(!Settings.isProduction());
+                jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+
+                renderer = jsonViewRenderer;
+
+                response.setContentType("application/json");
+
+            } else {
+                renderer = ViewRenderer.createRenderer(viewModel);
+            }
+
+            // 6. Render the ViewModel
+            if (renderer != null) {
+
+                try {
+                    ViewOutput result = renderer.render(viewModel);
+                    output = result.get();
+
+                } catch (RuntimeException e) {
+                    ViewResponse vr = ViewResponse.findInExceptionChain(e);
+                    if (vr != null) {
+                        // These will usually be the same, but an implementer could potentially throw a different one
+                        viewResponse = vr;
+                    } else {
+                        throw e;
+                    }
+                }
+
+            } else {
+                LOGGER.warn("Could not create view renderer for view of type ["
+                        + viewModel.getClass().getName()
+                        + "]!");
+            }
+        }
+
+        // 7. Update the real HTTP response headers based on the ViewResponse
+        updateViewResponse(request, (HttpServletResponse) JspUtils.getHeaderResponse(request, response), viewResponse);
+
+        // 8. Write the output to the real HTTP response
+        if (output != null) {
+            writer.write(output);
+        }
+
+        return true;
+    }
+
+    /*
      * 1. Find ViewCreator class (check the different view types, etc.)
      * 2. Create ViewCreator
      * 3. Create a ViewRequest based on the ViewCreator class
@@ -1115,7 +1284,8 @@ public class PageFilter extends AbstractFilter {
      * 8. Create the View
      * 9. Render the View
      */
-    private static <T> boolean tryProcessView(
+    @Deprecated
+    private static <T> boolean tryProcessViewLegacy(
             HttpServletRequest request,
             HttpServletResponse response,
             Writer writer,
@@ -1179,11 +1349,13 @@ public class PageFilter extends AbstractFilter {
             }
 
             if (viewCreatorClass == null) {
-                LOGGER.warn("Could not find view creator for object of type ["
-                        + object.getClass().getName()
-                        + "] and view of type ["
-                        + StringUtils.join(viewTypes, ", or ")
-                        + "]!");
+                if (object.getClass().isAnnotationPresent(ViewMapping.class)) {
+                    LOGGER.warn("Could not find view creator for object of type ["
+                            + object.getClass().getName()
+                            + "] and view of type ["
+                            + StringUtils.join(viewTypes, ", or ")
+                            + "]!");
+                }
             }
         }
 

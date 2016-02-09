@@ -46,7 +46,7 @@ function($, bsp_utils) {
                 'minSpareCols': 1,
                 'fillHandle': false,
                 'contextMenu': true,
-                'onChange': function() {
+                'afterChange': function() {
                     $jsonInput.val(JSON.stringify(data));
                 }
             });
