@@ -2244,10 +2244,15 @@ public class ToolPageContext extends WebPageContext {
 
         List<ObjectType> typesList = ObjectUtils.to(new TypeReference<List<ObjectType>>() { }, types);
 
+        List<ObjectType> toolUiMainContentType = new ArrayList<>();
+
         for (ObjectType type : Database.Static.getDefault().getEnvironment().getTypes()) {
             if (Boolean.FALSE.equals(type.as(ToolUi.class).getHidden()) && !type.isConcrete()) {
                 if (typesList.containsAll(type.findConcreteTypes())) {
                     typesList.add(type);
+                    if (type.as(ToolUi.class).isMainContentType()) {
+                        toolUiMainContentType.add(type);
+                    }
                 }
             }
         }
@@ -2256,6 +2261,7 @@ public class ToolPageContext extends WebPageContext {
         List<ObjectType> mainTypes = Template.Static.findUsedTypes(getSite());
 
         mainTypes.retainAll(typesList);
+        mainTypes.addAll(toolUiMainContentType);
         typesList.removeAll(mainTypes);
         typeGroups.put("Main Content Types", mainTypes);
         typeGroups.put("Misc Content Types", typesList);
