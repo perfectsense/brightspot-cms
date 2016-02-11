@@ -26,8 +26,11 @@
     <modules>
         <module>archetypes/app</module>
         <module>db</module>
+        <module>db-java7</module>
         <module>hunspell</module>
+        <module>hunspell-java7</module>
         <module>tool-ui</module>
+        <module>tool-ui-java7</module>
     </modules>
 
     <dependencyManagement>

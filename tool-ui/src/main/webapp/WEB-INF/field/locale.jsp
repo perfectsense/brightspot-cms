@@ -62,12 +62,7 @@ wp.writeStart("div", "class", "inputSmall");
 
         availableLocales.remove(Locale.ROOT);
 
-        Collections.<Locale>sort(availableLocales, new Comparator<Locale>() {
-            @Override
-            public int compare(Locale o1, Locale o2) {
-                return ObjectUtils.compare(createLocaleDisplayName(o1, userLocale), createLocaleDisplayName(o2, userLocale), true);
-            }
-        });
+        Collections.<Locale>sort(availableLocales, localeComparator(userLocale));
 
         for (Locale availableLocale : availableLocales) {
             wp.writeStart("option",
@@ -95,5 +90,14 @@ private String createLocaleDisplayName(Locale locale, Locale userLocale) {
     }
 
     return combined.toString();
+}
+
+private Comparator<Locale> localeComparator(final Locale userLocale) {
+    return new Comparator<Locale>() {
+        @Override
+        public int compare(Locale o1, Locale o2) {
+            return ObjectUtils.compare(createLocaleDisplayName(o1, userLocale), createLocaleDisplayName(o2, userLocale), true);
+        }
+    };
 }
 %>

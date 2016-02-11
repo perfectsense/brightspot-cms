@@ -46,6 +46,9 @@ java.util.Map,
 java.util.Set,
 java.util.UUID,
 
+java8.util.function.Predicate,
+java8.util.stream.StreamSupport,
+
 org.joda.time.DateTime,
 com.google.common.collect.ImmutableMap" %><%
 
@@ -60,7 +63,7 @@ Object selected = wp.findOrReserve();
 if (selected == null) {
     wp.writeHeader();
     wp.writeStart("div", "class", "message message-warning");
-    wp.writeHtml(wp.localize(
+    wp.writeHtml(wp.localizeImmutableContextOverrides(
             "com.psddev.cms.tool.page.content.Edit",
             ImmutableMap.of("queryString", request.getQueryString()),
             "message.missing"));
@@ -76,7 +79,7 @@ if (selected != null) {
     if (!(site == null || Site.Static.isObjectAccessible(site, selected))) {
         wp.writeHeader();
         wp.writeStart("div", "class", "message message-warning");
-        wp.writeHtml(wp.localize(
+        wp.writeHtml(wp.localizeImmutableContextOverrides(
                 "com.psddev.cms.tool.page.content.Edit",
                 ImmutableMap.of(
                         "typeLabel", wp.getTypeLabel(selected),
@@ -853,14 +856,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                                     wp.writeEnd();
                                                 }
 
+                                                final ToolPageContext finalwpVersion = wp;
+
                                                 if (draft == null
                                                         && (wp.hasPermission("type/" + editingState.getTypeId() + "/workflow.saveAllowed." + currentState)
-                                                        || workflow.getTransitionsTo(currentState)
-                                                                .keySet()
-                                                                .stream()
-                                                                .filter(name -> wp.hasPermission("type/" + editingState.getTypeId() + "/" + name))
+                                                                || StreamSupport.stream(workflow.getTransitionsTo(currentState)
+                                                                .keySet())
+                                                                .filter(wp.permissionsPredicate(editingState))
                                                                 .findFirst()
-                                                                .isPresent())) {
+                                                        .isPresent())) {
                                                     wp.writeStart("div", "class", "actions");
                                                         wp.writeStart("button",
                                                                 "class", "link icon icon-action-save",
@@ -896,14 +900,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                                 wp.writeFormFields(newLog);
                                             wp.writeEnd();
 
+                                            final ToolPageContext finalwpVersion = wp;
+
                                             if (!visible
                                                     && draft != null
-                                                    && workflow.getTransitionsTo(editingState.as(Workflow.Data.class).getCurrentState())
-                                                            .keySet()
-                                                            .stream()
-                                                            .filter(name -> wp.hasPermission("type/" + editingState.getTypeId() + "/" + name))
+                                                    && StreamSupport.stream(workflow.getTransitionsTo(editingState.as(Workflow.Data.class).getCurrentState())
+                                                            .keySet())
+                                                    .filter(wp.permissionsPredicate(editingState))
                                                             .findFirst()
-                                                            .isPresent()) {
+                                                    .isPresent()) {
                                                 wp.writeStart("button",
                                                         "name", "action-merge",
                                                         "value", "true");

@@ -16,16 +16,20 @@ com.psddev.cms.tool.Widget,
 
 com.psddev.dari.db.Application,
 com.psddev.dari.db.Database,
+com.psddev.dari.db.DatabaseEnvironment,
 com.psddev.dari.db.Modification,
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
+com.psddev.dari.db.Record,
 com.psddev.dari.db.State,
 com.psddev.dari.util.ObjectUtils,
 com.psddev.dari.util.SparseSet,
+com.psddev.dari.util.StringUtils,
 
 java.io.IOException,
 java.util.ArrayList,
+java.util.Arrays,
 java.util.Collections,
 java.util.HashMap,
 java.util.HashSet,
@@ -35,11 +39,10 @@ java.util.List,
 java.util.Map,
 java.util.Set,
 java.util.TreeSet,
-java.util.stream.Stream
-" %>
-<%@ page import="com.psddev.dari.util.StringUtils" %>
-<%@ page import="com.psddev.dari.db.DatabaseEnvironment" %>
-<%@ page import="com.google.common.collect.ImmutableMap" %><%
+java8.util.function.Consumer,
+
+com.google.common.collect.ImmutableMap,
+java8.util.stream.StreamSupport" %><%
 
 // --- Logic ---
 
@@ -50,7 +53,7 @@ State state = State.getInstance(request.getAttribute("object"));
 ObjectField field = (ObjectField) request.getAttribute("field");
 String fieldName = field.getInternalName();
 String fieldValue = (String) state.getValue(fieldName);
-SparseSet permissions = new SparseSet(ObjectUtils.isBlank(fieldValue) ? "+/" : fieldValue);
+final SparseSet permissions = new SparseSet(ObjectUtils.isBlank(fieldValue) ? "+/" : fieldValue);
 
 String inputName = (String) request.getAttribute("inputName");
 
@@ -109,12 +112,17 @@ if ((Boolean) request.getAttribute("isFormPost")) {
     }
 
     if (!permissions.contains("area/admin/adminUsers")) {
-        Stream.of(ToolRole.class, ToolUser.class).forEach(c -> {
-            String permissionId = "type/" + ObjectType.getInstance(c).getId();
+        StreamSupport.stream(Arrays.asList(ToolRole.class, ToolUser.class))
+                .forEach(new Consumer<Class<? extends Record>>() {
+                    @Override
+                    public void accept(Class<? extends Record> c) {
+                        String permissionId = "type/" + ObjectType.getInstance(c).getId();
 
-            permissions.remove(permissionId);
-            permissions.remove(permissionId + "/");
-        });
+                        permissions.remove(permissionId);
+                        permissions.remove(permissionId + "/");
+                    }
+                     });
+
     }
 
     state.putValue(fieldName, permissions.toString());

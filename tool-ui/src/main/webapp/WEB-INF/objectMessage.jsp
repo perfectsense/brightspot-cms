@@ -110,7 +110,7 @@ if (wp.getUser().equals(contentData.getUpdateUser())) {
 
         wp.write("<div class=\"message message-success\"><p>");
             if (log != null && !ObjectUtils.isBlank(log.getNewWorkflowState())) {
-                wp.writeHtml(wp.localize(
+                wp.writeHtml(wp.localizeImmutableContextOverrides(
                         "com.psddev.cms.tool.page.content.ObjectMessage",
                         ImmutableMap.of(
                                 "state", log.getNewWorkflowState(),
@@ -119,7 +119,7 @@ if (wp.getUser().equals(contentData.getUpdateUser())) {
 
             } else {
 
-                wp.writeHtml(wp.localize(
+                wp.writeHtml(wp.localizeImmutableContextOverrides(
                         "com.psddev.cms.tool.page.content.ObjectMessage",
                         ImmutableMap.of("date", wp.formatUserDateTime(updateDate)),
                         draft != null || !state.isVisible() ? "message.saved" : "message.published"));
@@ -134,7 +134,7 @@ if (wp.getUser().equals(contentData.getUpdateUser())) {
 Date saved = wp.dateParam("saved");
 if (saved != null) {
     wp.write("<div class=\"message message-success\"><p>");
-    wp.writeHtml(wp.localize(
+    wp.writeHtml(wp.localizeImmutableDateContextOverrides(
             "com.psddev.cms.tool.page.content.ObjectMessage",
             ImmutableMap.of("date", saved),
             "message.saved"));

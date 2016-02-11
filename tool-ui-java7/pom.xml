@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
         http://maven.apache.org/maven-v4_0_0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -12,27 +13,37 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.psddev</groupId>
-    <artifactId>cms-tool-ui</artifactId>
+    <artifactId>cms-tool-ui-java7</artifactId>
     <version>3.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <name>BrightSpot CMS: Tool UI</name>
+    <name>BrightSpot CMS: Tool UI Java 7</name>
 
     <dependencies>
+
         <dependency>
             <groupId>com.psddev</groupId>
-            <artifactId>cms-db</artifactId>
+            <artifactId>cms-tool-ui</artifactId>
+            <version>3.2-SNAPSHOT</version>
+            <type>war</type>
         </dependency>
 
         <dependency>
             <groupId>com.psddev</groupId>
-            <artifactId>dari-db</artifactId>
+            <artifactId>cms-db-java7</artifactId>
+            <version>3.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>com.psddev</groupId>
-            <artifactId>dari-util</artifactId>
+            <artifactId>dari-db-java7</artifactId>
+            <version>3.2-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.psddev</groupId>
+            <artifactId>dari-util-java7</artifactId>
+            <version>3.2-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -66,6 +77,33 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <configuration>
+                    <webResources>
+                        <resource>
+                            <filtering>true</filtering>
+                            <directory>src/main/webapp</directory>
+                            <includes>
+                                <include>**/web.xml</include>
+                            </includes>
+                        </resource>
+                    </webResources>
+                    <overlays>
+                        <overlay>
+                            <groupId>com.psddev</groupId>
+                            <artifactId>cms-tool-ui</artifactId>
+                            <targetPath>.</targetPath>
+                        </overlay>
+                    </overlays>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <profiles>
         <profile>
             <id>jspJava7Test</id>
@@ -88,7 +126,6 @@
                              <goal>jspc</goal>
                            </goals>
                            <configuration>
-                               <!--<keepSources>true</keepSources>-->
                                <sourceVersion>1.7</sourceVersion>
                                <targetVersion>1.7</targetVersion>
                            </configuration>
@@ -99,4 +136,5 @@
             </build>
         </profile>
     </profiles>
+
 </project>

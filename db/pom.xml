@@ -111,6 +111,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+        	<groupId>net.sourceforge.streamsupport</groupId>
+        	<artifactId>streamsupport</artifactId>
+        	<version>1.4.1</version>
+        </dependency>
+
     </dependencies>
 
     <profiles>

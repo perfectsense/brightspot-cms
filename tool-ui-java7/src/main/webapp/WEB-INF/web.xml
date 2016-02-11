@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+        http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+
+    <display-name>BrightSpot CMS Tool - Java 7</display-name>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/WEB-INF/500.jsp</location>
+    </error-page>
+
+    <!-- Filters -->
+
+    <filter>
+        <filter-name>ApplicationFilter</filter-name>
+        <filter-class>com.psddev.dari.db.ApplicationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ApplicationFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>ScheduleFilter</filter-name>
+        <filter-class>com.psddev.cms.tool.ScheduleFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ScheduleFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>HeaderResponseFilter</filter-name>
+        <filter-class>com.psddev.dari.util.HeaderResponseFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>HeaderResponseFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>MultipartRequestFilter</filter-name>
+        <filter-class>com.psddev.dari.util.MultipartRequestFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>MultipartRequestFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>CacheFilter</filter-name>
+        <filter-class>com.psddev.dari.db.CacheFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CacheFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>ToolFilter</filter-name>
+        <filter-class>com.psddev.cms.tool.ToolFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ToolFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <!-- Servlets -->
+
+    <servlet>
+        <servlet-name>WebDatabaseServlet</servlet-name>
+        <servlet-class>com.psddev.dari.db.WebDatabaseServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>WebDatabaseServlet</servlet-name>
+        <url-pattern>/_db/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Settings -->
+
+    <env-entry>
+        <env-entry-name>cookieSecret</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>2c93d4e51ce44f05dd9c4b2de37b9bdc</env-entry-value>
+    </env-entry>
+    <env-entry>
+        <env-entry-name>dari/mainApplicationClass</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>com.psddev.cms.tool.CmsTool</env-entry-value>
+    </env-entry>
+    <env-entry>
+        <env-entry-name>cms/tool/isAutoCreateUser</env-entry-name>
+        <env-entry-type>java.lang.Boolean</env-entry-type>
+        <env-entry-value>true</env-entry-value>
+    </env-entry>
+
+</web-app>

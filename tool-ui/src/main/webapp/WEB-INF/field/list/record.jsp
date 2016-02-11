@@ -6,6 +6,7 @@ com.psddev.cms.db.Renderer,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.PageWriter,
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.UploadFiles,
 
 com.psddev.dari.db.Database,
 com.psddev.dari.db.Query,
@@ -34,8 +35,10 @@ java.util.List,
 java.util.Map,
 java.util.Set,
 java.util.UUID,
-java.util.stream.Collectors
-, com.psddev.cms.tool.page.UploadFiles" %><%
+java8.util.stream.Collectors,
+java8.util.function.Function,
+java8.util.function.Predicate,
+java8.util.stream.StreamSupport" %><%
 
 // --- Logic ---
 
@@ -586,16 +589,31 @@ if (!isValueExternal) {
 
         wp.writeStart("ol",
                 "data-sortable-input-name", inputName,
-                "data-sortable-valid-item-types", validTypes.stream()
-                        .map(ObjectType::getId)
-                        .map(UUID::toString)
+                "data-sortable-valid-item-types", StreamSupport.stream(validTypes)
+                        .map(new Function<ObjectType, UUID>() {
+                            @Override
+                            public UUID apply(ObjectType objectType) {
+                                return objectType.getId();
+                            }
+                        })
+                        .map(new Function<Object, String>() {
+                            @Override
+                            public String apply(Object o) {
+                                return o.toString();
+                            }
+                        })
                         .collect(Collectors.joining(" ")));
 
             for (Object item : fieldValue) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
-                boolean expanded = itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
+                boolean expanded = StreamSupport.stream(itemType.getFields()).anyMatch(new Predicate<ObjectField>() {
+                                                                                            @Override
+                                                                                            public boolean test(ObjectField objectField) {
+                                                                                                return objectField.as(ToolUi.class).isExpanded();
+                                                                                            }
+                                                                                        });
 
                 wp.writeStart("li",
                         "class", expanded ? "expanded" : null,
@@ -725,10 +743,20 @@ if (!isValueExternal) {
 
         writer.start("ol",
                     "data-sortable-input-name", inputName,
-                    "data-sortable-valid-item-types", validTypes.stream()
-                            .map(ObjectType::getId)
-                            .map(UUID::toString)
-                            .collect(Collectors.joining(" ")));
+                    "data-sortable-valid-item-types", StreamSupport.stream(validTypes)
+                            .map(new Function<ObjectType, UUID>() {
+                                        @Override
+                                        public UUID apply(ObjectType objectType) {
+                                            return objectType.getId();
+                                        }
+                                    })
+                            .map(new Function<Object, String>() {
+                                @Override
+                                public String apply(Object o) {
+                                    return o.toString();
+                                }
+                            })
+                        .collect(Collectors.joining(" ")));
 
             if (fieldValue != null) {
                 for (Object item : fieldValue) {

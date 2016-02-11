@@ -280,6 +280,20 @@ public class ToolPageContext extends WebPageContext {
         return Static.getTypeLabel(object);
     }
 
+    @Deprecated //Remove when we move off JSPs
+    public String localizeImmutableContextOverrides(String context, ImmutableMap<String, String> immutableContextOverrides, String key) throws IOException {
+        Map<String, Object> contextOverrides = new CompactMap<>();
+        contextOverrides.putAll(immutableContextOverrides);
+        return localize(context, contextOverrides, key);
+    }
+
+    @Deprecated //Remove when we move off JSPs
+    public String localizeImmutableDateContextOverrides(String context, ImmutableMap<String, Date> immutableContextOverrides, String key) throws IOException {
+        Map<String, Object> contextOverrides = new CompactMap<>();
+        contextOverrides.putAll(immutableContextOverrides);
+        return localize(context, contextOverrides, key);
+    }
+
     public String localize(Object context, Map<String, Object> contextOverrides, String key) throws IOException {
         String baseName = null;
 
@@ -2270,6 +2284,17 @@ public class ToolPageContext extends WebPageContext {
                 && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0));
     }
 
+    @Deprecated //Remove when we move off JSPs
+    public java8.util.function.Predicate<ObjectType> createTypeDisplayPredicateForJava7Jsp(Collection<String> permissions) {
+
+        return (ObjectType type) ->
+            type.isConcrete()
+                && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
+                && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || type.getObjectClass() != null)
+                && !(Draft.class.equals(type.getObjectClass()))
+                && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0));
+    }
+
     private void writeTypeSelectReally(
             boolean multiple,
             Iterable<ObjectType> types,
@@ -4057,6 +4082,16 @@ public class ToolPageContext extends WebPageContext {
     /** @see Content.Static#purge */
     public void purge(Object object) {
         Content.Static.purge(object, getSite(), getUser());
+    }
+
+    @Deprecated //Remove when we move off JSPs
+    public java8.util.function.Predicate permissionsPredicate(State state) {
+        return new java8.util.function.Predicate<String>() {
+            @Override
+            public boolean test(String name) {
+                return hasPermission("type/" + state.getTypeId() + "/" + name);
+            }
+        };
     }
 
     // --- WebPageContext support ---
