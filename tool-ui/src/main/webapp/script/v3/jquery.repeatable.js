@@ -1596,6 +1596,13 @@ The HTML within the repeatable element must conform to these standards:
                 // it is displaying everything correctly
                 self.carousel.update();
 
+                // If no tile is active in the carousel, make the first one active
+                // so there will be an edit form underneath
+                if (self.carousel.getActive() === 0) {
+                    // Make the first tile active and show the edit form
+                    self.modePreviewEditNext();
+                }
+                
                 // After showing the carousel update the next/previous buttons on the edit form
                 // This might be needed in case the tiles were reordered or something like that
                 self.modePreviewUpdateEditContainer();
