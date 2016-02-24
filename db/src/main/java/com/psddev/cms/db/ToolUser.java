@@ -136,6 +136,9 @@ public class ToolUser extends Record implements ToolEntity {
     private boolean returnToDashboardOnSave;
 
     @ToolUi.Tab("Advanced")
+    private boolean returnToDashboardOnWorkflow;
+
+    @ToolUi.Tab("Advanced")
     private boolean disableNavigateAwayAlert;
 
     @ToolUi.Note("Force the user to change the password on next log in.")
@@ -777,6 +780,14 @@ public class ToolUser extends Record implements ToolEntity {
 
     public void setReturnToDashboardOnSave(boolean returnToDashboardOnSave) {
         this.returnToDashboardOnSave = returnToDashboardOnSave;
+    }
+
+    public boolean isReturnToDashboardOnWorkflow() {
+        return returnToDashboardOnWorkflow;
+    }
+
+    public void setReturnToDashboardOnWorkflow(boolean returnToDashboardOnWorkflow) {
+        this.returnToDashboardOnWorkflow = returnToDashboardOnWorkflow;
     }
 
     /**

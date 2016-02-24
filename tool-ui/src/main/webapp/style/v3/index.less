@@ -248,6 +248,11 @@
   margin: 0 -330px 0 10px;
   width: 320px;
 
+  .contentWidgets {
+    border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+  }
+
   @media @media-tablet {
     margin-right: -200px;
     width: 190px;
@@ -448,6 +453,7 @@
 
 .widget-publishing {
   margin-bottom: 10px;
+  z-index: 1;
 
   [name='workflowComment'] {
     margin-bottom: 5px;
@@ -799,7 +805,13 @@ form[data-type='com.psddev.cms.db.ContentType'] {
   line-height: 50px;
   margin: -10px 0 10px 0;
   padding: 0;
+  text-shadow: none;
   width: 90%;
+
+  .visibilityLabel {
+    margin-top: -2px;
+    vertical-align: middle;
+  }
 
   .icon:before {
     display: none !important;

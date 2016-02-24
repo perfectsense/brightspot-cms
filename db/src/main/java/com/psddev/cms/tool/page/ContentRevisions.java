@@ -110,8 +110,8 @@ public class ContentRevisions extends Widget {
 
         PaginatedResult<History> historiesResult = Query
                 .from(History.class)
-                .where("name = missing and objectId = ?", state.getId())
-                .sortDescending("updateDate")
+                .where("name = missing and getObjectIdUpdateDate ^= ?", state.getId().toString())
+                .sortDescending("getObjectIdUpdateDate")
                 .select(0, 10);
 
         for (History h : historiesResult.getItems()) {
@@ -126,7 +126,9 @@ public class ContentRevisions extends Widget {
             page.writeStart("ul", "class", "links");
                 page.writeStart("li", "class", object.equals(selected) ? "selected" : null);
                     page.writeStart("a", "href", page.originalUrl(null, object));
-                        page.writeHtml(page.localize(ContentRevisions.class, "action.viewLive"));
+                        page.writeHtml(ObjectUtils.firstNonNull(
+                                state.getVisibilityLabel(),
+                                page.localize(ContentRevisions.class, "action.viewLive")));
                     page.writeEnd();
                 page.writeEnd();
             page.writeEnd();

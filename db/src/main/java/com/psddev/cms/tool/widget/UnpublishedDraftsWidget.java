@@ -323,14 +323,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                                                 "href", page.url("/content/edit.jsp",
                                                         "id", itemState.getId(),
                                                         "draftId", draftId));
-                                            // TODO: LOCALIZE
-                                            page.writeStart("span", "class", "visibilityLabel");
-                                                page.writeHtml("Content Update");
-                                            page.writeEnd();
-
-                                            page.writeHtml(" ");
-
-                                            page.writeObjectLabel(itemState);
+                                            page.writeObjectLabel(draft);
                                         page.writeEnd();
                                     page.writeEnd();
 

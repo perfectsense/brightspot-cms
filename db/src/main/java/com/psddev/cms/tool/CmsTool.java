@@ -115,7 +115,7 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Debug")
     private boolean disableAutomaticallySavingDrafts;
 
-    @ToolUi.Tab("Debug")
+    @ToolUi.Tab("UI")
     private boolean enableFrontEndUploader;
 
     @ToolUi.Tab("Debug")
@@ -127,10 +127,12 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("RTE")
     private boolean enableAnnotations;
 
-    @ToolUi.Tab("Debug")
+    @ToolUi.Tab("UI")
     private boolean disableContentLocking;
 
-    @ToolUi.Tab("Debug")
+    @ToolUi.DisplayName("Manual Content Locking?")
+    @ToolUi.NoteHtml("<span data-dynamic-text='${content.createManualContentLockingNoteText()}'></span>")
+    @ToolUi.Tab("UI")
     private boolean optInContentLocking;
 
     @ToolUi.Tab("Debug")
@@ -166,14 +168,17 @@ public class CmsTool extends Tool {
 
     private boolean enableCrossDomainInlineEditing;
 
-    @ToolUi.Tab("Debug")
+    @ToolUi.Tab("UI")
     private boolean enablePaddedCrop;
 
-    @ToolUi.Tab("Debug")
+    @ToolUi.Tab("RTE")
     private boolean disableCodeMirrorRichTextEditor;
 
     @ToolUi.Tab("Debug")
     private boolean disableRtc;
+
+    @ToolUi.Tab("Debug")
+    private boolean disableInvisibleContentPreview;
 
     @Embedded
     public static class CommonTime extends Record {
@@ -782,6 +787,20 @@ public class CmsTool extends Tool {
 
     public void setDisableRtc(boolean disableRtc) {
         this.disableRtc = disableRtc;
+    }
+
+    public boolean isDisableInvisibleContentPreview() {
+        return disableInvisibleContentPreview;
+    }
+
+    public void setDisableInvisibleContentPreview(boolean disableInvisibleContentPreview) {
+        this.disableInvisibleContentPreview = disableInvisibleContentPreview;
+    }
+
+    public String createManualContentLockingNoteText() {
+        return isDisableContentLocking()
+                ? "Content locking is completely disabled, so this setting has no effect."
+                : "If checked, user must lock each content manually.";
     }
 
     /** Returns the preview URL. */

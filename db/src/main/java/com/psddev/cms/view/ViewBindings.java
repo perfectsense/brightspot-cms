@@ -7,17 +7,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @deprecated Use {@link ViewBindings} instead.
+ * The wrapper annotation for the repeatable {@link com.psddev.cms.view.ViewBinding}
+ * annotation.
  */
-@Deprecated
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ViewMappings {
+public @interface ViewBindings {
 
     /**
-     * Specifies the list of {@link com.psddev.cms.view.ViewMapping}
+     * Specifies the list of {@link com.psddev.cms.view.ViewBinding}
      * annotations to be applied.
      */
-    ViewMapping[] value();
+    ViewBinding[] value();
 }

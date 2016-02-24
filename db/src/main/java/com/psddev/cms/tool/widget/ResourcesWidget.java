@@ -55,7 +55,7 @@ public class ResourcesWidget extends DashboardWidget {
                             page.writeStart("li");
                                 page.writeStart("a",
                                         "href", url,
-                                        "target", item.isSameWindow() ? null : "_blank");
+                                        "target", item.isSameWindow() ? "_top" : "_blank");
                                     page.writeHtml(item.getName());
                                 page.writeEnd();
                             page.writeEnd();

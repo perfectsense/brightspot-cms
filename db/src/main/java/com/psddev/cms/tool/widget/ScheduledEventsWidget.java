@@ -397,7 +397,7 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                         page.writeStart("a",
                                 "href", page.objectUrl("/content/edit.jsp", draft),
                                 "target", "_top");
-                        page.writeObjectLabel(draftObject);
+                        page.writeObjectLabel(draft);
                         page.writeEnd();
                         page.writeEnd();
                         page.writeEnd();

@@ -49,7 +49,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             '[data-dynamic-predicate][data-dynamic-predicate != ""]');
 
         $dynamicTexts = $dynamicTexts.filter(function() {
-          return $(this).closest('.collapsed').length === 0;
+          return $(this).closest('.collapsed').length === 0
+              && $(this).closest('.contentDiffCurrent').length === 0;
         });
 
         if (!idle) {
@@ -64,7 +65,11 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           'cache': false,
           'dataType': 'json',
 
-          'data': $form.serialize() + $dynamicTexts.map(function() {
+          // If we are looking at a content update, then the current state (for viewing the diff) resides in the form
+          // as well. We need to remove that from the form post or it messes up the dynamic values that return.
+          'data': $form.find('[name]').filter(function() {
+            return $(this).closest('.contentDiffCurrent').length === 0;
+          }).serialize() + $dynamicTexts.map(function() {
             var $element = $(this);
 
             return '&_dti=' + ($element.closest('[data-object-id]').attr('data-object-id') || '') +

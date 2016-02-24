@@ -73,7 +73,7 @@ require([
   'nv.d3',
 
   'v3/dashboard',
-  'v3/constrainedscroll',
+  'v3/sticky',
   'v3/content/diff',
   'v3/content/edit',
   'content/lock',
@@ -81,6 +81,7 @@ require([
   'content/layout-element',
   'v3/content/state',
   'v3/csrf',
+  'v3/search-fields',
   'v3/search-filters',
   'v3/search-result-check',
   'v3/tabs' ],
@@ -162,12 +163,26 @@ function() {
   });
 
   // Hide non-essential items in the permissions input.
-  $doc.onCreate('.inputContainer .permissions select', function() {
+  $doc.on('change', '.inputContainer .permissions select', function () {
     var $select = $(this);
 
-    $select.bind('change', $.run(function() {
-      $select.parent().find('> h2, > ul').toggle($select.find(':selected').val() === 'some');
-    }));
+    $select.parent().find('> h2, > ul').toggle($select.find(':selected').val() === 'some');
+  });
+
+  bsp_utils.onDomInsert(document, '.inputContainer .permissions select', {
+    afterInsert: function (selects) {
+      var $hide = $();
+
+      $(selects).each(function () {
+        var $select = $(this);
+
+        if ($select.val() !== 'some') {
+          $hide = $hide.add($select.parent().find('> h2, > ul'));
+        }
+      });
+
+      $hide.hide();
+    }
   });
 
   $doc.onCreate('.searchSuggestionsForm', function() {
@@ -304,7 +319,7 @@ function() {
 
       // Skip textarea created inside CodeMirror editor
       if ($input.closest('.CodeMirror').length) { return; }
-            
+
       updateWordCount(
           $input.closest('.inputContainer'),
           $input,
@@ -335,7 +350,7 @@ function() {
     // For new rich text editor, special handling for the word count.
     // Note this counts only the text content not the final output which includes extra HTML elements.
     $doc.on('rteChange', $.throttle(1000, function(event, rte) {
-          
+
         var $input, $container, html, $html, text;
 
         $input = rte.$el;
@@ -635,7 +650,7 @@ function() {
     if (!$frame.is('.popup[data-popup-source-class~="objectId-edit"]')) {
       return;
     }
-    
+
     $frame.popup('container').removeClass('popup-objectId-edit-hide');
     $parent.addClass('popup-objectId-edit popup-objectId-edit-loading');
     $win.resize();
@@ -685,7 +700,7 @@ function() {
 
       $frame.prepend($('<a/>', {
         'class': 'popup-objectId-edit-heading',
-        'text': 'Back to ' + $parent.find('.contentForm-main > .widget > h1').text(),
+        'text': 'Back to ' + $parent.find('.contentForm-main > .widget > h1').clone().find('option:not(:selected)').remove().end().text(),
         'click': function() {
           $frame.popup('close');
           return false;

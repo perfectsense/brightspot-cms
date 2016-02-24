@@ -483,6 +483,9 @@ define([
          *
          * @param {Object} [range=current range]
          *
+         * @returns {Object}
+         * The mark for an inline style, or the line data for a block style.
+         *
          * @see inlineSetStyle(), blockSetStyle()
          */
         setStyle: function(style, range) {
@@ -494,7 +497,7 @@ define([
             styleObj = self.styles[style];
             if (styleObj) {
                 if (styleObj.line) {
-                    self.blockSetStyle(style, range);
+                    mark = self.blockSetStyle(style, range);
                 } else {
                     mark = self.inlineSetStyle(style, range);
                 }
@@ -529,6 +532,177 @@ define([
             }
         },
 
+        
+        /**
+         * Returns the "context" elements for the current cursor position or range.
+         *
+         * @param {Object} [range]
+         * The range of the selection {from:{line,ch},to:{line:ch}}.
+         * If not specified, uses the current selection.
+         *
+         * @returns {Array}
+         * An array of the context elemsnets that are active within the range.
+         * The value null represents the root context.
+         * For example: [null, 'b']
+         */
+        getContext: function(range) {
+
+            // Step through each character in the range
+            // Get a list of all marks on the character
+            // Pick the mark that has the right-most starting character, add that element to the context list
+            // Return the context list
+
+            // Example: what if you have xxx<B>RRR</B>RRRxxx
+            // Then the context should be considered to be [B,null]
+            //
+            // Example: what if you have xxxRRR<B>RRR</B>RRRxxx
+            // Then the context should be considered to be [null,B]
+            //
+            // Example: what if you have: xxxRRR<B>RRR</B>RR<I>RRR</I>RRRxxx
+            // Then the context should be considered to be [null,B,I]
+            //
+            // Example: what if you have xxxRRR<B>RRR<I>RRR</I>RRR</B>xxx
+            // Then the context should be considered [null,B,I]
+            //
+            // Example: what if you have xxx<B>xxx<I>RRR</I>xxx</B>xxx
+            // Then the context should be considered to be [I]
+            
+            var blockStyles, context, contextArray, contextMarks, contextNull, editor, foundBlockStyle, lineNumber, self;
+
+            self = this;
+            editor = self.codeMirror;
+            range = range || self.getRange();
+            lineNumber = range.from.line;
+
+            // Placeholder for the context elements
+            context = {};
+
+            // Loop through all lines in the range
+            editor.eachLine(range.from.line, range.to.line + 1, function(line) {
+
+                var charFrom, charTo, isRange, marks, rightmostMark, rightmostPos, styleObj;
+                
+                charFrom = (lineNumber === range.from.line) ? range.from.ch : 0;
+                charTo = (lineNumber === range.to.line) ? range.to.ch : line.text.length;
+
+                isRange = Boolean(charFrom !== charTo);
+                
+                // Loop through each character in the line
+                for (charNumber = charFrom; charNumber <= charTo; charNumber++) {
+
+                    rightmostMark = undefined;
+                    rightmostPos = undefined;
+                    
+                    // Get all of the marks for this character and get a list of the class names
+                    marks = editor.findMarksAt({ line: lineNumber, ch: charNumber });
+
+                    // Find the mark with the rightmost starting character
+                    marks.forEach(function(mark){
+                        
+                        var isRightmost, markPosition, pos;
+                        
+                        if (!mark.className) {
+                            return;
+                        }
+                        // Make sure this class maps to an element (and is not an internal mark like for spelling errors)
+                        if (!self.classes[mark.className]) {
+                            return;
+                        }
+                        if (!mark.find) {
+                            return;
+                        }
+                        pos = mark.find();
+                        if (!pos) {
+                            return;
+                        }
+                        
+                        // We need to check a couple special cases because CodeMirror still sends us the marks
+                        // that are next to the position of the cursor.
+                        //
+                        // Marks can have an "inclusiveLeft" and "inclusiveRight" property, which means to extend the mark
+                        // to the left or the right when text is added on that side.
+                        //
+                        // If the mark is defined to the right of the cursor, then we only include the classname if inclusiveLeft is set.
+                        // If the mark is defined to the left of the cursor, then we only include the classname if inclusiveRight is set.
+
+                        if (pos.from.line === lineNumber && pos.from.ch === charNumber && !mark.inclusiveLeft) {
+
+                            // Don't consider this mark if we are on the left side of the range when inclusiveLeft is not set
+                            return;
+                                
+                        } else if (pos.to.line === lineNumber && pos.to.ch === charNumber && !mark.inclusiveRight) {
+                                
+                            // Don't consider this mark if we are on the right side of the range when inclusiveRight is not set
+                            return;
+
+                        }
+
+                        if (rightmostMark) {
+                            
+                            if (pos.from.line > rightmostPos.from.line ||
+                                (pos.from.line === rightmostPos.from.line && pos.from.ch >= rightmostPos.from.ch)) {
+
+                                isRightmost = true;
+                            }
+                            
+                        } else {
+                            isRightmost = true;
+                        }
+
+                        if (isRightmost) {
+                            rightmostMark = mark;
+                            rightmostPos = pos;
+                        }
+
+                    });
+
+                    if (rightmostMark) {
+
+                        styleObj = self.classes[rightmostMark.className];
+                        if (styleObj && styleObj.element) {
+                            context[styleObj.element] = true;
+                        }
+                        
+                    } else {
+
+                        // Use line styles if there are no inline marks
+                        
+                        blockStyles = self.blockGetStyles({from:{line:lineNumber, ch:0}, to:{line:lineNumber, ch:0}});
+                        foundBlockStyle = false;
+                        $.each(blockStyles, function(styleKey) {
+                            var element;
+                            element = self.styles[styleKey].element;
+                            if (element) {
+                                context[element] = true;
+                                foundBlockStyle = true;
+                            }
+                        });
+
+                        // If there is no line style then use a null context
+                        if (!foundBlockStyle) {
+                            contextNull = true;
+                        }
+                    }
+                }
+                
+                lineNumber++;
+            });
+            
+            // Convert context object into an array
+            contextArray = [];
+            $.each(context, function(element) {
+                if (element === 'NULL') {
+                }
+                contextArray.push(element);
+            });
+
+            if (contextNull) {
+                contextArray.push(null);
+            }
+
+            return contextArray;
+        },
+        
         
         //==================================================
         // INLINE STYLES
@@ -739,10 +913,10 @@ define([
                     
                     // Check if we should remove the class
                     matchesClass = false;
+                    styleObj = self.classes[mark.marker.className] || {};
                     if (className) {
                         matchesClass = Boolean(mark.marker.className === className);
                     } else {
-                        styleObj = self.classes[mark.marker.className] || {};
                         
                         // Do not remove the track changes classes unless specifically named
                         matchesClass = Boolean(options.includeTrack || styleObj.internal !== true);
@@ -874,6 +1048,11 @@ define([
                         //        rrr        <-- range
                         //      nn   nn      <-- new marks
                         //        xxx        <-- text to delete (if deleteText is true)
+
+                        // Do not allow inline enhancement styles to be split in the middle
+                        if (styleObj.enhancementType) {
+                            return;
+                        }
                         
                         editor.markText(
                             { line: lineNumber, ch: toCh },
@@ -1693,13 +1872,16 @@ define([
          * Set of key/value pairs to specify options.
          * These options will be passed as mark options when the mark is created.
          *
+         * @param Object [options.attributes]
+         * An object with key/value pairs for the attributes that should be saved for this block style.
+         *
          * @param Object [options.triggerChange=true]
          * Set this to false if you do not want to trigger the rteChange event after setting the style.
          * For example, if you will be making multiple style changes and you will trigger the rteChange event yourself.
          */
         blockSetStyle: function(style, range, options) {
 
-            var className, editor, lineNumber, self, styleObj;
+            var className, editor, lineHandle, lineNumber, mark, self, styleObj;
 
             self = this;
             editor = self.codeMirror;
@@ -1712,9 +1894,29 @@ define([
                 styleObj = style;
             }
             className = styleObj.className;
+
+            // Create a fake "mark" object for the line
+            mark = {
+                
+                // just in case we need to distinguish this is our fake mark...
+                rteLineStyle: true,
+                
+                // other code checks for className on the mark so we'll save it here too
+                className: className 
+            };
+
+            // Save attributes on the mark
+            if (options.attributes) {
+                mark.attributes = options.attributes;
+            }
             
             for (lineNumber = range.from.line; lineNumber <= range.to.line; lineNumber++) {
+                
                 editor.addLineClass(lineNumber, 'text', className);
+
+                // Store the mark data (and attributes) for the block style
+                self.blockSetLineData(styleObj.key, lineNumber, mark);
+                
             }
 
             // If this is a set of mutually exclusive styles, clear the other styles
@@ -1731,8 +1933,121 @@ define([
             if (options.triggerChange !== false) {
                 self.triggerChange();
             }
+
+            //return mark;
+            return self.blockGetLineData(styleObj.key, range.from.line) || {};
         },
 
+        
+        /**
+         * Return the data stored on the line, for a particular style.
+         *
+         * @param {String} className
+         * The className that is used for the style.
+         * For example, the alignLeft style uses classname 'rte2-style-alignLeft'
+         *
+         * @param {Number} lineNumber
+         * Number of the line where data should be retrieved.
+         *
+         * @returns {Object|undefined}
+         * The data stored on the line for a particular style,
+         * or null if data is not stored for that line number.
+         */
+        blockGetLineData: function(styleKey, lineNumber) {
+
+            var data, editor, lineHandle, self, styleObj;
+            self = this;
+            editor = self.codeMirror;
+
+            styleObj = self.styles[styleKey] || {};
+            className = styleObj.className;
+            
+            // Get the lineMarker object so we can store additional data for the block style
+            lineHandle = editor.getLineHandle(lineNumber);
+
+            if (lineHandle && lineHandle.rteMarks) {
+                data = lineHandle.rteMarks[className];
+            }
+
+            return data;
+        },
+
+        
+        /**
+         * Set data on a line, for a particular class name.
+         *
+         * @param {String} className
+         * The className that is used for the style.
+         * For example, the alignLeft style uses classname 'rte2-style-alignLeft'
+         *
+         * @param {Number} lineNumber
+         * Number of the line where data should be stored.
+         *
+         * @param {Object} data
+         * The data to store on the line for a particular class name.
+         */
+        blockSetLineData: function(styleKey, lineNumber, data) {
+            
+            var editor, lineHandle, self, styleObj, className;
+            self = this;
+            editor = self.codeMirror;
+            
+            styleObj = self.styles[styleKey] || {};
+            className = styleObj.className;
+
+            // Get the lineMarker object so we can store additional data for the block style
+            lineHandle = editor.getLineHandle(lineNumber);
+
+            if (lineHandle) {
+                
+                lineHandle.rteMarks = lineHandle.rteMarks || {};
+
+                data = $.extend(true, {}, data, {
+                    
+                    // Create a "find" function that will return position for the line.
+                    // This will make the fake block mark more like a normal inline
+                    // mark.
+                    find: function() {
+                        
+                        var lineNumber;
+                        
+                        // Get the current line number for this line handle
+                        
+                        lineNumber = editor.getLineNumber(lineHandle) || 0;
+                        
+                        // Return a position for the line number
+                        return {
+                            from: {line:lineNumber, ch:0},
+                            to:  {line:lineNumber, ch:lineHandle.text.length}
+                        };
+                    },
+
+                    // Create a "clear" function that clears the style from the line
+                    clear: function() {
+                        
+                        var lineNumber;
+                        
+                        // Get the current line number for this line handle
+                        
+                        lineNumber = editor.getLineNumber(lineHandle) || 0;
+
+                        self.blockRemoveStyle(styleKey, {
+                            from: {line:lineNumber, ch:0},
+                            to:  {line:lineNumber, ch:lineHandle.text.length}
+                        });
+                        
+                        // Return a position for the line number
+                        return ;
+                    }
+                });
+
+                // Save the data on the lineHandle so it will follow
+                // the line around, and can be found again by looking
+                // up via the class name of the style.
+                lineHandle.rteMarks[className] = data;
+            }
+        },
+        
         
         /**
          * Remove the line class for a range.
@@ -1752,7 +2067,12 @@ define([
             range = range || self.getRange();
 
             if (styleKey) {
-                className = self.styles[styleKey].className;
+                if (self.styles[styleKey]) {
+                    className = self.styles[styleKey].className;
+                } else {
+                    // A style key was provided but there is no such style
+                    return;
+                }
             }
 
             for (lineNumber = range.from.line; lineNumber <= range.to.line; lineNumber++) {
@@ -2279,21 +2599,35 @@ define([
         
         /**
          * Get all the marks in the current range that have click events.
+         *
+         * @param {Boolean} [allowRange=false]
+         * Set to true if you want the marks across a range of characters.
+         * Defaults to false, which means it will only return marks if the selection range is a cursor position.
          */
-        dropdownGetMarks: function() {
-            var editor, marks, range, self;
+        dropdownGetMarks: function(allowRange) {
+            var editor, lineStyles, marks, range, self;
 
             self = this;
             editor = self.codeMirror;
             range = self.getRange();
 
             // Do not return marks if a range of characters is selected
-            if (!(range.from.line === range.to.line && range.from.ch === range.to.ch)) {
+            if (allowRange !== true && !(range.from.line === range.to.line && range.from.ch === range.to.ch)) {
                 return [];
             }
-            
-            // Find all the marks for the clicked position
-            marks = editor.findMarks(range.from, range.to);
+
+            // Get the line styles and the "fake" marks we created
+            marks = [];
+            lineStyles = self.blockGetStyles();
+            $.each(lineStyles, function(styleKey) {
+                var mark;
+                mark = self.blockGetLineData(styleKey, range.from.line);
+                marks.push(mark);
+            });
+        
+            // Find all the inline marks for the clicked position
+            // (funky javascript to append one array onto the end of another)
+            [].push.apply(marks, editor.findMarks(range.from, range.to));
 
             // Only keep the marks that have onClick configs
             marks = $.map(marks, function(mark, i) {
@@ -2772,7 +3106,7 @@ define([
          */ 
         trackAcceptRange: function(range) {
             
-            var editor, self;
+            var editor, marks, self;
 
             self = this;
             editor = self.codeMirror;
@@ -2822,12 +3156,18 @@ define([
             
             position = mark.find();
 
-            if (position && mark.className === self.styles.trackDelete.className) {
-                editor.replaceRange('', position.from, position.to, '+brightspotTrackRejectMark');
+            if (position) {
+                if (mark.className === self.styles.trackDelete.className) {
+                    // For a delete mark, remove the content
+                    mark.clear();
+                    editor.replaceRange('', position.from, position.to, '+brightspotTrackAcceptMark');
+                    self.triggerChange();
+                } else if (mark.className === self.styles.trackInsert.className) {
+                    // For an insert mark, leave the content and remove the mark
+                    mark.clear();
+                    self.triggerChange();
+                }
             }
-            
-            mark.clear();
-            self.triggerChange();
         },
 
 
@@ -2843,12 +3183,19 @@ define([
             
             position = mark.find();
 
-            if (position && mark.className === self.styles.trackInsert.className) {
-                editor.replaceRange('', position.from, position.to, '+brightspotTrackRejectMark');
+            if (position) {
+                if (mark.className === self.styles.trackInsert.className) {
+                    // For an insert mark, remove the content
+                    mark.clear();
+                    editor.replaceRange('', position.from, position.to, '+brightspotTrackRejectMark');
+                    self.triggerChange();
+                } else if (mark.className === self.styles.trackDelete.className) {
+                    // For a delete mark, leave the content and remove the mark
+                    mark.clear();
+                    self.triggerChange();
+                }
             }
             
-            mark.clear();
-            self.triggerChange();
         },
 
 
@@ -4001,6 +4348,22 @@ define([
 
         
         /**
+         * For a given range, returns the starting offset in pixels.
+         *
+         * @param {Object} range
+         * @returns {Object}
+         * Offset object {left, right, top, bottom }
+         * Use left,top to represent the point below the first character.
+         */
+        getOffset: function(range) {
+            var self;
+            self = this;
+            range = range || self.getRange();
+            return self.codeMirror.charCoords({line:range.from.line, ch:range.from.ch});
+        },
+
+        
+        /**
          * Given a CodeMirror mark, replace the text within it
          * without destroying the mark.
          * Normally if you were to use the CodeMirror functions to replace a range,
@@ -4060,6 +4423,9 @@ define([
             self = this;
 
             keymap = {};
+
+            keymap['Tab'] = false;
+            keymap['Shift-Tab'] = false;
 
             keymap['Shift-Enter'] = function (cm) {
                 // Add a carriage-return symbol and style it as 'newline'
@@ -4245,7 +4611,7 @@ define([
                         
                         $.each(line.textClass.split(' '), function() {
                             
-                            var container, styleObj;
+                            var container, lineStyleData, styleObj;
 
                             // From a line style (like "rte2-style-ul"), determine the style name it maps to (like "ul")
                             styleObj = self.classes[this];
@@ -4275,10 +4641,12 @@ define([
                                 }
                             }
 
+                            // Get any attributes that might be defined for this line style
+                            lineStyleData = self.blockGetLineData(styleObj.key, lineNo) || {};
                             
                             // Now determine which element to create for the line.
                             // For example, if it is a list then we would create an 'LI' element.
-                            htmlStartOfLine += openElement(styleObj);
+                            htmlStartOfLine += openElement(styleObj, lineStyleData.attributes);
 
                             // Also push this style onto a stack so when we reach the end of the line we can close the element
                             blockElementsToClose.push(styleObj);
@@ -5146,7 +5514,7 @@ define([
                 }
                 
                 if (styleObj.line) {
-                    self.blockSetStyle(styleObj, annotation, {triggerChange:false});
+                    self.blockSetStyle(styleObj, annotation, {triggerChange:false, attributes:annotation.attributes});
                 } else {
                     self.inlineSetStyle(styleObj, annotation, {addToHistory:false, triggerChange:false, attributes:annotation.attributes});
                 }

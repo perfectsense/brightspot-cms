@@ -14,10 +14,12 @@ import javax.servlet.http.HttpServletRequest;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.page.SearchResultActions;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.StorageItem;
+import com.psddev.dari.util.StringUtils;
 import org.joda.time.DateTime;
 
 import com.psddev.cms.db.Directory;
@@ -179,13 +181,20 @@ public class ListSearchResultView extends AbstractSearchResultView {
                             : item.getPublicUrl());
         });
 
+        String selectAllUrl = page.cmsUrl("/searchResultActions",
+                "search", ObjectUtils.toJson(search.getState().getSimpleValues()));
+
         page.writeStart("table", "class", "searchResultTable links table-striped pageThumbnails");
             page.writeStart("thead");
                 page.writeStart("tr");
                     page.writeStart("th");
                         page.writeElement("input",
                                 "type", "checkbox",
-                                "class", "searchResult-checkAll");
+                                "class", "searchResult-checkAll",
+                                "value", "",
+                                "data-frame-target", "searchResultActions",
+                                "data-frame-check", StringUtils.addQueryParameters(selectAllUrl, SearchResultActions.ACTION_PARAMETER, SearchResultActions.ACTION_ADD),
+                                "data-frame-uncheck", StringUtils.addQueryParameters(selectAllUrl, SearchResultActions.ACTION_PARAMETER, SearchResultActions.ACTION_REMOVE));
                     page.writeEnd();
 
                     if (sortField != null

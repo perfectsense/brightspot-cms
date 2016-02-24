@@ -74,14 +74,14 @@ public class SearchResultActions extends PageServlet {
         UUID selectionId = page.param(UUID.class, SELECTION_ID_PARAMETER);
 
         if (ACTION_ADD.equals(action)) {
-
-            // add an item to the current selection
-            currentSelection.addItem(page.param(UUID.class, ITEM_ID_PARAMETER));
+            for (UUID item : page.params(UUID.class, ITEM_ID_PARAMETER)) {
+                currentSelection.addItem(item);
+            }
 
         } else if (ACTION_REMOVE.equals(action)) {
-
-            // remove an item from the current selection
-            currentSelection.removeItem(page.param(UUID.class, ITEM_ID_PARAMETER));
+            for (UUID item : page.params(UUID.class, ITEM_ID_PARAMETER)) {
+                currentSelection.removeItem(item);
+            }
 
         } else if (ACTION_CLEAR.equals(action) && user.isSavedSearchResultSelection(currentSelection)) {
 

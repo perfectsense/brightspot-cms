@@ -373,7 +373,8 @@ The HTML within the repeatable element must conform to these standards:
                         
                         'class': 'addButton',
                         text: addButtonText,
-                        
+                        'data-sortable-item-type': $template.attr('data-sortable-item-type')
+
                         // Save the template on the add button control so when user
                         // clicks it we will know which template to add
                         // 'data-addButtonTemplate': $template
@@ -402,7 +403,7 @@ The HTML within the repeatable element must conform to these standards:
              * The LI element that contains the item HTML.
              */
             initItem: function(element) {
-                
+
                 var self = this;
                 var $item = $(element);
 
@@ -441,7 +442,7 @@ The HTML within the repeatable element must conform to these standards:
              * The item (LI element).
              */
             initItemLabel: function(element) {
-                
+
                 var self = this;
                 var $item = $(element);
                 var type = $item.attr('data-type');
@@ -459,7 +460,7 @@ The HTML within the repeatable element must conform to these standards:
                 if (self.modeIsPreview()) {
                     return;
                 }
-                
+
                 // The text for the label will be the data type such as "Slideshow Slide"
                 // And if a data-label attribute was provided append it after a colon such as "Slideshow Slide: My Slide"
                 labelText = type;
@@ -473,7 +474,7 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-text': '${content.state.getType().label}: ${content.label}'
+                    'data-dynamic-html': '${content.state.getType().label}: ${toolPageContext.createObjectLabelHtml(content)}'
                     
                 }).on('click', function() {
                     self.itemToggle($item);
@@ -531,7 +532,7 @@ The HTML within the repeatable element must conform to these standards:
              * A function to call after the new item has been added.
              */
             addItem: function(template, customCallback) {
-                
+
                 var self = this;
                 var $template = $(template);
                 var $addedItem;
@@ -797,7 +798,7 @@ The HTML within the repeatable element must conform to these standards:
              * myRepeatable.itemLoad(element).always(function(){ alert('Item is done loading'); });
              */
             itemLoad: function(item, location) {
-                
+
                 var self = this;
                 var $item = $(item);
                 var $location = location ? $(location) : $item;
@@ -1057,7 +1058,7 @@ The HTML within the repeatable element must conform to these standards:
              * TODO: needs lots of cleanup
              */
             modePreviewInit: function() {
-                
+
                 var self = this;
                 var $container = self.$element;
                 var carousel;
@@ -1228,7 +1229,7 @@ The HTML within the repeatable element must conform to these standards:
                     text: labelText,
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': itemId,
-                    'data-dynamic-text': '${content.label}'
+                    'data-dynamic-html': '${toolPageContext.createObjectLabelHtml(content)}'
                 }).on('click', function(){
                     self.modePreviewEdit($item);
                     return false;
@@ -1306,7 +1307,7 @@ The HTML within the repeatable element must conform to these standards:
 
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-text': '${content.label}'
+                    'data-dynamic-html': '${toolPageContext.createObjectLabelHtml(content)}'
 
                 }).appendTo($carouselTile);
 
@@ -1439,6 +1440,7 @@ The HTML within the repeatable element must conform to these standards:
 
                     // Show the current edit form
                     $editContainer.show();
+                    $editContainer.trigger('resize');
                 });
             },
 
@@ -1503,7 +1505,8 @@ The HTML within the repeatable element must conform to these standards:
                 $editContainer = $item.data('editContainer');
                 if (!$editContainer) {
                     $editContainer = $('<div/>', {
-                        'class': 'itemEdit'
+                        'class': 'itemEdit',
+                        'data-sortable-item-type': $item.attr('data-sortable-item-type')
                     }).on('change', function(event) {
 
                         var imageUrl, $target, targetName, thumbnailName;
@@ -1596,6 +1599,13 @@ The HTML within the repeatable element must conform to these standards:
                 // it is displaying everything correctly
                 self.carousel.update();
 
+                // If no tile is active in the carousel, make the first one active
+                // so there will be an edit form underneath
+                if (self.carousel.getActive() === 0) {
+                    // Make the first tile active and show the edit form
+                    self.modePreviewEditNext();
+                }
+                
                 // After showing the carousel update the next/previous buttons on the edit form
                 // This might be needed in case the tiles were reordered or something like that
                 self.modePreviewUpdateEditContainer();

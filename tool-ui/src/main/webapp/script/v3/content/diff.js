@@ -201,4 +201,14 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
       });
     }
   });
+
+  bsp_utils.onDomInsert(document, '.contentDiff > .contentDiffLeft > .objectInputs > .tabs-wrapper > .tabs > li, .contentDiff > .contentDiffRight > .objectInputs > .tabs-wrapper > .tabs > li', {
+    'insert': function (item) {
+      var $item = $(item);
+
+      if ($item.closest('.objectInputs').find('> .inputContainer[data-tab="' + $item.text() + '"]:not(.contentDiffSame)').length === 0) {
+        $item.hide();
+      }
+    }
+  });
 });

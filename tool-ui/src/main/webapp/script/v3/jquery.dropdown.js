@@ -1,3 +1,5 @@
+define(['string'], function (S) {
+    
 /** Better drop-down list than standard SELECT. */
 (function($, win, undef) {
 
@@ -7,8 +9,6 @@
       $openOriginal,
       $openList;
   
-  require(['string'], function (S) {    
-
   $.plugin2('dropDown', {
     '_defaultOptions': {
       'classPrefix': 'dropDown-'
@@ -140,7 +140,7 @@
 
       $label.bind('dropDown-update', function() {
         var newLabel = $.map($original.find('option:selected'), function(option) {
-          return $(option).text();
+          return $(option).attr("data-drop-down-html") || $(option).text();
         }).join(', ');
 
         $label.html(newLabel || dynamicPlaceholderHtml || placeholder || '&nbsp;');
@@ -243,7 +243,7 @@
 
         $item = $('<div/>', {
           'class': plugin.className('listItem'),
-          'html': $option.text() || '&nbsp;'
+          'html': $option.attr("data-drop-down-html") || $option.text() || '&nbsp;'
         });
 
         $check = $('<input/>', {
@@ -451,6 +451,10 @@
     return true;
   });
   
-  });
-
 }(jQuery, window));
+
+    // Return an empty object just for the benefit of the AMD module.
+    // Not expected to be used since we just set up a jquery plugin.
+    return {};
+    
+}); // define()

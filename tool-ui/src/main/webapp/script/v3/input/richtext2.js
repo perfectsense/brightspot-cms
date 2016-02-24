@@ -424,6 +424,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 $.extend(true, self, options);
             }
 
+            // If the RTE_INIT global variable is set to a function run it.
+            // This lets individual projects modify the RTE toolbar and styles.
+            if ($.isFunction(window.RTE_INIT)) {
+                window.RTE_INIT.call(self);
+            }
+
             self.$el = $(element);
 
             // Save this object on the element so it can be accessed externally
@@ -699,9 +705,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             $('body').toggleClass('rte-fullscreen');
             self.$container.toggleClass('rte-fullscreen');
             
-            // After changing fullscreen status, kick the toolbar in case it was moved due to scrolling
-            self.toolbarHoist();
-
             // Also kick the editor
             self.rte.refresh();
         },
@@ -903,11 +906,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             });
 
             self.toolbarUpdate();
-
-            // Keep the toolbar visible if the window scrolls or resizes
-            $(window).bind('rteHoistToolbar', function() {
-                self.toolbarHoist();
-            });
         },
 
 
@@ -1081,7 +1079,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
          */
         toolbarHandleClick: function(item, event) {
 
-            var $button, mark, rte, self, styleObj, value;
+            var $button, mark, marks, rte, self, styleObj, value;
 
             self = this;
 
@@ -1209,10 +1207,26 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
                 if (styleObj.onClick) {
 
-                    // Create a new mark then call the onclick function on it
-                    mark = rte.setStyle(item.style);
-                    if (mark) {
-                        styleObj.onClick(event, mark);
+                    // Find all the marks in the current selection that have onclick
+                    marks = self.rte.dropdownGetMarks(true);
+
+                    // Exclude marks that are not for the style we are currently examining
+                    marks = $.map(marks, function(mark){
+                        if (mark.className === styleObj.className) {
+                            return mark;
+                        } else {
+                            return null;
+                        }
+                    });
+
+                    if (marks.length) {
+                        styleObj.onClick(event, marks[0]);
+                    } else {
+                        // Create a new mark then call the onclick function on it
+                        mark = rte.setStyle(item.style);
+                        if (mark) {
+                            styleObj.onClick(event, mark);
+                        }
                     }
 
                 } else {
@@ -1238,7 +1252,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
          */
         toolbarUpdate: function() {
 
-            var $links, mode, rte, self, styles;
+            var contextArray, $links, mode, rte, self, styles;
 
             self = this;
             rte = self.rte;
@@ -1261,6 +1275,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             // Note ALL characters in the range must have the style or it won't be returned
             styles = $.extend({}, rte.inlineGetStyles(), rte.blockGetStyles());
 
+            // Get all the context elements for the currently selected range of characters
+            context = rte.getContext();
+            
             // Go through each link in the toolbar and see if the style is defined
             $links.each(function(){
 
@@ -1342,39 +1359,36 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     // Special case if the toolbar style should only be displayed in certain contexts
                     styleObj = self.styles[config.style] || {};
                     if (styleObj.context) {
-
-                        validContext = false;
-
-                        // For each of the active styles, determine which elements the styles represent
-                        // so we can check if we are in the context of those elements
-                        activeElements = {};
-                        allRoot = true;
-                        $.each(styles, function(styleName, styleValue) {
-                            var styleObj;
-                            styleObj = self.styles[styleName] || {};
-                            if (styleObj.element) {
-                                allRoot = false;
-                                activeElements[styleObj.element] = styleValue;
-                            }
-                        });
                         
-                        // Loop through all the elements listed as a required context for this style
-                        $.each(styleObj.context, function (i, contextElement) {
+                        // Loop through all the current contexts.
+                        // Note there can be multiple contexts because multiple characters can be
+                        // selected in the range, and each character might be in a different context.
+                        // For example, if the character R represents the selected range:
+                        // aaa<B>RRR</B>RRR<I>RRR</I>aaa
+                        // Then the context would be B, I, and null.
+                        //
+                        // We must check each context that is selected, to determine if
+                        // the style is allowed in that context.
+                        //
+                        // If the style fails for any one of the contexts, then it
+                        // should be invalid, and we should prevent the user from applying the style
+                        // across the range.
 
-                            // If null is specified as a context, then the style can appear in the "root" context.
-                            // If the entire range is plain text then we'll consider this "root"
-                            if (contextElement === null && allRoot) {
-                                validContext = true;
-                                return false;
-                            }
+                        
+                        // Loop through all the contexts for the selected range
+                        validContext = true;
+                        $.each(context, function(i, contextElement) {
 
-                            // Check if we are completely in contextStyle
-                            if (activeElements[contextElement]) {
-                                validContext = true;
-                                return false; // stop the loop
+                            // Is this contextElement listed among the context allowed by the current style?
+                            if ($.inArray(contextElement, styleObj.context) === -1) {
+                                validContext = false;
+                                return false; // stop looping
                             }
                         });
 
+                        // Set a class on the toolbar button to indicate we are out of context.
+                        // That class will be used to style the button, but also
+                        // to prevent clicking on the button.
                         $link.toggleClass('outOfContext', !validContext);
                     }
                     
@@ -1403,101 +1417,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
             var self;
             self = this;
             self.$toolbar.hide();
-        },
-
-        /**
-         * Keep the toolbar in view when the page scrolls or the window is resized.
-         */
-        toolbarHoist: function() {
-
-            var self = this;
-            var $win = $(window);
-            var $header = $('.toolHeader');
-            var headerBottom = 0;
-            var windowTop = $win.scrollTop() + headerBottom;
-            var raf = window.requestAnimationFrame;
-            var $container = self.$container;
-            var $toolbar = self.$toolbar;
-            var containerTop, toolbarHeight, toolbarLeft, toolbarWidth;
-
-            // Do nothing if the editor is not visible
-            if (!$container.is(':visible')) {
-                return;
-            }
-
-            // Determine if we need to adjust below the toolHeader
-            if ($header.is(':visible')) {
-                headerBottom = $header.offset().top + $header.outerHeight() - ($header.css('position') === 'fixed' ? $win.scrollTop() : 0);
-            }
-            
-            $toolbar = self.$toolbar;
-            containerTop = $container.offset().top;
-            toolbarHeight = $toolbar.outerHeight();
-            containerTop -= toolbarHeight;
-
-            // Is the rich text editor completely in view?
-            // Or is the editor so small that moving the toolbar wouldn't be wise?
-            if (($container.outerHeight() < 3 * toolbarHeight) || windowTop < containerTop) {
-
-                if ($toolbar.hasClass('rte2-toolbar-fixed')) {
-                    
-                    // Yes, completely in view. So remove positioning from the toolbar
-                    raf(function() {
-
-                        // Remove extra padding  above the editor because the toolbar will no longer be fixed position
-                        $container.css('padding-top', 0);
-
-                        // Restore toolbar to original styles
-                        $toolbar.removeClass('rte2-toolbar-fixed');
-                        $toolbar.attr('style', self._toolbarOldStyle);
-                        self._toolbarOldStyle = null;
-                    });
-                }
-
-            } else {
-
-                // No the editor is not completely in view.
-
-                // Save the original toolbar style so it can be reapplied later
-                self._toolbarOldStyle = self._toolbarOldStyle || $toolbar.attr('style') || ' ';
-
-                // Add padding to the top of the editor to leave room for the toolbar to be positioned on top
-                raf(function() {
-                    $container.css('padding-top', toolbarHeight);
-                });
-
-                // Is the rich text editor at least partially in view?
-                if (windowTop < containerTop + $container.height()) {
-
-                    // Yes, it is partially in view.
-                    // Set the toolbar position to "fixed" so it stays at the top.
-
-                    toolbarLeft = $toolbar.offset().left;
-                    toolbarWidth = $toolbar.width();
-
-                    raf(function() {
-                        $toolbar.addClass('rte2-toolbar-fixed');
-                        $toolbar.css({
-                            'left': toolbarLeft,
-                            'position': 'fixed',
-                            'top': headerBottom,
-                            'width': toolbarWidth
-                        });
-                    });
-
-
-                } else {
-
-                    // No, the rich text editor is completely out of view
-                    // Move the toolbar out of view.
-                    raf(function() {
-                        $toolbar.css({
-                            'top': -10000,
-                            'position': 'fixed'
-                        });
-                    });
-                }
-            }
         },
 
 
@@ -2776,7 +2695,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
 
         inlineEnhancementHandleClick: function(event, mark) {
 
-            var enhancementEditUrl, $div, $divLink, html, self, styleObj;
+            var enhancementEditUrl, $div, $divLink, html, offset, self, styleObj;
 
             self = this;
 
@@ -2814,11 +2733,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     text: '.'
                 })
                 
-            }).appendTo('body').css({
-                'top': event.pageY,
-                'left': event.pageX
-            });
+            }).appendTo('body');
 
+            // Set the position of the popup
+            offset = self.rte.getOffset(range);
+            $div.css({
+                'top': offset.top,
+                'left': offset.left
+            });
             $divLink = $div.find('a');
 
             // Add data to the link with the rte and the mark,
@@ -3003,7 +2925,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
          */
         tableShowContextMenu: function(el, row, col) {
 
-            var h, height, menu, offset, self, $td, width;
+            var h, height, menu, offset, self, $td;
 
             self = this;
             
@@ -3013,8 +2935,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 $td = $(h.getCell(row, col));
                 offset = $td.offset();
                 height = $td.height();
-                width = $td.width();
-                menu.open({top:offset.top + height, left:offset.left, width:width, height:height});
+                menu.open({pageY:offset.top + height, pageX:offset.left});
             }
         },
 
@@ -3544,9 +3465,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         var richTextElementsSubmenus = {};
         
         $.each(RICH_TEXT_ELEMENTS, function (index, rtElement) {
-            var tag = rtElement.tag;
             var styleName = rtElement.styleName;
             var submenu;
+            var tag = rtElement.tag;
+            var toolbarButton;
 
             Rte.styles[styleName] = {
                 className: 'rte2-style-' + styleName,
@@ -3555,11 +3477,20 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                 element: tag,
                 elementAttrAny: true,
                 singleLine: true,
+                line: Boolean(rtElement.line),
                 "void": Boolean(rtElement.void),
                 popup: rtElement.popup === false ? false : true,
-                context: rtElement.context
+                context: rtElement.context,
+                clear: rtElement.clear
             };
 
+            toolbarButton = {
+                className: 'rte2-toolbar-noicon rte2-toolbar-' + styleName,
+                style: styleName,
+                text: rtElement.displayName,
+                tooltip: rtElement.tooltipText
+            };
+            
             if (rtElement.submenu) {
                 
                 submenu = richTextElementsSubmenus[rtElement.submenu];
@@ -3567,17 +3498,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
                     submenu = [];
                     richTextElementsSubmenus[rtElement.submenu] = submenu;
                 }
-                submenu.push({
-                    className: 'rte2-toolbar-noicon',
-                    style: styleName,
-                    text: rtElement.displayName
-                });
+                submenu.push(toolbarButton);
             } else {
-                Rte.toolbarConfig.push({
-                    className: 'rte2-toolbar-noicon rte2-toolbar-' + styleName,
-                    style: styleName,
-                    text: rtElement.displayName
-                });
+                Rte.toolbarConfig.push(toolbarButton);
             }
         });
 
@@ -3630,15 +3553,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/plugin/popup', 'jquery.extr
         }
 
     });
-
-
-    // Whenever a resize or scroll event occurs, trigger an event to tell all rich text editors to hoist their toolbars.
-    // For better performance throttle the function so it doesn't run too frequently.
-    // We do this *once* for the page because we don't want each individual rich text editor listening to the
-    // scroll and resize events constantly, instead they can each listen for the throttled rteHoist event.
-    $(window).bind('resize.rte scroll.rte', $.throttle(150, function() {
-        $(window).trigger('rteHoistToolbar');
-    }));
 
 
     return Rte;

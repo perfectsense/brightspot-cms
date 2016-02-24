@@ -25,6 +25,7 @@ com.psddev.cms.tool.CmsTool,
 com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
+com.psddev.dari.util.Settings,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
@@ -172,7 +173,11 @@ if (copy != null) {
     for (Site consumer : editingState.as(Site.ObjectModification.class).getConsumers()) {
         editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
     }
-    editingState.as(Site.ObjectModification.class).setOwner(site);
+    if (site != null && 
+            !Settings.get(boolean.class, "cms/tool/copiedObjectInheritsSourceObjectsSiteOwner")) {
+        // Only set the owner to current site if not on global and no setting to dictate otherwise.
+        editingState.as(Site.ObjectModification.class).setOwner(site);
+    }    
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
@@ -261,29 +266,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             wp.writeHtml("New");
 
                         } else {
-                            if (draft != null && !draft.isNewContent()) {
-                                wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
-
-                                String draftName = draft.getName();
-
-                                if (!ObjectUtils.isBlank(draftName)) {
-                                    wp.writeHtml(" (");
-                                    wp.writeHtml(draftName);
-                                    wp.writeHtml(")");
-                                }
-
-                                wp.writeHtml(" for");
-
-                                if (!visible) {
-                                    wp.writeHtml(" Initial Draft of");
-                                }
-
-                            } else if (!visible) {
-                                wp.writeHtml("Initial Draft of");
-
-                            } else {
-                                wp.writeHtml("Edit");
-                            }
+                            wp.writeHtml("Edit");
                         }
 
                         wp.writeHtml(" ");
@@ -508,7 +491,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     long total = complete + incomplete + skipped;
 
                     wp.writeStart("div",
-                            "class", "block",
+                            "class", "publishing-workflow block",
                             "style", wp.cssString(
                                     "border-bottom", "1px solid #bbb",
                                     "padding-bottom", "5px"));

@@ -34,7 +34,8 @@ if (wp.getOverlaidDraft(object) == null) {
             .fromAll()
             .and("com.psddev.cms.db.Draft/objectId = ?", state.getId())
             .sortDescending("cms.content.updateDate")
-            .selectAll();
+            .select(0, 5)
+            .getItems();
 
     for (Iterator<Object> i = contentUpdates.iterator(); i.hasNext();) {
         Draft contentUpdate = (Draft) i.next();

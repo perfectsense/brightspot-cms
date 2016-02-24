@@ -269,7 +269,7 @@ $.fn.isFixedPosition = function() {
             $newParent;
 
     while (true) {
-        if ($parent.css('position') === 'fixed') {
+        if (!$parent.hasClass('is_stuck') && $parent.css('position') === 'fixed') {
             return true;
         }
 

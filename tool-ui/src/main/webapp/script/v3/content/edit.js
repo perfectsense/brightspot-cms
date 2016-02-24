@@ -165,10 +165,10 @@ define([ 'jquery', 'v3/rtc' ], function($, rtc) {
 
     $form.on('submit', function() {
       $.data($form[0], 'content-edit-submit', true);
-    })
+    });
 
-    // Tab navigation from textarea to RTE.
-    $(document).on('keydown', '.contentForm :text, .contentForm textarea', function (event) {
+    // Tab navigation from textarea or record input to RTE.
+    $(document).on('keydown', '.contentForm :text, .contentForm textarea, .objectId-select', function (event) {
       if (event.which === 9) {
         var $container = $(this).closest('.inputContainer');
         var rte2 = $container.next('.inputContainer').find('> .inputSmall > .rte2-wrapper').data('rte2');

@@ -1,8 +1,26 @@
 .rte2-toolbar {
-  background-color: fade(white, 93%);
+  background: white;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 0 1px;
   margin: 0;
+  padding: 0 4px;
   position: relative;
   vertical-align: top;
+
+  &.is_stuck {
+    border-color: @color-border;
+    padding-top: 5px;
+
+    &:after {
+      border-bottom: 1px dotted @color-border;
+      bottom: 0;
+      content: '';
+      left: 5px;
+      position: absolute;
+      right: 5px;
+    }
+  }
 
   .rte2-wrapper > & {
 

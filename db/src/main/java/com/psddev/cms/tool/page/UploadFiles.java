@@ -17,6 +17,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.dari.util.UuidUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,7 @@ public class UploadFiles extends PageServlet {
         DatabaseEnvironment environment = database.getEnvironment();
         Exception postError = null;
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
+        UUID uploadId = UuidUtils.createSequentialUuid();
         String containerId = page.param(String.class, "containerId");
 
         if (page.isFormPost()) {
@@ -243,6 +245,7 @@ public class UploadFiles extends PageServlet {
                         }
 
                         state.put(previewField.getInternalName(), item);
+                        state.as(BulkUploadDraft.class).setUploadId(uploadId);
                         state.as(BulkUploadDraft.class).setContainerId(containerId);
                         page.publish(state);
                         newObjectIds.add(state.getId());

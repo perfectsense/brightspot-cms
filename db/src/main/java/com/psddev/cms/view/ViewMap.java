@@ -85,6 +85,7 @@ class ViewMap implements Map<String, Object> {
         try {
             Arrays.stream(Introspector.getBeanInfo(view.getClass()).getPropertyDescriptors())
                     .filter((prop) -> includeClassName || !"class".equals(prop.getName()))
+                    .filter((prop) -> prop.getReadMethod() != null)
                     .forEach(prop -> unresolved.put(prop.getName(), () -> invoke(prop.getReadMethod(), view)));
 
         } catch (IntrospectionException e) {
@@ -277,6 +278,11 @@ class ViewMap implements Map<String, Object> {
 
             Throwable cause = e.getCause();
             cause = cause != null ? cause : e;
+
+            ViewResponse response = ViewResponse.findInExceptionChain(cause);
+            if (response != null) {
+                throw response;
+            }
 
             LOGGER.error(message, cause);
 

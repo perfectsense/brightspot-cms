@@ -115,7 +115,7 @@ if (copy != null) {
     <div class="main">
 
         <div class="widget">
-            <% wp.writeStandardForm(selected, false, true); %>
+            <% wp.writeStandardForm(selected); %>
         </div>
 
     </div>
