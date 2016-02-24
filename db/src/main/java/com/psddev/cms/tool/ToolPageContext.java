@@ -2561,7 +2561,7 @@ public class ToolPageContext extends WebPageContext {
                     "data-generic-argument-index", field.getGenericArgumentIndex(),
                     "data-dynamic-placeholder", ui.getPlaceholderDynamicText(),
                     "data-dynamic-field-name", field.getInternalName(),
-                    "data-label", value != null ? getObjectLabel(value) : null,
+                    "data-label", value != null ? getObjectLabelOrDefault(value, ToolPageContext.DEFAULT_OBJECT_LABEL) : null,
                     "data-pathed", ToolUi.isOnlyPathed(field),
                     "data-preview", getPreviewThumbnailUrl(value),
                     "data-searcher-path", ui.getInputSearcherPath(),
