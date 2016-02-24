@@ -601,8 +601,8 @@ if (!isValueExternal) {
                         "class", expanded ? "expanded" : null,
                         "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
-                        "data-label", wp.getObjectLabel(item),
-                        
+                        "data-label", wp.getObjectLabelOrDefault(item, ToolPageContext.DEFAULT_OBJECT_LABEL),
+
                         // Add the image url for the preview thumbnail, plus the field name that provided the thumbnail
                         // so if that field is changed the front-end knows that the thumbnail should also be updated
                         "data-preview", wp.getPreviewThumbnailUrl(item),
