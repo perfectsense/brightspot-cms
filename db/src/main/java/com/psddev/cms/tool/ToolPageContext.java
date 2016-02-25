@@ -1749,7 +1749,7 @@ public class ToolPageContext extends WebPageContext {
                                             writeStart("a",
                                                     "href", cmsUrl("/profilePanel"),
                                                     "target", "profilePanel");
-                                                writeHtml("Profile");
+                                                writeHtml(localize(ToolUser.class, "action.profilePanel"));
                                             writeEnd();
                                         writeEnd();
 
@@ -1822,7 +1822,7 @@ public class ToolPageContext extends WebPageContext {
                                             "class", "icon icon-object-toolUser",
                                             "href", cmsUrl("/misc/settings.jsp"),
                                             "target", "misc");
-                                        writeHtml("Profile");
+                                        writeHtml(localize(ToolUser.class, "action.miscSettings"));
                                     writeEnd();
                                 writeEnd();
 
@@ -1830,7 +1830,7 @@ public class ToolPageContext extends WebPageContext {
                                     writeStart("a",
                                             "class", "action-logOut",
                                             "href", cmsUrl("/misc/logOut.jsp"));
-                                        writeHtml("Log Out");
+                                        writeHtml(localize(ToolUser.class, "action.logOut"));
                                     writeEnd();
                                 writeEnd();
                             writeEnd();
