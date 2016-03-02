@@ -53,6 +53,11 @@ public class Directory extends Record {
         }
         path = "/" + path + "/";
         path = StringUtils.replaceAll(path, "/(?:/+|\\./)", "/");
+        try {
+            path = StringUtils.decodeUri(path);
+        } catch (IllegalArgumentException exception) {
+            //ignore, user might be typing a "%20" and an exception will be thrown as they type "%"
+        }
         return path;
     }
 
