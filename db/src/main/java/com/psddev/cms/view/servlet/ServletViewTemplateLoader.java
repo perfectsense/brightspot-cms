@@ -1,7 +1,7 @@
 package com.psddev.cms.view.servlet;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.servlet.ServletContext;
@@ -14,6 +14,8 @@ import com.psddev.dari.util.CodeUtils;
  */
 public class ServletViewTemplateLoader extends UrlViewTemplateLoader {
 
+    private static final String TEMPLATE_NOT_FOUND_MESSAGE_FORMAT = "Could not find template at path [%s]!";
+
     private ServletContext servletContext;
 
     /**
@@ -24,12 +26,20 @@ public class ServletViewTemplateLoader extends UrlViewTemplateLoader {
     }
 
     @Override
-    public InputStream getTemplate(String path) {
-        return CodeUtils.getResourceAsStream(servletContext, path);
+    public InputStream getTemplate(String path) throws IOException{
+        InputStream template = CodeUtils.getResourceAsStream(servletContext, path);
+        if (template == null) {
+            throw new IOException(String.format(TEMPLATE_NOT_FOUND_MESSAGE_FORMAT, path));
+        }
+        return template;
     }
 
     @Override
-    protected URL getTemplateUrl(String path) throws MalformedURLException {
-        return CodeUtils.getResource(servletContext, path);
+    protected URL getTemplateUrl(String path) throws IOException {
+        URL templateUrl = CodeUtils.getResource(servletContext, path);
+        if (templateUrl == null) {
+            throw new IOException(String.format(TEMPLATE_NOT_FOUND_MESSAGE_FORMAT, path));
+        }
+        return templateUrl;
     }
 }

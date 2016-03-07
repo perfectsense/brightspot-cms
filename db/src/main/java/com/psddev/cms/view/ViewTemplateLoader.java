@@ -13,7 +13,7 @@ public interface ViewTemplateLoader {
      * {@link java.io.InputStream} object.
      *
      * @param path the path to the template.
-     * @return the template as a stream.
+     * @return the template as a stream. Never {@code null}.
      * @throws IOException if a problem occurred fetching the template at the given path.
      */
     InputStream getTemplate(String path) throws IOException;

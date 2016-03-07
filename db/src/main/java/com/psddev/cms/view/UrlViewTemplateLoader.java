@@ -21,7 +21,7 @@ public abstract class UrlViewTemplateLoader implements ViewTemplateLoader {
      * Returns the template located at the named path as a URL.
      *
      * @param path the path to the template.
-     * @return the template URL.
+     * @return the template URL. Never {@code null}.
      * @throws IOException if a problem occurred fetching the URL for the given path.
      */
     protected abstract URL getTemplateUrl(String path) throws IOException;
