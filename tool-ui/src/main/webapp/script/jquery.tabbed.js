@@ -105,7 +105,7 @@ $.plugin2('tabbed', {
 
             if (urlMatch) {
                 urlMatch = urlMatch[2];
-                urlMatch = urlMatch.replace(/\%20/g, ' ');
+                urlMatch = decodeURIComponent(urlMatch);                
 
                 if (urlMatch) {
                     $tabs.find('> li > a').each(function() {
