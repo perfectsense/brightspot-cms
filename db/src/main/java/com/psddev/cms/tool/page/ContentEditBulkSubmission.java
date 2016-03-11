@@ -7,14 +7,25 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
+import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.Task;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+
+import java.util.stream.Collectors;
+
+import javax.servlet.ServletException;
 
 public class ContentEditBulkSubmission extends Record {
 
@@ -35,6 +46,7 @@ public class ContentEditBulkSubmission extends Record {
     private Set<String> clears;
     private long successes;
     private long failures;
+    private BulkErrorRecord bulkErrorRecord;
 
     @Indexed
     private Date finishDate;
@@ -139,6 +151,14 @@ public class ContentEditBulkSubmission extends Record {
         this.failures = failures;
     }
 
+    public BulkErrorRecord getBulkErrorRecord() {
+        return bulkErrorRecord;
+    }
+
+    public void setBulkErrorRecord(BulkErrorRecord bulkErrorRecord) {
+        this.bulkErrorRecord = bulkErrorRecord;
+    }
+
     public Date getFinishDate() {
         return finishDate;
     }
@@ -238,8 +258,47 @@ public class ContentEditBulkSubmission extends Record {
                         Content.Static.publish(item, site, user);
                         setSuccesses(getSuccesses() + 1);
 
-                    } catch (Exception error) {
+                    } catch (Exception e) {
                         setFailures(getFailures() + 1);
+
+                        //Save first error
+                        if (ObjectUtils.isBlank(getBulkErrorRecord())) {
+
+                            BulkErrorRecord bulkErrorRecord = new BulkErrorRecord();
+                            bulkErrorRecord.setRecordId(itemState.getId());
+                            bulkErrorRecord.setRecordLabel(itemState.getLabel());
+
+                            Throwable error = e;
+                            if (error instanceof ServletException) {
+                                Throwable cause = error.getCause();
+                                if (cause != null) {
+                                    error = cause;
+                                }
+                            }
+
+                            List<BulkErrorCause> bulkErrorCauseList = new ArrayList<>();
+
+                            List<Throwable> causes = new ArrayList<>();
+                            for (; error != null; error = error.getCause()) {
+                                causes.add(error);
+                            }
+
+                            Collections.reverse(causes);
+                            for (Throwable cause : causes) {
+                                BulkErrorCause bulkErrorCause = new BulkErrorCause();
+                                bulkErrorCause.setName(cause.getClass().getName());
+                                bulkErrorCause.setMessage(cause.getMessage());
+
+                                bulkErrorCause.setStackElements(Arrays.stream(cause.getStackTrace())
+                                        .map(element -> element.toString())
+                                        .filter(element -> StringUtils.isBlank(element))
+                                        .collect(Collectors.toList()));
+                                bulkErrorCauseList.add(bulkErrorCause);
+                            }
+                            bulkErrorRecord.setBulkErrorCauses(bulkErrorCauseList);
+                            setBulkErrorRecord(bulkErrorRecord);
+
+                        }
                     }
 
                     save();
@@ -249,6 +308,72 @@ public class ContentEditBulkSubmission extends Record {
                 setFinishDate(new Date());
                 save();
             }
+        }
+    }
+
+    @Embedded
+    public static class BulkErrorRecord extends Record {
+        private UUID recordId;
+
+        private String recordLabel;
+
+        private List<BulkErrorCause> bulkErrorCauses;
+
+        public UUID getRecordId() {
+            return recordId;
+        }
+
+        public void setRecordId(UUID recordId) {
+            this.recordId = recordId;
+        }
+
+        public String getRecordLabel() {
+            return recordLabel;
+        }
+
+        public void setRecordLabel(String recordLabel) {
+            this.recordLabel = recordLabel;
+        }
+
+        public List<BulkErrorCause> getBulkErrorCauses() {
+            return bulkErrorCauses;
+        }
+
+        public void setBulkErrorCauses(List<BulkErrorCause> bulkErrorCauses) {
+            this.bulkErrorCauses = bulkErrorCauses;
+        }
+    }
+
+    @Embedded
+    public static class BulkErrorCause extends Record {
+        private String name;
+
+        private String message;
+
+        private List<String> stackElements;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public List<String> getStackElements() {
+            return stackElements;
+        }
+
+        public void setStackElements(List<String> stackElements) {
+            this.stackElements = stackElements;
         }
     }
 }
