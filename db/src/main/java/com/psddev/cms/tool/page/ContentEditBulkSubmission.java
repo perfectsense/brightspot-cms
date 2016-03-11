@@ -258,7 +258,7 @@ public class ContentEditBulkSubmission extends Record {
                         Content.Static.publish(item, site, user);
                         setSuccesses(getSuccesses() + 1);
 
-                    } catch (Exception e) {
+                    } catch (Exception exception) {
                         setFailures(getFailures() + 1);
 
                         //Save first error
@@ -268,19 +268,19 @@ public class ContentEditBulkSubmission extends Record {
                             bulkErrorRecord.setRecordId(itemState.getId());
                             bulkErrorRecord.setRecordLabel(itemState.getLabel());
 
-                            Throwable error = e;
-                            if (error instanceof ServletException) {
-                                Throwable cause = error.getCause();
+                            Throwable throwable = exception;
+                            if (throwable instanceof ServletException) {
+                                Throwable cause = throwable.getCause();
                                 if (cause != null) {
-                                    error = cause;
+                                    throwable = cause;
                                 }
                             }
 
                             List<BulkErrorCause> bulkErrorCauseList = new ArrayList<>();
 
                             List<Throwable> causes = new ArrayList<>();
-                            for (; error != null; error = error.getCause()) {
-                                causes.add(error);
+                            for (; throwable != null; throwable = throwable.getCause()) {
+                                causes.add(throwable);
                             }
 
                             Collections.reverse(causes);
