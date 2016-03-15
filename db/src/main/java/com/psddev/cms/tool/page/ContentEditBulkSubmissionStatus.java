@@ -65,9 +65,45 @@ public class ContentEditBulkSubmissionStatus extends PageServlet {
                     }
 
                     page.writeStart("div", "class", "message message-success");
-                    page.writeHtml(page.localize(ContentEditBulkSubmissionStatus.class, "message.finished"));
+                    page.writeHtml(page.localize(ContentEditBulkSubmissionStatus.class, "message.finished") + " ");
                     writeSubmission(page, submission);
                     page.writeEnd();
+
+                    if (!ObjectUtils.isBlank(submission.getBulkErrorRecord())) {
+                        ContentEditBulkSubmission.BulkErrorRecord bulkErrorRecord = submission.getBulkErrorRecord();
+
+                        page.writeStart("h2");
+                            page.writeHtml(page.localize("com.psddev.cms.tool.page.content.Errors", "error.bulkSave"));
+                            page.writeHtml(" : ");
+                            page.writeStart("a" , "href", String.format("%scontent/edit.jsp?id=%s", page.getCmsTool().getDefaultToolUrl() != null ? page.getCmsTool().getDefaultToolUrl() : "/cms/", bulkErrorRecord.getRecordId()));
+                                    page.writeHtml(bulkErrorRecord.getRecordLabel());
+                            page.writeEnd();
+                        page.writeEnd();
+
+                        page.writeStart("div", "class", "message message-error");
+                            page.writeStart("li");
+                                page.writeStart("ul", "class", "exception");
+                                for (ContentEditBulkSubmission.BulkErrorCause bulkErrorCause : bulkErrorRecord.getBulkErrorCauses()) {
+                                    page.writeStart("li");
+                                        page.write(page.h(bulkErrorCause.getName()));
+                                        page.write(": ");
+                                        page.write(page.h(bulkErrorCause.getMessage()));
+                                        if (!ObjectUtils.isBlank(bulkErrorCause.getStackElements())) {
+                                            page.writeStart("ul", "class", "stackTrace");
+                                                for (String stackTraceElement : bulkErrorCause.getStackElements()) {
+                                                    page.writeStart("li");
+                                                    page.h(stackTraceElement);
+                                                    page.writeEnd();
+                                                }
+                                            page.writeEnd();
+                                        }
+                                    page.writeEnd();
+                                }
+                            page.writeEnd();
+                        page.writeEnd();
+
+                        page.writeEnd();
+                    }
                 }
             }
             page.writeEnd();
