@@ -696,7 +696,7 @@ define([
                     if (rightmostMark) {
 
                         styleObj = self.classes[rightmostMark.className];
-                        if (styleObj && styleObj.element) {
+                        if (styleObj && styleObj.element && !styleObj.internal) {
                             context[styleObj.element] = true;
                         }
                         
