@@ -94,21 +94,29 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 $element.addClass('state-loaded');
               }
 
-              if (text === null || text === '') {
-                return;
+              //If text is missing set to empty to compare & replace below
+              if (text === null) {
+                text = '';
               }
 
               $element.closest('.message').toggle(text !== '');
 
-              if ($element.is('[data-dynamic-text]')) {
-                $element.text(text);
+              var $previousText = $element.attr('data-previous-text');
 
-              } else if ($element.is('[data-dynamic-html]')) {
-                $element.html(text);
+              //Replace only when text has changed
+              if ($previousText === null || $previousText !== text) {
+                if ($element.is('[data-dynamic-text]')) {
+                    $element.text(text);
 
-              } else if ($element.is('[data-dynamic-placeholder]')) {
-                $element.prop('placeholder', text);
+                } else if ($element.is('[data-dynamic-html]')) {
+                    $element.html(text);
+
+                } else if ($element.is('[data-dynamic-placeholder]')) {
+                    $element.prop('placeholder', text);
+                }
               }
+
+              $element.attr('data-previous-text', text);
             });
 
             $form.resize();

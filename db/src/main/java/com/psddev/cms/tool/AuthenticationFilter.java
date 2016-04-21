@@ -294,23 +294,8 @@ public class AuthenticationFilter extends AbstractFilter {
         }
 
         public static boolean requireUser(ServletContext context, HttpServletRequest request, HttpServletResponse response) throws IOException {
-            String toolUrlPrefix = Settings.get(String.class, ToolPageContext.TOOL_URL_PREFIX_SETTING);
 
-            if (!ObjectUtils.isBlank(toolUrlPrefix)
-                    && !new UrlBuilder(request)
-                    .currentScheme()
-                    .currentHost()
-                    .currentPath()
-                    .toString()
-                    .startsWith(toolUrlPrefix)) {
-
-                response.sendRedirect(
-                        StringUtils.removeEnd(toolUrlPrefix, "/")
-                                + new UrlBuilder(request)
-                                .currentPath()
-                                .currentParameters()
-                                .toString());
-
+            if (requireToolUrlPrefix(context, request, response)) {
                 return true;
             }
 
@@ -375,6 +360,29 @@ public class AuthenticationFilter extends AbstractFilter {
                 return true;
             }
 
+            return false;
+        }
+
+        public static boolean requireToolUrlPrefix(ServletContext context, HttpServletRequest request, HttpServletResponse response) throws IOException {
+            String toolUrlPrefix = Settings.get(String.class, ToolPageContext.TOOL_URL_PREFIX_SETTING);
+
+            if (!ObjectUtils.isBlank(toolUrlPrefix)
+                    && !new UrlBuilder(request)
+                    .currentScheme()
+                    .currentHost()
+                    .currentPath()
+                    .toString()
+                    .startsWith(toolUrlPrefix)) {
+
+                response.sendRedirect(
+                        StringUtils.removeEnd(toolUrlPrefix, "/")
+                                + new UrlBuilder(request)
+                                .currentPath()
+                                .currentParameters()
+                                .toString());
+
+                return true;
+            }
             return false;
         }
 

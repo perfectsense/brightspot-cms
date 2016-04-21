@@ -29,12 +29,6 @@ if (wp.requireUser()) {
 
 String pageId = wp.createId();
 
-String objectFormId = wp.createId();
-String objectPreviewId = wp.createId();
-
-String editObjectFormId = wp.createId();
-String viewObjectPreviewId = wp.createId();
-
 // init enhancement object
 Object object = wp.findOrReserve();
 State state = State.getInstance(object);
@@ -148,10 +142,6 @@ if (object != null && wp.isFormPost()) {
                     wp.writeEnd();
                 }
             }
-
-        } else if (wp.param(boolean.class, "isEditObject")) {
-            wp.updateUsingParameters(object);
-            wp.publish(object);
         }
 
     } catch (Exception ex) {
@@ -183,7 +173,11 @@ if (object == null) {
         wp.writeEnd();
 
     } else {
-        wp.writeFormHeading(object);
+        wp.writeStart("h1");
+            wp.writeHtml("Edit ");
+            wp.writeTypeLabel(object);
+            wp.writeHtml(" Enhancement Options");
+        wp.writeEnd();
     }
 
     // -1 accounts for `object` field if object is isntanceof Reference
@@ -204,44 +198,15 @@ if (object == null) {
             wp.writeElement("input", "type", "hidden", "name", "refId", "value", ref.getId());
             wp.writeSomeFormFields(ref, false, null, Arrays.asList("record"));
         }
+
+        if (isRichTextElement) {
+            wp.writeFormFields(object);
+        }
         %>
-
-        <%-- Object Preview --%>
-        <p id="<%= editObjectFormId %>">
-            <a target="_top" class="action action-edit" href="javascript:;">
-                <% wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Enhancement", "action.edit")); %>
-            </a>
-        </p>
-        <div id="<%= objectPreviewId %>">
-            <div class="rte-enhancement-label">
-                <% if (state.getPreview() != null) { %>
-                    <figure style="height:300px;">
-                        <img src="<%= state.getPreview().getPublicUrl() %>" style="max-height:100%;max-width:100%;"/>
-                        <figcaption>
-                            <%= wp.h(state.getLabel()) %>
-                        </figcaption>
-                    </figure>
-                <% } else { %>
-                    <%= wp.h(state.getLabel()) %>
-                <% } %>
-            </div>
-        </div>
-
-        <% if (!isRichTextElement) { %>
-            <%-- Object Edit Form --%>
-            <p id="<%= viewObjectPreviewId %>" style="display:none;">
-                <a target="_top" class="action action-cancel" href="javascript:;">
-                    <% wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Enhancement", "action.cancel")); %>
-                </a>
-            </p>
-        <% } %>
-        <div id="<%= objectFormId %>" style="display:none;">
-            <% wp.writeFormFields(object); %>
-        </div>
 
         <div class="buttons">
             <%
-                if (isRichTextElement && ((RichTextElement) object).shouldCloseOnSave()) {
+                if (!isRichTextElement || ((RichTextElement) object).shouldCloseOnSave()) {
                     wp.writeStart("button",
                             "class", "action action-save",
                             "name", "action-save-and-close",
@@ -259,52 +224,12 @@ if (object == null) {
     </form>
 
     <script type="text/javascript">
-        if (typeof jQuery !== 'undefined') (function($) {
-            var $objectForm = $('#<%= objectFormId %>');
-            var $objectPreview = $('#<%= objectPreviewId %>');
-            var $editObjectForm = $('#<%= editObjectFormId %>');
-            var $viewObjectForm = $('#<%= viewObjectPreviewId %>');
-
-            $objectForm.append($('<input/>', {
-                'type': 'hidden',
-                'name': 'isEditObject',
-                'value': 'false'}));
-
-            $viewObjectForm.click(function(evt) {
-                $viewObjectForm.hide();
-                $editObjectForm.show();
-
-                $objectForm.hide();
-                $objectPreview.show();
-
-                $objectForm.find('input[name="isEditObject"]').val(false);
-                $(window).resize();
-            });
-
-            $editObjectForm.click(function(evt) {
-                $editObjectForm.hide();
-                $viewObjectForm.show();
-
-                $objectPreview.hide();
-                $objectForm.show();
-
-                $objectForm.find('input[name="isEditObject"]').val(true);
-                $(window).resize();
-            });
-
-            <% if (refFieldCount == 0 || state.isNew()) { %>
-                $editObjectForm.click();
-            <% } %>
-
-            <% if (refFieldCount == 0) { %>
-                $viewObjectForm.remove();
-            <% } %>
-        })(jQuery);
 
         // Update the rich text editor so it points to this enhancement
         if (typeof jQuery !== 'undefined') (function($) {
 
-            var $source = $('#<%= pageId %>').popup('source');
+            var $page = $('#<%= pageId %>');
+            var $source = $page.popup('source');
             var id = '<%= state.getId() %>';
             var label = '<%= wp.js(state.getLabel()) %>';
             var preview = '<%= wp.js(state.getPreview() != null ? state.getPreview().getPublicUrl() : null) %>';
@@ -350,11 +275,15 @@ if (object == null) {
                 if (rte2) {
 
                     // Save the enhancement data on the enhancement
-                    // Enhancement will be updated automaticaly when the popup closes
+                    // Enhancement will be updated automatically when the popup closes
                     rte2.enhancementSetReference($source, reference);
 
                 }
             }
+
+            <% if (!isRichTextElement && wp.isFormPost() && wp.getErrors().isEmpty()) { %>
+                $page.popup('close');
+            <% } %>
 
         })(jQuery);
     </script>

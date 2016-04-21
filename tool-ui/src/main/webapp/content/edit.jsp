@@ -28,6 +28,7 @@ com.psddev.cms.tool.Widget,
 com.psddev.dari.util.Settings,
 
 com.psddev.dari.db.ObjectField,
+com.psddev.dari.db.ObjectIndex,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.Singleton,
@@ -46,6 +47,7 @@ java.util.List,
 java.util.Map,
 java.util.Set,
 java.util.UUID,
+java.util.function.Consumer,
 
 org.joda.time.DateTime,
 com.google.common.collect.ImmutableMap" %><%
@@ -177,6 +179,21 @@ if (copy != null) {
     State editingState = State.getInstance(editing);
     editingState.setValues(State.getInstance(copy).getSimpleValues());
     editingState.setId(null);
+
+    Consumer<ObjectIndex> removeVisibilityIndexValues = index -> {
+        if (index.isVisibility()) {
+            index.getFields().forEach(editingState::remove);
+        }
+    };
+
+    editingState.getDatabase().getEnvironment().getIndexes().forEach(removeVisibilityIndexValues);
+
+    ObjectType editingType = editingState.getType();
+
+    if (editingType != null) {
+        editingType.getIndexes().forEach(removeVisibilityIndexValues);
+    }
+
     editingState.as(Directory.ObjectModification.class).clearPaths();
     for (Site consumer : editingState.as(Site.ObjectModification.class).getConsumers()) {
         editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);

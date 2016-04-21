@@ -93,7 +93,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             $(document.body).append($frame);
             $form.attr('target', frameName);
             $frame.load(function () {
-              var $message = $('.contentForm-main > .widget-content > .message', this.contentDocument);
+              var $message = $('.contentForm-main > .widget-content > .message:not(.message-info)', this.contentDocument);
 
               if ($message.length > 0) {
                 $toolMessage.html($message.clone());
@@ -127,6 +127,12 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
               $form.find('.state-changed').removeClass('state-changed');
               $form.find('.toBeRemoved').remove();
+
+              var OLD_VALUES_SELECTOR = '.contentForm > input[type="hidden"][name$="/oldValues"]';
+              var $oldValuesInput = $(OLD_VALUES_SELECTOR);
+
+              $oldValuesInput.val($(OLD_VALUES_SELECTOR, this.contentDocument).val());
+              $oldValuesInput.change();
 
               $form.removeAttr('target');
               $frame.remove();

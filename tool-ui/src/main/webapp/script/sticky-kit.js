@@ -83,6 +83,7 @@
                 }
                 if (offset_top_function) {
                     offset_top = offset_top_function();
+                    offset = Math.min(offset_top, offset);
                 }
                 last_scroll_height = doc.height();
                 border_top = parseInt(parent.css("border-top-width"), 10);

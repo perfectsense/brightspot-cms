@@ -78,6 +78,7 @@ public class Search extends Record {
     public static final String SORT_PARAMETER = "s";
     public static final String SUGGESTIONS_PARAMETER = "sg";
     public static final String TYPES_PARAMETER = "rt";
+    public static final String NEW_ITEM_IDS_PARAMETER = "ni";
 
     public static final String NEWEST_SORT_LABEL = "Newest";
     public static final String NEWEST_SORT_VALUE = "_newest";
@@ -105,6 +106,7 @@ public class Search extends Record {
     private boolean suggestions;
     private long offset;
     private int limit;
+    private Set<UUID> newItemIds;
 
     public Search() {
     }
@@ -186,6 +188,7 @@ public class Search extends Record {
         setSuggestions(page.param(boolean.class, SUGGESTIONS_PARAMETER));
         setOffset(page.param(long.class, OFFSET_PARAMETER));
         setLimit(page.paramOrDefault(int.class, LIMIT_PARAMETER, 10));
+        setNewItemIds(new LinkedHashSet<>(page.params(UUID.class, NEW_ITEM_IDS_PARAMETER)));
 
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.initializeSearch(this, page);
@@ -380,6 +383,17 @@ public class Search extends Record {
 
     public void setLimit(int limit) {
         this.limit = limit;
+    }
+
+    public Set<UUID> getNewItemIds() {
+        if (newItemIds == null) {
+            newItemIds = new LinkedHashSet<>();
+        }
+        return newItemIds;
+    }
+
+    public void setNewItemIds(Set<UUID> newItemIds) {
+        this.newItemIds = newItemIds;
     }
 
     public Set<ObjectType> findValidTypes() {
@@ -737,11 +751,15 @@ public class Search extends Record {
                     String prefix = type.getInternalName() + "/";
 
                     for (String field : type.getLabelFields()) {
-                        if (type.getIndex(field) != null) {
+
+                        ObjectIndex objectIndex = type.getIndex(field);
+                        if (objectIndex != null) {
+
+                            String comparisonOperator = "contains" + (objectIndex.isCaseSensitive() ? "" : "[c]");
                             predicate = CompoundPredicate.combine(
                                     PredicateParser.OR_OPERATOR,
                                     predicate,
-                                    PredicateParser.Static.parse(prefix + field + " contains[c] ?", queryString));
+                                    PredicateParser.Static.parse(prefix + field + " " + comparisonOperator + " ?", queryString));
                         }
                     }
                 }

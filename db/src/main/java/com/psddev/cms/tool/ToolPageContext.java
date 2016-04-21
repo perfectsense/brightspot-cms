@@ -1908,7 +1908,11 @@ public class ToolPageContext extends WebPageContext {
                         writeStart("div",
                                 "class", "toolBackground",
                                 "style", cssString(
-                                        "background-image", "url(" + backgroundImage.getPublicUrl() + ")"));
+                                        "background-image", "url("
+                                                + (JspUtils.isSecure(getRequest())
+                                                    ? backgroundImage.getSecurePublicUrl()
+                                                    : backgroundImage.getPublicUrl())
+                                                + ")"));
                         writeEnd();
                     }
     }
@@ -3325,19 +3329,25 @@ public class ToolPageContext extends WebPageContext {
     }
 
     private void redirectOnWorkflow(String url, Object... parameters) throws IOException {
-        if (getUser().isReturnToDashboardOnWorkflow()) {
+        if (!param(boolean.class, "_frame") && getUser().isReturnToDashboardOnWorkflow()) {
             getResponse().sendRedirect(cmsUrl("/"));
+
         } else {
             redirectOnSave(url, parameters);
         }
     }
 
     private void redirectOnSave(String url, Object... parameters) throws IOException {
-        if (getUser().isReturnToDashboardOnSave()) {
+        boolean frame = param(boolean.class, "_frame");
+
+        if (!frame && getUser().isReturnToDashboardOnSave()) {
             getResponse().sendRedirect(cmsUrl("/"));
 
         } else {
-            getResponse().sendRedirect(StringUtils.addQueryParameters(url(url, parameters), "editAnyway", null));
+            getResponse().sendRedirect(StringUtils.addQueryParameters(
+                    url(url, parameters),
+                    "_frame", frame ? Boolean.TRUE : null,
+                    "editAnyway", null));
         }
     }
 
@@ -3520,21 +3530,30 @@ public class ToolPageContext extends WebPageContext {
                 state.as(Variation.Data.class).setInitialVariation(site.getDefaultVariation());
             }
 
+            if (draft == null
+                    && (state.isNew()
+                    || state.as(Content.ObjectModification.class).isDraft())) {
+
+                state.as(Content.ObjectModification.class).setDraft(true);
+            }
+
+            Map<String, Map<String, Object>> differences = Draft.findDifferences(
+                    state.getDatabase().getEnvironment(),
+                    findOldValuesInForm(state),
+                    state.getSimpleValues());
+
             if (draft == null) {
                 if (state.isNew()
                         || state.as(Content.ObjectModification.class).isDraft()) {
-                    state.as(Content.ObjectModification.class).setDraft(true);
-                    publish(state);
+                    publishDifferences(object, differences);
                     redirectOnSave("",
-                            "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                             "id", state.getId(),
                             "copyId", null);
                     return true;
 
                 } else if (state.as(Workflow.Data.class).getCurrentState() != null) {
-                    publish(state);
-                    redirectOnSave("",
-                            "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null);
+                    publishDifferences(object, differences);
+                    redirectOnSave("");
                     return true;
                 }
 
@@ -3542,7 +3561,7 @@ public class ToolPageContext extends WebPageContext {
                 draft.setOwner(getUser());
 
             } else if (draft.isNewContent()) {
-                publish(object);
+                publishDifferences(object, differences);
                 redirectOnSave("");
                 return true;
             }
@@ -3551,7 +3570,6 @@ public class ToolPageContext extends WebPageContext {
             publish(draft);
             getResponse().sendRedirect(url("",
                     "editAnyway", null,
-                    "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                     ToolPageContext.DRAFT_ID_PARAMETER, draft.getId(),
                     ToolPageContext.HISTORY_ID_PARAMETER, null));
             return true;
@@ -3579,6 +3597,7 @@ public class ToolPageContext extends WebPageContext {
 
         State state = State.getInstance(object);
         Site site = getSite();
+        boolean wasDraft = state.as(Content.ObjectModification.class).isDraft();
 
         try {
             updateUsingParameters(object);
@@ -3594,7 +3613,6 @@ public class ToolPageContext extends WebPageContext {
                 state.as(Content.ObjectModification.class).setDraft(true);
                 publish(state);
                 redirectOnSave("",
-                        "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                         "id", state.getId(),
                         "copyId", null);
 
@@ -3607,7 +3625,6 @@ public class ToolPageContext extends WebPageContext {
 
                 getResponse().sendRedirect(url("",
                         "editAnyway", null,
-                        "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                         ToolPageContext.DRAFT_ID_PARAMETER, draft.getId(),
                         ToolPageContext.HISTORY_ID_PARAMETER, null));
             }
@@ -3615,6 +3632,10 @@ public class ToolPageContext extends WebPageContext {
             return true;
 
         } catch (Exception error) {
+            if (!wasDraft) {
+                state.as(Content.ObjectModification.class).setDraft(false);
+            }
+
             getErrors().add(error);
             return false;
         }
@@ -3767,7 +3788,6 @@ public class ToolPageContext extends WebPageContext {
                 publish(draft);
                 state.commitWrites();
                 redirectOnSave("",
-                        "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                         ToolPageContext.DRAFT_ID_PARAMETER, draft.getId());
 
             } else {
@@ -3806,7 +3826,6 @@ public class ToolPageContext extends WebPageContext {
                 publishDifferences(object, differences);
                 state.commitWrites();
                 redirectOnSave("",
-                        "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                         "typeId", state.getTypeId(),
                         "id", state.getId(),
                         "historyId", null,
@@ -3881,7 +3900,6 @@ public class ToolPageContext extends WebPageContext {
             updateUsingParameters(object);
             state.save();
             redirectOnSave("",
-                    "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null,
                     "id", state.getId(),
                     "copyId", null);
             return true;
@@ -4220,10 +4238,10 @@ public class ToolPageContext extends WebPageContext {
      * @see Content.Static#publish(Object, Site, ToolUser)
      */
     public History publish(Object object) {
+        PublishModification.setBroadcast(object, true);
+
         ToolUser user = getUser();
         History history = updateLockIgnored(Content.Static.publish(object, getSite(), user));
-
-        PublishModification.setBroadcast(object, true);
 
         return history;
     }
@@ -4232,10 +4250,10 @@ public class ToolPageContext extends WebPageContext {
      * @see Content.Static#publishDifferences(Object, Map, Site, ToolUser)
      */
     public History publishDifferences(Object object, Map<String, Map<String, Object>> differences) {
+        PublishModification.setBroadcast(object, true);
+
         ToolUser user = getUser();
         History history = updateLockIgnored(Content.Static.publishDifferences(object, differences, getSite(), user));
-
-        PublishModification.setBroadcast(object, true);
 
         return history;
     }

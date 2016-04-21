@@ -259,25 +259,18 @@
 .objectInputs-readOnly {
   opacity: 0.6;
 
-  .contentDiff-sideBySide .objectInputs,
-  .inputContainer-pending,
-  .inputContainer-readOnly,
-  .inputContainer-updated,
-  .objectInputs-readOnly {
+  & & {
     opacity: 1.0;
   }
 
   pointer-events: none;
 
-  input[type='text'],
-  textarea,
   .filePreview a,
   .inputNote a,
   .inputPending a,
   .inputUpdated a,
   .objectId-edit,
   .repeatableLabel,
-  .rte2-codemirror,
   .tabs,
   .tabs-wrapper {
     pointer-events: auto;

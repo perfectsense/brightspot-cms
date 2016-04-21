@@ -454,9 +454,9 @@ define([
                 
             });
             
-            editor.on('changes', $.debounce(200, function(instance, event) {
-                self.triggerChange();
-            }));
+            editor.on('changes', function(instance, event) {
+                self.triggerChange(event);
+            });
 
             editor.on('focus', function(instance, event) {
                 self.$el.trigger('rteFocus', [self]);
@@ -470,12 +470,19 @@ define([
         
         /**
          * Trigger an rteChange event.
+         *
          * This can happen when user types changes into the editor, or if some kind of mark is modified.
+         * When the event is triggered, it is sent additional data: the object for this rte, plus an optional
+         * extra data parameter.
+         *
+         * @param {Object} [extra]
+         * Extra data parameter to pass with the rteChange event.
+         * For example, this could be the CodeMirror change event.
          */
-        triggerChange: function() {
+        triggerChange: function(extra) {
             var self;
             self = this;
-            self.$el.trigger('rteChange', [self]);
+            self.$el.trigger('rteChange', [self, extra]);
         },
 
         
@@ -636,15 +643,23 @@ define([
                     // Find the mark with the rightmost starting character
                     marks.forEach(function(mark){
                         
-                        var isRightmost, markPosition, pos;
+                        var isRightmost, markPosition, pos, styleObj;
                         
                         if (!mark.className) {
                             return;
                         }
-                        // Make sure this class maps to an element (and is not an internal mark like for spelling errors)
-                        if (!self.classes[mark.className]) {
+                        
+                        // Make sure this class maps to an element
+                        styleObj = self.classes[mark.className];
+                        if (!styleObj) {
                             return;
                         }
+                        
+                        // Make sure this style is not for internal use (like track changes)
+                        if (styleObj.internal) {
+                            return;
+                        }
+
                         if (!mark.find) {
                             return;
                         }
@@ -697,7 +712,7 @@ define([
 
                         styleObj = self.classes[rightmostMark.className];
                         if (styleObj && styleObj.element) {
-                            context[styleObj.element] = true;
+                            context[styleObj.element] = styleObj;
                         }
                         
                     } else {
@@ -707,10 +722,11 @@ define([
                         blockStyles = self.blockGetStyles({from:{line:lineNumber, ch:0}, to:{line:lineNumber, ch:0}});
                         foundBlockStyle = false;
                         $.each(blockStyles, function(styleKey) {
-                            var element;
-                            element = self.styles[styleKey].element;
+                            var styleObj = self.styles[styleKey];
+                            var element = styleObj.element;
+
                             if (element) {
-                                context[element] = true;
+                                context[element] = styleObj;
                                 foundBlockStyle = true;
                             }
                         });
@@ -726,18 +742,11 @@ define([
             });
             
             // Convert context object into an array
-            contextArray = [];
-            $.each(context, function(element) {
-                if (element === 'NULL') {
-                }
-                contextArray.push(element);
-            });
-
             if (contextNull) {
-                contextArray.push(null);
+                context[''] = { };
             }
 
-            return contextArray;
+            return context;
         },
         
         
@@ -857,6 +866,10 @@ define([
                 markOptions.addToHistory = true;
                 markOptions.inclusiveLeft = false;
                 markOptions.inclusiveRight = false;
+
+                if (editor.getValue() === '') {
+                    self.insert(' ');
+                }
             }
 
             mark = editor.markText(range.from, range.to, markOptions);
@@ -953,7 +966,7 @@ define([
 
                 // Loop through all the marks defined on this line
                 marks = line.markedSpans || [];
-                marks.forEach(function(mark) {
+                marks.slice(0).reverse().forEach(function(mark) {
 
                     var from, markerOpts, markerOptsNotInclusive, matchesClass, outsideOfSelection, selectionStartsBefore, selectionEndsAfter, styleObj, to;
                     
@@ -1225,6 +1238,10 @@ define([
             
             // Ignore certain styles that are internal only like spelling errors
             if (!self.classes[mark.className]) {
+                return;
+            }
+
+            if (mark.atomic) {
                 return;
             }
             
@@ -2458,12 +2475,13 @@ define([
             // Save the mark in an internal cache so we can use it later to output content.
             mark.options.id = self.enhancementId++;
             self.enhancementCache[ mark.options.id ] = mark;
+
+            self.triggerChange();
             
             // Small delay before refreshing the editor to prevent cursor problems
             setTimeout(function(){
                 self.refresh();
                 mark.changed();
-                self.triggerChange();
             }, 100);
             
             return mark;
@@ -2500,9 +2518,12 @@ define([
             
             if (lineNumber > lineMax) {
                 
-                // Add another line to the end of the editor
+                // Add another line to the end of the editor.
+                // Set the change event origin to "brightspotEnhancementMove" so we know this newline is being
+                // added automatically rather than the user typing (so we don't try to adjust the
+                // position of the enhancement - see enhancementNewlineAdjust()
                 lineLength = editor.getLine(lineMax).length;
-                editor.replaceRange('\n', {line:lineMax, ch:lineLength}, 'brightspotEnhancementMove');
+                editor.replaceRange('\n', {line:lineMax, ch:lineLength}, undefined, 'brightspotEnhancementMove');
                 
             }
 
@@ -2543,6 +2564,8 @@ define([
             self.enhancementRemove(mark);
             
             mark = self.enhancementAdd($content[0], lineNumber, options);
+
+            self.triggerChange();
             
             return mark;
         },
@@ -2565,6 +2588,10 @@ define([
             var lineInfo, lineNumber, self;
 
             self = this;
+
+            if (changeObj.origin === 'brightspotEnhancementMove') {
+                return;
+            }
             
             if (changeObj.from &&
                 changeObj.from.ch === 0 && // change occurred at the first character of the line
@@ -2819,7 +2846,9 @@ define([
             $.each(lineStyles, function(styleKey) {
                 var mark;
                 mark = self.blockGetLineData(styleKey, range.from.line);
-                marks.push(mark);
+                if (mark) {
+                    marks.push(mark);
+                }
             });
         
             // Find all the inline marks for the clicked position
@@ -2830,7 +2859,7 @@ define([
             marks = $.map(marks, function(mark, i) {
                 var styleObj;
                 styleObj = self.classes[mark.className];
-                if (styleObj && (styleObj.onClick || styleObj.void || styleObj.readOnly)) {
+                if (styleObj && (styleObj.onClick || styleObj.void || styleObj.readOnly || styleObj.dropdown)) {
                     // Keep in the array
                     return mark;
                 } else {
@@ -2870,6 +2899,11 @@ define([
                     'class': 'rte2-dropdown-item'
                 }).appendTo(self.$dropdown);
 
+                if (styleObj.dropdown) {
+                    $div.append( styleObj.dropdown(mark) );
+                    return;
+                }
+                
                 $('<span/>', {
                     'class':'rte2-dropdown-label',
                     text: label
@@ -4683,7 +4717,15 @@ define([
                     
                     $.each(keys, function(i, keyName) {
                         keymap[keyName] = function (cm) {
-                            return self.toggleStyle(styleKey);
+                            var $button = self.$el.closest('.rte2-wrapper').find('> .rte2-toolbar [data-rte-style="' + styleKey + '"]').eq(0);
+
+                            if ($button.length > 0) {
+                                $button.click();
+                                return false;
+
+                            } else {
+                                return self.toggleStyle(styleKey);
+                            }
                         };
                     });
                 }
@@ -4951,9 +4993,9 @@ define([
                 annotationEnd = {};
                 
                 if (line.markedSpans) {
-                    
-                    $.each(line.markedSpans, function(key, markedSpan) {
-                        
+
+                    $.each(self.toHTMLSortSpans(line), function(key, markedSpan) {
+
                         var className, endArray, endCh, mark, startArray, startCh, styleObj;
 
                         startCh = markedSpan.from;
@@ -5260,6 +5302,131 @@ define([
             return html;
             
         }, // toHTML
+
+
+        /**
+         * Sort CodeMirror spans in the order that elements should appear in the HTML output.
+         *
+         * The general logic goes like this:
+         * Output elements in the order they are found.
+         * If two elements start on the same character:
+         * Check for context rules to see if a certain order is required
+         * (like element A is allowed to be inside element B).
+         * If no context rules apply, then apply the style in the reverse order
+         * in which it was added to the content (like if bold was applied, then italic,
+         * the output would be <i><b></b></i>.
+         *
+         * @param {Object] line
+         * A CodeMirror line object.
+         */
+        toHTMLSortSpans: function(line) {
+            
+            var self, spans, spansSorted, spansByChar;
+            
+            self = this;
+
+            // First reverse the order of the marks so the last applied will "wrap" any previous marks
+            spans = line.markedSpans.slice(0).reverse();
+
+            // Group the marks by starting character so we can tell if multiple marks start on the same character
+            spansByChar = [];
+            $.each(spans, function() {
+                var char, span;
+                span = this;
+                char = span.from;
+                spansByChar[char] = spansByChar[char] || [];
+                spansByChar[char].push(span);
+            });
+
+            // Bubble sort the marks for each character based on the context
+            $.each(spansByChar, function() {
+                
+                var compare, spans, swapped, temp;
+                spans = this;
+                if (spans.length > 1) {
+                    do {
+                        swapped = false;
+                        for (var i=0; i < spans.length-1; i++) {
+                            compare = self.toHTMLSpanCompare(spans[i], spans[i+1]);
+                            if (compare === 1) {
+                                temp = spans[i];
+                                spans[i] = spans[i+1];
+                                spans[i+1] = temp;
+                                swapped = true;
+                            }
+                        }
+                    } while (swapped);
+                }
+            });
+
+            // Merge spansByChar back into a single ordered array
+            spans = [];
+            $.each(spansByChar, function(char, charSpans){
+                if (charSpans) {
+                    $.each(charSpans, function(i, span){
+                        spans.push(span);
+                    });
+                }
+            });
+
+            return spans;
+        },
+
+        /**
+         * Function that compares the context of two spans.
+         * @returns {Boolean}
+         * 0 if the order should not be changed
+         * -1 if a should come first
+         * 1 if b should come first
+         */
+        toHTMLSpanCompare: function(a, b) {
+                
+            var classA, classB, outsideB, outsideA, self, styleA, styleB;
+
+            self = this;
+            
+            classA = a.marker.className;
+            classB = b.marker.className;
+            
+            styleA = self.classes[classA];
+            styleB = self.classes[classB];
+
+            if (!(styleA && styleB)) {
+                return 0;
+            }
+
+            // Check if styleA is allowed to be inside styleB
+            if (styleA.context) {
+                if ($.inArray(styleB.element, styleA.context) !== -1) {
+                    // a is allowed inside b
+                    outsideB = true;
+                }
+            }
+
+            // Check if styleB is allowed to be inside styleA
+            if (styleB.context) {
+                if ($.inArray(styleA.element, styleB.context) !== -1) {
+                    // b is allowed inside a
+                    outsideA = true;
+                }
+            }
+
+            // Determine which style should be first
+            if (outsideA && outsideB) {
+                // Both are allowed inside the other, so do not change order
+                return 0;
+            } else if (outsideA) {
+                // B is allowed inside A
+                return -1;
+            } else if (outsideB) {
+                // A is allowed inside B
+                return 1;
+            } else {
+                // No context or neither allowed inside the other, so do not change order
+                return 0;
+            }
+                
+        },
 
         
         /**
@@ -5725,7 +5892,7 @@ define([
             // We reverse the order of the annotations because the parsing was done
             // depth first, and we want to create the marks for parent elements before
             // the marks for child elements (so elements can later be created in the same order)
-            $.each(annotations.reverse(), function(i, annotation) {
+            $.each(annotations, function(i, annotation) {
 
                 var styleObj;
 

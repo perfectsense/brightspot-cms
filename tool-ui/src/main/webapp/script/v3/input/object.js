@@ -162,7 +162,7 @@ function($) {
 
       $select = $('<a/>', {
         'class': 'objectId-select',
-        'target': target,
+        'target': target + '-select',
         'click': function() { return !$(this).is('.state-disabled'); },
         'href': searcherPath +
             (searcherPath.indexOf('?') > -1 ? '&' : '?') + 'pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
@@ -175,7 +175,7 @@ function($) {
 
       $edit = $('<a/>', {
         'class': 'objectId-edit',
-        'target': target,
+        'target': target + '-edit',
         'text': 'Edit'
       });
 

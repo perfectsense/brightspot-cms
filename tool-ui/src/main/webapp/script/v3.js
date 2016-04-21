@@ -119,6 +119,7 @@ function() {
   bsp_fixedScrollable.live(document, [
     '.fixedScrollable',
     '.searchResult-list',
+    '.searchResultTaxonomyColumn ul',
     '.popup[name="miscSearch"] .searchFiltersRest',
     '.popup[data-popup-source-class~="objectId-select"] .searchFiltersRest',
     '.popup[data-popup-source-class~="objectId-select"] .searchResultList'
@@ -238,7 +239,7 @@ function() {
     });
   });
 
-  $doc.on('click', '.taxonomyExpand', function() {
+  $doc.on('click', '.searchResultTaxonomyExpand', function() {
     var $this = $(this);
     var selectedClass = 'state-selected';
     $this.closest('ul').find('.' + selectedClass).removeClass(selectedClass);
@@ -681,159 +682,130 @@ function() {
     }
   });
 
-  $doc.on('open', '.popup[data-popup-source-class~="objectId-edit"]', function(event) {
-    var $frame = $(event.target);
+  var OBJECT_EDIT_POPUP_SELECTORS = [
+    '.popup[data-popup-source-class~="objectId-create"]',
+    '.popup[data-popup-source-class~="objectId-edit"]',
+    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-edit"]'
+  ];
+
+  function findObjectEditParentContent($popup) {
+    var $parentPopup = $popup.popup('source').closest('.popup');
+
+    if ($parentPopup.length > 0) {
+      if (OBJECT_EDIT_POPUP_SELECTORS.filter(function (s) { return $parentPopup.is(s); }).length > 0) {
+        return $parentPopup.find('> .content');
+      }
+    }
+
+    return $('.toolContent');
+  }
+
+  $doc.on('open', OBJECT_EDIT_POPUP_SELECTORS, function(event) {
+    var $target = $(event.target);
+    var $popup = $target.popup('container');
 
     // Since the edit popup might contain other popups within it,
     // only run this code when the edit popup is opened
     // (not when the internal popups are opened)
-    if (!$frame.is('.popup[data-popup-source-class~="objectId-edit"]')) {
+    if (OBJECT_EDIT_POPUP_SELECTORS.filter(function (s) { return $popup.is(s); }).length === 0) {
       return;
     }
 
-    var $parent = $frame.popup('source').closest('.popup, .toolContent');
+    if ($.isNumeric($.data($popup[0], 'popup-objectId-edit-scrollTop'))) {
+      return;
+    }
 
-    $frame.popup('container').removeClass('popup-objectId-edit-hide');
-    $parent.addClass('popup-objectId-edit popup-objectId-edit-loading');
+    var scrollTop = $win.scrollTop();
+
+    $.data($popup[0], 'popup-objectId-edit-scrollTop', scrollTop);
+
+    var $parentContent = findObjectEditParentContent($popup);
+
+    $parentContent.css({
+      height: $win.height() + scrollTop,
+      'margin-top': (0 - scrollTop + parseInt($parentContent.css('margin-top'), 10)),
+      overflow: 'hidden'
+    });
+
+    $win.scrollTop(0);
     $win.resize();
   });
 
-  $doc.on('frame-load', '.popup[data-popup-source-class~="objectId-edit"] > .content > .frame', function(event) {
-    var $frame = $(event.target);
-    var frameName = $frame.attr('name');
+  // Add a close button to the content edit publishing widget within a popup.
+  bsp_utils.onDomInsert(document, OBJECT_EDIT_POPUP_SELECTORS.map(function (s) {
+    return s + ' > .content > .frame > .content-edit > .contentForm > .contentForm-aside > .widget-publishing > .widget-controls';
 
-    if (!frameName || frameName.indexOf('objectId-') !== 0) {
-      return;
-    }
-
-    var $parent = $frame.popup('source').closest('.popup, .toolContent');
-
-    $frame.css('opacity', 0);
-
-    // Move the close button to the publishing widget.
-    var $publishingControls = $frame.find('.widget-publishing > .widget-controls');
-
-    if ($publishingControls.length > 0) {
-      $publishingControls.append($('<a/>', {
+  }).join(', '), {
+    insert: function (controls) {
+      $(controls).append($('<a/>', {
         'class': 'widget-publishing-close',
-        'click': function() {
-          $frame.popup('close');
+        'click': function () {
+          $(this).popup('close');
           return false;
         }
       }));
     }
+  });
 
-    // Move the frame into view.
-    var scrollTop = $win.scrollTop();
+  // Add back to link above the content edit form within a popup.
+  bsp_utils.onDomInsert(document, OBJECT_EDIT_POPUP_SELECTORS.map(function (s) {
+    return s + ' > .content';
 
-    $.data($frame[0], 'popup-content-edit-scrollTop', scrollTop);
+  }).join(', '), {
+    insert: function (frame) {
+      var $frame = $(frame);
+      var $source = $frame.popup('source');
+      var text = $source.closest('.contentForm').find('> .contentForm-main > .widget > h1, > .withLeftNav > .main > .widget > h1').eq(0).clone().find('option:not(:selected)').remove().end().text();
 
-    scrollTop += $('.toolHeader').outerHeight(true);
+      if (!text) {
+        text = $source.closest('.frame').find('> h1').text();
+      }
 
-    setTimeout(function() {
-      var sourceOffset = $(event.target).popup('source').offset();
-
-      $frame.popup('container').css({
-        'top': scrollTop
-      });
-
-      $parent.removeClass('popup-objectId-edit-loading');
-      $parent.addClass('popup-objectId-edit-loaded');
+      text = text ? 'Back to ' + text : 'Back';
 
       $frame.prepend($('<a/>', {
         'class': 'popup-objectId-edit-heading',
-        'text': 'Back to ' + $parent.find('.contentForm-main > .widget > h1, > .withLeftNav > .main > .widget > h1').eq(0).clone().find('option:not(:selected)').remove().end().text(),
+        'text': text,
         'click': function() {
-          $frame.popup('close');
+          $(this).popup('close');
           return false;
         }
       }));
-
-      $frame.css({
-        'transform-origin': (sourceOffset.left / $win.width() * 100) + '% ' + ((sourceOffset.top - scrollTop) / $frame.outerHeight(true) * 100) + '%'
-      });
-
-      $frame.velocity({
-        'opacity': 0.5,
-        'scale': 0.01
-
-      }, {
-        'duration': 1,
-        'complete': function() {
-          $frame.velocity({
-            'opacity': 1,
-            'scale': 1
-
-          }, {
-            'duration': 300,
-            'easing': [ 0.175, 0.885, 0.32, 1.275 ],
-            'complete': function () {
-               $frame.css({
-                 'opacity': '',
-                 'transform': '',
-                 'transform-origin': ''
-               });
-            }
-          });
-        }
-      });
-    }, 1500);
+    }
   });
 
-  $doc.on('close', '.popup[data-popup-source-class~="objectId-edit"]', function(event) {
-    var $frame = $(event.target);
+  $doc.on('close', OBJECT_EDIT_POPUP_SELECTORS.join(', '), function(event) {
+    var $target = $(event.target);
+    var $popup = $target.popup('container')
 
     // Since the edit popup might contain other popups within it,
     // only run this code when the edit popup is opened
     // (not when the internal popups are opened)
-    if (!$frame.is('.popup[data-popup-source-class~="objectId-edit"]')) {
+    if (OBJECT_EDIT_POPUP_SELECTORS.filter(function (s) { return $popup.is(s); }).length === 0) {
       return;
     }
-
-    var $source = $frame.popup('source');
-    var $popup = $frame.popup('container');
 
     if ($.data($popup[0], 'popup-close-cancelled')) {
       return;
     }
 
-    var sourceOffset = $source.offset();
-    var $parent = $source.closest('.popup, .toolContent');
+    var $parentContent = findObjectEditParentContent($popup);
 
-    $popup.addClass('popup-objectId-edit-hiding');
-    $parent.removeClass('popup-objectId-edit-loading');
-    $parent.removeClass('popup-objectId-edit-loaded');
-
-    $frame.css({
-      'transform-origin': (sourceOffset.left / $win.width() * 100) + '% ' + ((sourceOffset.top - $win.scrollTop() - $('.toolHeader').outerHeight(true)) / $frame.outerHeight(true) * 100) + '%'
+    $parentContent.css({
+      height: '',
+      'margin-top': '',
+      overflow: ''
     });
 
-    $frame.velocity({
-      'scale': 1
+    $win.resize();
 
-    }, {
-      'duration': 1,
-      'complete': function() {
-        $frame.velocity({
-          'opacity': 0.5,
-          'scale': 0.01
+    var scrollTop = $.data($popup[0], 'popup-objectId-edit-scrollTop');
 
-        }, {
-          'duration': 300,
-          'easing': [ 0.6, -0.28, 0.735, 0.045 ],
-          'complete': function() {
-            $popup.removeClass('popup-objectId-edit-hiding');
-            $popup.addClass('popup-objectId-edit-hide');
-            $frame.css({
-              'opacity': '',
-              'transform': '',
-              'transform-origin': ''
-            });
-            $popup.remove();
-          }
-        })
-      }
-    })
+    $.removeData($popup[0], 'popup-objectId-edit-scrollTop');
+
+    if ($.isNumeric(scrollTop)) {
+      $win.scrollTop(scrollTop);
+    }
   });
 
   $doc.ready(function() {

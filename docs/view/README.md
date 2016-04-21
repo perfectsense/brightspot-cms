@@ -1,91 +1,270 @@
-# View Annotations
+---
+
+# View System
+
+---
+
+### Model
 
 Given a simple article class:
 
-    public class Article extends Content {
-    
-        private String headline;
-        
-        public String getHeadline() {
-            return headline;
-        }
-           
-        public List<Module> getRightModules() {
-            return Query.from(Module.class).selectAll();
-        }
+```java
+public class Article extends Content {
+
+    private String headline;
+
+    public String getHeadline() {
+        return headline;
     }
-   
+
+    public List<Module> getRightModules() {
+        return Query.from(Module.class).selectAll();
+    }
+}
+```
+
+---
+
+### Annotations
+
 Old renderer annotations:
 
-    @Renderer.LayoutPath("/two-column-page.jsp")
-    @Renderer.Path("/article.jsp")
-    public class Article
-    
-And the new view annotations:
+```java
+@Renderer.Path(value = "/article.jsp", context = "left")
+@Renderer.LayoutPath("/two-column-page.jsp")
+public class Article ...
+```
 
-    @ViewMapping(value = ObjectToTwoColumnPageView.class, types = { PageFilter.PAGE_VIEW_TYPE })
-    @ViewMapping(value = ArticleToArticleView.class, types = { "main" })
-    public class Article
+New view annotations:
 
-Simple JSP used with the old renderer annotations (`two-column-page.jsp`):
+```java
+@ViewBinding(value = ArticleViewModel.class, types = { TwoColumnPageViewModel.LEFT_ELEMENT })
+@ViewBinding(value = TwoColumnPageViewModel.class, types = { PageFilter.PAGE_VIEW_TYPE })
+public class Article ...
+```
 
-    <!doctype html>
-    <html>
-    <body>
-        <div class="left">
-            <cms:render value="${mainContent}" />
-        </div>
-        <div class="right">
-            <c:forEach items="${mainContent.rightModules}" var="module">
-                <cms:render context="module" value="${module}" />
-            </c:forEach>
-        </div>
-    </body>
-    </html>
-   
-And the Handlebars template equivalent (`two-column-page.hbs`):
 
-    <!doctype html>
-    <html>
-    <body>
-        <div class="left">
-            {{left}}
-        </div>
-        <div class="right">
-            {{#each right}}
-                {{this}}
-            {{/each}}
-        </div>
-    </body>
-    </html>
+---
 
-New classes necessary to translate the model into the different views:
+### Rendering Article - Old
 
-    public class ObjectToTwoColumnPageView extends AbstractViewCreator<Object> implements TwoColumnPageView {
-    
-        public Object getLeft() {
-            return request.createView("main", model);
-        }
-        
-        public List<?> getRight() {
-            if (model instanceof Article) {
-                return ((Article) model)
-                        .getRightModules()
-                        .map(m -> request.createView("module", m));
-                
-            } else {
-                return null;
-            }
+`Article.java`
+
+```java
+@Renderer.Path("/article.jsp")
+public class Article ...
+```
+
+`article.jsp`
+
+```jsp
+<div class="article">
+    <h1 class="headline"><cms:render value="${headline}" /></h1>
+</div>
+```
+
+---
+
+### Rendering Article - New
+
+`Article.java`
+
+```java
+@ViewBinding(value = ArticleViewModel.class, types = { TwoColumnPageViewModel.LEFT_ELEMENT })
+public class Article ...
+```
+
+`Article.hbs`
+
+```hbs
+<div class="Article">
+    <h1 class="Article-headline">{{headline}}</h1>
+</div>
+```
+
+`ArticleViewModel.java`
+
+```java
+// ArticleView is automatically generated based on Article.hbs
+public class ArticleViewModel extends ViewModel<Article> implements ArticleView {
+
+    public Object getHeadline() {
+        return model.getHeadline();
+    }
+}
+```
+
+---
+
+### Changing Article - Model
+
+To change `headline` to rich text:
+
+`Article.java`
+
+```java
+public class Article extends Content {
+
+    @ToolUi.RichText
+    private String headline;
+}
+```
+
+---
+
+### Changing Article - Old
+
+To display rich text as is, remove `<c:out>` call:
+
+`article.jsp`
+
+```jsp
+<div class="article">
+    <h1 class="headline">${headline}</h1>
+</div>
+```
+
+---
+
+### Changing Article - New
+
+To display rich text as is, return a `RawHtmlView` instance:
+
+`ArticleViewModel.java`
+
+```java
+public class ArticleViewModel extends ViewModel<Article> implements ArticleView {
+
+    public Object getHeadline() {
+        return new RawHtmlView.Builder()
+                .html(model.getHeadline())
+                .build();
+    }
+}
+```
+
+---
+
+### Article Pagination - Old
+
+`article.jsp`
+
+```jsp
+<div class="article">
+    <div class="body"><!-- Use ${param.page} --></div>
+</div>
+```
+
+---
+
+### Article Pagination - New
+
+`ArticleViewModel.java`
+
+```java
+public class ArticleViewModel extends ViewModel<Article> implements ArticleView {
+
+    @HttpParameter
+    private int page;
+
+    public Object getBody() {
+        // Use page field.
+    }
+}
+```
+
+---
+
+### Rendering Page - Old
+
+`two-column-page.jsp`
+
+```jsp
+<!doctype html>
+<html>
+<body>
+    <div class="left">
+        <cms:render context="left" value="${mainContent}" />
+    </div>
+    <div class="right">
+        <c:forEach items="${mainContent.rightModules}" var="module">
+            <cms:render context="right" value="${module}" />
+        </c:forEach>
+    </div>
+</body>
+</html>
+```
+
+---
+
+### Rendering Page - New Template
+
+`TwoColumnPage.hbs`
+
+```hbs
+<!doctype html>
+<html>
+<body class="TwoColumnPage">
+    <div class="TwoColumnPage-left">
+        {{left}}
+    </div>
+    <div class="TwoColumnPage-right">
+        {{#each right}}
+            {{this}}
+        {{/each}}
+    </div>
+</body>
+</html>
+```
+
+---
+
+### Rendering Page - New View Model
+
+`TwoColumnPageViewModel.java`
+
+```java
+public class TwoColumnPageViewModel extends ViewModel<Object> implements TwoColumnPageView {
+
+    public Object getLeft() {
+        return createView(LEFT_ELEMENT, model);
+    }
+
+    public List<?> getRight() {
+        if (model instanceof Article) {
+            return ((Article) model)
+                    .getRightModules()
+                    .map(m -> createView(RIGHT_ELEMENT, m));
+
+        } else {
+            return null;
         }
     }
-    
-    public class ArticleToArticleView extends AbstractViewCreator<Article> implements ArticleView {
-    
-        public Object getHeadline() {
-            return model.getHeadline();
-        }
+}
+```
+
+---
+
+### Rendering Page - Left Rail
+
+Old:
+
+```jsp
+    <div class="left">
+        <cms:render context="left" value="${mainContent}" />
+    </div>
+```
+
+New:
+
+```hbs
+    <div class="TwoColumnPage-left">
+        {{left}}
+    </div>
+```
+
+```java
+    public Object getLeft() {
+        return createView(LEFT_ELEMENT, model);
     }
-
-## Frequently Asked Questions
-
-- [What if the contents of `two-column-page.hbs` is split across multiple files?](split.md)
+```

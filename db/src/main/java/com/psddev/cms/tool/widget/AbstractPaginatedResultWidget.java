@@ -147,7 +147,7 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
 
             PaginatedResult<T> result = getPaginatedResult(page);
 
-            writePaginationHtml(page, result, 0);
+            writePaginationHtml(page, result, page.paramOrDefault(int.class, LIMIT_PARAMETER, LIMITS[0]));
 
             if (result.hasPages()) {
                 writeResultsHtml(page, result);

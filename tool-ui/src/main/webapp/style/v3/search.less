@@ -34,6 +34,7 @@
   }
 }
 
+.searchSorter,
 .queryRestrictions,
 .searchResult-fields,
 .searchResult-sorts,
@@ -50,6 +51,7 @@
   display: none;
 }
 
+.searchPagination,
 .searchResult-pagination {
   float: right;
   margin: 0 0 10px 10px;
@@ -58,13 +60,23 @@
     display: block;
     margin: 0;
   }
+
+  .infiniteScroll & {
+    display: none;
+  }
 }
 
+.searchResultImages,
+.searchResultList,
 .searchResult-list {
   float: left;
   margin-top: 10px;
   width: 100%;
   overflow-x: hidden;
+}
+
+.searchResultList > .frame {
+  clear: both;
 }
 
 .searchResult-actions {
@@ -436,26 +448,7 @@
   margin-bottom: 20px;
 }
 
-.searchSorter {
-  margin-bottom: 20px;
-  margin-right: 170px;
-
-  form {
-    display: inline;
-  }
-}
-
-.searchPagination {
-  margin-bottom: 20px;
-  position: absolute;
-  right: 0;
-  top: (@lineHeight-default + @gap-large);
-}
-
 .searchResultImages {
-  margin-bottom: 10px;
-  overflow: hidden;
-
   figure {
     border: 1px solid darken(white, 20%);
     box-sizing: border-box;

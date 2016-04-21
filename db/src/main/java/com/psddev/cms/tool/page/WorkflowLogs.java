@@ -6,10 +6,13 @@ import java.util.UUID;
 
 import javax.servlet.ServletException;
 
+import com.psddev.cms.db.Site;
+import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowLog;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.RoutingFilter;
 
 @RoutingFilter.Path(application = "cms", value = "workflowLogs")
@@ -23,6 +26,9 @@ public class WorkflowLogs extends PageServlet {
 
     @Override
     protected void doService(final ToolPageContext page) throws IOException, ServletException {
+        Object obj = Query.findById(Object.class, page.param(UUID.class, "objectId"));
+        State state = State.getInstance(obj);
+        Workflow workflow = Workflow.findWorkflow(state.as(Site.ObjectModification.class).getOwner(), state);
         List<WorkflowLog> logs = Query
                 .from(WorkflowLog.class)
                 .where("objectId = ?", page.param(UUID.class, "objectId"))
@@ -61,7 +67,7 @@ public class WorkflowLogs extends PageServlet {
                             for (WorkflowLog log : logs) {
                                 page.writeStart("tr");
                                     page.writeStart("td");
-                                        page.writeHtml(log.getNewWorkflowState());
+                                        page.writeHtml(workflow == null ? log.getNewWorkflowState() : workflow.getStateDisplayName(log.getNewWorkflowState()));
                                     page.writeEnd();
 
                                     page.writeStart("td");

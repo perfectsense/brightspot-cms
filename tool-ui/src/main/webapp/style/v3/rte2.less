@@ -1,3 +1,25 @@
+.rte2-submenu() {
+  display:none;
+  margin:0;
+  position:absolute;
+  padding:0.5em;
+  background-color: fade(white, 93%);
+  border:1px solid @color-separator;
+  z-index:3;
+  &:hover {
+    z-index: 4;
+  }
+      
+  li {
+    display:block;
+
+    a {
+          // Prevent submenu from shrinking and cutting off text when on right side
+      white-space: nowrap;
+    }
+  }
+}
+
 .rte2-toolbar {
   background: white;
   border-color: transparent;
@@ -48,22 +70,7 @@
     height: 25px;
 
     > ul {  // Submenu
-      display:none;
-      margin:0;
-      position:absolute;
-      padding:0.5em;
-      background-color: fade(white, 93%);
-      border:1px solid @color-separator;
-      z-index:1;
-      
-      li {
-        display:block;
-
-        a {
-          // Prevent submenu from shrinking and cutting off text when on right side
-          white-space: nowrap;
-        }
-      }
+      .rte2-submenu;
     }
 
     &:hover {
@@ -196,6 +203,10 @@
   background-color: transparent;
   border-style: none;
   padding: 0;
+  > li:last-of-type {
+    // Remove the extra space normally reserved for the word count
+      margin-right: 0;
+  }
 
   .rte2-enhancement-toolbar-up { .icon; .icon-arrow-up; }
   .rte2-enhancement-toolbar-down { .icon; .icon-arrow-down; }
@@ -206,8 +217,30 @@
   .rte2-enhancement-toolbar-restore { .icon; .icon-undo; width:auto; padding-right:0.5em; display:none; }
   .rte2-enhancement-toolbar-remove-completely { .icon; .icon-remove; color: @color-remove; width:auto; padding-right:0.5em; display:none; }
   .rte2-enhancement-toolbar-change { .icon; .icon-random; width:auto; padding-right:0.5em; }
+  .rte2-enhancement-toolbar-options { .icon; .icon-cog; width:auto; padding-right:0.5em; }
   .rte2-enhancement-toolbar-edit { .icon; .icon-pencil; width:auto; padding-right:0.5em; }
-  .rte2-enhancement-toolbar-size { width:auto; }
+  .rte2-enhancement-toolbar-size {
+    .icon;
+    .icon-caret-right;
+    &.hovered, &:hover {
+      .icon-caret-down;
+    }
+    width:auto;
+    padding-right:0.5em;
+    &:before { padding: 0 0 1px 3px; }
+  }
+}
+
+.rte2-enhancement-sizes-popup:extend(.rte2-toolbar all) {
+  .rte2-submenu;
+  width:auto;
+  a { width:auto; display:block; }
+  > li {
+    &:last-of-type {
+      // Remove the extra space normally reserved for the word count
+      margin-right: 0;
+    }
+  }
 }
 
 .rte2-enhancement.toBeRemoved, .rte2-table.toBeRemoved {
@@ -304,15 +337,21 @@
   width:100%;
   margin:1em 0;
 }
+.rte2-style-enhancement-float() {
+  width:auto;
+  .rte2-enhancement-toolbar {
+    white-space:nowrap;
+  }
+}
 .rte2-style-enhancement-left {
+  .rte2-style-enhancement-float;
   float:left;
   margin:0 1em 0 0;
-  width:400px;
 }
 .rte2-style-enhancement-right {
+  .rte2-style-enhancement-float;
   float:right;
   margin:0 0 0 1em;
-  width:400px;
 }
 .rte2-style-track-delete, .rte2-table-placeholder del {
   background-color: rgba(255, 0, 0, 0.3);
@@ -414,6 +453,15 @@ li.CodeMirror-hint-active {
   .CodeMirror-linewidget {
     overflow: visible;
     z-index: inherit;
+  }
+}
+
+.rte-fullscreen {
+  position: relative;
+  z-index: 999;
+
+  &.contentForm {
+    overflow: visible;
   }
 }
 
@@ -703,5 +751,19 @@ li.CodeMirror-hint-active {
   .rte2-dropdown-clear {
     display:table-cell;
     padding-left:0.25em;
+  }
+}
+
+.rte2-table-placeholder {
+
+  .wtHolder::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 5px;
+    height:5px;
+  }
+  .wtHolder::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background-color: rgba(0,0,0,.25);
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
   }
 }

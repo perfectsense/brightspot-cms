@@ -22,7 +22,7 @@
 // --- Logic ---
 
 ToolPageContext wp = new ToolPageContext(pageContext);
-if (wp.requirePermission("dashboard/viewGuides")) {
+if (wp.requirePermission("area/dashboard/viewGuides")) {
     return;
 }
 

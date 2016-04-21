@@ -1961,11 +1961,11 @@ The HTML within the repeatable element must conform to these standards:
                     var headerHeight;
                     var scrollPosition;
                     
-                    // Switch to the carousel view
-                    self.modePreviewShowCarousel();
-
                     // Set the active tile in the carousel
                     self.carousel.setActive( $item.index() + 1 );
+                    
+                    // Switch to the carousel view
+                    self.modePreviewShowCarousel();
 
                     if (goToActiveTile !== false) {
                         

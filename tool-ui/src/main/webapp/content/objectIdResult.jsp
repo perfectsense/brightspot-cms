@@ -66,6 +66,11 @@ String removeId = wp.createId();
             $input.val($link.attr('data-objectId'));
             $input.change();
 
+            if ($repeatableForm.length > 0 &&
+                    $repeatableForm[0] === $source.closest('.objectInputs').parent().closest('.objectInputs').closest('.repeatableForm')[0]) {
+                $repeatableForm = $();
+            }
+
             if ($repeatableObjectId.length > 0) {
                 $sourceContainer = $source.closest('li');
 

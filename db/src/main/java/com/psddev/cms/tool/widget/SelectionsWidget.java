@@ -2,6 +2,7 @@ package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUser;
@@ -118,25 +119,34 @@ public class SelectionsWidget extends AbstractPaginatedResultWidget<SearchResult
     @Override
     public void writeResultsItemHtml(ToolPageContext page, SearchResultSelection selection) throws IOException {
 
-        if (StringUtils.isBlank(selection.getName())) {
-            return;
-        }
-
         Search search = new Search();
         search.setAdditionalPredicate(selection.createItemsQuery().getPredicate().toString());
         search.setLimit(10);
 
-        page.writeStart("td");
+        page.writeStart("tr");
+            page.writeStart("td");
 
-            page.writeStart("a",
-                    "target", "_top",
-                    "href", page.cmsUrl("/searchAdvancedFull",
-                        "search", ObjectUtils.toJson(search.getState().getSimpleValues()),
-                        "view", MixedSearchResultView.class.getCanonicalName()));
-                page.writeObjectLabel(selection);
+                page.writeStart("a",
+                        "target", "_top",
+                        "href", page.cmsUrl("/searchAdvancedFull",
+                                "search", ObjectUtils.toJson(search.getState().getSimpleValues()),
+                                "view", MixedSearchResultView.class.getCanonicalName()));
+                    if (StringUtils.isBlank(selection.getName())) {
+                        page.writeStart("i").writeHtml("<untitiled>").writeEnd();
+                    } else {
+                        page.writeObjectLabel(selection);
+                    }
+                page.writeEnd();
 
             page.writeEnd();
-
+            page.writeStart("td");
+                page.writeHtml(!ObjectUtils.isBlank(selection.getEntities())
+                        ? selection.getEntities().stream().map(e -> e.getState().getLabel()).collect(Collectors.joining(", "))
+                        : "");
+            page.writeEnd();
+            page.writeStart("td");
+                page.writeHtml(selection.size() + " item" + (selection.size() != 1 ? "s" : ""));
+            page.writeEnd();
         page.writeEnd();
     }
 

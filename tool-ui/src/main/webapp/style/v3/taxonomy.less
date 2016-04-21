@@ -1,12 +1,19 @@
-.taxonomyContainer {
+.searchResultTaxonomy {
   margin-left: (0 - @gap-large);
-  max-height: 400px;
-  overflow: auto;
+  overflow: visible;
+  overflow-x: auto;
+
+  .searchResult-view > & {
+    margin-left: 0;
+  }
+
+  .searchResultTaxonomyColumn {
+    display: table-cell;
+  }
 
   ul {
-    display: table-cell;
     list-style-type: none;
-    margin-left: 0;
+    margin: 0;
   }
 
   li {
@@ -32,7 +39,7 @@
       }
     }
 
-    .taxonomyExpand {
+    .searchResultTaxonomyExpand {
       .icon;
       .icon-chevron-right;
       .icon-only;
@@ -48,7 +55,7 @@
     }
   }
 
-  .taxonChildren {
+  .searchResultTaxonomyChildren {
     display: table-cell;
 
     &.loaded {

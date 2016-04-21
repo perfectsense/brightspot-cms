@@ -67,6 +67,8 @@ $.plugin2('toggleable', {
             if (!disable) {
                 $matching.rte('enable');
             }
+
+            $matching.find('.plugin-toggleable').trigger('toggle');
         }
     },
 

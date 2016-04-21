@@ -64,8 +64,21 @@ public class ContentEditBulkSubmissionStatus extends PageServlet {
                         page.writeEnd();
                     }
 
-                    page.writeStart("div", "class", "message message-success");
+                    String status;
+
+                    if (submission.getSuccesses() == 0) {
+                        status = "error";
+
+                    } else if (submission.getFailures() > 0) {
+                        status = "warning";
+
+                    } else {
+                        status = "success";
+                    }
+
+                    page.writeStart("div", "class", "message message-" + status);
                     page.writeHtml(page.localize(ContentEditBulkSubmissionStatus.class, "message.finished"));
+                    page.writeHtml(' ');
                     writeSubmission(page, submission);
                     page.writeEnd();
                 }
