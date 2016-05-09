@@ -21,6 +21,7 @@ java.io.StringWriter,
 java.util.ArrayList,
 java.util.List,
 java.util.Map,
+java.util.Set,
 java.util.UUID,
 java.util.regex.Matcher
 " %><%
@@ -38,7 +39,13 @@ ReferentialText fieldValue = (ReferentialText) state.getValue(fieldName);
 String inputName = (String) request.getAttribute("inputName");
 
 if ((Boolean) request.getAttribute("isFormPost")) {
-    fieldValue = new ReferentialText(wp.param(String.class, inputName), Boolean.TRUE.equals(request.getAttribute("finalDraft")));
+    ReferentialText refText = new ReferentialText();
+
+    refText.setResolveInvisible(state.isResolveInvisible());
+    refText.addHtml(wp.param(String.class, inputName));
+
+    fieldValue = refText;
+
     state.putValue(fieldName, fieldValue);
     return;
 }
@@ -46,6 +53,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 // --- Presentation ---
 
 ToolUi ui = field.as(ToolUi.class);
+Set<String> rteTags = ui.findRichTextElementTags();
 Number suggestedMinimum = ui.getSuggestedMinimum();
 Number suggestedMaximum = ui.getSuggestedMaximum();
 
@@ -55,6 +63,7 @@ wp.writeStart("textarea",
         "data-expandable-class", "code",
         "id", wp.getId(),
         "name", inputName,
+        "data-rte-tags", ObjectUtils.isBlank(rteTags) ? null : ObjectUtils.toJson(rteTags),
         "data-suggested-maximum", suggestedMaximum != null ? suggestedMaximum.intValue() : null,
         "data-suggested-minimum", suggestedMinimum != null ? suggestedMinimum.intValue() : null,
         "data-user", wp.getObjectLabel(wp.getUser()),

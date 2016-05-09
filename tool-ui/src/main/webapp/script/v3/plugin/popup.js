@@ -41,6 +41,7 @@
           $original.data('popup-scrollTop', $win.scrollTop());
         }
         $original.addClass('popup-show');
+        $original.resize();
       });
 
       $container.bind('restoreOriginalPosition.popup', function() {
@@ -56,7 +57,7 @@
       });
 
       $container.bind('close.popup', function(event) {
-        
+
         // In the case of nested popups, the close event from the child popup
         // might propagate up to the parent popup, in which case we do not
         // want to close the parent popup.
@@ -66,7 +67,9 @@
         // code relying on popup close events bubbling up to the top.
         if (event.popupClosed) { return; }
         
-        if ($container.is(':visible') &&
+        if (this === event.target &&
+            !$(this).is('[data-popup-source-class~="imageEditor-hotSpotOverlay"]') &&
+            $container.is(':visible') &&
             $container.find('.enhancementForm, .contentForm').find('.inputContainer.state-changed').length > 0 &&
             !confirm('Are you sure you want to close this popup and discard the unsaved changes?')) {
           $.data($container[0], 'popup-close-cancelled', true);
@@ -84,7 +87,13 @@
         // Prevent infinite looping for nested popups
         if ($original.hasClass('popup-show')) {
 
+          // Set a flag to indicate this event has already closed a popup,
+          // so we can avoid closing a parent popup in case popups are nested.
+          event.popupClosed = true;
+          
           $original.removeClass('popup-show');
+          $original.trigger('closed');
+          $original.resize();
           $('.popup').each(function() {
             var $popup = $(this);
             var $source = $popup.popup('source');
@@ -213,7 +222,7 @@
           'margin': 0,
           'position': isFixedPosition ? 'fixed' : 'absolute',
           'top': top,
-          'z-index': $newSource.parent().zIndex() + 1
+          'z-index': $newSourceParent.zIndex() + 1
         });
 
         return this.$caller;
@@ -237,7 +246,9 @@
     if ($targetPopup.length > 0) {
       var $targetPopupContent = $targetPopup.find('> .content');
 
-      if ($targetPopupContent.length === 0 || !$.contains($targetPopupContent[0], target)) {
+      // Close the popup if we couldn't find the "content" div within it,
+      // Or if the clicked target is outside the content div.
+      if ($targetPopupContent.length === 0 || $target.closest($targetPopupContent).length === 0) {
         $targetPopup.popup('close');
       }
 

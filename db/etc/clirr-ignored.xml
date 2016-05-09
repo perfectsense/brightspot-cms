@@ -13,4 +13,35 @@
         <method>java.lang.String sortField()</method>
     </difference>
 
+    <difference>
+        <className>com/psddev/cms/tool/SearchResultAction</className>
+        <differenceType>7012</differenceType>
+        <method>int getPosition()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/view/ViewCreator</className>
+        <differenceType>7005</differenceType>
+        <method>java.lang.Object createView(java.lang.Object, com.psddev.cms.view.ViewRequest)</method>
+        <to>java.lang.Object createView(java.lang.Object, java.lang.Object)</to>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/view/ViewCreator</className>
+        <differenceType>7012</differenceType>
+        <method>java.lang.Class findCreatorClass(java.lang.Object, java.lang.Class, java.lang.String, java.lang.Object)</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/view/ViewCreator</className>
+        <differenceType>7012</differenceType>
+        <method>boolean processRequest(java.lang.Object, com.psddev.cms.view.ViewResponse)</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/view/ViewRenderer</className>
+        <differenceType>7012</differenceType>
+        <method>com.psddev.cms.view.ViewOutput render(java.lang.Object, com.psddev.cms.view.ViewTemplateLoader)</method>
+    </difference>
+
 </differences>

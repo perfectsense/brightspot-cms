@@ -41,7 +41,7 @@ public class WorkflowLog extends Record {
     @ToolUi.Hidden
     private String userId;
 
-    @ToolUi.Placeholder("Optional Comment")
+    @ToolUi.Placeholder("Optional Workflow Comment")
     private String comment;
 
     public UUID getObjectId() {

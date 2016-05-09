@@ -17,6 +17,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.dari.util.UuidUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,7 @@ public class UploadFiles extends PageServlet {
         DatabaseEnvironment environment = database.getEnvironment();
         Exception postError = null;
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
+        UUID uploadId = UuidUtils.createSequentialUuid();
         String containerId = page.param(String.class, "containerId");
 
         if (page.isFormPost()) {
@@ -243,6 +245,7 @@ public class UploadFiles extends PageServlet {
                         }
 
                         state.put(previewField.getInternalName(), item);
+                        state.as(BulkUploadDraft.class).setUploadId(uploadId);
                         state.as(BulkUploadDraft.class).setContainerId(containerId);
                         page.publish(state);
                         newObjectIds.add(state.getId());
@@ -251,6 +254,7 @@ public class UploadFiles extends PageServlet {
                         js.append("var $added = $(this);");
                         js.append("$input = $added.find(':input.objectId').eq(0);");
                         js.append("$input.attr('data-label', '").append(StringUtils.escapeJavaScript(state.getLabel())).append("');");
+                        js.append("$input.attr('data-label-html', '").append(StringUtils.escapeJavaScript(page.createObjectLabelHtml(state))).append("');");
                         js.append("$input.attr('data-preview', '").append(StringUtils.escapeJavaScript(page.getPreviewThumbnailUrl(object))).append("');");
                         js.append("$input.val('").append(StringUtils.escapeJavaScript(state.getId().toString())).append("');");
                         js.append("$input.change();");

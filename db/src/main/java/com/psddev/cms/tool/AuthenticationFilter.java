@@ -120,6 +120,22 @@ public class AuthenticationFilter extends AbstractFilter {
      */
     public static final class Static {
 
+        private static String getEnvironmentName() {
+            return Settings.getOrDefault(String.class, "cms/tool/environmentName", "");
+        }
+
+        private static String getToolUserCookieName() {
+            return TOOL_USER_COOKIE + getEnvironmentName();
+        }
+
+        private static String getInsecureToolUserCookieName() {
+            return INSECURE_TOOL_USER_COOKIE + getEnvironmentName();
+        }
+
+        private static String getPreviewCookieName() {
+            return PREVIEW_COOKIE + getEnvironmentName();
+        }
+
         private static void setSignedCookie(
                 HttpServletRequest request,
                 HttpServletResponse response,
@@ -178,8 +194,8 @@ public class AuthenticationFilter extends AbstractFilter {
                 logIn(request, response, user);
 
             } else {
-                setSignedCookie(request, response, TOOL_USER_COOKIE, token, -1, true);
-                setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, token, -1, false);
+                setSignedCookie(request, response, getToolUserCookieName(), token, -1, true);
+                setSignedCookie(request, response, getInsecureToolUserCookieName(), token, -1, false);
                 request.setAttribute(USER_ATTRIBUTE, user);
                 request.setAttribute(USER_TOKEN, token);
                 request.setAttribute(USER_CHECKED_ATTRIBUTE, Boolean.TRUE);
@@ -228,8 +244,8 @@ public class AuthenticationFilter extends AbstractFilter {
                 }
             }
 
-            setSignedCookie(request, response, TOOL_USER_COOKIE, token, -1, true);
-            setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, token, -1, false);
+            setSignedCookie(request, response, getToolUserCookieName(), token, -1, true);
+            setSignedCookie(request, response, getInsecureToolUserCookieName(), token, -1, false);
             request.setAttribute(USER_ATTRIBUTE, user);
             request.setAttribute(USER_TOKEN, token);
             request.setAttribute(USER_CHECKED_ATTRIBUTE, Boolean.TRUE);
@@ -251,8 +267,8 @@ public class AuthenticationFilter extends AbstractFilter {
                 }
             }
 
-            setSignedCookie(request, response, TOOL_USER_COOKIE, "", 0, true);
-            setSignedCookie(request, response, INSECURE_TOOL_USER_COOKIE, "", 0, false);
+            setSignedCookie(request, response, getToolUserCookieName(), "", 0, true);
+            setSignedCookie(request, response, getInsecureToolUserCookieName(), "", 0, false);
         }
 
         /**
@@ -278,23 +294,8 @@ public class AuthenticationFilter extends AbstractFilter {
         }
 
         public static boolean requireUser(ServletContext context, HttpServletRequest request, HttpServletResponse response) throws IOException {
-            String toolUrlPrefix = Settings.get(String.class, ToolPageContext.TOOL_URL_PREFIX_SETTING);
 
-            if (!ObjectUtils.isBlank(toolUrlPrefix)
-                    && !new UrlBuilder(request)
-                    .currentScheme()
-                    .currentHost()
-                    .currentPath()
-                    .toString()
-                    .startsWith(toolUrlPrefix)) {
-
-                response.sendRedirect(
-                        StringUtils.removeEnd(toolUrlPrefix, "/")
-                                + new UrlBuilder(request)
-                                .currentPath()
-                                .currentParameters()
-                                .toString());
-
+            if (requireToolUrlPrefix(context, request, response)) {
                 return true;
             }
 
@@ -362,6 +363,29 @@ public class AuthenticationFilter extends AbstractFilter {
             return false;
         }
 
+        public static boolean requireToolUrlPrefix(ServletContext context, HttpServletRequest request, HttpServletResponse response) throws IOException {
+            String toolUrlPrefix = Settings.get(String.class, ToolPageContext.TOOL_URL_PREFIX_SETTING);
+
+            if (!ObjectUtils.isBlank(toolUrlPrefix)
+                    && !new UrlBuilder(request)
+                    .currentScheme()
+                    .currentHost()
+                    .currentPath()
+                    .toString()
+                    .startsWith(toolUrlPrefix)) {
+
+                response.sendRedirect(
+                        StringUtils.removeEnd(toolUrlPrefix, "/")
+                                + new UrlBuilder(request)
+                                .currentPath()
+                                .currentParameters()
+                                .toString());
+
+                return true;
+            }
+            return false;
+        }
+
         private static ToolUser getToolUserByCookieName(
                 HttpServletRequest request,
                 String cookieName,
@@ -405,7 +429,7 @@ public class AuthenticationFilter extends AbstractFilter {
         public static ToolUser getUser(HttpServletRequest request) {
             return getToolUserByCookieName(
                     request,
-                    TOOL_USER_COOKIE,
+                    getToolUserCookieName(),
                     TOOL_USER_ATTRIBUTE,
                     TOOL_USER_CHECKED_ATTRIBUTE);
         }
@@ -419,7 +443,7 @@ public class AuthenticationFilter extends AbstractFilter {
         public static ToolUser getInsecureToolUser(HttpServletRequest request) {
             return getToolUserByCookieName(
                     request,
-                    INSECURE_TOOL_USER_COOKIE,
+                    getInsecureToolUserCookieName(),
                     INSECURE_TOOL_USER_ATTRIBUTE,
                     INSECURE_TOOL_USER_CHECKED_ATTRIBUTE);
         }
@@ -431,15 +455,16 @@ public class AuthenticationFilter extends AbstractFilter {
                 preview = (Preview) request.getAttribute(PREVIEW_ATTRIBUTE);
 
             } else {
-                String cookieValue = JspUtils.getSignedCookie(request, PREVIEW_COOKIE);
+                String previewCookie = getPreviewCookieName();
+                String cookieValue = JspUtils.getSignedCookie(request, previewCookie);
 
-                if (cookieValue == null || cookieValue.length() < PREVIEW_COOKIE.length()) {
+                if (cookieValue == null || cookieValue.length() < previewCookie.length()) {
                     preview = null;
 
                 } else {
                     preview = Query
                             .from(Preview.class)
-                            .where("_id = ?", ObjectUtils.to(UUID.class, cookieValue.substring(PREVIEW_COOKIE.length())))
+                            .where("_id = ?", ObjectUtils.to(UUID.class, cookieValue.substring(previewCookie.length())))
                             .first();
 
                     request.setAttribute(PREVIEW_ATTRIBUTE, preview);
@@ -452,13 +477,13 @@ public class AuthenticationFilter extends AbstractFilter {
         }
 
         public static void setCurrentPreview(HttpServletRequest request, HttpServletResponse response, Preview preview) {
-            setSignedCookie(request, response, PREVIEW_COOKIE, preview.getId().toString(), -1, true);
+            setSignedCookie(request, response, getPreviewCookieName(), preview.getId().toString(), -1, true);
             request.setAttribute(PREVIEW_ATTRIBUTE, preview);
             request.setAttribute(PREVIEW_CHECKED_ATTRIBUTE, Boolean.TRUE);
         }
 
         public static void removeCurrentPreview(HttpServletRequest request, HttpServletResponse response) {
-            setSignedCookie(request, response, PREVIEW_COOKIE, "", 0, true);
+            setSignedCookie(request, response, getPreviewCookieName(), "", 0, true);
             request.removeAttribute(PREVIEW_ATTRIBUTE);
             request.removeAttribute(PREVIEW_CHECKED_ATTRIBUTE);
         }

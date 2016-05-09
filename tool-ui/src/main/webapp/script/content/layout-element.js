@@ -56,8 +56,11 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       });
 
       function addElement(element, $field) {
+
+        var hasErrors = $field && $field.data('layout-errors');
+
         var $label = $('<div/>', {
-          'class': 'inputLayout-label' + ($field ? '' : ' inputLayout-label-placeholder'),
+          'class': 'inputLayout-label' + ($field ? '' : ' inputLayout-label-placeholder') + (hasErrors ? ' inputLayout-error' : ''),
           'click': function() {
             if (!$field) {
               return;

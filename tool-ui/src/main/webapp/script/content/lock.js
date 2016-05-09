@@ -4,7 +4,11 @@ define([
 
 function($, bsp_utils) {
   $(window).load(function() {
-    bsp_utils.onDomInsert(document, '.contentLock[data-content-locked-out = "true"] :input', {
+    bsp_utils.onDomInsert(document,
+        '.contentLock[data-content-locked-out="true"] input, '
+        + '.contentLock[data-content-locked-out="true"] select, '
+        + '.contentLock[data-content-locked-out="true"] textarea, '
+        + '.contentLock[data-content-locked-out="true"] button', {
       'insert': function (input) {
         $(input).trigger('input-disable', [ true ]);
       }

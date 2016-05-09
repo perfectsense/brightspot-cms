@@ -25,10 +25,10 @@ if (selected instanceof ToolUser) {
     selectedUser = (ToolUser) selected;
 }
 
-Query<ToolUser> query = Query.from(ToolUser.class).where("name != missing").sortAscending("name");
+Query<ToolUser> query = Query.from(ToolUser.class).where("name isnt missing").and("cms.content.trashed = true || cms.content.trashed is missing").sortAscending("cms.content.trashed").sortAscending("name");
 String queryString = wp.param("query");
 if (!ObjectUtils.isBlank(queryString)) {
-    query.where("name ^=[c] ? or email ^=[c] ?", queryString, queryString);
+    query.where("name contains ? or email contains ?", queryString, queryString);
 }
 
 long offset = wp.longParam("offset", 0L);
@@ -57,7 +57,7 @@ PaginatedResult<ToolUser> users = query.select(offset, wp.intParam("limit", 10))
             <li<%= user.equals(selectedUser) ? " class=\"selected\"" : "" %>>
                 <a href="<%= wp.objectUrl("/admin/users.jsp", user,
                         "query", queryString,
-                        "offset", offset) %>" target="_top"><%= wp.objectLabel(user) %></a>
+                        "offset", offset) %>" target="_top"><%= wp.createObjectLabelHtml(user) %></a>
             </li>
         <% } %>
     </ul>

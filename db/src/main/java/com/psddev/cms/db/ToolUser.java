@@ -39,6 +39,7 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StorageItem;
 
 /** User that uses the CMS and other related tools. */
+@ToolUi.DefaultSortField("name")
 @ToolUi.IconName("object-toolUser")
 @Record.BootstrapPackages("Users and Roles")
 @Record.BootstrapTypeMappable(groups = Content.class, uniqueKey = "email")
@@ -47,6 +48,7 @@ public class ToolUser extends Record implements ToolEntity {
     private static final long TOKEN_CHECK_EXPIRE_MILLISECONDS = 30000L;
 
     @Indexed
+    @ToolUi.DefaultSearchResult
     @ToolUi.Note("If left blank, the user will have full access to everything.")
     private ToolRole role;
 
@@ -123,8 +125,8 @@ public class ToolUser extends Record implements ToolEntity {
     @ToolUi.Hidden
     private boolean external;
 
+    @ToolUi.Hidden
     @ToolUi.FieldDisplayType("toolUserSavedSearches")
-    @ToolUi.Tab("Search")
     private Map<String, String> savedSearches;
 
     @ToolUi.Placeholder("All Contents")
@@ -134,7 +136,13 @@ public class ToolUser extends Record implements ToolEntity {
     private boolean returnToDashboardOnSave;
 
     @ToolUi.Tab("Advanced")
+    private boolean returnToDashboardOnWorkflow;
+
+    @ToolUi.Tab("Advanced")
     private boolean disableNavigateAwayAlert;
+
+    @ToolUi.Tab("Advanced")
+    private boolean disableCodeMirrorRichTextEditor;
 
     @ToolUi.Note("Force the user to change the password on next log in.")
     private boolean changePasswordOnLogIn;
@@ -777,6 +785,14 @@ public class ToolUser extends Record implements ToolEntity {
         this.returnToDashboardOnSave = returnToDashboardOnSave;
     }
 
+    public boolean isReturnToDashboardOnWorkflow() {
+        return returnToDashboardOnWorkflow;
+    }
+
+    public void setReturnToDashboardOnWorkflow(boolean returnToDashboardOnWorkflow) {
+        this.returnToDashboardOnWorkflow = returnToDashboardOnWorkflow;
+    }
+
     /**
      * @return the disableNavigateAwayAlert
      */
@@ -789,6 +805,14 @@ public class ToolUser extends Record implements ToolEntity {
      */
     public void setDisableNavigateAwayAlert(boolean disableNavigateAwayAlert) {
         this.disableNavigateAwayAlert = disableNavigateAwayAlert;
+    }
+
+    public boolean isDisableCodeMirrorRichTextEditor() {
+        return disableCodeMirrorRichTextEditor;
+    }
+
+    public void setDisableCodeMirrorRichTextEditor(boolean disableCodeMirrorRichTextEditor) {
+        this.disableCodeMirrorRichTextEditor = disableCodeMirrorRichTextEditor;
     }
 
     public boolean isChangePasswordOnLogIn() {

@@ -6,7 +6,7 @@ var $doc = $(win.document);
 function findRelatedContainers($selected) {
     var itemType = $selected.attr('data-sortable-item-type');
 
-    return itemType ? $('[data-sortable-valid-item-types~="' + itemType + '"]') : $();
+    return itemType ? $('[data-sortable-valid-item-types~="' + itemType + '"]') : $('.plugin-sortable._sortable:not([data-sortable-valid-item-types])');
 }
 
 $.plugin2('sortable', {

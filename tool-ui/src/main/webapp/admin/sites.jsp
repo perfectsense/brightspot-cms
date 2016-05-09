@@ -1,6 +1,7 @@
 <%@ page session="false" import="
 
 com.psddev.cms.db.Site,
+com.psddev.cms.db.SiteCategory,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.Query,
@@ -32,11 +33,14 @@ if (wp.tryStandardUpdate(selected)) {
         <div class="widget">
 
             <h1 class="icon icon-object-site">
-                <%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Sites", "title"))%>
+                <%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Sites", "title.sites"))%>
             </h1>
+
             <ul class="links">
-                <li class="new<%= selectedState.isNew() ? " selected" : "" %>">
-                    <a href="<%= wp.url(null) %>"><%= wp.h(wp.localize(Site.class, "action.newType")) %></a>
+                <li class="new<%= selected instanceof Site && selectedState.isNew() ? " selected" : "" %>">
+                    <a href="<%= wp.typeUrl(null, Site.class) %>">
+                        <%= wp.h(wp.localize(Site.class, "action.newType")) %>
+                    </a>
                 </li>
             </ul>
 
@@ -52,6 +56,39 @@ if (wp.tryStandardUpdate(selected)) {
             </form>
 
             <div class="frame" name="sitesResult">
+            </div>
+
+        </div>
+
+        <div class="widget">
+
+            <h1 class="icon icon-object-site">
+                <%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Sites", "title.siteCategories"))%>
+            </h1>
+
+            <ul class="links">
+                <li class="new<%= selected instanceof SiteCategory && selectedState.isNew() ? " selected" : "" %>">
+                    <a href="<%= wp.typeUrl(null, SiteCategory.class) %>">
+                        <%= wp.h(wp.localize(SiteCategory.class, "action.newType")) %>
+                    </a>
+                </li>
+            </ul>
+
+            <form action="<%= wp.url("/admin/siteCategoriesResult.jsp") %>" data-bsp-autosubmit="" method="get"
+                  target="siteCategoriesResult">
+                <input name="id" type="hidden" value="<%= selectedState.getId() %>">
+                <div class="searchInput">
+                    <label for="<%= wp.createId() %>">
+                        <%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Sites", "label.search"))%>
+                    </label>
+                    <input id="<%= wp.getId() %>" class="autoFocus" name="query" type="text"
+                           value="<%= wp.h(queryString) %>">
+                    <input type="submit"
+                           value="<%= wp.h(wp.localize("com.psddev.cms.tool.page.admin.Sites", "action.go"))%>">
+                </div>
+            </form>
+
+            <div class="frame" name="siteCategoriesResult">
             </div>
 
         </div>

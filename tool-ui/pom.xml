@@ -8,13 +8,13 @@
     <parent>
         <groupId>com.psddev</groupId>
         <artifactId>cms</artifactId>
-        <version>3.1-SNAPSHOT</version>
+        <version>3.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.psddev</groupId>
     <artifactId>cms-tool-ui</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>BrightSpot CMS: Tool UI</name>

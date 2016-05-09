@@ -11,6 +11,7 @@ com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectFieldComparator,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.State,
+com.psddev.dari.util.StringUtils,
 
 com.psddev.dari.util.ObjectUtils,
 
@@ -127,7 +128,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
                 %>
-                <li data-type="<%= wp.objectLabel(itemType) %>" data-label="<%= wp.objectLabel(item) %>">
+                <li data-type="<%= wp.objectLabel(itemType) %>" data-label="<%= wp.objectLabel(item) %>" data-label-html="<%= StringUtils.escapeHtml(wp.createObjectLabelHtml(item)) %>">
                     <input name="<%= wp.h(idName) %>" type="hidden" value="<%= itemState.getId() %>">
                     <input name="<%= wp.h(typeIdName) %>" type="hidden" value="<%= itemType.getId() %>">
                     <input name="<%= wp.h(publishDateName) %>" type="hidden" value="<%= wp.h(itemPublishDate != null ? itemPublishDate.getTime() : null) %>">

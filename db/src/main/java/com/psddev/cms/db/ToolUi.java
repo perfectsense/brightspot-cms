@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import com.psddev.dari.db.Database;
 import com.psddev.dari.db.DatabaseEnvironment;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
@@ -39,6 +41,7 @@ public class ToolUi extends Modification<Object> {
     private Boolean collectionItemWeight;
     private Boolean colorPicker;
     private String cssClass;
+    private Boolean defaultSearchResult;
     private Set<String> displayAfter;
     private Set<String> displayBefore;
     private boolean displayFirst;
@@ -63,6 +66,7 @@ public class ToolUi extends Modification<Object> {
     private String languageTag;
     private ToolUiLayoutElement layoutField;
     private List<ToolUiLayoutElement> layoutPlaceholders;
+    private Boolean main;
     private String noteHtml;
     private String noteRendererClassName;
     private String placeholder;
@@ -73,6 +77,8 @@ public class ToolUi extends Modification<Object> {
     private String referenceableViaClassName;
     private Boolean readOnly;
     private boolean richText;
+    private String richTextElementTagName;
+    private Set<String> richTextElementClassNames;
     private boolean secret;
     private Boolean sortable;
     private Set<String> standardImageSizes;
@@ -137,6 +143,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setCssClass(String cssClass) {
         this.cssClass = cssClass;
+    }
+
+    public Boolean getDefaultSearchResult() {
+        return defaultSearchResult;
+    }
+
+    public void setDefaultSearchResult(Boolean defaultSearchResult) {
+        this.defaultSearchResult = defaultSearchResult;
     }
 
     public Set<String> getDisplayAfter() {
@@ -521,6 +535,35 @@ public class ToolUi extends Modification<Object> {
         this.richText = richText;
     }
 
+    public String getRichTextElementTagName() {
+        return richTextElementTagName;
+    }
+
+    public void setRichTextElementTagName(String richTextElementTagName) {
+        this.richTextElementTagName = richTextElementTagName;
+    }
+
+    public Set<String> getRichTextElementClassNames() {
+        if (richTextElementClassNames == null) {
+            richTextElementClassNames = new LinkedHashSet<>();
+        }
+        return richTextElementClassNames;
+    }
+
+    public void setRichTextElementClassNames(Set<String> richTextElementClassNames) {
+        this.richTextElementClassNames = richTextElementClassNames;
+    }
+
+    public Set<String> findRichTextElementTags() {
+        Set<String> classNames = getRichTextElementClassNames();
+
+        return Database.Static.getDefault().getEnvironment().getTypes().stream()
+                .filter(t -> !Collections.disjoint(t.getGroups(), classNames))
+                .map(t -> t.as(ToolUi.class).getRichTextElementTagName())
+                .filter(n -> !ObjectUtils.isBlank(n))
+                .collect(Collectors.toSet());
+    }
+
     public boolean isReferenceable() {
         if (referenceable == null) {
             referenceable = ObjectUtils.to(Boolean.class, getState().get("cms.ui.isReferenceable"));
@@ -646,6 +689,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setDefaultSortField(String defaultSortField) {
         this.defaultSortField = defaultSortField;
+    }
+
+    public boolean isMain() {
+        return Boolean.TRUE.equals(main);
+    }
+
+    public void setMain(boolean main) {
+        this.main = main;
     }
 
     /**
@@ -840,6 +891,26 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, CssClass annotation) {
             field.as(ToolUi.class).setCssClass(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies that the target field should display in the search result
+     * by default.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(DefaultSearchResultProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface DefaultSearchResult {
+        boolean value() default true;
+    }
+
+    private static class DefaultSearchResultProcessor implements ObjectField.AnnotationProcessor<DefaultSearchResult> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, DefaultSearchResult annotation) {
+            field.as(ToolUi.class).setDefaultSearchResult(annotation.value());
         }
     }
 
@@ -1273,6 +1344,27 @@ public class ToolUi extends Modification<Object> {
         }
     }
 
+    /**
+     * Specifies whether the class will be listed as a main content type.
+     */
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(MainProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface Main {
+
+        boolean value() default true;
+    }
+
+    private static class MainProcessor implements ObjectType.AnnotationProcessor<Main> {
+
+        @Override
+        public void process(ObjectType objectType, Main annotation) {
+            objectType.as(ToolUi.class).setMain(annotation.value());
+        }
+    }
+
     /** Specifies the note displayed along with the target in the UI. */
     @Documented
     @Inherited
@@ -1431,10 +1523,11 @@ public class ToolUi extends Modification<Object> {
 
     /** Specifies whether the target is read-only. */
     @Documented
+    @Inherited
     @ObjectField.AnnotationProcessorClass(ReadOnlyProcessor.class)
     @ObjectType.AnnotationProcessorClass(ReadOnlyProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
+    @Target({ ElementType.FIELD, ElementType.TYPE })
     public @interface ReadOnly {
         boolean value() default true;
     }

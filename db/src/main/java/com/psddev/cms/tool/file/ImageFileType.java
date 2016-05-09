@@ -411,6 +411,7 @@ public class ImageFileType implements FileContentType {
                 String resizeScale = "";
                 if (ImageEditor.Static.getDefault() != null) {
                     ImageTag.Builder imageTagBuilder = new ImageTag.Builder(fieldValue)
+                            .setPrivateUrl(true)
                             .setWidth(1000)
                             .setResizeOption(ResizeOption.ONLY_SHRINK_LARGER)
                             .setEdits(false);

@@ -47,8 +47,14 @@ public class JsonViewRenderer implements ViewRenderer {
         this.indented = indented;
     }
 
+    @Deprecated
     @Override
     public ViewOutput render(Object view) {
+        return render(view, null);
+    }
+
+    @Override
+    public ViewOutput render(Object view, ViewTemplateLoader loader) {
 
         Map<?, ?> viewMap;
         if (view instanceof Map) {

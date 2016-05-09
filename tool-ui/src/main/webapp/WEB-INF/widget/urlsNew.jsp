@@ -3,6 +3,7 @@
 com.psddev.cms.db.Content,
 com.psddev.cms.db.Directory,
 com.psddev.cms.db.Site,
+com.psddev.cms.db.ToolUser,
 com.psddev.cms.db.Workflow,
 com.psddev.cms.tool.JspWidget,
 com.psddev.cms.tool.ToolPageContext,
@@ -12,6 +13,7 @@ com.psddev.dari.db.State,
 com.psddev.dari.util.CompactMap,
 com.psddev.dari.util.ObjectUtils,
 
+java.util.HashSet,
 java.util.LinkedHashSet,
 java.util.List,
 java.util.Map,
@@ -35,11 +37,23 @@ String siteIdName = namePrefix + "siteId";
 Directory.Data dirData = state.as(Directory.Data.class);
 Map<UUID, Site> sites = new CompactMap<UUID, Site>();
 
+ToolUser user = wp.getUser();
+
+Set<Site> userSites = new HashSet<Site>();
+if (user != null) {
+    userSites.addAll(user.findOtherAccessibleSites());
+    userSites.add(user.getCurrentSite());
+}
+
+
 for (Site s : Query.
         from(Site.class).
         sortAscending("name").
         selectAll()) {
-    sites.put(s.getId(), s);
+
+    if (userSites.contains(s)) {
+        sites.put(s.getId(), s);
+    }
 }
 
 boolean initialDraft = state.isNew() ||
@@ -172,9 +186,11 @@ if (!paths.isEmpty()) {
 
                 if (!sites.isEmpty()) {
                     wp.writeStart("select", "name", siteIdName);
-                        wp.writeStart("option", "value", "");
-                            wp.writeHtml("Global");
-                        wp.writeEnd();
+                        if (user != null && user.hasPermission("site/global")) {
+                            wp.writeStart("option", "value", "");
+                                wp.writeHtml("Global");
+                            wp.writeEnd();
+                        }
 
                         for (Site s : sites.values()) {
                             wp.writeStart("option",
@@ -214,9 +230,11 @@ if (!paths.isEmpty()) {
                 <%
                 if (!sites.isEmpty()) {
                     wp.writeStart("select", "name", siteIdName);
-                        wp.writeStart("option", "value", "");
-                            wp.writeHtml("Global");
-                        wp.writeEnd();
+                        if (user != null && user.hasPermission("site/global")) {
+                            wp.writeStart("option", "value", "");
+                                wp.writeHtml("Global");
+                            wp.writeEnd();
+                        }
 
                         for (Site s : sites.values()) {
                             wp.writeStart("option", "value", s.getId(), "selected", s.equals(site) ? "selected" : null);

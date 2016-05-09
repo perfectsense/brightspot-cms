@@ -30,8 +30,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
   $(document).on('change', '.inputContainer', function() {
     var $container = $(this);
     var changed = false;
-
-    $container.find('input, textarea').each(function() {
+      
+    $container.find('input[name], textarea[name]').each(function() {
       if (this.defaultValue !== this.value) {
         changed = true;
         return false;

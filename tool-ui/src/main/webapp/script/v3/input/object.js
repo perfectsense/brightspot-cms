@@ -17,8 +17,7 @@ function($) {
           $edit,
           $clear,
           preview,
-          visibility,
-          label,
+          labelHtml,
           dynamicPlaceholderText,
           dynamicFieldName,
           placeholder,
@@ -35,33 +34,26 @@ function($) {
       $edit = shadow.$edit;
       $clear = shadow.$clear;
       preview = $input.attr('data-preview');
-      label = $input.attr('data-label');
-      visibility = $input.attr('data-visibility');
+      labelHtml = $input.attr('data-label-html') || $input.attr('data-label');
       value = $input.val();
 
       if (preview) {
+        var $caption = $('<figcaption>', {
+          'html': labelHtml
+        });
+
         $select.html($('<figure/>', {
           'html': [
             $('<img/>', {
               'src': preview
             }),
-            $('<figcaption>', {
-              'text': label
-            })
+            $caption
           ]
         }));
 
       } else {
-        if (label) {
-          $select.text(label);
-
-          if (visibility) {
-            $select.prepend(' ');
-            $select.prepend($('<span/>', {
-              'class': 'visibilityLabel',
-              'text': visibility
-            }));
-          }
+        if (labelHtml) {
+          $select.html(labelHtml);
 
         } else {
           dynamicPlaceholderText = $input.attr('data-dynamic-placeholder');
@@ -170,7 +162,7 @@ function($) {
 
       $select = $('<a/>', {
         'class': 'objectId-select',
-        'target': target,
+        'target': target + '-select',
         'click': function() { return !$(this).is('.state-disabled'); },
         'href': searcherPath +
             (searcherPath.indexOf('?') > -1 ? '&' : '?') + 'pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
@@ -183,7 +175,7 @@ function($) {
 
       $edit = $('<a/>', {
         'class': 'objectId-edit',
-        'target': target,
+        'target': target + '-edit',
         'text': 'Edit'
       });
 
@@ -199,6 +191,7 @@ function($) {
           if ($input.val()) {
             if ($input.attr('data-restorable') === 'false') {
               $input.removeAttr('data-label');
+              $input.removeAttr('data-label-html');
               $input.removeAttr('data-preview');
 
             } else {

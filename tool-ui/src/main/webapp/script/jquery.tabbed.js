@@ -84,6 +84,7 @@ $.plugin2('tabbed', {
                         $selected.closest('li').addClass(SELECTED_CLASS);
                         $items.toggleClass('tabs-hidden', true);
                         $(tab.items).toggleClass('tabs-hidden', false).trigger('tabbedShow');
+                        $tabs.trigger('tabbed-select');
                         $container.resize();
                         return false;
                     }
@@ -106,6 +107,8 @@ $.plugin2('tabbed', {
                 urlMatch = urlMatch[2];
 
                 if (urlMatch) {
+                    urlMatch = decodeURIComponent(urlMatch);                
+                    
                     $tabs.find('> li > a').each(function() {
                         var $tab = $(this);
 

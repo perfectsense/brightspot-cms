@@ -5,12 +5,13 @@
 
   > .leftNav {
     float: left;
+    transition: margin-left @time-fast ease-in-out;
     width: @rail-width;
   }
 
   > .main {
     margin-left: (@rail-width + @gap-medium);
-
+    transition: margin-left @time-fast ease-in-out;
 
     // Create a new "block formatting context" so when we clear floats within
     // it does not clear the float of the leftNav
@@ -18,6 +19,16 @@
     > .widget {
       display:inline-block;
       width:100%;
+    }
+  }
+
+  &.objectSelectOpen {
+    > .leftNav {
+      margin-left: (0 - @rail-width - @gap-medium);
+    }
+
+    > .main {
+      margin-left: 0;
     }
   }
 }

@@ -34,8 +34,6 @@ import com.psddev.cms.tool.FileContentType;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
-import com.psddev.dari.db.ObjectType;
-import com.psddev.dari.db.Query;
 import com.psddev.dari.db.ReferentialText;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.AggregateException;
@@ -77,9 +75,6 @@ public class StorageItemField extends PageServlet {
 
         String inputName = ObjectUtils.firstNonBlank((String) request.getAttribute("inputName"), page.param(String.class, "inputName"));
         String actionName = inputName + ".action";
-        String storageName = inputName + ".storage";
-        String pathName = inputName + ".path";
-        String contentTypeName = inputName + ".contentType";
         String fileName = inputName + ".file";
         String urlName = inputName + ".url";
         String dropboxName = inputName + ".dropbox";
@@ -104,19 +99,6 @@ public class StorageItemField extends PageServlet {
 
         if (state != null) {
             fieldValue = (StorageItem) state.getValue(fieldName);
-        } else {
-            // handles processing of files uploaded on frontend
-            UUID typeId = page.param(UUID.class, "typeId");
-            ObjectType type = Query.findById(ObjectType.class, typeId);
-            field = type.getField(fieldName);
-            state = State.getInstance(ObjectType.getInstance(page.param(UUID.class, "typeId")));
-        }
-
-        String storageItemPath = page.param(String.class, pathName);
-        if (!StringUtils.isBlank(storageItemPath)) {
-            StorageItem newItem = StorageItem.Static.createIn(page.param(storageName));
-            newItem.setPath(storageItemPath);
-            fieldValue = newItem;
         }
 
         String metadataFieldName = fieldName + ".metadata";
@@ -268,13 +250,7 @@ public class StorageItemField extends PageServlet {
                 InputStream newItemData = null;
 
                 if ("keep".equals(action)) {
-                    if (fieldValue != null) {
-                        newItem = fieldValue;
-                    } else {
-                        newItem = StorageItem.Static.createIn(page.param(storageName));
-                        newItem.setPath(page.param(pathName));
-                        newItem.setContentType(page.param(contentTypeName));
-                    }
+                    newItem = fieldValue;
 
                 } else if ("newUpload".equals(action)
                         || "dropbox".equals(action)) {
@@ -617,9 +593,6 @@ public class StorageItemField extends PageServlet {
 
                 page.writeStart("div",
                         "class", "fileSelectorItem fileSelectorExisting filePreview");
-                    page.writeTag("input", "name", page.h(storageName), "type", "hidden", "value", page.h(fieldValue.getStorage()));
-                    page.writeTag("input", "name", page.h(pathName), "type", "hidden", "value", page.h(fieldValue.getPath()));
-                    page.writeTag("input", "name", page.h(contentTypeName), "type", "hidden", "value", page.h(contentType));
 
                     if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
 

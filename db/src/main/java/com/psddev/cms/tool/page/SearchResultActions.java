@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
@@ -74,14 +74,14 @@ public class SearchResultActions extends PageServlet {
         UUID selectionId = page.param(UUID.class, SELECTION_ID_PARAMETER);
 
         if (ACTION_ADD.equals(action)) {
-
-            // add an item to the current selection
-            currentSelection.addItem(page.param(UUID.class, ITEM_ID_PARAMETER));
+            for (UUID item : page.params(UUID.class, ITEM_ID_PARAMETER)) {
+                currentSelection.addItem(item);
+            }
 
         } else if (ACTION_REMOVE.equals(action)) {
-
-            // remove an item from the current selection
-            currentSelection.removeItem(page.param(UUID.class, ITEM_ID_PARAMETER));
+            for (UUID item : page.params(UUID.class, ITEM_ID_PARAMETER)) {
+                currentSelection.removeItem(item);
+            }
 
         } else if (ACTION_CLEAR.equals(action) && user.isSavedSearchResultSelection(currentSelection)) {
 
@@ -186,16 +186,18 @@ public class SearchResultActions extends PageServlet {
             page.writeEnd();
         }
 
-        // Sort SearchResultActions first by getClass().getSimpleName(), then by getClass().getName() for tie-breaking.
-        for (Class<? extends SearchResultAction> actionClass : ClassFinder.Static.findClasses(SearchResultAction.class)
-                .stream()
+        for (Iterator<? extends SearchResultAction> i = ClassFinder.findClasses(SearchResultAction.class).stream()
                 .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
+                .map(c -> TypeDefinition.getInstance(c).newInstance())
                 .sorted(Comparator
-                        .<Class<? extends SearchResultAction>, String>comparing(Class::getSimpleName)
-                        .thenComparing(Class::getName))
-                .collect(Collectors.toList())) {
+                        .comparing(SearchResultAction::getPosition)
+                        .thenComparing(a -> a.getClass().getSimpleName())
+                        .thenComparing(a -> a.getClass().getName()))
+                .iterator();
+                i.hasNext();
+                ) {
 
-            TypeDefinition.getInstance(actionClass).newInstance().writeHtml(page, search, count > 0 ? currentSelection : null);
+            i.next().writeHtml(page, search, count > 0 ? currentSelection : null);
         }
     }
 

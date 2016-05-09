@@ -1,3 +1,5 @@
+define(['string'], function (S) {
+    
 /** Better drop-down list than standard SELECT. */
 (function($, win, undef) {
 
@@ -7,8 +9,6 @@
       $openOriginal,
       $openList;
   
-  require(['string'], function (S) {    
-
   $.plugin2('dropDown', {
     '_defaultOptions': {
       'classPrefix': 'dropDown-'
@@ -91,19 +91,68 @@
         }
       });
 
+      function resize() {
+        var inputOffset = $input.offset();
+        var inputWidth = $input.outerWidth(true);
+        var winScrollTop = $win.scrollTop();
+        var winHeight = $win.height();
+
+        if (inputWidth > $listContainer.outerWidth(true)) {
+          $listContainer.css('min-width', inputWidth + 20);
+        }
+
+        if (inputOffset.top - winScrollTop < winHeight * 0.6) {
+          var inputHeight = $input.outerHeight();
+          var markerTop = inputOffset.top + inputHeight;
+
+          if (isFixedPosition) {
+            markerTop -= $win.scrollTop();
+          }
+
+          $list.css('max-height', winScrollTop + winHeight - inputOffset.top - inputHeight);
+
+          $input.add($listContainer).add($markerContainer).removeClass('dropDown-input-bottom');
+          $listContainer.add($markerContainer).css({
+            'bottom': '',
+            'left': inputOffset.left,
+            'top': markerTop
+          });
+
+        } else {
+          var markerBottom = winHeight - inputOffset.top;
+
+          if (isFixedPosition) {
+            markerBottom += $win.scrollTop();
+          }
+
+          $list.css('max-height', inputOffset.top - winScrollTop);
+
+          $input.add($listContainer).add($markerContainer).addClass('dropDown-input-bottom');
+          $listContainer.add($markerContainer).css({
+            'bottom': markerBottom,
+            'left': inputOffset.left,
+            'top': ''
+          });
+        }
+
+        $markerContainer.css('width', $input.outerWidth());
+      }
+
       $label.bind('dropDown-update', function() {
         var newLabel = $.map($original.find('option:selected'), function(option) {
-          return $(option).text();
+          return $(option).attr("data-drop-down-html") || $(option).text();
         }).join(', ');
 
         $label.html(newLabel || dynamicPlaceholderHtml || placeholder || '&nbsp;');
         $label.toggleClass('state-placeholder', !newLabel);
+
+        resize();
       });
 
       containerCss = {
         'display': 'none',
         'position': isFixedPosition ? 'fixed' : 'absolute',
-        'z-index': $original.zIndex()
+        'z-index': $original.zIndex() + 1000000
       };
 
       $markerContainer = $('<div/>', {
@@ -116,6 +165,7 @@
 
       $listContainer = $('<div/>', {
         'class': plugin.className('container'),
+        'data-original-class': $original.attr('class'),
         'css': containerCss
       });
 
@@ -124,22 +174,7 @@
       });
 
       $list.bind('dropDown-open', function() {
-        var offset = $input.offset();
-        var inputWidth = $input.outerWidth(true);
-
-        if (inputWidth > $listContainer.outerWidth(true)) {
-          $listContainer.css('min-width', inputWidth + 20);
-        }
-
-        offset.top += $input.outerHeight();
-
-        if (isFixedPosition) {
-          offset.top -= $win.scrollTop();
-        }
-
-        $listContainer.css(offset);
-        $markerContainer.css(offset);
-        $markerContainer.css('width', $input.outerWidth());
+        resize();
 
         $input.addClass(plugin.className('list-open'));
 
@@ -209,7 +244,7 @@
 
         $item = $('<div/>', {
           'class': plugin.className('listItem'),
-          'html': $option.text() || '&nbsp;'
+          'html': $option.attr("data-drop-down-html") || $option.text() || '&nbsp;'
         });
 
         $check = $('<input/>', {
@@ -417,6 +452,10 @@
     return true;
   });
   
-  });
-
 }(jQuery, window));
+
+    // Return an empty object just for the benefit of the AMD module.
+    // Not expected to be used since we just set up a jquery plugin.
+    return {};
+    
+}); // define()

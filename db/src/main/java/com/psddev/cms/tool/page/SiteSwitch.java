@@ -1,6 +1,7 @@
 package com.psddev.cms.tool.page;
 
 import com.psddev.cms.db.Site;
+import com.psddev.cms.db.SiteCategory;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
@@ -15,6 +16,8 @@ import java.util.UUID;
 
 @RoutingFilter.Path(application = "cms", value = "/siteSwitch")
 public class SiteSwitch extends PageServlet {
+
+    private static final String SITE_CATEGORY_INPUT_NAME = "siteCategory";
 
     @Override
     protected String getPermissionId() {
@@ -52,28 +55,44 @@ public class SiteSwitch extends PageServlet {
                     page.writeEnd();
 
                     page.writeStart("div", "class", "siteSwitch-content fixedScrollable");
-                        page.writeStart("ul", "class", "links");
-                            if (currentSite != null && page.hasPermission("site/global")) {
-                                page.writeStart("li");
-                                    page.writeStart("a",
-                                            "href", page.cmsUrl("/siteSwitch", "switch", true),
-                                            "target", "_top");
-                                        page.writeHtml(page.localize(SiteSwitch.class, "label.global"));
+                        page.writeStart("form",
+                                "action", page.cmsUrl("/siteSwitchResults"),
+                                "method", "get",
+                                "data-bsp-autosubmit", "",
+                                "target", "siteSwitchResults");
+
+                            if (Query.from(SiteCategory.class).hasMoreThan(0)) {
+                                page.writeStart("select",
+                                        "data-searchable", true,
+                                        "name", SITE_CATEGORY_INPUT_NAME,
+                                        "placeholder", "Site Category",
+                                        "style", "display: block;");
+                                    page.writeStart("option", "value", "");
                                     page.writeEnd();
+
+                                    for (SiteCategory siteCategory : Query.from(SiteCategory.class).selectAll()) {
+                                        page.writeStart("option", "value", siteCategory.getId());
+                                            page.writeHtml(siteCategory.getLabel());
+                                        page.writeEnd();
+                                    }
                                 page.writeEnd();
                             }
 
-                            for (Site site : sites) {
-                                page.writeStart("li");
-                                    page.writeStart("a",
-                                            "href", page.cmsUrl("/siteSwitch", "switch", true, "id", site.getId()),
-                                            "target", "_top");
-                                        page.writeObjectLabel(site);
-                                    page.writeEnd();
+                            page.writeStart("div", "class", "searchInput");
+                                page.writeStart("label", "for", page.createId());
+                                    page.write(page.localize(SiteSwitch.class, "label.search"));
                                 page.writeEnd();
-                            }
+                                page.writeTag("input", "id", page.getId(),
+                                        "class", "autoFocus",
+                                        "name", "query",
+                                        "type", "text",
+                                        "value", "");
+                            page.writeEnd();
                         page.writeEnd();
-                    page.writeEnd();
+
+                        page.writeStart("div", "class", "frame", "name", "siteSwitchResults");
+                        page.writeEnd();
+
                 page.writeEnd();
             }
         }

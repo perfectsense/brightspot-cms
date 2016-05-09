@@ -3494,7 +3494,27 @@ define([
                     .closest('.inputContainer').hide();
 
                 // Create a new list for the hotspot LI and move it into a popup
-                $hotspot = $('<ul/>').append( $objectInput.closest('li') );
+                $hotspot = $('<div/>', {
+                    html: [
+                        $('<h1/>', {
+                            'class': 'widget-heading',
+                            text: 'Edit Hotspot'
+                        }),
+                        $('<ul/>').append( $objectInput.closest('li') ),
+                        $('<div/>', {
+                            'class': 'actions',
+                            html: [
+                                $('<button/>', {
+                                    text: 'Set',
+                                    click: function () {
+                                        $hotspot.popup('close');
+                                        return false;
+                                    }
+                                })
+                            ]
+                        })
+                    ]
+                });
                 $hotspot.popup({parent:self.dom.$hotspotPopups}).popup('close');
             });
 

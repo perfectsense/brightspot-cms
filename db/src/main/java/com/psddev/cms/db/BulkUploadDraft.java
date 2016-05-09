@@ -4,14 +4,27 @@ import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 
+import java.util.UUID;
+
 @BulkUploadDraft.FieldInternalNamePrefix("cms.bulkUpload.")
 public class BulkUploadDraft extends Modification<Object> {
+
+    @Indexed
+    private UUID uploadId;
 
     @Indexed(visibility = true)
     @ToolUi.Sortable(false)
     private String containerId;
 
     private transient boolean runAfterSave;
+
+    public UUID getUploadId() {
+        return uploadId;
+    }
+
+    public void setUploadId(UUID uploadId) {
+        this.uploadId = uploadId;
+    }
 
     public String getContainerId() {
         return containerId;

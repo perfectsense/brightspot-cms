@@ -1,18 +1,58 @@
-.rte2-toolbar {
+.rte2-submenu() {
+  display:none;
+  margin:0;
+  position:absolute;
+  padding:0.5em;
   background-color: fade(white, 93%);
+  border:1px solid @color-separator;
+  z-index:4;
+  &:hover {
+    z-index: 5;
+  }
+      
+  li {
+    display:block;
+
+    a {
+          // Prevent submenu from shrinking and cutting off text when on right side
+      white-space: nowrap;
+    }
+  }
+}
+
+.rte2-toolbar {
+  background: white;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 0 1px;
   margin: 0;
+  padding: 0 4px;
   position: relative;
   vertical-align: top;
+
+  &.is_stuck {
+    border-color: @color-border;
+    padding-top: 5px;
+
+    &:after {
+      border-bottom: 1px dotted @color-border;
+      bottom: 0;
+      content: '';
+      left: 5px;
+      position: absolute;
+      right: 5px;
+    }
+  }
 
   .rte2-wrapper > & {
 
     // Give a higher z-index than the rich text editor.
-    z-index: 3;
+    z-index: 4;
 
     // When hovering the toolbar, give it a higher z-index than other toolbars
     // below so that the submenu will be on top of other toolbars.
     &:hover {
-      z-index: 4;
+      z-index: 5;
     }
   }
 
@@ -30,17 +70,7 @@
     height: 25px;
 
     > ul {  // Submenu
-      display:none;
-      margin:0;
-      position:absolute;
-      padding:0.5em;
-      background-color: fade(white, 93%);
-      border:1px solid @color-separator;
-      z-index:1;
-      
-      li {
-        display:block;
-      }
+      .rte2-submenu;
     }
 
     &:hover {
@@ -54,9 +84,11 @@
       }
     }
 
-    &:last-of-type {
+  }
+
+  // To leave room for the word count, make sure there is space after the last toolbar item
+  > li:last-of-type {
       margin-right: 7em;
-    }
   }
   
   a, span, .rte2-toolbar-separator {
@@ -97,8 +129,13 @@
       color: @color-text;
       text-decoration: none;
     }
+
+    &.outOfContext {
+      text-decoration: line-through;
+    }
   }
 
+  .rte2-toolbar-noicon { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-bold { .icon; .icon-bold; }
   .rte2-toolbar-italic { .icon; .icon-italic; }
   .rte2-toolbar-underline { .icon; .icon-underline; }
@@ -120,6 +157,8 @@
   
   .rte2-toolbar-enhancement { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-marker { width:auto; padding-left:0.5em; padding-right:0.5em; }
+
+  .rte2-toolbar-enhancement-inline { width:auto; padding-left:0.5em; padding-right:0.5em; }
 
   .rte2-toolbar-track-changes { width:auto; padding-left:0.5em; padding-right:0.5em; }
   .rte2-toolbar-track-changes-accept { .icon; .icon-ok; }
@@ -164,6 +203,10 @@
   background-color: transparent;
   border-style: none;
   padding: 0;
+  > li:last-of-type {
+    // Remove the extra space normally reserved for the word count
+      margin-right: 0;
+  }
 
   .rte2-enhancement-toolbar-up { .icon; .icon-arrow-up; }
   .rte2-enhancement-toolbar-down { .icon; .icon-arrow-down; }
@@ -174,16 +217,42 @@
   .rte2-enhancement-toolbar-restore { .icon; .icon-undo; width:auto; padding-right:0.5em; display:none; }
   .rte2-enhancement-toolbar-remove-completely { .icon; .icon-remove; color: @color-remove; width:auto; padding-right:0.5em; display:none; }
   .rte2-enhancement-toolbar-change { .icon; .icon-random; width:auto; padding-right:0.5em; }
+  .rte2-enhancement-toolbar-options { .icon; .icon-cog; width:auto; padding-right:0.5em; }
   .rte2-enhancement-toolbar-edit { .icon; .icon-pencil; width:auto; padding-right:0.5em; }
-  .rte2-enhancement-toolbar-size { width:auto; }
+  .rte2-enhancement-toolbar-size {
+    .icon;
+    .icon-caret-right;
+    &.hovered, &:hover {
+      .icon-caret-down;
+    }
+    width:auto;
+    padding-right:0.5em;
+    &:before { padding: 0 0 1px 3px; }
+  }
 }
 
-.rte2-enhancement.toBeRemoved {
+.rte2-enhancement-sizes-popup:extend(.rte2-toolbar all) {
+  .rte2-submenu;
+  width:auto;
+  a { width:auto; display:block; }
+  > li {
+    &:last-of-type {
+      // Remove the extra space normally reserved for the word count
+      margin-right: 0;
+    }
+  }
+}
+
+.rte2-enhancement.toBeRemoved, .rte2-table.toBeRemoved {
   .rte2-enhancement-toolbar-remove { display:none; }
   .rte2-enhancement-toolbar-restore { display:inline-block; }
   .rte2-enhancement-toolbar-remove-completely { display:inline-block; }
 }
-
+.rte2-table-placeholder {
+  height:auto;
+  width:100%;
+  position:relative;
+}
 .rte2-style-html {
   font-family: @fontFamily-code;
   background-color:fade(black, 10%);
@@ -225,10 +294,27 @@
 .rte2-style-align-right {
   text-align:right;
 }
+.rte2-style-spelling {
+  border-bottom:1px dotted red;
+}
+@rte2-style-comment-border: 1px solid rgba(0, 0, 0, 0.3);
 .rte2-style-comment {
   font-style:italic;
-  outline:1px solid #333;
-  padding:0.1em;
+  border-top: @rte2-style-comment-border;
+  border-bottom:@rte2-style-comment-border;
+  background-color: rgba(0,0,0,0.1);
+}
+.rte2-style-comment-start {
+  padding-left:0.1em;
+  border-left: @rte2-style-comment-border;
+
+  .icon;
+  .icon-comment-alt;
+
+}
+.rte2-style-comment-end {
+  padding-right:0.1em;
+  border-right:  @rte2-style-comment-border;
 }
 .rte2-style-collapsed {
   font-style:italic;
@@ -237,7 +323,12 @@
   padding:0.1em 0.5em;
   background-color:#ddd;
 }
-.rte2-style-enhancement {
+.rte2-style-enhancement-inline {
+  padding:0;
+  background-color:rgba(180, 180, 180, 0.3);
+  outline:1px solid rgba(100, 100, 100, 0.5);
+}
+.rte2-style-enhancement, .rte2-style-table {
   display:inline-block;
   padding:2em;
   background-color:#ddd;
@@ -246,27 +337,38 @@
   width:100%;
   margin:1em 0;
 }
+.rte2-style-enhancement-float() {
+  width:auto;
+  .rte2-enhancement-toolbar {
+    white-space:nowrap;
+  }
+}
 .rte2-style-enhancement-left {
+  .rte2-style-enhancement-float;
   float:left;
   margin:0 1em 0 0;
-  width:400px;
 }
 .rte2-style-enhancement-right {
+  .rte2-style-enhancement-float;
   float:right;
   margin:0 0 0 1em;
-  width:400px;
 }
-.rte2-style-track-delete {
+.rte2-style-track-delete, .rte2-table-placeholder del {
   background-color: rgba(255, 0, 0, 0.3);
   color:white;
   text-decoration: line-through;
 }
-.rte2-style-track-display .rte2-style-track-insert {
-  background-color: rgba(125, 255, 125, 0.3);
-  color:black;
+.rte2-table-placeholder del {
+  display:none;
 }
-.rte2-style-spelling {
-  border-bottom:1px dotted red;
+.rte2-style-track-display {
+  .rte2-style-track-insert, .rte2-table-placeholder ins {
+    background-color: rgba(125, 255, 125, 0.3);
+    color:black;
+  }
+  .rte2-table-placeholder del {
+    display:inline;
+  }
 }
 
 .CodeMirror-hints {
@@ -308,6 +410,39 @@ li.CodeMirror-hint-active {
   color: white;
 }
 
+.CodeMirror-dialog {
+  position: absolute;
+  left: 0; right: 0;
+  background: white;
+  z-index: 15;
+  padding: .1em .8em;
+  overflow: hidden;
+  color: #333;
+}
+
+.CodeMirror-dialog-top {
+  border-bottom: 1px solid #eee;
+  top: 0;
+}
+
+.CodeMirror-dialog-bottom {
+  border-top: 1px solid #eee;
+  bottom: 0;
+}
+
+.CodeMirror-dialog input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 20em;
+  color: inherit;
+  font-family: monospace;
+}
+
+.CodeMirror-dialog button {
+  font-size: 70%;
+}
+
 // For enhancements, let the enhancement toolbar overflow the codemirror widget,
 // and reset the z-index because it was causing problems with the submenu hover
 .rte2-codemirror {
@@ -318,6 +453,15 @@ li.CodeMirror-hint-active {
   .CodeMirror-linewidget {
     overflow: visible;
     z-index: inherit;
+  }
+}
+
+.rte-fullscreen {
+  position: relative;
+  z-index: 999;
+
+  &.contentForm {
+    overflow: visible;
   }
 }
 
@@ -358,13 +502,15 @@ li.CodeMirror-hint-active {
     z-index: 49;
 
     > .rte2-toolbar {
-      background: white;
-      border-bottom: 1px solid @color-separator;
-      left: 0 !important;
-      padding-left: 5px;
-      padding-right: 5px;
-      right: 0 !important;
-      width: auto !important;
+      border-color: @color-separator;
+      border-style: solid;
+      border-width: 0 0 1px 0;
+      padding-top: 5px;
+      margin: 0 -40px;
+
+      &:after {
+        display: none;
+      }
     }
 
     .rte2-toolbar {
@@ -422,7 +568,8 @@ li.CodeMirror-hint-active {
     }
   }
 
-  .rte2-enhancement {
+  .rte2-enhancement,
+  .rte2-table {
     box-sizing: border-box;
     padding: 0 5px (@lineHeight-default + 5px) 5px;
     position: relative;
@@ -461,19 +608,18 @@ li.CodeMirror-hint-active {
       padding:0.25em;
     }
 
-    &.toBeRemoved {
-      .background-striped(lighten(@color-remove, 10%));
+    .rte2-enhancement-toolbar a {
+      color: @color-placeholder;
+
+      &:hover {
+        background-color: fade(white, 93%);
+        text-decoration: none;
+      }
     }
 
-    &,
     &.toBeRemoved {
-      a {
-        color: @color-placeholder;
-
-        &:hover {
-          background-color: fade(white, 93%);
-          text-decoration: none;
-        }
+      &:before {
+        .background-striped(lighten(@color-remove, 40%));
       }
     }
   }
@@ -519,9 +665,109 @@ li.CodeMirror-hint-active {
   float: right;
 }
 
+.popup[name^=rte2-frame-enhancement-inline] {
+  max-width:1000px;
+  width:70%;
+}
+
+.popup[name=rte2-frame-table-editor] {
+  
+  max-width:1000px;
+  width: 60%;
+  margin-left:-40%;
+  
+  .closeButton {
+    display:none;
+  }
+
+  .rte2-codemirror {
+    overflow: hidden;
+  }
+}
+
+.rte2-table-editor-save {
+  margin-right: 0.5em;
+}
+.rte2-table-editor-controls {
+  margin-top:1em;
+}
+
+.rte2-table-placeholder {
+  u { text-decoration:underline; }
+  strike { text-decoration:line-through;}
+  
+  // Within the table do not let users click link or button elements
+  table {
+    a, button { pointer-events:none; }
+  }
+
+  .rte-comment {
+    &:extend(.rte2-style-comment);
+    &:extend(.rte2-style-comment-start all);
+    &:extend(.rte2-style-comment-end);
+  }
+}
+
 // Div that is used as a paste clipboard
 // Note this cannot be hidden because it needs to get focus
 .rte2-clipboard {
   max-height:1px;
   overflow:hidden;
+}
+
+.rte2-onclick-selector {
+  ul {
+    margin:0 1em;
+  }
+}
+
+.rte2-dropdown {
+  z-index:2;
+  position:absolute;
+  background-color:rgba(255, 255, 255, 0.9);
+  padding:0.25em;
+  border:1px solid rgba(0, 0, 0, 0.5);
+  border-radius:2px;
+  top:0;
+  left:0;
+  display:table;
+
+  .rte2-dropdown-item {
+    display:table-row;
+  }
+  
+  .rte2-dropdown-label {
+    padding-right:0.25em;
+    border-right:1px solid #aaa;
+    display:table-cell;
+  }
+  .rte2-dropdown-edit {
+    padding-left:0.25em;
+    padding-right:0.25em;
+    border-right:1px solid #aaa;
+    margin-right:0.25em;
+    display:table-cell;
+  }
+  .rte2-dropdown-clear {
+    display:table-cell;
+    padding-left:0.25em;
+  }
+}
+
+.rte2-table-placeholder {
+
+  .wtHolder::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 5px;
+    height:5px;
+  }
+  .wtHolder::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background-color: rgba(0,0,0,.25);
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+  }
+}
+
+.rte2-placeholder-showing .CodeMirror pre {
+  color: @color-placeholder;
 }

@@ -253,6 +253,15 @@ public class Workflow extends Record {
         return transitions;
     }
 
+    public String getStateDisplayName(String workflowState) {
+        return getStates()
+                .stream()
+                .filter(st -> st != null && workflowState.equals(st.getName()))
+                .map(WorkflowState::getDisplayName)
+                .findFirst()
+                .orElse(workflowState);
+    }
+
     @Override
     protected void beforeSave() {
         super.beforeSave();

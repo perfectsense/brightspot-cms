@@ -38,7 +38,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       // Bind command/control-S to saving a draft.
       var $draftButton = $widget.find('button[name="action-draft"]');
 
-      if ($draftButton.length > 0) {
+      if ($draftButton.length > 0 && $draftButton.closest('.widget-publishing').find('.publishing-workflow').length === 0) {
         $(document).on('keydown', function(event) {
           if (event.which === 83 && (event.ctrlKey || event.metaKey)) {
             $draftButton.click();
@@ -47,7 +47,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           }
         });
 
-        if ($draftButton.closest('.message').length > 0) {
+        if (!window.DISABLE_AJAX_SAVES) {
           var saving = false;
           var toolMessageTimeout;
 
@@ -93,7 +93,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             $(document.body).append($frame);
             $form.attr('target', frameName);
             $frame.load(function () {
-              var $message = $('.contentForm-main > .widget-content > .message', this.contentDocument);
+              var $message = $('.contentForm-main > .widget-content > .message:not(.message-info)', this.contentDocument);
 
               if ($message.length > 0) {
                 $toolMessage.html($message.clone());
@@ -127,6 +127,12 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
               $form.find('.state-changed').removeClass('state-changed');
               $form.find('.toBeRemoved').remove();
+
+              var OLD_VALUES_SELECTOR = '.contentForm > input[type="hidden"][name$="/oldValues"]';
+              var $oldValuesInput = $(OLD_VALUES_SELECTOR);
+
+              $oldValuesInput.val($(OLD_VALUES_SELECTOR, this.contentDocument).val());
+              $oldValuesInput.change();
 
               $form.removeAttr('target');
               $frame.remove();
@@ -202,120 +208,5 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
     $(document).on('click', '.widget-publishing button, .widget-publishing :submit', function(event) {
       return !$.data($(event.target).closest('.contentForm')[0], SUBMITTING_DATA);
     });
-  })();
-
-  // Keep the publishing widget in view at all times.
-  (function() {
-    var FIXED_DATA_KEY = 'cp-fixed';
-    var OFFSET_DATA_KEY = 'cp-offset';
-    var HEIGHT_DATA_KEY = 'cp-height';
-    var WIDTH_DATA_KEY = 'cp-width';
-
-    // Update the various element sizing information to be used later.
-    var toolHeaderHeight;
-
-    function updateSizes() {
-      toolHeaderHeight = $('.toolHeader').outerHeight(true);
-
-      $('.contentForm-aside').each(function() {
-        var aside = this;
-        var $aside = $(aside);
-
-        if ($aside.closest('.popup[data-popup-source-class="objectId-select"]').length > 0) {
-          return;
-        }
-
-        var $publishing = $aside.find('> .widget-publishing');
-
-        $.data($publishing[0], FIXED_DATA_KEY, $publishing.outerHeight() < $window.height() * 0.4);
-
-        var asideTop = $aside.css('top');
-
-        $aside.css('top', '');
-        $.data(aside, OFFSET_DATA_KEY, $aside.offset());
-        $aside.css('top', asideTop);
-
-        var asideWidth = $aside.width();
-        var $widget = $aside.find('.widget-publishing');
-        var widget = $widget[0];
-
-        $.data(widget, HEIGHT_DATA_KEY, $widget.outerHeight(true));
-        $.data(widget, WIDTH_DATA_KEY, $widget.css('box-sizing') === 'border-box' ?
-            asideWidth :
-            asideWidth - ($widget.outerWidth() - $widget.width()));
-      });
-    }
-
-    // Keep the publishing widget fixed at the top below the tool header,
-    // and move down all the elements below.
-    function moveElements() {
-      var windowScrollTop = $window.scrollTop();
-
-      $('.contentForm-aside').each(function() {
-        var aside = this;
-        var $aside = $(aside);
-
-        if ($aside.closest('.popup[data-popup-source-class="objectId-select"]').length > 0) {
-          return;
-        }
-
-        var asideOffset = $.data(aside, OFFSET_DATA_KEY);
-        var $widgets = $aside.find('> .contentWidgets');
-        var $publishing = $aside.find('> .widget-publishing');
-        var publishing = $publishing[0];
-
-        if ($.data(publishing, FIXED_DATA_KEY)
-            && asideOffset.top - windowScrollTop <= toolHeaderHeight) {
-
-          $widgets.css({
-            'padding-top': $.data(publishing, HEIGHT_DATA_KEY)
-          });
-
-          $publishing.css({
-            'left': asideOffset.left,
-            'position': 'fixed',
-            'top': toolHeaderHeight,
-            'width': $.data(publishing, WIDTH_DATA_KEY),
-            'z-index': 1
-          });
-
-          // Hide the right rail widgets when under the publishing widget.
-          var asideTop = $aside.closest('.popup').length > 0 ? parseInt($aside.css('top'), 10) || 0 : 0;
-          var clipPathTop = (windowScrollTop - asideOffset.top - asideTop + toolHeaderHeight + 20) + 'px';
-          var clipPath = 'inset(' + clipPathTop + ' 0 0 0)';
-
-          $widgets.css({
-            '-webkit-clip-path': clipPath,
-            'clip-path': clipPath
-          });
-
-        } else {
-          $widgets.css({
-            '-webkit-clip-path': '',
-            'clip-path': '',
-            'padding-top': ''
-          });
-
-          $publishing.css({
-            'left': '',
-            'position': '',
-            'top': '',
-            'width': '',
-            'z-index': ''
-          });
-        }
-      });
-    }
-
-    // Execute on resizes and scrolls.
-    updateSizes();
-    moveElements();
-
-    $window.resize(bsp_utils.throttle(50, function() {
-      updateSizes();
-      moveElements();
-    }));
-
-    $window.scroll(moveElements);
   })();
 });

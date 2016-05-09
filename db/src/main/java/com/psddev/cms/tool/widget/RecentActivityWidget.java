@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableSet;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.ToolRole;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
@@ -94,6 +95,10 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                 visibilitiesFilter = item -> State.getInstance(item).isVisible();
             }
 
+            if (itemType == null) {
+                contentQuery.and(page.userTypesPredicate());
+            }
+
             QueryRestriction.updateQueryUsingAll(contentQuery, page);
 
             result = contentQuery.and("_any matches *").selectFiltered(offset, limit, visibilitiesFilter);
@@ -114,7 +119,7 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                         "action", page.url(null));
 
                     page.writeTypeSelect(
-                            com.psddev.cms.db.Template.Static.findUsedTypes(page.getSite())
+                            ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()
                                     .stream()
                                     .filter(page.createTypeDisplayPredicate(ImmutableSet.of("read")))
                                     .collect(Collectors.toList()),

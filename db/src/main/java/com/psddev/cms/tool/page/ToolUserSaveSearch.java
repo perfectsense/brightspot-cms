@@ -48,6 +48,7 @@ public class ToolUserSaveSearch extends PageServlet {
             page.writeEnd();
             page.writeStart("script", "type", "text/javascript");
                 page.writeRaw("$('#").writeRaw(page.getId()).writeRaw("').popup('close');");
+                page.writeRaw("$('.frame[name=\"savedSearches\"]').find('form[name=\"refreshSavedSearches\"]').submit();");
             page.writeEnd();
             return;
         }

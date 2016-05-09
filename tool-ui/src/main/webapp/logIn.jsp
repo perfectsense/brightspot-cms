@@ -70,6 +70,10 @@ private static String getIpAddress(String xForReqParam, String remoteAddrReqPara
 
 ToolPageContext wp = new ToolPageContext(pageContext);
 
+if (AuthenticationFilter.Static.requireToolUrlPrefix(wp.getServletContext(), request, response)) {
+    return;
+}
+
 if (wp.getUser() != null) {
     AuthenticationFilter.Static.logOut(response);
     response.sendRedirect(new UrlBuilder(request).

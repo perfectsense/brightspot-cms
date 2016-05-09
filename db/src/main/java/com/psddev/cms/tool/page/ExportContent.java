@@ -336,11 +336,12 @@ public class ExportContent extends PageServlet {
             }
 
             State itemState = State.getInstance(item);
+            ObjectType itemType = itemState.getType();
 
             writeRaw(CSV_BOUNDARY);
-            writeCsvItem(getTypeLabel(item));
+            writeCsvItem(itemType != null ? itemType.getLabel() : null);
             writeRaw(CSV_BOUNDARY).writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
-            writeCsvItem(getObjectLabel(item));
+            writeCsvItem(itemState.getLabel());
             writeRaw(CSV_BOUNDARY);
 
             List<String> fieldNames = getUser().getSearchResultFieldsByTypeId().get(selectedType.getId().toString());
@@ -418,7 +419,7 @@ public class ExportContent extends PageServlet {
             HtmlWriter htmlWriter = new HtmlWriter(stringWriter);
 
             htmlWriter.putOverride(Recordable.class, (HtmlWriter writer, Recordable object) ->
-                            writer.writeHtml(getObjectLabel(object))
+                            writer.writeHtml(object.getState().getLabel())
             );
 
             // Override Metric fields to output the total sum

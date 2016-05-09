@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +24,11 @@ import com.psddev.dari.db.State;
 import com.psddev.dari.util.UrlBuilder;
 
 public class CreateDraftSearchResultAction implements SearchResultAction {
+
+    @Override
+    public int getPosition() {
+        return -1;
+    }
 
     @Override
     public void writeHtml(
@@ -96,20 +100,6 @@ public class CreateDraftSearchResultAction implements SearchResultAction {
                     // TODO: LOCALIZE
                     page.writeHtml("Create New ");
                     page.writeObjectLabel(generate.type);
-
-                    // write out count of objects that will be passed to the SearchResultSelectionGeneratable#fromCollection method.
-                    page.writeHtml(" (");
-
-                    Iterator<ObjectType> componentTypesIt = generate.componentTypes.iterator();
-                    ObjectType componentType = componentTypesIt.next();
-                    page.writeObjectLabel(componentType);
-                    while (componentTypesIt.hasNext()) {
-                        page.write(",");
-                        componentType = componentTypesIt.next();
-                        page.writeObjectLabel(componentType);
-                    }
-                    page.writeHtml(')');
-
                     page.writeEnd(); // end a.button
                     page.writeEnd(); // end div.searchResult-action-simple
                 }

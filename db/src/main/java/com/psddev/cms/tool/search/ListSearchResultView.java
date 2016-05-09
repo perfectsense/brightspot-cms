@@ -14,10 +14,12 @@ import javax.servlet.http.HttpServletRequest;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.page.SearchResultActions;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.StorageItem;
+import com.psddev.dari.util.StringUtils;
 import org.joda.time.DateTime;
 
 import com.psddev.cms.db.Directory;
@@ -179,13 +181,20 @@ public class ListSearchResultView extends AbstractSearchResultView {
                             : item.getPublicUrl());
         });
 
+        String selectAllUrl = page.cmsUrl("/searchResultActions",
+                "search", ObjectUtils.toJson(search.getState().getSimpleValues()));
+
         page.writeStart("table", "class", "searchResultTable links table-striped pageThumbnails");
             page.writeStart("thead");
                 page.writeStart("tr");
                     page.writeStart("th");
                         page.writeElement("input",
                                 "type", "checkbox",
-                                "class", "searchResult-checkAll");
+                                "class", "searchResult-checkAll",
+                                "value", "",
+                                "data-frame-target", "searchResultActions",
+                                "data-frame-check", StringUtils.addQueryParameters(selectAllUrl, SearchResultActions.ACTION_PARAMETER, SearchResultActions.ACTION_ADD),
+                                "data-frame-uncheck", StringUtils.addQueryParameters(selectAllUrl, SearchResultActions.ACTION_PARAMETER, SearchResultActions.ACTION_REMOVE));
                     page.writeEnd();
 
                     if (sortField != null
@@ -237,6 +246,14 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                 }
                             }
 
+                            if (selectedType != null) {
+                                for (ObjectField field : selectedType.getFields()) {
+                                    if (Boolean.TRUE.equals(field.as(ToolUi.class).getDefaultSearchResult())) {
+                                        writeHeaderCell(field);
+                                    }
+                                }
+                            }
+
                         } else {
                             for (String fieldName : fieldNames) {
                                 Class<?> fieldNameClass = ObjectUtils.getClassByName(fieldName);
@@ -260,9 +277,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     }
 
                                     if (field != null && !ObjectUtils.equals(sortField, field)) {
-                                        page.writeStart("th");
-                                            page.writeHtml(field.getDisplayName());
-                                        page.writeEnd();
+                                        writeHeaderCell(field);
                                     }
                                 }
                             }
@@ -288,7 +303,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     && !ObjectUtils.isBlank(rendererData.getEmbedPath())) {
 
                                 permalink = "/_preview?_embed=true&_cms.db.previewId=" + itemState.getId();
-                                embedWidth = 320;
+                                embedWidth = previewWidth;
                             }
                         }
                     }
@@ -465,6 +480,14 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                     }
                                 }
 
+                                if (selectedType != null) {
+                                    for (ObjectField field : selectedType.getFields()) {
+                                        if (Boolean.TRUE.equals(field.as(ToolUi.class).getDefaultSearchResult())) {
+                                            writeDataCell(itemState, field.getInternalName());
+                                        }
+                                    }
+                                }
+
                             } else {
                                 for (String fieldName : fieldNames) {
                                     Class<?> fieldNameClass = ObjectUtils.getClassByName(fieldName);
@@ -478,7 +501,6 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                         }
 
                                     } else {
-
                                         ObjectField field = itemState.getField(fieldName);
 
                                         if (field == null) {
@@ -486,17 +508,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                         }
 
                                         if (field != null && !ObjectUtils.equals(sortField, field)) {
-                                            page.writeStart("td");
-                                            for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(fieldName)).iterator(); i.hasNext();) {
-                                                Object value = i.next();
-
-                                                page.writeObject(value);
-
-                                                if (i.hasNext()) {
-                                                    page.writeHtml(", ");
-                                                }
-                                            }
-                                            page.writeEnd();
+                                            writeDataCell(itemState, fieldName);
                                         }
                                     }
                                 }
@@ -512,11 +524,33 @@ public class ListSearchResultView extends AbstractSearchResultView {
 
         page.writeStart("script", "type", "text/javascript");
         page.writeRaw("$('#" + page.getId() + "').siblings('.searchResultTable').find('tr').each(function() {");
-        page.writeRaw("    if ($(this).find('td > a').size() > 1) {");
+        page.writeRaw("    if ($(this).find('td a').size() > 1) {");
         page.writeRaw("        $(this).closest('.searchResultTable').addClass('multipleLinkedColumns');");
         page.writeRaw("        return false;");
         page.writeRaw("    }");
         page.writeRaw(" });");
+        page.writeEnd();
+    }
+
+    private void writeHeaderCell(ObjectField field) throws IOException {
+        page.writeStart("th");
+            page.writeHtml(field.getDisplayName());
+        page.writeEnd();
+    }
+
+    private void writeDataCell(State itemState, String fieldName) throws IOException {
+        page.writeStart("td");
+
+        for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(fieldName)).iterator(); i.hasNext();) {
+            Object value = i.next();
+
+            page.writeObject(value);
+
+            if (i.hasNext()) {
+                page.writeHtml(", ");
+            }
+        }
+
         page.writeEnd();
     }
 }

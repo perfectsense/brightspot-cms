@@ -562,6 +562,8 @@ function($) {
                     $lastAnchor.removeAttr('rel');
                 }
 
+                $linkDialog.trigger('link.save', [$lastAnchor]);
+
                 $linkDialog.popup('close');
             });
 
@@ -666,6 +668,8 @@ function($) {
                     'position': 'absolute',
                     'top': composerOffset.top + $anchor.offset().top + $anchor.outerHeight()
                 });
+
+                $linkDialog.trigger('link.edit', [$lastAnchor]);
             };
 
             (function() {

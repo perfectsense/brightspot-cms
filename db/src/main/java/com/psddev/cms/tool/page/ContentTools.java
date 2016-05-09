@@ -28,11 +28,14 @@ import org.joda.time.format.DateTimeFormat;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentLock;
 import com.psddev.cms.db.Directory;
+import com.psddev.cms.db.PageFilter;
 import com.psddev.cms.db.Renderer;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.view.ViewCreator;
+import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -436,7 +439,10 @@ public class ContentTools extends PageServlet {
                             ObjectType type = state.getType();
 
                             if (type != null) {
-                                if (!ObjectUtils.isBlank(type.as(Renderer.TypeModification.class).getEmbedPath())) {
+                                if (!ObjectUtils.isBlank(type.as(Renderer.TypeModification.class).getEmbedPath())
+                                        || ViewCreator.findCreatorClass(object, null, PageFilter.EMBED_VIEW_TYPE, null) != null
+                                        || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, object) != null) {
+
                                     String permalink = state.as(Directory.ObjectModification.class).getPermalink();
 
                                     if (!ObjectUtils.isBlank(permalink)) {

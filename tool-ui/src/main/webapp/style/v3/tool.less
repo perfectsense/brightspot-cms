@@ -226,18 +226,6 @@
   }
 }
 
-.toolSearchSaved {
-  .background-flat(@color-heading);
-  bottom: -15px;
-  box-sizing: border-box;
-  display: block;
-  left: (-60 - @length-toolTitle-width);
-  padding: 20px;
-  position: absolute;
-  top: -15px;
-  width: (@length-toolTitle-width + 40);
-}
-
 .toolNav {
   display: none;
 }
@@ -344,7 +332,7 @@
 .toolContent {
   background: @color-border;
   margin: (0 - @toolHeader-height) (0 - @toolContent-padding) 0 (0 - @toolContent-padding);
-  padding: (@toolHeader-height + @toolContent-padding) @toolContent-padding @toolContent-padding @toolContent-padding;
+  padding: (@toolHeader-height + @toolContent-padding) @toolContent-padding (@toolContent-padding / 2) @toolContent-padding;
   position: relative;
   z-index: 0;
 }

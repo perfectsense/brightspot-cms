@@ -24,7 +24,6 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.UuidUtils;
 
 /** Unpublished object or unsaved changes to an existing object. */
-@Draft.DisplayName("Content Update")
 @ToolUi.Hidden
 public class Draft extends Content {
 

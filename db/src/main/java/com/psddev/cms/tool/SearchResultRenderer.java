@@ -11,6 +11,9 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.cms.db.PageFilter;
+import com.psddev.cms.view.ViewCreator;
+import com.psddev.cms.view.ViewModel;
 import org.joda.time.DateTime;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Renderer;
@@ -140,6 +143,15 @@ public class SearchResultRenderer {
         int level = page.paramOrDefault(int.class, TAXON_LEVEL_PARAMETER, 1);
 
         if (level == 1) {
+            List<Object> newItems = Query.fromAll()
+                    .where("_id = ?", search.getNewItemIds())
+                    .selectAll();
+
+            if (!newItems.isEmpty()) {
+                page.writeStart("h2").writeHtml("New").writeEnd();
+                renderList(newItems);
+            }
+
             page.writeStart("h2").writeHtml("Result").writeEnd();
         }
 
@@ -199,21 +211,16 @@ public class SearchResultRenderer {
             if (!ObjectUtils.isBlank(taxonResults)) {
                 resultsDisplayed = true;
 
-                page.writeStart("div", "class", "searchResultList");
-
                 if (level == 1) {
-                    page.writeStart("div", "class", "taxonomyContainer");
-                    page.writeStart("div", "class", "searchTaxonomy");
+                    page.writeStart("div", "class", "searchResultTaxonomy");
                 }
 
                 renderTaxonList(taxonResults, nextLevel);
 
                 if (level == 1) {
                     page.writeEnd();
-                    page.writeEnd();
+                    writeSuggestions();
                 }
-
-                page.writeEnd();
             }
         }
 
@@ -234,9 +241,13 @@ public class SearchResultRenderer {
                 } else {
                     renderEmpty();
                 }
+
+                writeSuggestions();
             page.writeEnd();
         }
+    }
 
+    private void writeSuggestions() throws IOException {
         if (search.isSuggestions() && ObjectUtils.isBlank(search.getQueryString())) {
             String frameName = page.createId();
 
@@ -256,7 +267,7 @@ public class SearchResultRenderer {
         }
     }
 
-    private void writeTaxon(Taxon taxon, int nextLevel) throws IOException {
+    private void writeTaxon(Taxon taxon, int nextLevel, String target) throws IOException {
         page.writeStart("li");
             if (taxon.as(Taxon.Data.class).isSelectable()) {
                 renderBeforeItem(taxon);
@@ -272,8 +283,8 @@ public class SearchResultRenderer {
             if (children != null && !children.isEmpty()) {
                 page.writeStart("a",
                         "href", page.url("", TAXON_PARENT_ID_PARAMETER, taxon.as(Taxon.Data.class).getId(), TAXON_LEVEL_PARAMETER, nextLevel),
-                        "class", "taxonomyExpand",
-                        "target", "taxonChildren-d" + nextLevel);
+                        "class", "searchResultTaxonomyExpand",
+                        "target", target);
                 page.writeEnd();
             }
         page.writeEnd();
@@ -410,16 +421,21 @@ public class SearchResultRenderer {
     }
 
     public void renderTaxonList(Collection<?> listItems, int nextLevel) throws IOException {
-        page.writeStart("ul", "class", "taxonomy");
+        String target = "t" + UUID.randomUUID().toString();
+
+        page.writeStart("div", "class", "searchResultTaxonomyColumn");
+        page.writeStart("ul");
 
         for (Taxon taxon : (Collection<Taxon>) listItems) {
-            writeTaxon(taxon, nextLevel);
+            writeTaxon(taxon, nextLevel, target);
         }
 
         page.writeEnd();
+        page.writeEnd();
+
         page.writeStart("div",
-                "class", "frame taxonChildren",
-                "name", "taxonChildren-d" + nextLevel);
+                "class", "frame searchResultTaxonomyChildren",
+                "name", target);
         page.writeEnd();
     }
 
@@ -466,9 +482,11 @@ public class SearchResultRenderer {
                 int previewWidth = rendererData.getEmbedPreviewWidth();
 
                 if (previewWidth > 0
-                        && !ObjectUtils.isBlank(rendererData.getEmbedPath())) {
+                        && (!ObjectUtils.isBlank(rendererData.getEmbedPath())
+                        || ViewCreator.findCreatorClass(item, null, PageFilter.EMBED_VIEW_TYPE, null) != null
+                        || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, item) != null)) {
                     permalink = "/_preview?_embed=true&_cms.db.previewId=" + itemState.getId();
-                    embedWidth = 320;
+                    embedWidth = previewWidth;
                 }
             }
         }

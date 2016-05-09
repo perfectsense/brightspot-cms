@@ -1,0 +1,7 @@
+{
+  "name": "${artifactId}",
+  "private": true,
+  "dependencies": {
+    "brightspot-base": "perfectsense/brightspot-base#release/3.0"
+  }
+}

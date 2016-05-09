@@ -622,14 +622,17 @@ if (!isValueExternal) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
+                boolean expanded = field.as(ToolUi.class).isExpanded() || itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
                 String weightFieldName = weightedTypesandFieldsMap.get(itemType);
 
                 wp.writeStart("li",
+                        "class", expanded ? "expanded" : null,
                         "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
                         "data-label", wp.getObjectLabel(item),
+                        "data-label-html", item != null ? wp.createObjectLabelHtml(item) : null,
 
                         // Add the image url for the preview thumbnail, plus the field name that provided the thumbnail
                         // so if that field is changed the front-end knows that the thumbnail should also be updated
@@ -657,7 +660,7 @@ if (!isValueExternal) {
                             "name", publishDateName,
                             "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
 
-                    if (!itemState.hasAnyErrors()
+                    if (!expanded && !itemState.hasAnyErrors()
                             && StringUtils.isBlank(toggleFieldName)
                             && StringUtils.isBlank(weightFieldName)) {
                         wp.writeElement("input",

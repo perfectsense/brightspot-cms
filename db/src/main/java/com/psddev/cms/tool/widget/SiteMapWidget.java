@@ -29,6 +29,7 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.StringUtils;
 
+@Deprecated
 @SuppressWarnings("deprecation")
 public class SiteMapWidget extends DashboardWidget {
 

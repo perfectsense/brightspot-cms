@@ -17,7 +17,7 @@ if (wp.requirePermission("area/admin/adminSites")) {
     return;
 }
 
-Site selected = (Site) wp.findOrReserve(Site.class);
+Object selected = wp.findOrReserve(Site.class);
 
 Query<Site> query = Query.from(Site.class).sortAscending("name");
 String queryString = wp.param("query");

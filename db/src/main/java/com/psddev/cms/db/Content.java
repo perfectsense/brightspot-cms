@@ -215,7 +215,7 @@ public abstract class Content extends Record {
         @Override
         public String createVisibilityLabel(ObjectField field) {
             if (field.getInternalName().equals("cms.content.draft")) {
-                return isDraft() ? "Initial Draft" : null;
+                return isDraft() ? (getScheduleDate() != null ? "Scheduled" : "Initial Draft") : null;
             } else {
                 return isTrash() ? "Archived" : null;
             }

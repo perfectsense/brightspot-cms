@@ -15,12 +15,23 @@ import java.util.Map;
 public interface ViewRenderer {
 
     /**
+     * @deprecated Use {@link ViewRenderer#render(Object, ViewTemplateLoader)} instead.
+     */
+    @Deprecated
+    default ViewOutput render(Object view) {
+        throw new UnsupportedOperationException("Must implement ViewRenderer#render(Object, ViewTemplateLoader)!");
+    }
+
+    /**
      * Renders a view, storing the result.
      *
      * @param view the view to render.
+     * @param templateLoader the template loader.
      * @return the result of rendering a view.
      */
-    ViewOutput render(Object view);
+    default ViewOutput render(Object view, ViewTemplateLoader templateLoader) {
+        return render(view);
+    }
 
     /**
      * Creates an appropriate ViewRenderer based on the specified view.
@@ -100,9 +111,16 @@ public interface ViewRenderer {
                 // wrap the view renderer so that it always converts the view to a ViewMap
                 // before delegating to the actual renderer if it's not already a map.
                 return new ViewRenderer() {
+
+                    @Deprecated
                     @Override
                     public ViewOutput render(Object view) {
                         return view instanceof Map ? renderer.render(view) : renderer.render(new ViewMap(view));
+                    }
+
+                    @Override
+                    public ViewOutput render(Object view, ViewTemplateLoader loader) {
+                        return view instanceof Map ? renderer.render(view, loader) : renderer.render(new ViewMap(view), loader);
                     }
                 };
 

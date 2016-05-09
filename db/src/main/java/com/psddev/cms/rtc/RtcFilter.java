@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Filter that handles the real-time communication between the server
@@ -47,8 +48,19 @@ public class RtcFilter extends AbstractFilter implements AbstractFilter.Auto {
             .put(ApplicationConfig.HEARTBEAT_INTERVAL_IN_SECONDS, String.valueOf(5))
             .build();
 
+    private static final String ATTRIBUTE_PREFIX = RtcFilter.class.getName() + ".";
+    private static final String USER_ID_ATTRIBUTE = ATTRIBUTE_PREFIX + "userId";
+
     private AtmosphereFrameworkInitializer initializer;
     private RtcObjectUpdateNotifier notifier;
+
+    public static void setUserId(HttpServletRequest request, UUID uuid) {
+        request.setAttribute(USER_ID_ATTRIBUTE, uuid);
+    }
+
+    public static UUID getUserId(HttpServletRequest request) {
+        return (UUID) request.getAttribute(USER_ID_ATTRIBUTE);
+    }
 
     @Override
     public void updateDependencies(Class<? extends AbstractFilter> filterClass, List<Class<? extends Filter>> dependencies) {

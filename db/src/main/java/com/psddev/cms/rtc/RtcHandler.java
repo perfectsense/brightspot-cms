@@ -101,16 +101,23 @@ class RtcHandler extends AbstractReflectorAtmosphereHandler {
             String method = request.getMethod();
 
             if ("get".equalsIgnoreCase(method)) {
-                ToolUser user = AuthenticationFilter.Static.getUser(resource.getRequest().wrappedRequest());
+                UUID userId = RtcFilter.getUserId(request);
 
-                if (user == null) {
+                if (userId == null) {
+                    ToolUser user = AuthenticationFilter.Static.getUser(resource.getRequest().wrappedRequest());
+                    if (user != null) {
+                        userId = user.getId();
+                    }
+                }
+
+                if (userId == null) {
                     return;
                 }
 
                 RtcSession session = new RtcSession();
 
                 session.getState().setId(createSessionId(resource));
-                session.setUserId(user.getId());
+                session.setUserId(userId);
                 session.save();
                 resource.addEventListener(disconnectListener);
 

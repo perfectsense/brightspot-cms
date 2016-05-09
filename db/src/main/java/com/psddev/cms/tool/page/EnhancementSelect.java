@@ -41,7 +41,8 @@ public class EnhancementSelect extends PageServlet {
                 page.getResponse(),
                 page,
                 page.toolPath(CmsTool.class, "/WEB-INF/search.jsp"),
-                        "newJsp", "/content/enhancement.jsp",
+                        "newJsp", "/content/edit.jsp",
+                        "newTarget", "objectId-create",
                         "resultJsp", "/enhancementSearchResult",
                         "validTypeIds", validTypeIds.toArray(new UUID[validTypeIds.size()]));
     }

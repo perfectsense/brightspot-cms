@@ -24,6 +24,7 @@ import com.psddev.cms.db.Preview;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.Workflow;
+import com.psddev.cms.db.WorkflowLog;
 import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
@@ -72,10 +73,22 @@ public class ContentState extends PageServlet {
             page.setContentFormScheduleDate(object);
         }
 
+        WorkflowLog log = null;
+
         try {
             state.beginWrites();
             page.updateUsingParameters(object);
             page.updateUsingAllWidgets(object);
+
+            UUID workflowLogId = page.param(UUID.class, "workflowLogId");
+
+            if (workflowLogId != null) {
+                log = new WorkflowLog();
+
+                log.getState().setId(workflowLogId);
+                page.updateUsingParameters(log);
+            }
+
             page.publish(object);
 
         } catch (IOException error) {
@@ -209,7 +222,13 @@ public class ContentState extends PageServlet {
                 Object content = null;
 
                 try {
-                    content = i < contentIdsSize ? findContent(object, contentIds.get(i)) : null;
+                    if (i < contentIdsSize) {
+                        UUID contentId = contentIds.get(i);
+                        content = log != null && log.getId().equals(contentId)
+                                ? log
+                                : findContent(object, contentId);
+                    }
+
                 } catch (RuntimeException e) {
                     // Ignore.
                 }
@@ -220,7 +239,7 @@ public class ContentState extends PageServlet {
                 if (content != null) {
 
                     try {
-
+                        pageContext.setAttribute("toolPageContext", page);
                         pageContext.setAttribute("content", content);
 
                         ObjectField field = null;

@@ -1,7 +1,5 @@
 package com.psddev.cms.tool.page;
 
-import com.psddev.cms.db.ImageTag;
-import com.psddev.cms.db.ResizeOption;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
@@ -9,7 +7,6 @@ import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
-import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.RoutingFilter;
@@ -97,18 +94,12 @@ public class SearchCarousel extends PageServlet {
                     }
 
                     if (itemPreviewImage) {
-                        String itemPreviewUrl = ImageEditor.Static.getDefault() != null
-                                ? new ImageTag.Builder(itemPreview)
-                                .setHeight(300)
-                                .setResizeOption(ResizeOption.ONLY_SHRINK_LARGER)
-                                .toUrl()
-                                : itemPreview.getPublicUrl();
 
                         Site owner = itemState.as(Site.ObjectModification.class).getOwner();
 
                         page.writeStart("figure");
                             page.writeElement("img",
-                                    "src", itemPreviewUrl,
+                                    "src", page.getPreviewThumbnailUrl(itemPreview),
                                     "alt", ((owner != null ? (page.getObjectLabel(owner) + ": ") : "")
                                             + (page.getTypeLabel(item) + ": ") + page.getObjectLabel(item)));
 
