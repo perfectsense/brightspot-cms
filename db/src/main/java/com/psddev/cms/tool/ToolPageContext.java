@@ -62,6 +62,7 @@ import com.google.common.collect.ImmutableMap;
 import com.ibm.icu.text.MessageFormat;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentField;
+import com.psddev.cms.db.ContentLock;
 import com.psddev.cms.db.ContentType;
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.History;
@@ -3418,6 +3419,17 @@ public class ToolPageContext extends WebPageContext {
                 }
 
             } else {
+
+                // Removes any locks that are associated with the ToolUser to be deleted.
+                if (object instanceof ToolUser) {
+                    List<ContentLock> contentLocks = Query.from(ContentLock.class).where("owner = ?", object).selectAll();
+
+                    for (ContentLock contentLock : contentLocks) {
+                        Content content = Query.from(Content.class).where("id = ?", contentLock.getContentId()).first();
+                        ContentLock.Static.unlock(content, null, object);
+                    }
+                }
+
                 state.delete();
 
                 Query.from(Draft.class)
