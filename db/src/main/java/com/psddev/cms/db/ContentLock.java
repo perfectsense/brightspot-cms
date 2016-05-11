@@ -14,6 +14,8 @@ public class ContentLock extends Record {
 
     private Date createDate;
     private UUID contentId;
+
+    @Indexed
     private Recordable owner;
 
     public Date getCreateDate() {
