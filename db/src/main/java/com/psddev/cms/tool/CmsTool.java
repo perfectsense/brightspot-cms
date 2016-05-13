@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,6 +23,7 @@ import com.psddev.cms.db.Template;
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.page.ContentRevisions;
+import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
@@ -979,9 +982,13 @@ public class CmsTool extends Tool {
     }
 
     @Embedded
+    @TypePostProcessorClasses(BulkUploadSettingsPostProcessor.class)
     public static class BulkUploadSettings extends Record {
 
         private ObjectType defaultType;
+
+        @ToolUi.DropDown
+        private Set<String> excludedTypes;
 
         public ObjectType getDefaultType() {
             return defaultType;
@@ -989,6 +996,43 @@ public class CmsTool extends Tool {
 
         public void setDefaultType(ObjectType defaultType) {
             this.defaultType = defaultType;
+        }
+
+        public Set<ObjectType> getExcludedTypes() {
+            if (excludedTypes == null) {
+                excludedTypes = new HashSet<>();
+            }
+            return excludedTypes.stream()
+                    .map(ObjectType::getInstance)
+                    .filter(type -> type != null)
+                    .collect(Collectors.toSet());
+        }
+    }
+
+    private static class BulkUploadSettingsPostProcessor implements ObjectType.PostProcessor {
+
+        @Override
+        public void process(ObjectType objectType) {
+            ObjectField excludedTypesField = objectType.getField("excludedTypes");
+
+            if (excludedTypesField != null) {
+                List<ObjectField.Value> values = new ArrayList<>();
+
+                for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
+                    for (ObjectField field : t.getFields()) {
+                        if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                            ObjectField.Value value = new ObjectField.Value();
+                            value.setValue(t.getInternalName());
+                            value.setLabel(t.getDisplayName() + " (" + t.getInternalName() + ")");
+                            values.add(value);
+                            break;
+                        }
+                    }
+                }
+
+                Collections.sort(values, (object1, object2) -> ObjectUtils.compare(object2.getValue(), object1.getValue(), false));
+                excludedTypesField.setValues(new LinkedHashSet<>(values));
+            }
         }
     }
 

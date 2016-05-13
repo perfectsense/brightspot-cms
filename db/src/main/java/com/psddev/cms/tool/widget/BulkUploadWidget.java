@@ -1,6 +1,9 @@
 package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
@@ -30,16 +33,6 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
         boolean hasUploadable = false;
-
-        for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
-            for (ObjectField field : t.getFields()) {
-                if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                    hasUploadable = true;
-                    break;
-                }
-            }
-        }
-
         CmsTool.BulkUploadSettings settings = null;
         Site site = page.getSite();
 
@@ -52,6 +45,19 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
         }
 
         ObjectType defaultType = settings != null ? settings.getDefaultType() : null;
+        Set<ObjectType> excludedTypes = settings != null ? settings.getExcludedTypes() : Collections.EMPTY_SET;
+
+        for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
+            String permissionId = "type/" + t.getId() + "/write";
+            if (!excludedTypes.contains(t) && page.hasPermission(permissionId)) {
+                for (ObjectField field : t.getFields()) {
+                    if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                        hasUploadable = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         page.writeStart("div", "class", "widget uploadable");
             page.writeStart("h1", "class", "icon icon-action-upload");
@@ -74,8 +80,9 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
                             "target", "uploadFiles",
                             "href", page.url(uploadFilesPath,
                                     "typeId", ObjectType.getInstance(Content.class).getId(),
-                                    "type", defaultType != null ? defaultType.getId() : null),
-                                    "context", UploadFiles.Context.GLOBAL);
+                                    "type", defaultType != null ? defaultType.getId() : null,
+                                    "excludedTypeIds", excludedTypes.stream().map(t -> t.getId().toString()).collect(Collectors.joining(","))),
+                            "context", UploadFiles.Context.GLOBAL);
                         page.writeHtml("select");
                     page.writeEnd();
                     page.writeHtml(" files.");

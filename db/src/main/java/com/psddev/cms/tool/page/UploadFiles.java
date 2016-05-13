@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -45,6 +46,7 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
+import com.psddev.dari.util.UuidUtils;
 
 @RoutingFilter.Path(application = "cms", value = "/content/uploadFiles")
 @SuppressWarnings("serial")
@@ -78,6 +80,14 @@ public class UploadFiles extends PageServlet {
         Exception postError = null;
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
         String containerId = page.param(String.class, "containerId");
+        String excludedTypeIds = page.param(String.class, "excludedTypeIds");
+        Set<ObjectType> excludedTypes = excludedTypeIds == null
+                ? Collections.EMPTY_SET
+                : Arrays.asList(excludedTypeIds.split(","))
+                        .stream()
+                        .map(UuidUtils::fromString)
+                        .map(ObjectType::getInstance)
+                        .collect(Collectors.toSet());
 
         if (page.isFormPost()) {
             database.beginWrites();
@@ -317,10 +327,13 @@ public class UploadFiles extends PageServlet {
 
             if (type != null) {
                 for (ObjectType t : type.as(ToolUi.class).findDisplayTypes()) {
-                    for (ObjectField field : t.getFields()) {
-                        if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                            typesSet.add(t);
-                            break;
+                    String permissionId = "type/" + t.getId() + "/write";
+                    if (!excludedTypes.contains(t) && page.hasPermission(permissionId)) {
+                        for (ObjectField field : t.getFields()) {
+                            if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                                typesSet.add(t);
+                                break;
+                            }
                         }
                     }
                 }
