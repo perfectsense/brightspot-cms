@@ -180,9 +180,6 @@ public interface Copyable extends Recordable {
             .filter(ObjectIndex::isVisibility)
             .forEach(index -> destinationState.remove(index.getField()));
 
-        // Set draft = true
-        destinationState.as(Content.ObjectModification.class).setDraft(true);
-
         // Set publishUser, updateUser, publishDate, and updateDate
         destinationContent.setPublishUser(user);
         destinationContent.setUpdateUser(user);
