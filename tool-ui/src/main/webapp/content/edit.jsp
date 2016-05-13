@@ -2,6 +2,7 @@
 
 com.psddev.cms.db.Content,
 com.psddev.cms.db.ContentLock,
+com.psddev.cms.db.Copyable,
 com.psddev.cms.db.Overlay,
 com.psddev.cms.db.OverlayProvider,
 com.psddev.cms.db.Directory,
@@ -53,7 +54,7 @@ java.util.UUID,
 java.util.function.Consumer,
 
 org.joda.time.DateTime,
-com.google.common.collect.ImmutableMap, com.psddev.cms.db.Copyable" %><%
+com.google.common.collect.ImmutableMap" %><%
 
 // --- Logic ---
 
