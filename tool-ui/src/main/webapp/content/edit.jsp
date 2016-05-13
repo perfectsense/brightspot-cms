@@ -53,7 +53,7 @@ java.util.UUID,
 java.util.function.Consumer,
 
 org.joda.time.DateTime,
-com.google.common.collect.ImmutableMap" %><%
+com.google.common.collect.ImmutableMap, com.psddev.cms.db.Copyable" %><%
 
 // --- Logic ---
 
@@ -203,7 +203,7 @@ if (copy != null) {
         editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
     }
     if (site != null && 
-            !Settings.get(boolean.class, "cms/tool/copiedObjectInheritsSourceObjectsSiteOwner")) {
+            !Settings.get(boolean.class, Copyable.PRESERVE_OWNING_SITE_SETTING)) {
         // Only set the owner to current site if not on global and no setting to dictate otherwise.
         editingState.as(Site.ObjectModification.class).setOwner(site);
     }    
