@@ -184,8 +184,10 @@ if (wp.tryDelete(editing) ||
 Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
 if (!wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
-    state = Copyable.copy(copy, site, wp.getUser(), null);
-    editing = state.getOriginalObject();
+    State editingState = State.getInstance(editing);
+    editingState.putAll(Copyable.copy(copy, site, wp.getUser(), null).getRawValues());
+    editingState.setId(null);
+    editingState.setStatus(null);
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
