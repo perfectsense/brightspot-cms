@@ -166,6 +166,19 @@ if (workStream != null) {
     State.getInstance(workstreamObject).as(WorkStream.Data.class).complete(workStream, wp.getUser());
 }
 
+Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
+if (wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
+
+    State editingState = State.getInstance(editing);
+    State copyState = Copyable.copy(copy, site, wp.getUser(), null);
+    copyState.putAll(editingState.getRawValues());
+    copyState.setId(editingState.getId());
+    copyState.setStatus(editingState.getStatus());
+    state = copyState;
+    editing = state.getOriginalObject();
+    selected = editing;
+}
+
 if (wp.tryDelete(editing) ||
         wp.tryNewDraft(editing) ||
         wp.tryDraft(editing) ||
@@ -181,13 +194,11 @@ if (wp.tryDelete(editing) ||
 // Only permit copy if the copy source object is accessible to the current Site
 // Only copy on a GET request to the page.  Subsequent POSTs should not overwrite
 // the editing state with the copy source state again.
-Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
 if (!wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
-    State editingState = State.getInstance(editing);
-    editingState.putAll(Copyable.copy(copy, site, wp.getUser(), null).getRawValues());
-    editingState.setId(null);
-    editingState.setStatus(null);
+    state = Copyable.copy(copy, site, wp.getUser(), null);
+    editing = state.getOriginalObject();
+    selected = editing;
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
