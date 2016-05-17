@@ -179,8 +179,10 @@ if (wp.tryDelete(editing) ||
 }
 
 // Only permit copy if the copy source object is accessible to the current Site
+// Only copy on a GET request to the page.  Subsequent POSTs should not overwrite
+// the editing state with the copy source state again.
 Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
-if (copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
+if (!wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
     state = Copyable.copy(copy, site, wp.getUser(), null);
     editing = state.getOriginalObject();
