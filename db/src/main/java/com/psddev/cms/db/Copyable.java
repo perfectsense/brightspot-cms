@@ -159,11 +159,13 @@ public interface Copyable extends Recordable {
         // State#getRawValues must be used or invisible objects will not be included.
         destinationState.putAll(sourceState.getRawValues());
         destinationState.setId(destinationId);
+        destinationState.setStatus(null);
         destinationState.setType(targetType);
         destinationState.setTypeId(targetType.getId());
 
-        // Behavior copied from edit.jsp's copy routine
+        // Clear existing paths
         destinationState.as(Directory.ObjectModification.class).clearPaths();
+        // Clear existing consumer Sites
         for (Site consumer : destinationState.as(Site.ObjectModification.class).getConsumers()) {
             destinationState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
         }
@@ -176,9 +178,12 @@ public interface Copyable extends Recordable {
         // Unset all visibility indexes
         Stream.concat(
             destinationState.getIndexes().stream(),
-            destinationState.getDatabase().getEnvironment().getIndexes().stream())
-            .filter(ObjectIndex::isVisibility)
-            .forEach(index -> destinationState.remove(index.getField()));
+            destinationState.getDatabase().getEnvironment().getIndexes().stream()
+        )
+        .filter(ObjectIndex::isVisibility)
+        .map(ObjectIndex::getFields)
+        .flatMap(Collection::stream)
+        .forEach(destinationState::remove);
 
         // Set publishUser, updateUser, publishDate, and updateDate
         destinationContent.setPublishUser(user);

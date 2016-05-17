@@ -180,34 +180,9 @@ if (wp.tryDelete(editing) ||
 
 Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
 if (copy != null) {
-    State editingState = State.getInstance(editing);
-    editingState.setValues(State.getInstance(copy).getSimpleValues());
-    editingState.setId(null);
-    editingState.setStatus(null);
 
-    Consumer<ObjectIndex> removeVisibilityIndexValues = index -> {
-        if (index.isVisibility()) {
-            index.getFields().forEach(editingState::remove);
-        }
-    };
-
-    editingState.getDatabase().getEnvironment().getIndexes().forEach(removeVisibilityIndexValues);
-
-    ObjectType editingType = editingState.getType();
-
-    if (editingType != null) {
-        editingType.getIndexes().forEach(removeVisibilityIndexValues);
-    }
-
-    editingState.as(Directory.ObjectModification.class).clearPaths();
-    for (Site consumer : editingState.as(Site.ObjectModification.class).getConsumers()) {
-        editingState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
-    }
-    if (site != null && 
-            !Settings.get(boolean.class, Copyable.PRESERVE_OWNING_SITE_SETTING)) {
-        // Only set the owner to current site if not on global and no setting to dictate otherwise.
-        editingState.as(Site.ObjectModification.class).setOwner(site);
-    }    
+    state = Copyable.copy(copy, site, wp.getUser(), null);
+    editing = state.getOriginalObject();
 }
 
 // Directory directory = Query.findById(Directory.class, wp.uuidParam("directoryId"));
