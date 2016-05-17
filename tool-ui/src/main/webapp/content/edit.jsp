@@ -178,8 +178,9 @@ if (wp.tryDelete(editing) ||
     return;
 }
 
+// Only permit copy if the copy source object is accessible to the current Site
 Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
-if (copy != null) {
+if (copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
     state = Copyable.copy(copy, site, wp.getUser(), null);
     editing = state.getOriginalObject();
