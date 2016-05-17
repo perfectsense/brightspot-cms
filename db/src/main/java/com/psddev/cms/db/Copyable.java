@@ -100,18 +100,15 @@ public interface Copyable extends Recordable {
             throw new IllegalStateException("Copy failed! Could not determine copy target type!");
         }
 
-        UUID destinationId = UuidUtils.createSequentialUuid();
-        Object destination = targetType.createObject(destinationId);
-        State destinationState = State.getInstance(destination);
+        State destinationState = State.getInstance(targetType.createObject(null));
         Content.ObjectModification destinationContent = destinationState.as(Content.ObjectModification.class);
         Date now = new Date();
 
         // State#getRawValues must be used or invisible objects will not be included.
         destinationState.putAll(sourceState.getRawValues());
-        destinationState.setId(destinationId);
+        destinationState.setId(null);
         destinationState.setStatus(null);
         destinationState.setType(targetType);
-        destinationState.setTypeId(targetType.getId());
 
         // Clear existing paths
         destinationState.as(Directory.ObjectModification.class).clearPaths();
