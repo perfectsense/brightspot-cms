@@ -27,7 +27,8 @@ public class Edit {
 
         UUID contentId = State.getInstance(content).getId();
 
-        page.writeStart("ul", "class", "piped");
+        page.writeStart("div", "class", "OverlayProviderSelect");
+        page.writeStart("ul");
         {
             page.writeStart("li", "class", selected == null ? "selected" : null);
             {
@@ -53,6 +54,7 @@ public class Edit {
                 page.writeEnd();
             }
         }
+        page.writeEnd();
         page.writeEnd();
     }
 }
