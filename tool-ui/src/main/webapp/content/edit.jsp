@@ -173,8 +173,8 @@ if (copy != null) {
         wp.writeHtml(wp.localize(
                 "com.psddev.cms.tool.page.content.Edit",
                 ImmutableMap.of(
-                        "typeLabel", wp.getTypeLabel(selected),
-                        "objectLabel", wp.getObjectLabel(selected),
+                        "typeLabel", wp.getTypeLabel(copy),
+                        "objectLabel", wp.getObjectLabel(copy),
                         "siteName", site.getName()
                 ),
                 "message.notAccessible"));
