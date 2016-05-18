@@ -170,7 +170,7 @@ Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
 if (wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
     State editingState = State.getInstance(editing);
-    State copyState = Copyable.copy(copy, site, wp.getUser(), null);
+    State copyState = Copyable.copy(copy, site, null);
     copyState.putAll(editingState.getRawValues());
     copyState.setId(editingState.getId());
     copyState.setStatus(editingState.getStatus());
@@ -196,7 +196,7 @@ if (wp.tryDelete(editing) ||
 // the editing state with the copy source state again.
 if (!wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
 
-    state = Copyable.copy(copy, site, wp.getUser(), null);
+    state = Copyable.copy(copy, site, null);
     editing = state.getOriginalObject();
     selected = editing;
 }
