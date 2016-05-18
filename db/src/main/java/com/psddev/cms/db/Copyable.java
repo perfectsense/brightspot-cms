@@ -22,9 +22,9 @@ public interface Copyable extends Recordable {
 
     /**
      * Hook for defining custom behavior during object copy.  Each of the object's implementation
-     * and its {@link com.psddev.dari.db.Modification Modifications'} implementations are invoked
-     * individually.  The invocation can occur in any order, so {@code onCopy} definitions should
-     * not be inter-dependent.
+     * and its {@link com.psddev.dari.db.Modification Modifications'} implementations of {@code onCopy}
+     * are invoked.  The invocations can occur in any order, so {@code onCopy} definitions should
+     * not be interdependent.
      *
      * The code defined within {@code onCopy} is executed on the copied {@link State} before it
      * is returned from {@link #copy}.
