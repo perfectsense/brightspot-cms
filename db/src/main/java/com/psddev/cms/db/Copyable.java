@@ -7,7 +7,6 @@ import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.db.Trigger;
 import com.psddev.dari.util.Settings;
-import com.psddev.dari.util.UuidUtils;
 
 import java.util.Collection;
 import java.util.Date;
