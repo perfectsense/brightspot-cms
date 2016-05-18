@@ -9,7 +9,6 @@ import com.psddev.dari.db.Trigger;
 import com.psddev.dari.util.Settings;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -33,43 +32,38 @@ public interface Copyable extends Recordable {
     void onCopy(Object source);
 
     /**
-     * Copies a source object where the copy is to be owned by the specified {@link Site}
-     * with specified {@link ToolUser} as both {@link Content.ObjectModification#publishUser} and
-     * {@link Content.ObjectModification#updateUser}.
+     * Copies a source object and sets the copy to be owned by the specified {@link Site}.
      *
      * If a {@code targetTypeId} is specified, the copied object will be of the specified type, otherwise
      * it will be of the same type as the object identified by {@code sourceId}.
      *
      * @param source the source object to be copied
      * @param site the {@link Site} to be set as the {@link Site.ObjectModification#owner}
-     * @param user the {@link ToolUser} to be set as {@link Content.ObjectModification#publishUser} and {@link Content.ObjectModification#updateUser}
      * @param targetTypeId the {@link State#id id} of the {@link ObjectType} to which the copy should be converted
      * @return the copy {@link State} after application of {@link #onCopy}
      */
-    static State copy(Object source, Site site, ToolUser user, UUID targetTypeId) {
+    static State copy(Object source, Site site, UUID targetTypeId) {
 
         if (source == null) {
             throw new IllegalArgumentException("Can't copy without a source! No source object was supplied!");
         }
 
-        return copy(State.getInstance(source).getId(), site, user, targetTypeId);
+        return copy(State.getInstance(source).getId(), site, targetTypeId);
     }
 
     /**
      * Copies a source object specified by {@code sourceId} where the copy is to be owned by the
-     * specified {@link Site} with specified {@link ToolUser} as both {@link Content.ObjectModification#publishUser}
-     * and {@link Content.ObjectModification#updateUser}.
+     * specified {@link Site}.
      *
      * If a {@code targetTypeId} is specified, the copied object will be of the specified type, otherwise
      * it will be of the same type as the object identified by {@code sourceId}.
      *
      * @param sourceId the {@link State#id} of the source object to be copied
      * @param site the {@link Site} to be set as the {@link Site.ObjectModification#owner}
-     * @param user the {@link ToolUser} to be set as {@link Content.ObjectModification#publishUser} and {@link Content.ObjectModification#updateUser}
      * @param targetTypeId the {@link State#id id} of the {@link ObjectType} to which the copy should be converted
      * @return the copy {@link State} after application of {@link #onCopy}
      */
-    static State copy(UUID sourceId, Site site, ToolUser user, UUID targetTypeId) {
+    static State copy(UUID sourceId, Site site, UUID targetTypeId) {
 
         if (sourceId == null) {
             throw new IllegalArgumentException("Can't copy without a source! \"sourceId\" was missing!");
@@ -90,7 +84,6 @@ public interface Copyable extends Recordable {
 
         State destinationState = State.getInstance(targetType.createObject(null));
         Content.ObjectModification destinationContent = destinationState.as(Content.ObjectModification.class);
-        Date now = new Date();
 
         // State#getRawValues must be used or invisible objects will not be included.
         destinationState.putAll(sourceState.getRawValues());
@@ -120,11 +113,12 @@ public interface Copyable extends Recordable {
         .flatMap(Collection::stream)
         .forEach(destinationState::remove);
 
-        // Set publishUser, updateUser, publishDate, and updateDate
-        destinationContent.setPublishUser(user);
-        destinationContent.setUpdateUser(user);
-        destinationContent.setUpdateDate(now);
-        destinationContent.setPublishDate(now);
+        // Set publishUser, updateUser, publishDate, and updateDate to null and they'll be
+        // re-set when the staged copy is saved.
+        destinationContent.setPublishUser(null);
+        destinationContent.setUpdateUser(null);
+        destinationContent.setUpdateDate(null);
+        destinationContent.setPublishDate(null);
 
         // If it or any of its modifications are copyable, fire onCopy()
         destinationState.fireTrigger(new CopyTrigger(source));
