@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
- * Defines interface hook {@link #onCopy} for custom behavior when copying objects.
+ * Interface for defining custom behavior when copying objects through {@link #onCopy}.
  */
 public interface Copyable<T> extends Recordable {
 
