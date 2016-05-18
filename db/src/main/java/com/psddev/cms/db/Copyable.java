@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 /**
  * Defines interface hook {@link #onCopy} for custom behavior when copying objects.
  */
-public interface Copyable extends Recordable {
+public interface Copyable<T> extends Recordable {
 
     String PRESERVE_OWNING_SITE_SETTING = "cms/tool/copiedObjectInheritsSourceObjectsSiteOwner";
 
@@ -30,7 +30,7 @@ public interface Copyable extends Recordable {
      * is returned from {@link #copy}.
      * @param source the Object to copy
      */
-    void onCopy(Object source);
+    void onCopy(T source);
 
     /**
      * Copies a source object and sets the copy to be owned by the specified {@link Site}.
@@ -110,6 +110,7 @@ public interface Copyable extends Recordable {
     /**
      * Executes {@link #onCopy} on the object and for each {@link com.psddev.dari.db.Modification}.
      */
+    @SuppressWarnings("unchecked")
     class CopyTrigger implements Trigger {
 
         private Object source;
@@ -121,7 +122,7 @@ public interface Copyable extends Recordable {
         @Override
         public void execute(Object object) {
             if (object instanceof Copyable) {
-                ((Copyable) object).onCopy(source);
+                ((Copyable<Object>) object).onCopy(source);
             }
         }
     }
