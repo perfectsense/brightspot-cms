@@ -1,5 +1,6 @@
 package com.psddev.cms.db;
 
+import com.google.common.base.Preconditions;
 import com.psddev.dari.db.ObjectIndex;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
@@ -47,9 +48,7 @@ public interface Copyable extends Recordable {
 
         UUID sourceId = State.getInstance(source).getId();
 
-        if (sourceId == null) {
-            throw new IllegalArgumentException("Can't copy without a source! No source object was supplied!");
-        }
+        Preconditions.checkNotNull(sourceId, "Can't copy without a source! No source object was supplied!");
 
         // Query source object including invisible references.  Cache is prevented which insures both that invisibles
         // are properly resolved and no existing instance of the source object becomes linked to the copy.
@@ -62,9 +61,7 @@ public interface Copyable extends Recordable {
             targetType = sourceState.getType();
         }
 
-        if (targetType == null) {
-            throw new IllegalStateException("Copy failed! Could not determine copy target type!");
-        }
+        Preconditions.checkState(targetType != null, "Copy failed! Could not determine copy target type!");
 
         State destinationState = State.getInstance(targetType.createObject(null));
         Content.ObjectModification destinationContent = destinationState.as(Content.ObjectModification.class);
