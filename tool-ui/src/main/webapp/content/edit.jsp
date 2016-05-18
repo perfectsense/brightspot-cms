@@ -163,8 +163,30 @@ if (workStream != null) {
     State.getInstance(workstreamObject).as(WorkStream.Data.class).complete(workStream, wp.getUser());
 }
 
+// Only permit copy if the copy source object is accessible to the current Site
 Object copy = Query.findById(Object.class, wp.uuidParam("copyId"));
-if (wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
+if (copy != null) {
+
+    if (site != null && !Site.Static.isObjectAccessible(site, copy)) {
+        wp.writeHeader();
+        wp.writeStart("div", "class", "message message-warning");
+        wp.writeHtml(wp.localize(
+                "com.psddev.cms.tool.page.content.Edit",
+                ImmutableMap.of(
+                        "typeLabel", wp.getTypeLabel(selected),
+                        "objectLabel", wp.getObjectLabel(selected),
+                        "siteName", site.getName()
+                ),
+                "message.notAccessible"));
+        wp.writeEnd();
+        wp.writeFooter();
+        return;
+    }
+}
+
+// When a copy is specified as part of a POST, overlay the editingState on top of
+// the copyState to retain non-displaying State values from the original copy.
+if (wp.isFormPost() && copy != null) {
 
     State editingState = State.getInstance(editing);
     State copyState = Copyable.copy(copy, site, null);
@@ -188,10 +210,9 @@ if (wp.tryDelete(editing) ||
     return;
 }
 
-// Only permit copy if the copy source object is accessible to the current Site
 // Only copy on a GET request to the page.  Subsequent POSTs should not overwrite
 // the editing state with the copy source state again.
-if (!wp.isFormPost() && copy != null && (site == null || Site.Static.isObjectAccessible(site, copy))) {
+if (!wp.isFormPost() && copy != null) {
 
     state = Copyable.copy(copy, site, null);
     editing = state.getOriginalObject();
