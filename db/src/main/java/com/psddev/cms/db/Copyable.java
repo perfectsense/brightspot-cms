@@ -34,49 +34,33 @@ public interface Copyable extends Recordable {
     /**
      * Copies a source object and sets the copy to be owned by the specified {@link Site}.
      *
-     * If a {@code targetTypeId} is specified, the copied object will be of the specified type, otherwise
-     * it will be of the same type as the object identified by {@code sourceId}.
+     * If a target {@link ObjectType} is specified, the copied object will be converted
+     * to the specified type, otherwise it will be of the same type as the object identified
+     * by {@code source}.
      *
      * @param source the source object to be copied
      * @param site the {@link Site} to be set as the {@link Site.ObjectModification#owner}
-     * @param targetTypeId the {@link State#id id} of the {@link ObjectType} to which the copy should be converted
+     * @param targetType the {@link ObjectType} to which the copy should be converted
      * @return the copy {@link State} after application of {@link #onCopy}
      */
-    static State copy(Object source, Site site, UUID targetTypeId) {
+    static State copy(Object source, Site site, ObjectType targetType) {
 
-        if (source == null) {
-            throw new IllegalArgumentException("Can't copy without a source! No source object was supplied!");
-        }
-
-        return copy(State.getInstance(source).getId(), site, targetTypeId);
-    }
-
-    /**
-     * Copies a source object specified by {@code sourceId} where the copy is to be owned by the
-     * specified {@link Site}.
-     *
-     * If a {@code targetTypeId} is specified, the copied object will be of the specified type, otherwise
-     * it will be of the same type as the object identified by {@code sourceId}.
-     *
-     * @param sourceId the {@link State#id} of the source object to be copied
-     * @param site the {@link Site} to be set as the {@link Site.ObjectModification#owner}
-     * @param targetTypeId the {@link State#id id} of the {@link ObjectType} to which the copy should be converted
-     * @return the copy {@link State} after application of {@link #onCopy}
-     */
-    static State copy(UUID sourceId, Site site, UUID targetTypeId) {
+        UUID sourceId = State.getInstance(source).getId();
 
         if (sourceId == null) {
-            throw new IllegalArgumentException("Can't copy without a source! \"sourceId\" was missing!");
+            throw new IllegalArgumentException("Can't copy without a source! No source object was supplied!");
         }
 
         // Query source object including invisible references.  Cache is prevented which insures both that invisibles
         // are properly resolved and no existing instance of the source object becomes linked to the copy.
         // This prevents mutations to the new copy from affecting the original source object if it is subsequently saved.
-        Object source = Query.fromAll().where("id = ?", sourceId).resolveInvisible().noCache().first();
+        source = Query.fromAll().where("id = ?", sourceId).resolveInvisible().noCache().first();
 
         State sourceState = State.getInstance(source);
 
-        ObjectType targetType = targetTypeId != null ? ObjectType.getInstance(targetTypeId) : sourceState.getType();
+        if (targetType == null) {
+            targetType = sourceState.getType();
+        }
 
         if (targetType == null) {
             throw new IllegalStateException("Copy failed! Could not determine copy target type!");
@@ -93,6 +77,7 @@ public interface Copyable extends Recordable {
 
         // Clear existing paths
         destinationState.as(Directory.ObjectModification.class).clearPaths();
+
         // Clear existing consumer Sites
         for (Site consumer : destinationState.as(Site.ObjectModification.class).getConsumers()) {
             destinationState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
@@ -109,12 +94,11 @@ public interface Copyable extends Recordable {
             destinationState.getDatabase().getEnvironment().getIndexes().stream()
         )
         .filter(ObjectIndex::isVisibility)
-        .map(ObjectIndex::getFields)
-        .flatMap(Collection::stream)
-        .forEach(destinationState::remove);
+            .map(ObjectIndex::getFields)
+            .flatMap(Collection::stream)
+            .forEach(destinationState::remove);
 
-        // Set publishUser, updateUser, publishDate, and updateDate to null and they'll be
-        // re-set when the staged copy is saved.
+        // Clear publishUser, updateUser, publishDate, and updateDate.
         destinationContent.setPublishUser(null);
         destinationContent.setUpdateUser(null);
         destinationContent.setUpdateDate(null);
