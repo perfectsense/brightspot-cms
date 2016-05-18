@@ -29,10 +29,8 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
-com.psddev.dari.util.Settings,
 
 com.psddev.dari.db.ObjectField,
-com.psddev.dari.db.ObjectIndex,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.Singleton,
@@ -51,7 +49,6 @@ java.util.List,
 java.util.Map,
 java.util.Set,
 java.util.UUID,
-java.util.function.Consumer,
 
 org.joda.time.DateTime,
 com.google.common.collect.ImmutableMap" %><%
