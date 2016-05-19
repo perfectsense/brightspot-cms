@@ -106,24 +106,24 @@ public interface Copyable<T> extends Recordable {
 
         return destinationState;
     }
+}
 
-    /**
-     * Executes {@link #onCopy} on the object and for each {@link com.psddev.dari.db.Modification}.
-     */
-    @SuppressWarnings("unchecked")
-    class CopyTrigger implements Trigger {
+/**
+ * Executes {@link Copyable#onCopy} on the object and for each {@link com.psddev.dari.db.Modification}.
+ */
+@SuppressWarnings("unchecked")
+class CopyTrigger implements Trigger {
 
-        private Object source;
+    private Object source;
 
-        public CopyTrigger(Object source) {
-            this.source = source;
-        }
+    public CopyTrigger(Object source) {
+        this.source = source;
+    }
 
-        @Override
-        public void execute(Object object) {
-            if (object instanceof Copyable) {
-                ((Copyable<Object>) object).onCopy(source);
-            }
+    @Override
+    public void execute(Object object) {
+        if (object instanceof Copyable) {
+            ((Copyable<Object>) object).onCopy(source);
         }
     }
 }
