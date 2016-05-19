@@ -54,7 +54,7 @@ define(['string'], function (S) {
           'margin-right': $original.css('margin-right'),
           'margin-top': $original.css('margin-top'),
           'position': 'relative',
-          'width': isMultiple ? 'auto' : $original.outerWidth()
+          'width': $original.outerWidth()
         }
       });
 

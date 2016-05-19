@@ -70,13 +70,13 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           'data': $form.find('[name]').not($form.find('.contentDiffCurrent [name]')).serialize() + $dynamicTexts.map(function() {
             var $element = $(this);
 
-            return '&_dti=' + ($element.closest('[data-object-id]').attr('data-object-id') || '') +
-                '&_dtt=' + (($element.attr('data-dynamic-text') ||
+            return '&_dti=' + encodeURIComponent($element.closest('[data-object-id]').attr('data-object-id') || '') +
+                '&_dtt=' + encodeURIComponent(($element.attr('data-dynamic-text') ||
                 $element.attr('data-dynamic-html') ||
                 $element.attr('data-dynamic-placeholder') ||
                 '')) +
-                  '&_dtf=' + ($element.attr('data-dynamic-field-name') || '') +
-                  '&_dtq=' + ($element.attr('data-dynamic-predicate') || '');
+                  '&_dtf=' + encodeURIComponent($element.attr('data-dynamic-field-name') || '') +
+                  '&_dtq=' + encodeURIComponent($element.attr('data-dynamic-predicate') || '');
           }).get().join(''),
 
           'success': function(data) {

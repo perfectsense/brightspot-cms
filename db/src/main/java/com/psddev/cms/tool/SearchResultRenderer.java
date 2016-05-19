@@ -533,7 +533,7 @@ public class SearchResultRenderer {
                 page.writeEnd();
             }
 
-            page.writeStart("td", "data-preview-anchor", "");
+            page.writeStart("td");
                 renderBeforeItem(item);
                 page.writeObjectLabel(item);
                 renderAfterItem(item);

@@ -116,6 +116,9 @@ public abstract class Content extends Record {
         @InternalName("cms.content.scheduleDate")
         private Date scheduleDate;
 
+        @InternalName("cms.content.overlaid")
+        private Boolean overlaid;
+
         /**
          * Returns {@code true} if this content is a draft.
          */
@@ -186,6 +189,14 @@ public abstract class Content extends Record {
 
         public void setScheduleDate(Date scheduleDate) {
             this.scheduleDate = scheduleDate;
+        }
+
+        public boolean isOverlaid() {
+            return Boolean.TRUE.equals(overlaid);
+        }
+
+        public void setOverlaid(boolean overlaid) {
+            this.overlaid = overlaid ? Boolean.TRUE : null;
         }
 
         /**

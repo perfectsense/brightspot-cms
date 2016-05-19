@@ -1,13 +1,21 @@
 package com.psddev.cms.view;
 
+import com.psddev.cms.db.PageFilter;
+import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.db.State;
+import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.TypeDefinition;
 
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * A renderer of views.
@@ -115,12 +123,77 @@ public interface ViewRenderer {
                     @Deprecated
                     @Override
                     public ViewOutput render(Object view) {
-                        return view instanceof Map ? renderer.render(view) : renderer.render(new ViewMap(view));
+                        return createViewOutput(
+                                view,
+                                () -> view instanceof Map
+                                        ? renderer.render(view)
+                                        : renderer.render(new ViewMap(view)));
                     }
 
                     @Override
                     public ViewOutput render(Object view, ViewTemplateLoader loader) {
-                        return view instanceof Map ? renderer.render(view, loader) : renderer.render(new ViewMap(view), loader);
+                        return createViewOutput(
+                                view,
+                                () -> view instanceof Map
+                                        ? renderer.render(view, loader)
+                                        : renderer.render(new ViewMap(view), loader));
+                    }
+
+                    private ViewOutput createViewOutput(Object view, Supplier<ViewOutput> viewOutputSupplier) {
+                        HttpServletRequest request = PageContextFilter.Static.getRequestOrNull();
+
+                        if (request == null
+                                || !PageFilter.Static.isInlineEditingAllContents(request)) {
+
+                            return viewOutputSupplier.get();
+                        }
+
+                        if (view instanceof ViewMap) {
+                            view = ((ViewMap) view).getView();
+                        }
+
+                        if (!(view instanceof ViewModel)) {
+                            return viewOutputSupplier.get();
+                        }
+
+                        Object model = ((ViewModel) view).model;
+
+                        PageFilter.Static.pushObject(request, model);
+
+                        try {
+                            Map<String, String> map = new HashMap<>();
+                            Object concrete = PageFilter.Static.peekConcreteObject(request);
+
+                            if (concrete != null) {
+                                State state = State.getInstance(concrete);
+                                ObjectType stateType = state.getType();
+
+                                map.put("id", state.getId().toString());
+
+                                if (stateType != null) {
+                                    map.put("typeLabel", stateType.getLabel());
+                                }
+
+                                try {
+                                    map.put("label", state.getLabel());
+
+                                } catch (RuntimeException error) {
+                                    // Not a big deal if label can't be retrieved.
+                                }
+                            }
+
+                            String viewOutput = viewOutputSupplier.get().get();
+
+                            return () -> "<!--brightspot.object-begin "
+                                    + ObjectUtils.toJson(map)
+                                    + "-->"
+                                    + viewOutput
+                                    + "<!--brightspot.object-end-->";
+
+                        } finally {
+                            PageFilter.Static.popObject(request);
+
+                        }
                     }
                 };
 

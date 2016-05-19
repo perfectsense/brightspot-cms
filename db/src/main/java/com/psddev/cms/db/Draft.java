@@ -115,11 +115,21 @@ public class Draft extends Content {
                         field = environment.getField(key);
                     }
 
-                    if (field != null
-                            && field.getInternalType().startsWith(ObjectField.SET_TYPE + "/")
-                            && ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
+                    if (field != null) {
+                        String fieldType = field.getInternalType();
 
-                        return;
+                        if (ObjectField.BOOLEAN_TYPE.equals(fieldType)) {
+                            if ((oldValue == null || Boolean.FALSE.equals(oldValue))
+                                    && (newValue == null || Boolean.FALSE.equals(newValue))) {
+
+                                return;
+                            }
+
+                        } else if (fieldType.startsWith(ObjectField.SET_TYPE + "/")) {
+                            if (ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
+                                return;
+                            }
+                        }
                     }
                 }
 

@@ -6,9 +6,12 @@ import javax.servlet.ServletException;
 
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
+import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.util.JspUtils;
 import com.psddev.dari.util.RoutingFilter;
+import com.psddev.dari.util.StringUtils;
+
 
 @RoutingFilter.Path(application = "cms", value = "searchAdvancedFull")
 public class SearchAdvancedFull extends PageServlet {
@@ -30,7 +33,8 @@ public class SearchAdvancedFull extends PageServlet {
                         page,
                         page.toolPath(CmsTool.class, "/WEB-INF/search.jsp"),
                         "name", "fullScreen",
-                        "resultJsp", "/misc/searchResult.jsp");
+                        "resultJsp", StringUtils.addQueryParameters("/misc/searchResult.jsp",
+                                Search.IGNORE_SITE_PARAMETER, page.getRequest().getParameter(Search.IGNORE_SITE_PARAMETER)));
             page.writeEnd();
         page.writeFooter();
     }

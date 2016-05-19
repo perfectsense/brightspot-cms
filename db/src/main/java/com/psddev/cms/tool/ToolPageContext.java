@@ -44,6 +44,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
+import com.psddev.cms.db.Overlay;
+import com.psddev.cms.db.OverlayProvider;
+import com.psddev.cms.tool.page.content.Edit;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -1051,6 +1054,48 @@ public class ToolPageContext extends WebPageContext {
             object = Query.fromAll().where("_id = ?", objectId).resolveInvisible().first();
         }
 
+        UUID overlayId = param(UUID.class, "overlayId");
+        Object overlayObject;
+
+        if (overlayId != null) {
+            overlayObject = Query.fromAll()
+                    .where("_id = ?", overlayId)
+                    .resolveInvisible()
+                    .first();
+
+        } else {
+            overlayObject = null;
+        }
+
+        Overlay overlay = null;
+
+        if (overlayObject instanceof Overlay) {
+            overlay = (Overlay) overlayObject;
+
+        } else if (object instanceof Overlay) {
+            overlay = (Overlay) object;
+
+        } else if (object != null && overlayObject instanceof OverlayProvider) {
+            overlay = ((OverlayProvider) overlayObject).provideOverlay(object);
+        }
+
+        if (overlay != null) {
+            object = Query.fromAll()
+                    .where("_id = ?", overlay.getContentId())
+                    .noCache()
+                    .resolveInvisible()
+                    .first();
+
+            State objectState = State.getInstance(object);
+
+            objectState.getExtras().put("cms.draft.oldValues", objectState.getSimpleValues());
+            objectState.getExtras().put("cms.tool.overlay", overlay);
+            objectState.setValues(Draft.mergeDifferences(
+                    objectState.getDatabase().getEnvironment(),
+                    objectState.getSimpleValues(),
+                    overlay.getDifferences()));
+        }
+
         if (object == null && !ObjectUtils.isBlank(validTypes)) {
             ObjectType selectedType = ObjectType.getInstance(param(UUID.class, TYPE_ID_PARAMETER));
 
@@ -1265,6 +1310,34 @@ public class ToolPageContext extends WebPageContext {
         }
 
         return predicate;
+    }
+
+    public Predicate userTypesPredicate() {
+        Set<UUID> denied = new HashSet<>();
+        Set<UUID> allowed = new HashSet<>();
+
+        for (ObjectType type : Database.Static.getDefault().getEnvironment().getTypes()) {
+            UUID typeId = type.getId();
+
+            if (hasPermission("type/" + typeId + "/read")) {
+                allowed.add(typeId);
+
+            } else {
+                denied.add(typeId);
+            }
+        }
+
+        int deniedSize = denied.size();
+
+        if (deniedSize > allowed.size()) {
+            return PredicateParser.Static.parse("_type = ?", allowed);
+
+        } else if (deniedSize > 0) {
+            return PredicateParser.Static.parse("_type != ?", denied);
+
+        } else {
+            return null;
+        }
     }
 
     private String cmsResource(String path, Object... parameters) {
@@ -3844,7 +3917,19 @@ public class ToolPageContext extends WebPageContext {
                             state.getSimpleValues());
                 }
 
-                publishDifferences(object, differences);
+                Overlay overlay = Edit.getOverlay(object);
+
+                if (overlay != null) {
+                    overlay.setDifferences(differences);
+                    publish(overlay);
+
+                    state.putAtomically("cms.content.overlaid", Boolean.TRUE);
+                    state.save();
+
+                } else {
+                    publishDifferences(object, differences);
+                }
+
                 state.commitWrites();
                 redirectOnSave("",
                         "typeId", state.getTypeId(),

@@ -58,15 +58,32 @@ public class ContentLock extends Record {
          *
          * @param content Can't be {@code null}.
          * @param aspect If {@code null}, it's equivalent to an empty string.
-         * @return May be {@code null}.
+         * @return May be {@code null} if there is no lock associated, or if
+         * the lock's owner is either archived or deleted.
          */
         public static ContentLock findLock(Object content, String aspect) {
-            return Query
+            ContentLock lock =  Query
                     .from(ContentLock.class)
                     .where("_id = ?", createLockId(content, aspect))
                     .master()
                     .noCache()
                     .first();
+
+            if (lock != null) {
+                Object owner = lock.getOwner();
+
+                // Owner is deleted.
+                if (owner == null) {
+                    unlock(content, null, null);
+                    return null;
+
+                // Owner is archived.
+                } else if (State.getInstance(owner).as(Content.ObjectModification.class).isTrash()) {
+                    return null;
+                }
+            }
+
+            return lock;
         }
 
         /**
@@ -89,18 +106,30 @@ public class ContentLock extends Record {
                         .noCache()
                         .first();
 
+                Object owner = null;
+                boolean isArchived = false;
+
                 if (lock != null) {
-                    return lock;
+                    owner = lock.getOwner();
+                    isArchived = State.getInstance(owner).as(Content.ObjectModification.class).isTrash();
 
-                } else {
-                    lock = new ContentLock();
-
-                    lock.getState().setId(lockId);
-                    lock.setCreateDate(new Date());
-                    lock.setContentId(State.getInstance(content).getId());
-                    lock.setOwner(newOwner);
-                    lock.saveImmediately();
+                    // Owner exists.
+                    if (owner != null && !isArchived) {
+                        return lock;
+                    }
                 }
+
+                // Owner is archived.
+                if (owner != null && isArchived) {
+                    unlock(content, null, owner);
+                }
+
+                lock = new ContentLock();
+                lock.getState().setId(lockId);
+                lock.setCreateDate(new Date());
+                lock.setContentId(State.getInstance(content).getId());
+                lock.setOwner(newOwner);
+                lock.saveImmediately();
             }
         }
 

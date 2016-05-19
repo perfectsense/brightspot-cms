@@ -223,6 +223,7 @@ public class ContentRevisions extends Widget {
                                 "class", "icon icon-action-search",
                                 "target", "_top",
                                 "href", page.cmsUrl("/searchAdvancedFull",
+                                        Search.IGNORE_SITE_PARAMETER, "true",
                                         Search.SELECTED_TYPE_PARAMETER, ObjectType.getInstance(History.class).getId(),
                                         Search.ADVANCED_QUERY_PARAMETER, "objectId = " + state.getId()));
                             page.writeHtml(page.localize(

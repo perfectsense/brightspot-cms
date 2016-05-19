@@ -97,14 +97,15 @@ $.plugin2('pageThumbnails', {
                     toggleLeft = anchorOffset.left -
                             $.css($anchor[0], 'padding-left', true) -
                             $.css($anchor[0], 'border-left-width', true) -
-                            $.css($anchor[0], 'margin-left', true);
+                            $.css($anchor[0], 'margin-left', true) -
+                            $toggle.outerWidth(true);
 
                 } else {
                     toggleLeft = anchorOffset.left - $toggle.outerWidth(true);
                 }
 
             } else {
-                toggleLeft = anchorOffset.left + anchorWidth - $toggle.outerWidth(true);
+                toggleLeft = anchorOffset.left + anchorWidth;
             }
 
             $toggle.toggleClass('pageThumbnails_toggle-right', leftLarger);
@@ -197,7 +198,8 @@ $.plugin2('pageThumbnails', {
                             previewLeft = anchorOffset.left -
                                     $.css($anchor[0], 'padding-left', true) -
                                     $.css($anchor[0], 'border-left-width', true) -
-                                    $.css($anchor[0], 'margin-left', true);
+                                    $.css($anchor[0], 'margin-left', true) -
+                                    $toggle.outerWidth(true);
 
                         } else {
                             previewLeft = anchorOffset.left - $toggle.outerWidth(true);
@@ -206,7 +208,7 @@ $.plugin2('pageThumbnails', {
                         previewLeft -= $preview.outerWidth(true);
 
                     } else {
-                        previewLeft = anchorOffset.left + anchorWidth;
+                        previewLeft = anchorOffset.left + anchorWidth + $toggle.outerWidth(true);
                     }
 
                     $preview.toggleClass('pageThumbnails_preview-right', leftLarger);

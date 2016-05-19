@@ -95,6 +95,10 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                 visibilitiesFilter = item -> State.getInstance(item).isVisible();
             }
 
+            if (itemType == null) {
+                contentQuery.and(page.userTypesPredicate());
+            }
+
             QueryRestriction.updateQueryUsingAll(contentQuery, page);
 
             result = contentQuery.and("_any matches *").selectFiltered(offset, limit, visibilitiesFilter);
@@ -296,7 +300,7 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                                 page.writeTypeLabel(content);
                             page.writeEnd();
 
-                            page.writeStart("td", "data-preview-anchor", "");
+                            page.writeStart("td");
                                 page.writeStart("a",
                                         "href", page.objectUrl("/content/edit.jsp", content),
                                         "target", "_top");

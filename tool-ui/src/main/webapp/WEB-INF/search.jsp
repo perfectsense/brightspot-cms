@@ -331,6 +331,8 @@ writer.start("div", "class", "searchForm");
                     writer.writeElement("input", "type", "hidden", "name", Search.NEW_ITEM_IDS_PARAMETER, "value", newItemId);
                 }
 
+                writer.writeElement("input", "type", "hidden", "name", Search.IGNORE_SITE_PARAMETER, "value", search.isIgnoreSitePredicate());
+
                 writer.start("div", "class", "searchInput");
                     writer.start("label", "for", wp.createId()).html("Search").end();
                     writer.writeElement("input",
