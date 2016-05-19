@@ -25,22 +25,23 @@ public interface Copyable<T> extends Recordable {
      * and its {@link com.psddev.dari.db.Modification Modifications'} implementations of {@code onCopy}
      * are invoked.  The invocations can occur in any order, so {@code onCopy} definitions should
      * not be interdependent.
-     *
+     * <p>
      * The code defined within {@code onCopy} is executed on the copied {@link State} before it
      * is returned from {@link #copy}.
+     *
      * @param source the Object to copy
      */
     void onCopy(T source);
 
     /**
      * Copies a source object and sets the copy to be owned by the specified {@link Site}.
-     *
+     * <p>
      * If a target {@link ObjectType} is specified, the copied object will be converted
      * to the specified type, otherwise it will be of the same type as the object identified
      * by {@code source}.
      *
-     * @param source the source object to be copied
-     * @param site the {@link Site} to be set as the {@link Site.ObjectModification#owner}
+     * @param source     the source object to be copied
+     * @param site       the {@link Site} to be set as the {@link Site.ObjectModification#owner}
      * @param targetType the {@link ObjectType} to which the copy should be converted
      * @return the copy {@link State} after application of {@link #onCopy}
      */
@@ -80,20 +81,19 @@ public interface Copyable<T> extends Recordable {
             destinationState.as(Directory.ObjectModification.class).clearSitePaths(consumer);
         }
         if (site != null
-            && !Settings.get(boolean.class, PRESERVE_OWNING_SITE_SETTING)) {
+                && !Settings.get(boolean.class, PRESERVE_OWNING_SITE_SETTING)) {
             // Only set the owner to current site if not on global and no setting to dictate otherwise.
             destinationState.as(Site.ObjectModification.class).setOwner(site);
         }
 
         // Unset all visibility indexes
         Stream.concat(
-            destinationState.getIndexes().stream(),
-            destinationState.getDatabase().getEnvironment().getIndexes().stream()
-        )
-        .filter(ObjectIndex::isVisibility)
-            .map(ObjectIndex::getFields)
-            .flatMap(Collection::stream)
-            .forEach(destinationState::remove);
+                destinationState.getIndexes().stream(),
+                destinationState.getDatabase().getEnvironment().getIndexes().stream())
+                .filter(ObjectIndex::isVisibility)
+                .map(ObjectIndex::getFields)
+                .flatMap(Collection::stream)
+                .forEach(destinationState::remove);
 
         // Clear publishUser, updateUser, publishDate, and updateDate.
         destinationContent.setPublishUser(null);
