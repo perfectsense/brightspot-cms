@@ -21,7 +21,6 @@ public class ProfileTab extends ProfilePanelTab {
 
         if (user != null
                 && user.getRole() != null
-                && !user.getRole().hasPermission("type" + ObjectType.getInstance(ToolUser.class).getId() + "/read")
                 && (ObjectUtils.isBlank(page.param(UUID.class, "id")) || user.getId().equals(page.param(UUID.class, "id")))) {
 
             user.getRole().setPermissions(user.getRole().getPermissions().replace("-type/" + ObjectType.getInstance(ToolUser.class).getId(), ""));
