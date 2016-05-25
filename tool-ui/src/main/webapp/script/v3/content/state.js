@@ -13,6 +13,12 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
   bsp_utils.onDomInsert(document, '.contentForm, .enhancementForm, .standardForm', {
     'insert': function(form) {
       var $form = $(form);
+      var changed = false;
+
+      $form.one('change input', function () {
+        changed = true;
+      });
+
       var running;
       var rerun;
       var idleTimeout;
@@ -59,9 +65,24 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           });
         }
 
+        var $publishingHeading = $form.find('.widget-publishing > h1');
+        var $wipSaveStatus = $publishingHeading.find('> .WorkInProgressSaveStatus');
+
+        if (changed) {
+          if ($wipSaveStatus.length === 0) {
+            $wipSaveStatus = $('<span/>', {
+              'class': 'WorkInProgressSaveStatus'
+            });
+
+            $publishingHeading.append($wipSaveStatus);
+          }
+
+          $wipSaveStatus.text('(Saving WIP)').attr('data-status', 'saving');
+        }
+
         $.ajax({
           'type': 'post',
-          'url': CONTEXT_PATH + 'contentState?idle=' + (!!idle) + (questionAt > -1 ? '&' + action.substring(questionAt + 1) : ''),
+          'url': CONTEXT_PATH + 'contentState?changed=' + changed + '&idle=' + (!!idle) + (questionAt > -1 ? '&' + action.substring(questionAt + 1) : ''),
           'cache': false,
           'dataType': 'json',
 
@@ -70,22 +91,49 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           'data': $form.find('[name]').not($form.find('.contentDiffCurrent [name]')).serialize() + $dynamicTexts.map(function() {
             var $element = $(this);
 
-            return '&_dti=' + ($element.closest('[data-object-id]').attr('data-object-id') || '') +
-                '&_dtt=' + (($element.attr('data-dynamic-text') ||
+            return '&_dti=' + encodeURIComponent($element.closest('[data-object-id]').attr('data-object-id') || '') +
+                '&_dtt=' + encodeURIComponent(($element.attr('data-dynamic-text') ||
                 $element.attr('data-dynamic-html') ||
                 $element.attr('data-dynamic-placeholder') ||
                 '')) +
-                  '&_dtf=' + ($element.attr('data-dynamic-field-name') || '') +
-                  '&_dtq=' + ($element.attr('data-dynamic-predicate') || '');
+                  '&_dtf=' + encodeURIComponent($element.attr('data-dynamic-field-name') || '') +
+                  '&_dtq=' + encodeURIComponent($element.attr('data-dynamic-predicate') || '');
           }).get().join(''),
 
           'success': function(data) {
+            if (changed && $wipSaveStatus) {
+              $wipSaveStatus.text('(Saved WIP)').attr('data-status', 'saved');
+            }
+
             $form.trigger('cms-updateContentState', [ data ]);
 
             $dynamicTexts.each(function(index) {
               var $element = $(this),
                   text = data._dynamicTexts[index],
                   dynamicPredicate = data._dynamicPredicates[index];
+
+              if ($element.attr('data-placeholder-clear-on-change') === 'true') {
+                var oldClearKey = $element.attr('data-old-clear-key');
+                var newClearKey = text || 'null';
+
+                if (!oldClearKey) {
+                  $element.attr('data-old-clear-key', newClearKey)
+
+                } else if (oldClearKey !== newClearKey) {
+                  $element.attr('data-old-clear-key', newClearKey);
+
+                  if ($element.is('input, select, textarea')) {
+                    var rte = $element.data('rte2');
+
+                    if (rte) {
+                      rte.fromHTML('');
+                    }
+
+                    $element.val('');
+                    $element.change();
+                  }
+                }
+              }
 
               if ($element.is('[data-dynamic-predicate]')) {
 

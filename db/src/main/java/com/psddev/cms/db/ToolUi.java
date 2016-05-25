@@ -70,8 +70,10 @@ public class ToolUi extends Modification<Object> {
     private String noteHtml;
     private String noteRendererClassName;
     private String placeholder;
+    private Boolean placeholderClearOnChange;
     private String placeholderDynamicText;
     private Boolean placeholderEditable;
+    private Boolean publishable;
     private String publishButtonText;
     private Boolean referenceable;
     private String referenceableViaClassName;
@@ -489,6 +491,14 @@ public class ToolUi extends Modification<Object> {
         this.placeholder = placeholder;
     }
 
+    public boolean isPublishable() {
+        return Boolean.TRUE.equals(publishable);
+    }
+
+    public void setPublishable(boolean publishable) {
+        this.publishable = publishable ? Boolean.TRUE : null;
+    }
+
     public String getPublishButtonText() {
         return publishButtonText;
     }
@@ -509,6 +519,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public boolean isPlaceholderClearOnChange() {
+        return Boolean.TRUE.equals(placeholderClearOnChange);
+    }
+
+    public void setPlaceholderClearOnChange(boolean placeholderClearOnChange) {
+        this.placeholderClearOnChange = Boolean.TRUE.equals(placeholderClearOnChange) ? Boolean.TRUE : null;
     }
 
     public boolean isPlaceholderEditable() {
@@ -1471,6 +1489,12 @@ public class ToolUi extends Modification<Object> {
         String value() default "";
 
         /**
+         * {@code true} if the target field should be cleared when the
+         * placeholder text changes.
+         */
+        boolean clearOnChange() default false;
+
+        /**
          * Dynamic placeholder text.
          */
         String dynamicText() default "";
@@ -1495,9 +1519,28 @@ public class ToolUi extends Modification<Object> {
                 Placeholder placeholder = (Placeholder) annotation;
 
                 ui.setPlaceholder(placeholder.value());
+                ui.setPlaceholderClearOnChange(placeholder.clearOnChange());
                 ui.setPlaceholderDynamicText(placeholder.dynamicText());
                 ui.setPlaceholderEditable(placeholder.editable());
             }
+        }
+    }
+
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(PublishableProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface Publishable {
+
+        boolean value() default true;
+    }
+
+    private static class PublishableProcessor implements ObjectType.AnnotationProcessor<Publishable> {
+
+        @Override
+        public void process(ObjectType type, Publishable annotation) {
+            type.as(ToolUi.class).setPublishable(annotation.value());
         }
     }
 

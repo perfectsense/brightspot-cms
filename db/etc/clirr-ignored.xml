@@ -44,4 +44,10 @@
         <method>com.psddev.cms.view.ViewOutput render(java.lang.Object, com.psddev.cms.view.ViewTemplateLoader)</method>
     </difference>
 
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$Placeholder</className>
+        <differenceType>7012</differenceType>
+        <method>boolean clearOnChange()</method>
+    </difference>
+
 </differences>

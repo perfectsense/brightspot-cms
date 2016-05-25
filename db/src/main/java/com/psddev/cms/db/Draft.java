@@ -2,12 +2,12 @@ package com.psddev.cms.db;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -88,14 +88,19 @@ public class Draft extends Content {
         Map<String, Map<String, Object>> oldIdMaps = findIdMaps(oldValues);
         Map<String, Map<String, Object>> differences = new CompactMap<>();
 
-        oldIdMaps.keySet().stream().filter(newIdMaps::containsKey).forEach(id -> {
+        newIdMaps.keySet().stream().forEach(id -> {
             Map<String, Object> oldIdMap = oldIdMaps.get(id);
             Map<String, Object> newIdMap = newIdMaps.get(id);
             Map<String, Object> changes = new CompactMap<>();
             ObjectType type = environment.getTypeById(ObjectUtils.to(UUID.class, newIdMap.get(State.TYPE_KEY)));
+            Set<String> keys = new LinkedHashSet<>(newIdMap.keySet());
 
-            Stream.concat(oldIdMap.keySet().stream(), newIdMap.keySet().stream()).forEach(key -> {
-                Object oldValue = oldIdMap.get(key);
+            if (oldIdMap != null) {
+                keys.addAll(oldIdMap.keySet());
+            }
+
+            keys.forEach(key -> {
+                Object oldValue = oldIdMap != null ? oldIdMap.get(key) : null;
                 Object newValue = newIdMap.get(key);
 
                 if (ObjectUtils.equals(oldValue, newValue)) {
@@ -115,11 +120,21 @@ public class Draft extends Content {
                         field = environment.getField(key);
                     }
 
-                    if (field != null
-                            && field.getInternalType().startsWith(ObjectField.SET_TYPE + "/")
-                            && ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
+                    if (field != null) {
+                        String fieldType = field.getInternalType();
 
-                        return;
+                        if (ObjectField.BOOLEAN_TYPE.equals(fieldType)) {
+                            if ((oldValue == null || Boolean.FALSE.equals(oldValue))
+                                    && (newValue == null || Boolean.FALSE.equals(newValue))) {
+
+                                return;
+                            }
+
+                        } else if (fieldType.startsWith(ObjectField.SET_TYPE + "/")) {
+                            if (ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
+                                return;
+                            }
+                        }
                     }
                 }
 
@@ -128,12 +143,6 @@ public class Draft extends Content {
 
             if (!changes.isEmpty()) {
                 differences.put(id, changes);
-            }
-        });
-
-        newIdMaps.forEach((id, newIdMap) -> {
-            if (!oldIdMaps.containsKey(id)) {
-                differences.put(id, newIdMap);
             }
         });
 

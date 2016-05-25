@@ -16,6 +16,9 @@
   clear: both;
   padding: 0 (@carousel-nav-width + @carousel-tile-margin);
   position: relative;
+  &.carousel-vertical {
+    padding: (@carousel-nav-width + @carousel-tile-margin) 0;
+  }
 }
 
 .carousel-nav,
@@ -39,7 +42,11 @@
   line-height: @carousel-tile-height;
   position: absolute;
   top: 0;
-
+  .carousel-vertical & {
+    height: auto;
+    line-height: 25px;
+    width: 100%; 
+  }
   &.carousel-nav-hide {
     color: @color-placeholder;
   }
@@ -49,12 +56,24 @@
   .icon-chevron-left;
 
   left: 0;
+  
+  &:before {
+    transform: rotate(90deg);
+  }  
 }
 
 .carousel-nav-next {
   .icon-chevron-right;
 
   right: 0;
+  .carousel-vertical & {
+    bottom: 0;
+    top: auto;
+    
+    &:before {
+      transform: rotate(90deg);
+    }
+  }
 }
 
 .carousel-viewport {
@@ -62,6 +81,11 @@
   padding-bottom: 20px;
   white-space: nowrap;
   width: 100%;
+  .carousel-vertical & {
+    height: 525px;
+    overflow-y: hidden;      
+  }
+  
 }
 
 .carousel-tiles {
@@ -72,6 +96,9 @@
   padding: 0;
   transition: margin-left @time-fast;
   white-space: nowrap;
+    .carousel-vertical & {
+        transition: margin-top @time-fast;
+    }
 }
 
 .carousel-tile {
@@ -87,7 +114,12 @@
   vertical-align: top;
   white-space: normal;
   width: @carousel-tile-width;
-
+  .carousel-vertical & {
+      display: block;
+    &:not(:last-child) {
+      margin-bottom: @carousel-tile-margin;
+    }
+  }
   &:not(:last-child) {
     margin-right: @carousel-tile-margin;
   }
@@ -233,6 +265,23 @@
           }
       }
   }
+  .carousel-vertical {
+      &.carousel-wrapper {
+          width: 160px;
+      }
+      .carousel-viewport {
+        height: 80vh;
+      }
+  }
+  [data-vertical-carousel='true'] & {
+      position: absolute;
+      left: -170px;
+      top: 0;
+  }
+}
+
+[data-vertical-carousel='true'].content-edit {
+    padding-left: 170px;  
 }
 
 // Temporarily turn off transition for the carousel.

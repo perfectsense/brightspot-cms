@@ -61,6 +61,7 @@ $.plugin2('tabbed', {
         $.each(tabs, function(i, tab) {
             $tabs.append($('<li/>', {
                 'class': $(tab.items).find('.message-error').length > 0 ? 'state-error' : '',
+                'data-tab': tab.name,
                 'html': $('<a/>', {
                     'text': tab.name,
                     'click': function(event) {

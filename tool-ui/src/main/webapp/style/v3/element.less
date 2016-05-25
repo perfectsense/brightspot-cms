@@ -127,12 +127,14 @@ figure,
 
 .icon-only {
   display: inline-block;
+  margin-right: 2px;
   overflow: hidden;
   white-space: nowrap;
-  width: 14px;
+  width: @lineHeight-default;
 
   &:before {
-    padding-right: 14px;
+    margin-right: 0;
+    padding-right: 20px;
   }
 }
 
@@ -800,6 +802,18 @@ table.links.table-striped {
         color: @color-remove;
       }
     }
+
+    .OverlaidCount {
+      .background-flat(@color-overlay);
+      border-radius: 100%;
+      display: inline-block;
+      font-weight: normal;
+      height: @lineHeight-default;
+      line-height: @lineHeight-default;
+      margin-left: 5px;
+      text-align: center;
+      width: @lineHeight-default;
+    }
   }
 }
 
@@ -1002,5 +1016,28 @@ table.links.table-striped {
     &:not(.link):before {
       display: none !important;
     }
+  }
+}
+
+.WorkInProgressSaveStatus {
+  color: @color-placeholder;
+  font-weight: normal;
+  margin-left: 5px;
+  opacity: 1;
+
+  &[data-status='saved'] {
+    opacity: 0;
+    transition: opacity @time-fast;
+    transition-delay: 2s;
+  }
+}
+
+.WorkInProgressRestoredMessage {
+  position: relative;
+
+  &-actions {
+    position: absolute;
+    right: 10px;
+    top: 10px;
   }
 }

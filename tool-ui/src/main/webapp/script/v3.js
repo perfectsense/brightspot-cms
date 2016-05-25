@@ -51,6 +51,7 @@ require([
   'input/region',
   'v3/input/richtext',
   'v3/input/richtext2',
+  'v3/input/secret',
   'input/table',
   'input/workflow',
 
@@ -124,7 +125,8 @@ function() {
     '.popup[data-popup-source-class~="objectId-select"] .searchFiltersRest',
     '.popup[data-popup-source-class~="objectId-select"] .searchResultList',
     '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchFiltersRest',
-    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchResultList'
+    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchResultList',
+    '.ToolUserWorksInProgress > ul'
   ].join(','));
 
   $doc.frame({

@@ -99,3 +99,41 @@
 .p-tud-lg-recent {
   margin-left: 240px;
 }
+
+.ToolUserWorksInProgress {
+  .links,
+  .message {
+    margin: 0;
+  }
+
+  .links {
+    li {
+      position: relative;
+
+      form {
+        display: none;
+        margin: 0;
+        position: absolute;
+        right: 20px;
+        top: 7.5px;
+        z-index: 1;
+
+        button {
+          &:extend(.widget-controls-button all);
+
+          .icon-action-delete;
+        }
+      }
+
+      &:hover {
+        form {
+          display: block;
+
+          button:hover {
+            color: @color-remove;
+          }
+        }
+      }
+    }
+  }
+}

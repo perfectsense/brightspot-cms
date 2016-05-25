@@ -355,7 +355,7 @@ public class ListSearchResultView extends AbstractSearchResultView {
                             page.writeEnd();
                         }
 
-                        page.writeStart("td", "data-preview-anchor", "");
+                        page.writeStart("td");
                             itemWriter.writeBeforeHtml(page, search, item);
                             page.writeObjectLabel(item);
                             itemWriter.writeAfterHtml(page, search, item);

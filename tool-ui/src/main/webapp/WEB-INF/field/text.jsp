@@ -95,7 +95,8 @@ if (validValues != null) {
 
 } else if (ui.isSecret()) {
     wp.writeElement("input",
-            "type", "password",
+            "type", "text",
+            "class", "secret",
             "id", wp.getId(),
             "name", inputName,
             "placeholder", placeholder,
@@ -113,6 +114,7 @@ if (validValues != null) {
             "data-dynamic-field-name", field.getInternalName(),
             "data-code-type", ui.getCodeType(),
             "data-editable-placeholder", ui.isPlaceholderEditable() ? ui.getPlaceholder() : null,
+            "data-placeholder-clear-on-change", ui.isPlaceholderClearOnChange() ? true : null,
             "data-rte-tags", ObjectUtils.isBlank(rteTags) ? null : ObjectUtils.toJson(rteTags),
             "data-suggested-maximum", suggestedMaximum != null ? suggestedMaximum.intValue() : null,
             "data-suggested-minimum", suggestedMinimum != null ? suggestedMinimum.intValue() : null,

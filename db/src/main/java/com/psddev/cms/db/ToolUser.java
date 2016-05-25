@@ -144,6 +144,9 @@ public class ToolUser extends Record implements ToolEntity {
     @ToolUi.Tab("Advanced")
     private boolean disableCodeMirrorRichTextEditor;
 
+    @ToolUi.Tab("Advanced")
+    private boolean disableWorkInProgress;
+
     @ToolUi.Note("Force the user to change the password on next log in.")
     private boolean changePasswordOnLogIn;
 
@@ -813,6 +816,14 @@ public class ToolUser extends Record implements ToolEntity {
 
     public void setDisableCodeMirrorRichTextEditor(boolean disableCodeMirrorRichTextEditor) {
         this.disableCodeMirrorRichTextEditor = disableCodeMirrorRichTextEditor;
+    }
+
+    public boolean isDisableWorkInProgress() {
+        return disableWorkInProgress;
+    }
+
+    public void setDisableWorkInProgress(boolean disableWorkInProgress) {
+        this.disableWorkInProgress = disableWorkInProgress;
     }
 
     public boolean isChangePasswordOnLogIn() {

@@ -53,6 +53,8 @@
 @import 'work-streams.less';
 @import 'workflow.less';
 
+@import 'OverlayProviderSelect.less';
+
 // From Bower.
 @import '../handsontable.full.css';
 @import '../leaflet/leaflet.css';
@@ -542,7 +544,9 @@
   }
 
   [name='action-publish'] {
-    margin-bottom: 5px;
+    .widget-publishing[data-publishable] & {
+      margin-bottom: 5px;
+    }
 
     & {
       .button-color(@color-publish);
@@ -555,12 +559,25 @@
 }
 
 .widget-publishingExtra {
+  bottom: 26px;
   overflow: hidden;
+  position: absolute;
+  right: 20px;
+
+  .widget-publishing[data-publishable] & {
+    bottom: auto;
+    position: static;
+    right: auto;
+  }
 
   &-left,
   &-right {
     list-style-type: none;
-    margin: 15px 0 0 0;
+    margin: 0;
+
+    .widget-publishing[data-publishable] & {
+      margin-top: 15px;
+    }
   }
 
   &-left {

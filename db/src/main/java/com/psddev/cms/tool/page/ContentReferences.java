@@ -63,7 +63,7 @@ public class ContentReferences extends PageServlet {
                 page.writeStart("h2");
                     page.writeHtml(page.localize(
                             ContentReferences.class,
-                            ImmutableMap.of("count", result.getCount()),
+                            ImmutableMap.of("count", result.getItems().size()),
                             "subtitle.mostRecent"));
                 page.writeEnd();
             }

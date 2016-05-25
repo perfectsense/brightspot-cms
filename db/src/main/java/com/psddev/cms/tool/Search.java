@@ -29,6 +29,7 @@ import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolEntity;
+import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.ToolUserSearch;
@@ -998,7 +999,27 @@ public class Search extends Record {
         }
 
         if (validTypeIds != null) {
-            query.and("_type = ?", validTypeIds);
+            if (page != null) {
+                query.and("_type = ?", validTypeIds.stream()
+                        .filter(typeId -> page.hasPermission("type/" + typeId + "/read"))
+                        .collect(Collectors.toSet()));
+
+            } else {
+                query.and("_type = ?", validTypeIds);
+            }
+
+        } else if (page != null) {
+            ToolUser user = page.getUser();
+
+            if (user != null) {
+                ToolRole role = user.getRole();
+
+                if (role != null
+                        && role.getPermissions().contains("+type/")) {
+
+                    query.and(page.userTypesPredicate());
+                }
+            }
         }
 
         String color = getColor();

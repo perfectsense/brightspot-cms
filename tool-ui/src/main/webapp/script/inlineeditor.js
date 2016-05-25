@@ -8,10 +8,27 @@
             mainObjectData = $.parseJSON($parentBody.find('.cms-mainObject').attr('data-object')),
             ids = [ mainObjectData.id ];
 
+    // Find all objects in the parent document.
+    var OBJECT_BEGIN_PREFIX = 'brightspot.object-begin ';
+    var parentCommentWalker = $parentDocument[0].createTreeWalker($parentBody[0], NodeFilter.SHOW_COMMENT, null, null);
+
+    while (parentCommentWalker.nextNode()) {
+        var comment = parentCommentWalker.currentNode;
+        var commentValue = comment.nodeValue;
+
+        if (commentValue.indexOf(OBJECT_BEGIN_PREFIX) !== 0) {
+            continue;
+        }
+
+        $(comment.nextElementSibling).attr(
+                'data-cms-object',
+                commentValue.substring(OBJECT_BEGIN_PREFIX.length));
+    }
+
     // Create controls for all the objects in the parent document.
-    $parentBody.find('.cms-objectBegin').each(function() {
+    $parentBody.find('[data-cms-object]').each(function() {
         var $begin = $(this),
-                objectData = $.parseJSON($begin.attr('data-object')),
+                objectData = $.parseJSON($begin.attr('data-cms-object')),
                 id = objectData.id,
                 $outline,
                 $edit,
@@ -39,7 +56,7 @@
                 $controls.addClass('inlineEditorControls-hover');
 
                 // Fade all the controls that overlap with this one.
-                $parentBody.find('.cms-objectBegin-hasControls').each(function() {
+                $parentBody.find('.cms-object-hasControls').each(function() {
                     var previousBox = $.data(this, 'inlineEditor-box');
 
                     if (previousBox &&
@@ -68,121 +85,69 @@
 
         $.data(this, 'inlineEditor-$controls', $controls);
         $body.append($controls);
-        $begin.addClass('cms-objectBegin-hasControls');
+        $begin.addClass('cms-object-hasControls');
     });
 
     function positionControls() {
         var previousBoxes = [ ];
 
-        $parentBody.find('.cms-objectBegin-hasControls').each(function() {
-            var $begin = $(this),
-                    $beginCurrent,
-                    beginIndex,
-                    beginCount,
-                    $controls = $.data(this, 'inlineEditor-$controls'),
-                    found = false,
-                    minX = Number.MAX_VALUE,
-                    maxX = 0,
-                    minY = Number.MAX_VALUE,
-                    maxY = 0,
-                    box,
-                    intersects;
+        $parentBody.find('.cms-object-hasControls').each(function() {
+            var $begin = $(this);
+            var beginOffset = $begin.offset();
+            var minX = beginOffset.left;
+            var maxX = minX + $begin.outerWidth();
+            var minY = beginOffset.top;
+            var maxY = $begin.outerHeight();
 
-            // Figure out the object box size by finding the minimum and
-            // maximum coordinates among all the elements between begin
-            // and end markers.
-            for ($beginCurrent = $begin, beginIndex = 0, beginCount = 1;
-                    beginIndex < beginCount;
-                    $beginCurrent = $beginCurrent.next(), ++ beginIndex) {
-
-                $beginCurrent.nextUntil('.cms-objectEnd').each(function() {
-                    var $item = $(this),
-                            itemOffset = $item.offset(),
-                            itemMinX = itemOffset.left,
-                            itemMaxX = itemMinX + $item.outerWidth(),
-                            itemMinY = itemOffset.top,
-                            itemMaxY = itemMinY + $item.outerHeight();
-
-                    $beginCurrent = $item;
-
-                    if ($item.is('.cms-objectBegin')) {
-                        ++ beginCount;
-                        return;
-
-                    } else if (!$item.is(':visible')) {
-                        return;
-                    }
-
-                    found = true;
-
-                    if (minX > itemMinX) {
-                        minX = itemMinX;
-                    }
-                    if (maxX < itemMaxX) {
-                        maxX = itemMaxX;
-                    }
-                    if (minY > itemMinY) {
-                        minY = itemMinY;
-                    }
-                    if (maxY < itemMaxY) {
-                        maxY = itemMaxY;
-                    }
-                });
+            if (minY < 37) {
+                minY = 37;
             }
 
-            if (!found) {
-                $controls.hide();
-
-            } else {
-                if (minY < 37) {
-                    minY = 37;
+            var $controls = $.data(this, 'inlineEditor-$controls');
+            var box = {
+                '$controls': $controls,
+                'controlsCss': {
+                    'left': minX,
+                    'top': minY
+                },
+                'controlsDimension': {
+                    'height': $controls.outerHeight() + 5,
+                    'width': $controls.outerWidth()
+                },
+                'outlineCss': {
+                    'height': maxY - minY,
+                    'top': 0,
+                    'width': maxX - minX
                 }
+            };
 
-                box = {
-                    '$controls': $controls,
-                    'controlsCss': {
-                        'left': minX,
-                        'top': minY
-                    },
-                    'controlsDimension': {
-                        'height': $controls.outerHeight() + 5,
-                        'width': $controls.outerWidth()
-                    },
-                    'outlineCss': {
-                        'height': maxY - minY,
-                        'top': 0,
-                        'width': maxX - minX
-                    }
-                };
+            $.data($begin[0], 'inlineEditor-box', box);
 
-                $.data($begin[0], 'inlineEditor-box', box);
+            // Move the controls down until they don't overlay with
+            // any other controls.
+            if (previousBoxes.length > 0) {
+                do {
+                    retry = false;
 
-                // Move the controls down until they don't overlay with
-                // any other controls.
-                if (previousBoxes.length > 0) {
-                    do {
-                        retry = false;
+                    $.each(previousBoxes, function(i, previousBox) {
+                        if (previousBox.controlsCss.left <= box.controlsCss.left + box.controlsDimension.width &&
+                                box.controlsCss.left <= previousBox.controlsCss.left + previousBox.controlsDimension.width &&
+                                previousBox.controlsCss.top <= box.controlsCss.top + box.controlsDimension.height &&
+                                box.controlsCss.top <= previousBox.controlsCss.top + previousBox.controlsDimension.height) {
+                            retry = true;
 
-                        $.each(previousBoxes, function(i, previousBox) {
-                            if (previousBox.controlsCss.left <= box.controlsCss.left + box.controlsDimension.width &&
-                                    box.controlsCss.left <= previousBox.controlsCss.left + previousBox.controlsDimension.width &&
-                                    previousBox.controlsCss.top <= box.controlsCss.top + box.controlsDimension.height &&
-                                    box.controlsCss.top <= previousBox.controlsCss.top + previousBox.controlsDimension.height) {
-                                retry = true;
-
-                                box.controlsCss.top += 1;
-                                box.outlineCss.top -= 1;
-                                return false;
-                            }
-                        });
-                    } while (retry);
-                }
-
-                previousBoxes.push(box);
-                $controls.css(box.controlsCss);
-                $controls.find('.inlineEditorOutline').css(box.outlineCss);
-                $controls.show();
+                            box.controlsCss.top += 1;
+                            box.outlineCss.top -= 1;
+                            return false;
+                        }
+                    });
+                } while (retry);
             }
+
+            previousBoxes.push(box);
+            $controls.css(box.controlsCss);
+            $controls.find('.inlineEditorOutline').css(box.outlineCss);
+            $controls.show();
         });
     }
 
