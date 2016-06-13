@@ -1681,9 +1681,9 @@ public class PageFilter extends AbstractFilter {
                     }
                 }
 
-                marker.append("<span class=\"cms-objectBegin\" style=\"display: none;\" data-object=\"");
-                marker.append(StringUtils.escapeHtml(ObjectUtils.toJson(map)));
-                marker.append("\"></span>");
+                marker.append("<!--brightspot.object-begin ");
+                marker.append(ObjectUtils.toJson(map));
+                marker.append("-->");
                 lazyWriter.writeLazily(marker.toString());
             }
 
@@ -1703,7 +1703,7 @@ public class PageFilter extends AbstractFilter {
             }
 
             if (lazyWriter != null) {
-                lazyWriter.writeLazily("<span class=\"cms-objectEnd\" style=\"display: none;\"></span>");
+                lazyWriter.writeLazily("<!--brightspot.object-end-->");
                 lazyWriter.writePending();
             }
         }
@@ -1868,6 +1868,7 @@ public class PageFilter extends AbstractFilter {
                                             Object object = type.createObject(ObjectUtils.to(UUID.class, objectMap.remove("_id")));
                                             State objectState = State.getInstance(object);
 
+                                            objectState.setResolveInvisible(true);
                                             objectState.setValues(objectMap);
                                             substitutions.put(objectState.getId(), object);
                                         }

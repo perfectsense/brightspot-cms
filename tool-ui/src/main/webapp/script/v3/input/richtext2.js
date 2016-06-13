@@ -1,9 +1,10 @@
 /* jshint undef: true, unused: true, browser: true, jquery: true, devel: true */
-/* global define */
+/* global clearTimeout define document RICH_TEXT_ELEMENTS setTimeout window */
 
 define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plugin/popup', 'jquery.extra', 'jquery.handsontable.full'], function($, CodeMirrorRte, tableEditor) {
 
-    var CONTEXT_PATH, Rte;
+    var CONTEXT_PATH;
+    var Rte;
 
     // Global variable set by the CMS, typically "/cms/"
     CONTEXT_PATH = window.CONTEXT_PATH || '';
@@ -112,7 +113,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 // Text to display in a dropdown when cursor moves over this style
                 dropdown: function(mark) {
 
-                    var date, user, time, label;
+                    var date;
+                    var user;
+                    var time;
+                    var label;
 
                     label = '';
                     
@@ -128,7 +132,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                             try {
                                 // Just in case older browser doesn't support toLocale functions catch the error
                                 label += ': ' + date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                            } catch (e) {}
+                            } catch (e) {
+                                // continue regardless of error
+                            }
                         }
                     }
                     
@@ -166,7 +172,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // otherwise the click outside the popup will close the popup!
                     setTimeout(function() {
                         
-                        self.linkEdit(mark.attributes).done(function(attributes){
+                        self.linkEdit(mark.attributes, mark).done(function(attributes){
 
                             if (attributes.remove || attributes.href === '' || attributes.href === 'http://') {
                                 // Remove the link
@@ -307,7 +313,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // MSWord 'p' elements should be treated as a new line
                     // Special case if 'p' element contains only whitespace remove the whitespace
                     'p[class^=Mso]': function($el) {
-                        var $replacement, t;
+                        var $replacement;
+                        var t;
                         t = $el.text() || '';
                         if (t.match(/^\s*$/)) {
                             $el.text('');
@@ -589,6 +596,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.inlineEnhancementInit();
             self.tableInit();
             self.initRte();
+            self.tableInitChangeEvent(); // must be after initRte
             self.toolbarInit();
             self.linkInit();
             self.trackChangesInit();
@@ -646,7 +654,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         initStylesCustom: function() {
 
-            var stylesCustom, self;
+            var stylesCustom;
+            var self;
 
             self = this;
 
@@ -661,7 +670,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                 $.each(window.CSS_CLASS_GROUPS, function() {
 
-                    var group, groupName;
+                    var group;
+                    var groupName;
 
                     group = this;
                     groupName = 'cms-' + group.internalName;
@@ -669,7 +679,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // Loop through all the styles in this group
                     $.each(group.cssClasses, function() {
 
-                        var classConfig, cmsClassName, styleDef;
+                        var classConfig;
+                        var cmsClassName;
+                        var styleDef;
 
                         classConfig = this;
 
@@ -725,7 +737,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         initRte: function() {
 
-            var content, self;
+            var content;
+            var self;
 
             self = this;
 
@@ -834,8 +847,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Load the custom CMS styles onto the page if they are not already present.
          */
         loadCMSStyles: function() {
-            var self;
-            self = this;
 
             // Check the private variable customStylesLoaded to determine if the styles have already been loaded
             // If there are multiple rich text editors on the page we only want to load the styles once
@@ -971,7 +982,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         trackChangesSave: function() {
             
-            var name, self, state;
+            var name;
+            var self;
+            var state;
 
             self = this;
 
@@ -995,7 +1008,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         trackChangesRestore: function() {
             
-            var name, self;
+            var name;
+            var self;
 
             self = this;
 
@@ -1014,7 +1028,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         trackChangesGetName: function() {
             
-            var name, self;
+            var name;
+            var self;
             
             self = this;
             
@@ -1034,7 +1049,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
         toolbarInit: function() {
 
-            var self, $toolbar;
+            var self;
+            var $toolbar;
 
             self = this;
 
@@ -1057,6 +1073,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             function toolbarProcess(config, $toolbar) {
                 
                 var $submenu;
+
+                if (self.$el.attr('data-render-block-elements') === 'true') {
+                    // If ToolUi.RichText(block=true) is used, turn off inline
+                    self.inline = false;
+                }
 
                 // Loop through the toolbar config to set up buttons
                 $.each(config, function(i, item) {
@@ -1137,7 +1158,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             $.each(window.CSS_CLASS_GROUPS, function() {
 
-                var group, groupName, $submenu;
+                var group;
+                var groupName;
+                var $submenu;
 
                 group = this;
                 groupName = 'cms-' + group.internalName;
@@ -1151,7 +1174,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 // Loop through all the styles in this group
                 $.each(group.cssClasses, function() {
 
-                    var classConfig, cmsClassName, toolbarItem;
+                    var classConfig;
+                    var cmsClassName;
+                    var toolbarItem;
 
                     classConfig = this;
 
@@ -1351,7 +1376,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         toolbarHandleClick: function(item, event) {
 
-            var $button, mark, marks, rte, self, styleObj, value;
+            var $button;
+            var mark;
+            var marks;
+            var rte;
+            var self;
+            var styleObj;
+            var value;
 
             self = this;
 
@@ -1455,7 +1486,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     rte.focus();
                     rte.find();
                     return; // return so we don't run rte.focus() again
-                    break;
 
                 case 'replace':
                     rte.focus();
@@ -1548,7 +1578,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         toolbarUpdate: function() {
 
-            var contextArray, $links, mode, rte, self, styles;
+            var context;
+            var $links;
+            var mode;
+            var rte;
+            var self;
+            var styles;
 
             self = this;
             rte = self.rte;
@@ -1579,7 +1614,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // Go through each link in the toolbar and see if the style is defined
             $links.each(function(){
 
-                var activeElements, allRoot, config, $link, makeActive, styleObj;
+                var config;
+                var $link;
+                var makeActive;
+                var styleObj;
 
                 $link = $(this);
 
@@ -1776,8 +1814,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // The pop-up dialog used to prompt for links
             self.$linkDialog = $(
-                '<div>' +
-                    '<h2>Link</h2>' +
+                '<div class="widget">' +
+                    '<h1>Link</h1>' +
                     '<div class="rte2-dialogLine">' +
                         '<input type="text" class="rte2-dialogLinkHref">' +
                         '<input type="hidden" class="rte2-dialogLinkId">' +
@@ -1793,9 +1831,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                             '<option value="nofollow">nofollow</option>' +
                         '</select>' +
                     '</div>' +
-                    '<a class="rte2-dialogLinkSave">Save</a>' +
-                    '<a class="rte2-dialogLinkOpen" target="_blank">Open</a>' +
-                    '<a class="rte2-dialogLinkUnlink">Unlink</a>' +
+                    '<div class="rte2-dialogLinkActions">' +
+                        '<a class="rte2-dialogLinkSave button">Save</a>' +
+                        '<a class="rte2-dialogLinkOpen action" target="_blank">Open</a>' +
+                        '<a class="rte2-dialogLinkUnlink action">Unlink</a>' +
+                    '</div>' +
                 '</div>'
             ).on('click', '.rte2-dialogLinkSave', function() {
                 // User clicked "Save" button to save the link
@@ -1818,7 +1858,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     return false;
                 }
             }).appendTo(document.body)
-                .popup({parent:self.$container}) // turn it into a popup
+                .popup() // turn it into a popup
                 .popup('close') // but initially close the popup
                 .popup('container').on('close', function() {
                     // If the popup is canceled with Esc or otherwise,
@@ -1854,9 +1894,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * @param {Boolean} [attributes.remove]
          * If this is true, then remove the link.
          */
-        linkEdit: function(attributes) {
+        linkEdit: function(attributes, mark) {
 
-            var deferred, $linkDialog, $href, self;
+            var deferred;
+            var $linkDialog;
+            var $href;
+            var self;
 
             self = this;
 
@@ -1868,6 +1911,45 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Open the popup
             $linkDialog.popup('open');
+
+            if (mark) {
+                var offset = self.rte.getOffset(self.rte.markGetRange(mark));
+                var popupWidth = $linkDialog.outerWidth();
+                var left = offset.left + (offset.right - offset.left) / 2 - popupWidth / 2;
+                var markerDelta = 0;
+
+                if (left < 10) {
+                    markerDelta = left - 10;
+                    left = 10;
+
+                } else {
+                    var leftDelta = left + popupWidth - $(document).width() + 10;
+
+                    if (leftDelta > 0) {
+                        markerDelta = leftDelta;
+                        left -= leftDelta;
+                    }
+                }
+
+                var $content = $linkDialog.popup('content');
+                var $marker = $content.find('> .marker');
+
+                if ($marker.length === 0) {
+                    $marker = $('<div/>', { 'class': 'marker' });
+                    $content.append($marker);
+                }
+
+                var markerLeft = (popupWidth  - 20) / 2 + markerDelta;
+
+                $marker.css('left', markerLeft < 5 ? 5 : markerLeft);
+                $linkDialog.css({
+                    'left': left,
+                    'margin': 0,
+                    'position': 'absolute',
+                    'top': offset.bottom,
+                    'z-index': self.$el.zIndex() + 1
+                });
+            }
 
             // Add existing attributes to the popup form
             $href = $linkDialog.find('.rte2-dialogLinkHref');
@@ -1891,8 +1973,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         linkSave: function() {
 
-            var attributes, $linkDialog, self;
-            var href, rel, target, title, cmsId;
+            var $linkDialog;
+            var attributes;
+            var cmsId;
+            var href;
+            var rel;
+            var self;
+            var target;
 
             self = this;
 
@@ -2008,7 +2095,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // somebody else deal with it.
             $(document.body).on('click', '[data-enhancement]', function(event) {
 
-                var data, $enhancement, $popupTrigger, $target;
+                var data;
+                var $enhancement;
+                var $popupTrigger;
+                var $target;
 
                 // The enhancement link that the user clicked
                 $target = $(this);
@@ -2053,7 +2143,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // so we can update the enhancement display (or remove the enhancement)
             $(document.body).on('close', '.popup[name^="contentEnhancement-"]', function() {
 
-                var $enhancement, $popupTrigger, $popup;
+                var $enhancement;
+                var $popupTrigger;
+                var $popup;
 
                 // The popup that was closed
                 $popup = $(this);
@@ -2099,7 +2191,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementCreate: function(config, line) {
 
-            var $enhancement, mark, self;
+            var $enhancement;
+            var self;
 
             self = this;
 
@@ -2131,7 +2224,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             $('<div/>', {'class': 'rte2-enhancement-label' }).appendTo($enhancement);
 
             // Add the enhancement to the editor
-            mark = self.rte.enhancementAdd($enhancement[0], line, {
+            self.rte.enhancementAdd($enhancement[0], line, {
                 block:true,
                 // Set up a custom "toHTML" function so the editor can output the enhancement
                 toHTML:function(){
@@ -2166,7 +2259,16 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementUpdate: function(el) {
 
-            var $content, $options, optionsUrl, $edit, editUrl, $enhancement, emptyText, reference, $select, self;
+            var $content;
+            var $edit;
+            var $enhancement;
+            var $options;
+            var $select;
+            var editUrl;
+            var emptyText;
+            var optionsUrl;
+            var reference;
+            var self;
 
             self = this;
             $enhancement = self.enhancementGetWrapper(el);
@@ -2241,7 +2343,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementToolbarCreate: function(config) {
 
-            var formAction, formId, formTypeId, self, sizes, $sizesSubmenu, $toolbar;
+            var formAction;
+            var formId;
+            var formTypeId;
+            var self;
+            var sizes;
+            var $toolbar;
 
             self = this;
 
@@ -2335,7 +2442,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 className: 'rte2-enhancement-toolbar-change',
                 href: CONTEXT_PATH + (config.marker ? '/content/marker.jsp' : '/enhancementSelect') +
                     '?pt=' + encodeURIComponent(formId) + '&py=' + encodeURIComponent(formTypeId),
-                target: self.enhancementGetTarget(),
+                target: self.enhancementGetTarget()
             }, $toolbar);
 
             // Add the "Edit" button for an enhancement but not for a marker
@@ -2406,7 +2513,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementToolbarAddSubmenu: function(item, $addToSubmenu) {
 
-            var self = this;
             var $submenu;
 
             $submenu = $('<li class="rte2-toolbar-submenu"><span></span><ul></ul></li>');
@@ -2432,7 +2538,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementToolbarAddButton: function(item, $submenu) {
 
-            var self = this;
             var $button;
 
             // This is a toolbar button
@@ -2483,8 +2588,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementToolbarAddSeparator: function($submenu) {
 
-            var self = this;
-
             $('<li/>', {
                 'class': 'rte2-toolbar-separator',
                 html: '&nbsp;'
@@ -2512,7 +2615,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         enhancementRemove: function (el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.enhancementGetWrapper(el);
             $el.addClass('toBeRemoved');
@@ -2523,7 +2627,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         enhancementRemoveCompletely: function (el) {
-            var mark, self;
+            var mark;
+            var self;
             self = this;
             mark = self.enhancementGetMark(el);
             if (mark) {
@@ -2536,7 +2641,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         enhancementRestore: function (el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.enhancementGetWrapper(el);
             $el.removeClass('toBeRemoved');
@@ -2547,7 +2653,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         enhancementIsToBeRemoved: function(el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.enhancementGetWrapper(el);
             return $el.hasClass('toBeRemoved');
@@ -2556,7 +2663,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
         enhancementMove: function(el, direction) {
 
-            var $el, doScroll, mark, self, $popup, topNew, topOriginal, topWindow;
+            var $el;
+            var doScroll;
+            var mark;
+            var self;
+            var $popup;
+            var topNew;
+            var topOriginal;
+            var topWindow;
 
             self = this;
 
@@ -2594,7 +2708,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Set the editor cursor to the same line that contains the enhancement.
          */
         enhancementSetCursor: function(el) {
-            var line, mark, self;
+            var line;
+            var mark;
+            var self;
 
             self = this;
             
@@ -2621,7 +2737,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementSetPosition: function(el, type) {
 
-            var $el, mark, rte, self;
+            var $el;
+            var mark;
+            var rte;
+            var self;
 
             self = this;
             rte = self.rte;
@@ -2663,7 +2782,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementGetPosition: function(el) {
 
-            var $el, pos, self;
+            var $el;
+            var pos;
+            var self;
 
             self = this;
             $el = self.enhancementGetWrapper(el);
@@ -2686,8 +2807,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The enhancement element, or an element within the enhancement.
          */
         enhancementGetWrapper: function(el) {
-            var self;
-            self = this;
             return $(el).closest('.rte2-enhancement');
         },
 
@@ -2774,7 +2893,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementGetSizes: function() {
 
-            var gotSize, self, sizes, sizesInputContainer, sizesGlobal;
+            var gotSize;
+            var self;
+            var sizes;
+            var sizesInputContainer;
+            var sizesGlobal;
 
             self = this;
 
@@ -2813,11 +2936,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementSetSize: function(el, size) {
 
-            var $enhancement, reference, self, sizes;
+            var reference;
+            var self;
+            var sizes;
 
             self = this;
-
-            $enhancement = self.enhancementGetWrapper(el);
 
             reference = self.enhancementGetReference(el);
 
@@ -2842,7 +2965,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementDisplaySize: function(el) {
 
-            var $enhancement, $label, reference, self, sizes, sizeDisplayName, $sizeLabel;
+            var $enhancement;
+            var $label;
+            var reference;
+            var self;
+            var sizes;
+            var sizeDisplayName;
+            var $sizeLabel;
 
             self = this;
             $enhancement = self.enhancementGetWrapper(el);
@@ -2885,7 +3014,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementPopupSizesCreate: function(el) {
             
-            var $el, $popup, self, sizes;
+            var $el;
+            var $popup;
+            var self;
+            var sizes;
 
             self = this;
             $el = $(el);
@@ -2896,7 +3028,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (!$popup) {
                 
                 $popup = $('<ul/>', {
-                    'class': 'rte2-enhancement-sizes-popup',
+                    'class': 'rte2-enhancement-sizes-popup'
                 }).hover(function(event){
                     self.enhancementPopupSizesShowDelayed($el);
                 }, function(event) {
@@ -2940,7 +3072,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementPopupSizesShowDelayed: function(el) {
             
-            var timeout, self;
+            var timeout;
+            var self;
 
             self = this;
             
@@ -2962,7 +3095,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementPopupSizesShow: function(el) {
 
-            var $popup, offset, self;
+            var $popup;
+            var offset;
+            var self;
 
             self = this;
 
@@ -2984,7 +3119,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementPopupSizesHideDelayed: function(el) {
             
-            var timeout, self;
+            var timeout;
+            var self;
 
             self = this;
             
@@ -3004,7 +3140,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The image sizes button inside the enhancement element.
          */
         enhancementPopupSizesHide: function(el) {
-            var $popup, self;
+            var $popup;
+            var self;
             self = this;
             $popup = self.enhancementPopupSizesCreate(el);
             $popup.hide();
@@ -3018,7 +3155,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementGetReference: function(el) {
 
-            var $enhancement, reference, self;
+            var $enhancement;
+            var reference;
+            var self;
 
             self = this;
 
@@ -3035,7 +3174,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementSetReference: function(el, reference) {
 
-            var $enhancement, self;
+            var $enhancement;
+            var self;
 
             self = this;
 
@@ -3058,7 +3198,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         enhancementToHTML: function(el) {
 
-            var alignment, reference, $enhancement, html, $html, id, isMarker, self;
+            var alignment;
+            var reference;
+            var $enhancement;
+            var html;
+            var $html;
+            var id;
+            var isMarker;
+            var self;
 
             self = this;
 
@@ -3187,11 +3334,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
         
         inlineEnhancementCreate: function(event, style) {
 
-            var mark, self, styleObj;
+            var mark;
+            var self;
             
             self = this;
-
-            styleObj = self.rte.styles[style] || {};
             
             // Create a new mark then call the onclick function on it
             mark = self.rte.setStyle(style);
@@ -3203,7 +3349,16 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
         inlineEnhancementHandleClick: function(event, mark) {
 
-            var enhancementEditUrl, $div, $divForm, frameName, html, offset, offsetContainer, range, self, styleObj;
+            var $div;
+            var $divForm;
+            var enhancementEditUrl;
+            var frameName;
+            var html;
+            var offset;
+            var offsetContainer;
+            var range;
+            var self;
+            var styleObj;
 
             self = this;
 
@@ -3234,8 +3389,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             
             enhancementEditUrl = $.addQueryParameters(
                 window.CONTEXT_PATH + '/content/enhancement.jsp',
-                'typeId', styleObj.enhancementType,
-                'attributes', JSON.stringify(mark.attributes)
+                'typeId', styleObj.enhancementType
             );
 
             // Create a link for editing the enhancement and position it at the click event
@@ -3248,11 +3402,18 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     action: enhancementEditUrl,
                     method: 'post',
                     style: 'width:100%;display:block;',
-                    html: $('<input/>', {
-                        type: 'hidden',
-                        name: 'body',
-                        value: $(html).html()
-                    })
+                    html: [
+                        $('<input/>', {
+                            type: 'hidden',
+                            name: 'attributes',
+                            value: JSON.stringify(mark.attributes)
+                        }),
+                        $('<input/>', {
+                            type: 'hidden',
+                            name: 'body',
+                            value: $(html).html()
+                        })
+                    ]
                 })
                 
             }).appendTo(self.$container);
@@ -3339,7 +3500,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         inlineEnhancementReplaceMark: function(mark, html) {
             
-            var range, self;
+            var range;
+            var self;
 
             self = this;
             
@@ -3390,11 +3552,31 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
+         * Initialize a listener for table editor changes, so we
+         * can in turn trigger an RTE change (to ensure the html gets updated).
+         * Note this must be called after initRte because the container element
+         * must exist before we can attach the event listener.
+         */
+        tableInitChangeEvent: function() {
+            var self = this;
+            // Add a listener for table changes so we know when the content changes
+            self.$container.on('tableEditorChange', function() {
+                // Trigger a content change so the final html gets updated
+                self.rte.triggerChange();
+            });
+        },
+
+
+        /**
          * 
          */
         tableCreate: function($content, line) {
             
-            var $div, mark, $placeholder, self, tEdit;
+            var $div;
+            var $placeholder;
+            var self;
+            var tEdit;
+            
             self = this;
 
             // Get the line number where the table should be added
@@ -3466,11 +3648,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             $placeholder.data('tableEditor', tEdit);
             
             // Add the div to the editor
-            mark = self.rte.enhancementAdd($div[0], line, {
+            self.rte.enhancementAdd($div[0], line, {
                 block:true,
                 // Set up a custom "toHTML" function so the editor can output the enhancement
                 toHTML:function(){
-                    var $table, html;
+                    var $table;
+                    var html;
                     if (self.tableIsToBeRemoved($div)) {
                         html = '';
                     } else {
@@ -3495,12 +3678,16 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * HTML for the table.
          */
         tableToHtml: function(table) {
-            var html, self, $table;
+            var html;
+            var self;
+            var $table;
+            
             self = this;
             $table = $(table);
 
             $table.find('tr,td,th').add($table).each(function() {
-                var $el, mark;
+                var $el;
+                var mark;
                 $el = $(this);
 
                 // Retrieve the mark for the table/tr/td/th element
@@ -3518,7 +3705,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Replace the attributes on an element with a new set of attributes.
          */
         replaceAttributes: function(el, attributes) {
-            var $el, original, self;
+            var $el;
+            var original;
+            var self;
+            
             self = this;
             $el = $(el);
             original = self.rte.getAttributes($el);
@@ -3536,7 +3726,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableToolbarCreate: function() {
 
-            var  self, $toolbar;
+            var  self;
+            var $toolbar;
 
             self = this;
 
@@ -3599,7 +3790,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableMove: function(el, direction) {
 
-            var $el, mark, self, topNew, topOriginal, topWindow;
+            var $el;
+            var mark;
+            var self;
+            var topNew;
+            var topOriginal;
+            var topWindow;
             
             self = this;
 
@@ -3630,7 +3826,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * 
          */
         tableRemove: function (el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.tableGetWrapper(el);
             $el.addClass('toBeRemoved');
@@ -3642,7 +3839,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * 
          */
         tableRemoveCompletely: function (el) {
-            var mark, self;
+            var mark;
+            var self;
             self = this;
             mark = self.tableGetMark(el);
             if (mark) {
@@ -3655,7 +3853,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * 
          */
         tableRestore: function (el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.tableGetWrapper(el);
             $el.removeClass('toBeRemoved');
@@ -3667,7 +3866,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * 
          */
         tableIsToBeRemoved: function(el) {
-            var $el, self;
+            var $el;
+            var self;
             self = this;
             $el = self.tableGetWrapper(el);
             return $el.hasClass('toBeRemoved');
@@ -3681,8 +3881,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The enhancement element, or an element within the enhancement.
          */
         tableGetWrapper: function(el) {
-            var self;
-            self = this;
             return $(el).closest('.rte2-table');
         },
 
@@ -3707,7 +3905,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableEditInit: function() {
             
-            var $controls, self;
+            var $controls;
+            var self;
 
             self = this;
 
@@ -3769,7 +3968,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableEditSelection: function($el) {
 
-            var self, value;
+            var self;
+            var value;
 
             self = this;
             
@@ -3804,6 +4004,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                  } else {
                      value = self.tableEditRte.toHTML();
                      $el.html(value);
+                     self.rte.triggerChange();
                  }
 
             });
@@ -3817,10 +4018,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableEditAttrTable: function(el) {
             
-            var $el, mark, self;
+            var mark;
+            var self;
             
             self = this;
-            $el = $(el);
 
             // Make sure there is backend style that is meant for editing the table
             if (!self.tableStyleTable) { return; }
@@ -3843,10 +4044,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableEditAttrRow: function(el) {
             
-            var $el, mark, self;
+            var mark;
+            var self;
             
             self = this;
-            $el = $(el);
 
             // Make sure there is backend style that is meant for editing the table
             if (!self.tableStyleRow) { return; }
@@ -3868,10 +4069,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableEditAttrCell: function(el) {
             
-            var $el, mark, rangeTable, self;
+            var mark;
+            var self;
             
             self = this;
-            $el = $(el);
 
             // Make sure there is backend style that is meant for editing the table
             if (!self.tableStyleCell) { return; }
@@ -3902,7 +4103,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         tableMarkCreate: function(el, extraAttributes, markParameters) {
             
-            var attributes, mark, self;
+            var attributes;
+            var mark;
+            var self;
             
             self = this;
 
@@ -3919,7 +4122,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // which is not a good representation of where we want the
                     // popup to appear, but that is all that is supported
                     // by inline enhancement right now
-                    var tableMark, line;
+                    var line;
+                    var tableMark;
                     tableMark =  self.tableGetMark(el);
                     if (tableMark) {
                         line = tableMark.line.lineNo();
@@ -3952,8 +4156,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The fake CodeMirror mark for the table element.
          */
         tableMarkSet: function(el, mark) {
-            var self;
-            self = this;
             $(el).data('markTable', mark);
         },
 
@@ -3972,7 +4174,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The fake CodeMirror mark for the table element, or undefined if none is defined.
          */
         tableMarkGet: function(el, create) {
-            var mark, self;
+            var mark;
+            var self;
             self = this;
 
             // Get the mark from a data attribute if it was previously created
@@ -4047,14 +4250,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         placeholderRefresh: function() {
 
-            var count, $editor, placeholder, placeholderIsShowing, self, showPlaceholder;
+            var count;
+            var placeholderIsShowing;
+            var self;
+            var showPlaceholder;
             
             self = this;
-            $editor = self.$editor;
             
-            // Get placeholder content from the textarea
-            placeholder = self.$el.prop('placeholder');
-
             placeholderIsShowing = self.placeholderIsShowing();
             
             // Determine if we should display the placeholder
@@ -4097,7 +4299,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         placeholderShow: function() {
             
-            var placeholder, self;
+            var placeholder;
+            var self;
             
             self = this;
 
@@ -4171,7 +4374,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         previewUpdate: function() {
             
-            var html, self, val;
+            var html;
+            var self;
+            var val;
             
             self = this;
 
@@ -4207,7 +4412,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         toHTML: function() {
-            var html, self;
+            var html;
+            var self;
             self = this;
             if (self.rte.modeGet() === 'rich') {
                 if (self.placeholderIsShowing()) {
@@ -4222,7 +4428,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
         },
 
         toText: function() {
-            var self, text;
+            var self;
+            var text;
             self = this;
             text = self.rte.toText();
             return text;
@@ -4234,7 +4441,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (self.rte.modeGet() === 'rich') {
                 self.rte.focus();
                 self.toolbarUpdate();
-                self.rte.refresh();
             } else {
                 self.$el.focus();
             }
@@ -4277,7 +4483,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 context: rtElement.context,
                 keymap: rtElement.keymap,
                 clear: rtElement.clear,
-                toggle: rtElement.toggle
+                toggle: rtElement.toggle,
+                previewable: Boolean(rtElement.previewable)
             };
         });
     }
@@ -4291,7 +4498,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
         _create: function(input) {
 
-            var inline, $input, options, rte;
+            var inline;
+            var $input;
+            var options;
+            var rte;
 
             $input = $(input);
 
@@ -4319,6 +4529,44 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             rte = Object.create(Rte);
             rte.init(input, options);
+            
+            function updatePreview() {
+                rte.rte.blockEachLineMark(function (name, mark) {
+                    var className = mark.className;
+                    var styleObj = rte.rte.classes[className];
+                    var attributesJson = JSON.stringify(mark.attributes);
+                    var newPreviewKey = className + attributesJson;
+
+                    // Skip this mark if it doesn't match one of our styles,
+                    // or if the style does not have the previewable flag
+                    if (!styleObj || !styleObj.previewable) {
+                        return;
+                    }
+                    
+                    if (mark.rtePreviewKey !== newPreviewKey) {
+                        mark.rtePreviewKey = newPreviewKey;
+
+                        $.ajax({
+                            type: 'get',
+                            url: CONTEXT_PATH + '/content/rte-preview',
+
+                            data: {
+                                className: className,
+                                attributes: attributesJson
+                            },
+
+                            success: function (html) {
+                                if (html) {
+                                    rte.rte.blockSetPreviewForMark(mark, html);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+            updatePreview();
+            rte.rte.$el.on('rteChange', $.debounce(1000, updatePreview));
 
             return;
         },

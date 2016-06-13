@@ -60,6 +60,7 @@ String setName = inputName + ".setName";
 String idName = inputName + ".id";
 String typeIdName = inputName + ".typeId";
 String publishDateName = inputName + ".publishDate";
+String dataName = inputName + ".data";
 
 UUID id = wp.uuidParam(idName);
 UUID typeId = wp.uuidParam(typeIdName);
@@ -94,8 +95,17 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
         if (fieldValue != null) {
             State fieldValueState = State.getInstance(fieldValue);
+            String data = wp.param(String.class, dataName);
+
             fieldValueState.setId(id);
-            wp.updateUsingParameters(fieldValue);
+
+            if (ObjectUtils.isBlank(data)) {
+                wp.updateUsingParameters(fieldValue);
+
+            } else {
+                fieldValueState.setValues((Map<String, Object>) ObjectUtils.fromJson(data));
+            }
+
             fieldValueState.remove(Content.PUBLISH_DATE_FIELD);
             fieldValueState.remove(Content.UPDATE_DATE_FIELD);
 
@@ -214,22 +224,44 @@ if (isEmbedded) {
         for (Object validObject : validObjects) {
             State validState = State.getInstance(validObject);
             Date validObjectPublishDate = validState.as(Content.ObjectModification.class).getPublishDate();
-            wp.write("<div class=\"inputLarge ", validObjectClass, " ", showClasses.get(validState.getId()), "\">");
-            wp.write("<input name=\"", wp.h(typeIdName), "\" type=\"hidden\" value=\"", validState.getTypeId(), "\">");
-            wp.write("<input name=\"", wp.h(publishDateName), "\" type=\"hidden\" value=\"", wp.h(validObjectPublishDate != null ? validObjectPublishDate.getTime() : null), "\">");
+            String disabled = validObject.equals(fieldValue) ? null : "disabled";
+
+            wp.writeStart("div", "class", "inputLarge " + validObjectClass + " " + showClasses.get(validState.getId()));
+
+            wp.writeElement("input",
+                    "type", "hidden",
+                    "name", typeIdName,
+                    "value", validState.getTypeId(),
+                    "disabled", disabled);
+
+            wp.writeElement("input",
+                    "type", "hidden",
+                    "name", publishDateName,
+                    "value", wp.h(validObjectPublishDate != null ? validObjectPublishDate.getTime() : null),
+                    "disabled", disabled);
+
             if (!validState.hasAnyErrors()) {
+                String validStateData = ObjectUtils.toJson(validState.getSimpleValues());
+
                 wp.writeStart("div",
                         "class", "toggleable-form",
-                        "data-form-fields-data", ObjectUtils.toJson(validState.getSimpleValues()),
+                        "data-form-fields-data", validStateData,
                         "data-form-fields-url", wp.cmsUrl(
                                 "/contentFormFields",
                                 "typeId", validState.getTypeId(),
                                 "id", validState.getId()));
+                    wp.writeElement("input",
+                            "type", "hidden",
+                            "name", dataName,
+                            "value", validStateData,
+                            "disabled", disabled);
                 wp.writeEnd();
+
             } else {
                 wp.writeFormFields(validObject);
             }
-            wp.write("</div>");
+
+            wp.writeEnd();
         }
     }
 

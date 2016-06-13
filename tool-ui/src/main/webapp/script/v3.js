@@ -32,6 +32,7 @@ require([
   'bsp-autosubmit',
   'bsp-uploader',
   'bsp-utils',
+  'iframeResizer',
   'jquery.mousewheel',
   'velocity',
 
@@ -51,6 +52,7 @@ require([
   'input/region',
   'v3/input/richtext',
   'v3/input/richtext2',
+  'v3/input/secret',
   'input/table',
   'input/workflow',
 
@@ -116,6 +118,18 @@ function() {
   $doc.dropDown('live', 'select[multiple], select[data-searchable="true"]');
   $doc.editablePlaceholder('live', ':input[data-editable-placeholder]');
 
+  bsp_utils.onDomInsert(document, '.ExternalPreviewFrame', {
+    insert: function (frame) {
+      var $frame = $(frame);
+
+      $frame.iFrameResize({
+        resizedCallback: function () {
+          $frame.resize();
+        }
+      });
+    }
+  });
+
   bsp_fixedScrollable.live(document, [
     '.fixedScrollable',
     '.searchResult-list',
@@ -124,7 +138,8 @@ function() {
     '.popup[data-popup-source-class~="objectId-select"] .searchFiltersRest',
     '.popup[data-popup-source-class~="objectId-select"] .searchResultList',
     '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchFiltersRest',
-    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchResultList'
+    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchResultList',
+    '.ToolUserWorksInProgress > ul'
   ].join(','));
 
   $doc.frame({

@@ -45,6 +45,9 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
         Query<Workflow> workflowQuery = Query.from(Workflow.class);
+        if (page.getSite() != null) {
+            workflowQuery.where("sites is missing or sites = ?", page.getSite());
+        }
         Map<String, String> workflowStateLabels = new TreeMap<>();
 
         workflowStateLabels.put("draft", "Initial Draft");
@@ -317,7 +320,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                                         page.writeHtml(page.getTypeLabel(item));
                                     page.writeEnd();
 
-                                    page.writeStart("td", "data-preview-anchor", "");
+                                    page.writeStart("td");
                                         page.writeStart("a",
                                                 "target", "_top",
                                                 "href", page.url("/content/edit.jsp",
@@ -341,7 +344,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                                         page.writeHtml(page.getTypeLabel(item));
                                     page.writeEnd();
 
-                                    page.writeStart("td", "data-preview-anchor", "");
+                                    page.writeStart("td");
                                         page.writeStart("a", "href", page.url("/content/edit.jsp", "id", itemId), "target", "_top");
                                             page.writeObjectLabel(itemState);
                                         page.writeEnd();

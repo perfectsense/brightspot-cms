@@ -12,10 +12,13 @@
     display: block;
   }
 
-  > .popup-content > .frame > .widget,
-  > .content > .frame > .widget {
-    border-style: none;
-    margin: -20px;
+  > .popup-content,
+  > .content {
+    > .widget,
+    > .frame > .widget {
+      border-style: none;
+      margin: -20px;
+    }
   }
 
   &:before {

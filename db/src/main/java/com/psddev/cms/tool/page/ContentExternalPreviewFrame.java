@@ -27,6 +27,10 @@ public class ContentExternalPreviewFrame extends PageServlet {
         page.writeTag("!doctype html");
         page.writeStart("html");
             page.writeStart("head");
+                page.writeStart("script",
+                        "type", "text/javascript",
+                        "src", page.cmsUrl("/script/iframeResizer.contentWindow.js"));
+                page.writeEnd();
             page.writeEnd();
 
             page.writeStart("body");

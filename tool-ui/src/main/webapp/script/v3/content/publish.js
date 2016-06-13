@@ -2,7 +2,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
   var $window = $(window);
 
   // Publishing widget behaviors.
-  bsp_utils.onDomInsert(document, '.widget-publishing', {
+  bsp_utils.onDomInsert(document, '.widget-publishing[data-publishable]', {
     'insert': function(widget) {
       var $widget = $(widget);
       var $dateInput = $widget.find('.dateInput');

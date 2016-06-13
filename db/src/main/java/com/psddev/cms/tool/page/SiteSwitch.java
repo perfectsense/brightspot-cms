@@ -65,9 +65,10 @@ public class SiteSwitch extends PageServlet {
                                 page.writeStart("select",
                                         "data-searchable", true,
                                         "name", SITE_CATEGORY_INPUT_NAME,
-                                        "placeholder", "Site Category",
                                         "style", "display: block;");
+
                                     page.writeStart("option", "value", "");
+                                        page.writeHtml(page.localize(SiteSwitch.class, "label.noCategory"));
                                     page.writeEnd();
 
                                     for (SiteCategory siteCategory : Query.from(SiteCategory.class).selectAll()) {

@@ -71,6 +71,10 @@ public class Widget extends Plugin {
         getPositions().add(position);
     }
 
+    public boolean shouldDisplayInNonPublishable() {
+        return false;
+    }
+
     /**
      * Creates the display HTML of this widget for the given {@code object}.
      */

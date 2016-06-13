@@ -114,7 +114,7 @@ if (selectedType != null) {
         for (ObjectType t : selectedType.as(ToolUi.class).findDisplayTypes()) {
             Map<String, ObjectField> ff = new LinkedHashMap<>();
 
-            addFieldFilters(ff, "", t);
+            addFieldFilters(ff, "", t, selectedType);
 
             for (Map.Entry<String, ObjectField> entry : ff.entrySet()) {
                 String n = entry.getKey();
@@ -330,6 +330,8 @@ writer.start("div", "class", "searchForm");
                 for (UUID newItemId : search.getNewItemIds()) {
                     writer.writeElement("input", "type", "hidden", "name", Search.NEW_ITEM_IDS_PARAMETER, "value", newItemId);
                 }
+
+                writer.writeElement("input", "type", "hidden", "name", Search.IGNORE_SITE_PARAMETER, "value", search.isIgnoreSite());
 
                 writer.start("div", "class", "searchInput");
                     writer.start("label", "for", wp.createId()).html("Search").end();
@@ -695,8 +697,14 @@ writer.end();
 private static void addFieldFilters(
         Map<String, ObjectField> fieldFilters,
         String prefix,
-        ObjectStruct struct) {
+        ObjectStruct struct,
+        ObjectType selectedType) {
+
     for (ObjectField field : ObjectStruct.Static.findIndexedFields(struct)) {
+        if (selectedType != null && selectedType.getField(field.getInternalName()) != null) {
+            continue;
+        }
+
         ToolUi fieldUi = field.as(ToolUi.class);
 
         if (!fieldUi.isEffectivelyFilterable()) {
@@ -729,5 +737,13 @@ private static void addFieldFilters(
 
         fieldFilters.put(prefix + fieldName, field);
     }
+}
+
+private static void addFieldFilters(
+        Map<String, ObjectField> fieldFilters,
+        String prefix,
+        ObjectStruct struct) {
+
+    addFieldFilters(fieldFilters, prefix, struct, null);
 }
 %>

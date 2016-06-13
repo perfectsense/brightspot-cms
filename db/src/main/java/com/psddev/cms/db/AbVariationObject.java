@@ -21,4 +21,12 @@ public class AbVariationObject extends Modification<Object> {
     public void setFields(Map<String, AbVariationField> fields) {
         this.fields = fields;
     }
+
+    @Override
+    protected void beforeSave() {
+
+        if (getFields().isEmpty()) {
+            setFields(null);
+        }
+    }
 }

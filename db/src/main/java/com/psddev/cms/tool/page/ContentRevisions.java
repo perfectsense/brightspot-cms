@@ -14,6 +14,7 @@ import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.History;
 import com.psddev.cms.db.Schedule;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowState;
 import com.psddev.cms.tool.CmsTool;
@@ -32,6 +33,11 @@ public class ContentRevisions extends Widget {
         setDisplayName("Revisions");
         setInternalName("cms.contentRevision");
         addPosition(CmsTool.CONTENT_RIGHT_WIDGET_POSITION, 0, 3);
+    }
+
+    @Override
+    public boolean shouldDisplayInNonPublishable() {
+        return true;
     }
 
     @Override
@@ -162,39 +168,43 @@ public class ContentRevisions extends Widget {
                 page.writeEnd();
             }
 
-            page.writeStart("h2");
-                page.writeHtml("Drafts");
-            page.writeEnd();
+            ObjectType type = state.getType();
 
-            page.writeStart("ul", "class", "links pageThumbnails");
-                page.writeStart("li", "class", "new");
-                    page.writeStart("a",
-                            "href", page.cmsUrl("/content/edit/new-draft", "id", state.getId()),
-                            "target", "content-edit-new-draft");
-                        page.writeHtml(page.localize(Draft.class, "action.newType"));
-                    page.writeEnd();
+            if (type != null && type.as(ToolUi.class).isPublishable()) {
+                page.writeStart("h2");
+                    page.writeHtml("Drafts");
                 page.writeEnd();
 
-                for (Draft d : drafts) {
-                    String name = d.getName();
-                    Content.ObjectModification dcd = d.as(Content.ObjectModification.class);
-
-                    page.writeStart("li",
-                            "class", d.equals(selected) ? "selected" : null,
-                            "data-preview-url", "/_preview?_cms.db.previewId=" + d.getId());
-                    page.writeStart("a", "href", page.objectUrl(null, d));
-                    // TODO: LOCALIZE
-                            if (!ObjectUtils.isBlank(name)) {
-                                page.writeHtml(name);
-                                page.writeHtml(" - ");
-                            }
-                            page.writeHtml(page.formatUserDateTime(dcd.getUpdateDate()));
-                            page.writeHtml(" by ");
-                            page.writeObjectLabel(dcd.getUpdateUser());
+                page.writeStart("ul", "class", "links pageThumbnails");
+                    page.writeStart("li", "class", "new");
+                        page.writeStart("a",
+                                "href", page.cmsUrl("/content/edit/new-draft", "id", state.getId()),
+                                "target", "content-edit-new-draft");
+                            page.writeHtml(page.localize(Draft.class, "action.newType"));
                         page.writeEnd();
                     page.writeEnd();
-                }
-            page.writeEnd();
+
+                    for (Draft d : drafts) {
+                        String name = d.getName();
+                        Content.ObjectModification dcd = d.as(Content.ObjectModification.class);
+
+                        page.writeStart("li",
+                                "class", d.equals(selected) ? "selected" : null,
+                                "data-preview-url", "/_preview?_cms.db.previewId=" + d.getId());
+                        page.writeStart("a", "href", page.objectUrl(null, d));
+                        // TODO: LOCALIZE
+                                if (!ObjectUtils.isBlank(name)) {
+                                    page.writeHtml(name);
+                                    page.writeHtml(" - ");
+                                }
+                                page.writeHtml(page.formatUserDateTime(dcd.getUpdateDate()));
+                                page.writeHtml(" by ");
+                                page.writeObjectLabel(dcd.getUpdateUser());
+                            page.writeEnd();
+                        page.writeEnd();
+                    }
+                page.writeEnd();
+            }
 
             if (!namedHistories.isEmpty()) {
                 page.writeStart("h2");
@@ -223,6 +233,7 @@ public class ContentRevisions extends Widget {
                                 "class", "icon icon-action-search",
                                 "target", "_top",
                                 "href", page.cmsUrl("/searchAdvancedFull",
+                                        Search.IGNORE_SITE_PARAMETER, "true",
                                         Search.SELECTED_TYPE_PARAMETER, ObjectType.getInstance(History.class).getId(),
                                         Search.ADVANCED_QUERY_PARAMETER, "objectId = " + state.getId()));
                             page.writeHtml(page.localize(

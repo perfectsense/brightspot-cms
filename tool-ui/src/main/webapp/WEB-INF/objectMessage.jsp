@@ -17,6 +17,7 @@ com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
 com.psddev.dari.util.ObjectUtils,
 
+java.io.IOException,
 java.util.Date,
 java.util.Iterator,
 java.util.List,
@@ -119,6 +120,7 @@ if (!state.isNew() && wp.getUser().equals(contentData.getUpdateUser())) {
                                 "state", workflowStateDisplayName,
                                 "date", wp.formatUserDateTime(log.getDate())),
                         "message.transition"));
+                writeReturnToDashboard(wp);
 
             } else {
 
@@ -126,8 +128,9 @@ if (!state.isNew() && wp.getUser().equals(contentData.getUpdateUser())) {
                         "com.psddev.cms.tool.page.content.ObjectMessage",
                         ImmutableMap.of("date", wp.formatUserDateTime(updateDate)),
                         draft != null || !state.isVisible() ? "message.saved" : "message.published"));
+                writeReturnToDashboard(wp);
             }
-        wp.write(".</p>");
+        wp.write("</p>");
         wp.write("</div>");
 
         return;
@@ -141,7 +144,16 @@ if (saved != null) {
             "com.psddev.cms.tool.page.content.ObjectMessage",
             ImmutableMap.of("date", saved),
             "message.saved"));
-    wp.write(".</p></div>");
+    writeReturnToDashboard(wp);
+    wp.write("</p></div>");
     return;
+}
+%><%!
+
+private static void writeReturnToDashboard(ToolPageContext wp) throws IOException {
+    wp.writeHtml(' ');
+    wp.writeStart("a", "class", "Message-returnToDashboard", "href", wp.cmsUrl("/"));
+    wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.ObjectMessage", "action.returnToDashboard"));
+    wp.writeEnd();
 }
 %>

@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,14 +24,17 @@ import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Preview;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUser;
+import com.psddev.cms.db.WorkInProgress;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowLog;
 import com.psddev.cms.tool.AuthenticationFilter;
+import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.PredicateParser;
+import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
@@ -56,6 +60,7 @@ public class ContentState extends PageServlet {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected void doService(ToolPageContext page) throws IOException, ServletException {
         Object object = page.findOrReserve();
 
@@ -65,7 +70,10 @@ public class ContentState extends PageServlet {
 
         // Pretend to update the object.
         State state = State.getInstance(object);
-        Map<String, Object> oldValues = state.getSimpleValues();
+        String oldValuesString = page.param(String.class, state.getId() + "/oldValues");
+        Map<String, Object> oldValues = !ObjectUtils.isBlank(oldValuesString)
+                ? (Map<String, Object>) ObjectUtils.fromJson(oldValuesString)
+                : Draft.findOldValues(object);
 
         if (state.isNew()
                 || object instanceof Draft
@@ -110,13 +118,13 @@ public class ContentState extends PageServlet {
 
         // Expensive operations that should only trigger occasionally.
         boolean idle = page.param(boolean.class, "idle");
+        ToolUser user = page.getUser();
 
         if (idle) {
             boolean saveUser = false;
 
             // Automatically save newly created drafts when the user is idle.
             Content.ObjectModification contentData = state.as(Content.ObjectModification.class);
-            ToolUser user = page.getUser();
 
             if (idle
                     && (state.isNew() || contentData.isDraft())
@@ -167,10 +175,81 @@ public class ContentState extends PageServlet {
         Map<String, Object> jsonResponse = new CompactMap<String, Object>();
 
         // Differences between existing and pending content.
-        jsonResponse.put("_differences", Draft.findDifferences(
+        Map<String, Map<String, Object>> differences = Draft.findDifferences(
                 state.getDatabase().getEnvironment(),
                 oldValues,
-                state.getSimpleValues()));
+                state.getSimpleValues());
+
+        // Remove differences that weren't initiated by the user.
+        Map<String, List<String>> fieldNamesById = (Map<String, List<String>>) ObjectUtils.fromJson(page.param(String.class, "_fns"));
+
+        for (Iterator<Map.Entry<String, Map<String, Object>>> i = differences.entrySet().iterator(); i.hasNext();) {
+            Map.Entry<String, Map<String, Object>> entry = i.next();
+            String id = entry.getKey();
+            List<String> fieldNames = fieldNamesById.get(id);
+
+            if (fieldNames == null) {
+                i.remove();
+
+            } else {
+                Map<String, Object> values = entry.getValue();
+
+                values.keySet().removeIf(n -> !fieldNames.contains(n));
+
+                if (values.isEmpty()) {
+                    i.remove();
+                }
+            }
+        }
+
+        jsonResponse.put("_differences", differences);
+
+        if (!user.isDisableWorkInProgress()
+                && !Query.from(CmsTool.class).first().isDisableWorkInProgress()) {
+
+            ObjectType contentType = state.getType();
+            UUID contentId = state.getId();
+
+            WorkInProgress wip = Query.from(WorkInProgress.class)
+                    .where("owner = ?", user)
+                    .and("contentType = ?", contentType)
+                    .and("contentId = ?", contentId)
+                    .first();
+
+            if (differences.isEmpty()) {
+                if (wip != null) {
+                    wip.delete();
+                }
+
+            } else {
+                if (wip == null) {
+                    wip = new WorkInProgress();
+
+                    wip.setOwner(user);
+                    wip.setContentType(contentType);
+                    wip.setContentId(contentId);
+                }
+
+                wip.setContentLabel(state.getLabel());
+                wip.setUpdateDate(new Date());
+                wip.setDifferences(differences);
+                wip.save();
+
+                List<WorkInProgress> more = Query.from(WorkInProgress.class)
+                        .where("owner = ?", user)
+                        .and("updateDate != missing")
+                        .sortDescending("updateDate")
+                        .select(50, 1)
+                        .getItems();
+
+                if (!more.isEmpty()) {
+                    Query.from(WorkInProgress.class)
+                            .where("owner = ?", user)
+                            .and("updateDate < ?", more.get(0).getUpdateDate())
+                            .deleteAll();
+                }
+            }
+        }
 
         // HTML display for the URL widget.
         @SuppressWarnings("unchecked")

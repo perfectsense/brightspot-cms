@@ -4,9 +4,11 @@
   .icon-only;
 
   border-radius: 2px;
+  box-sizing: content-box;
   cursor: pointer;
+  margin-right: 0;
   opacity: 0.5;
-  padding: 0 4px 0 4px;
+  padding: 0 1px 0 1px;
   z-index: 2000000;
 
   &:hover {
@@ -34,7 +36,7 @@
 
     &:not(.pageThumbnails_toggle-right) {
       margin: -10px 0 0 -10px;
-      padding: 10px 4px 10px 14px;
+      padding: 10px 1px 10px 11px;
 
       &:after {
         border-bottom-left-radius: 5px;
@@ -46,7 +48,7 @@
 
     &.pageThumbnails_toggle-right {
       margin: -10px -10px 0 0;
-      padding: 10px 14px 10px 4px;
+      padding: 10px 11px 10px 1px;
 
       &:after {
         border-bottom-right-radius: 5px;
@@ -64,6 +66,7 @@
   border-radius: 5px;
   bottom: 40px;
   box-shadow: 0 0 10px @color-text;
+  box-sizing: content-box;
   min-height: 480px;
   overflow: hidden;
   position: fixed;
@@ -96,6 +99,7 @@
   .icon;
   .icon-bullhorn;
 
+  box-sizing: content-box;
   display: block;
   padding: 5px;
 
@@ -106,6 +110,7 @@
 
 .pageThumbnails_preview_frame {
   border-style: none;
+  box-sizing: content-box;
   height: 800px;
   left: 0;
   position: absolute;
@@ -119,6 +124,6 @@
     margin: 10px;
     position: static;
     transform: none;
-    width: auto;
+    width: ~'calc(100% - 20px)';
   }
 }

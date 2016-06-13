@@ -56,6 +56,7 @@ ToolUi ui = field.as(ToolUi.class);
 Set<String> rteTags = ui.findRichTextElementTags();
 Number suggestedMinimum = ui.getSuggestedMinimum();
 Number suggestedMaximum = ui.getSuggestedMaximum();
+boolean renderBlockElements = ui.isRichTextBlock();
 
 wp.writeStart("div", "class", "inputSmall inputSmall-text");
 wp.writeStart("textarea",
@@ -69,7 +70,8 @@ wp.writeStart("textarea",
         "data-user", wp.getObjectLabel(wp.getUser()),
         "data-user-id", wp.getUser() != null ? wp.getUser().getId() : null,
         "data-first-draft", Boolean.TRUE.equals(request.getAttribute("firstDraft")),
-        "data-final-draft", Boolean.TRUE.equals(request.getAttribute("finalDraft")));
+        "data-final-draft", Boolean.TRUE.equals(request.getAttribute("finalDraft")),
+        "data-render-block-elements", renderBlockElements);
 
 if (fieldValue != null) {
     for (Object item : fieldValue) {

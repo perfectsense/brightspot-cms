@@ -53,6 +53,7 @@ public class PreviewDatabase extends ForwardingDatabase {
                         .fromAll()
                         .and("com.psddev.cms.db.Draft/schedule != missing")
                         .and("com.psddev.cms.db.Draft/objectId = ?", object)
+                        .resolveInvisible()
                         .iterable(0)) {
                     if (!(dObject instanceof Draft)) {
                         continue;

@@ -11,12 +11,25 @@ function findRelatedContainers($selected) {
 
 $.plugin2('sortable', {
     '_defaultOptions': {
-        'itemSelector': '> *'
+        'itemSelector': '> *',
+        'scrollingDown': false,
+        'scrollingUp': false,
+        'scrollInterval': null
     },
+    'scrollPage': function() {
+      var scrollByYaxis = 50;
 
+      if (this.option().scrollingDown) {
+        window.scrollBy(0 , scrollByYaxis );
+      }
+      if (this.option().scrollingUp) {
+        window.scrollBy(0 , -scrollByYaxis);
+      }
+    },
     '_create': function(container) {
         var $container = $(container);
         var options = this.option();
+        var self = this;
 
         $container.addClass('_sortable');
         $container.find(options.itemSelector).addClass('_sortable-item');
@@ -41,6 +54,8 @@ $.plugin2('sortable', {
             $.drag(this, event, function(event, data) {
                 var $selected = $(this);
                 var selectedOffset = $selected.offset();
+
+                options.scrollInterval = window.setInterval(function(){self.scrollPage()}, 100);
 
                 data.originalStyle = $selected.attr('style');
 
@@ -76,18 +91,29 @@ $.plugin2('sortable', {
                 var $selected = $(this);
                 var $dropContainer;
                 var $drop;
+                var scrollOffset = 100;
+
+                //scroll page as user drags sortable item down and up the page
+                options.scrollingUp = false;
+                options.scrollingDown = false;
+                if (event.clientY <=  scrollOffset){
+                  options.scrollingUp = true;
+                }
+                if (event.clientY >= $(window).height() - scrollOffset){
+                  options.scrollingDown = true;
+                }
 
                 $selected.css({
                     'left': event.pageX - $win.scrollLeft() + data.adjustX,
                     'top': event.pageY - $win.scrollTop() + data.adjustY
                 });
-                
+
                 $selected.hide();
                 data.$dragCover.hide();
 
                 // Get the top-most element under the current mouse position
                 var dropPoint = $.elementFromPoint(event.clientX, event.clientY)[0];
-                
+
                 if (dropPoint) {
 
                     // Find all the drop zones for this type.
@@ -95,7 +121,7 @@ $.plugin2('sortable', {
                     // a child before we check the parent.
                     // This will ensure nested drop zones are handled reasonably.
                     findRelatedContainers($selected).sortDepthFirst().each(function() {
-                        
+
                         var $container = $(this);
 
                         // Get all the children elements of the container (except the selected item if any)
@@ -103,7 +129,7 @@ $.plugin2('sortable', {
 
                         // There are children elements.
                         $items.each(function () {
-                                
+
                             // Check if the drop point is inside the element
                             if ($.contains(this, dropPoint)) {
                                 $dropContainer = $container;
@@ -133,7 +159,7 @@ $.plugin2('sortable', {
 
                     // Is mouse over another draggable element?
                     if ($drop && $drop.length > 0 && $drop[0] !== data.$placeholder[0]) {
-                        
+
                         var $items = $dropContainer.find(options.itemSelector);
                         var placeholderIndex = Array.prototype.indexOf.call($items, data.$placeholder[0]);
                         var dropIndex = Array.prototype.indexOf.call($items, $drop[0]);
@@ -149,7 +175,7 @@ $.plugin2('sortable', {
 
                         // TODO: this does not correctly handle when placeholder is already before or after the current element
                         // and causes the UI to bounce around.
-                        
+
                         // Move the placeholder into position (before or after the element)
                         $drop[position](data.$placeholder);
 
@@ -168,6 +194,8 @@ $.plugin2('sortable', {
 
             }, function(event, data) {
                 var $selected = $(this);
+                //clear interval for scrolling page
+                window.clearInterval(options.scrollInterval);
 
                 $selected.removeClass('sortable-dragging');
 

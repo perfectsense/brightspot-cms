@@ -165,8 +165,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
       }, update);
 
       var updateTimeout;
+      var $document = $(document);
 
-      $(document).on('blur focus change', '.contentForm :input', function() {
+      function throttledUpdate() {
         if (updateTimeout) {
           clearTimeout(updateTimeout);
         }
@@ -175,10 +176,13 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
           updateTimeout = null;
           update();
         }, 50);
-      });
+      }
+
+      $document.on('blur focus change', '.contentForm :input', throttledUpdate);
+      $document.on('content-state-differences', '.contentForm', throttledUpdate);
 
       // Tab navigation from textarea or record input to RTE.
-      $(document).on('keydown', '.contentForm :text, .contentForm textarea, .objectId-select', function (event) {
+      $document.on('keydown', '.contentForm :text, .contentForm textarea, .objectId-select', function (event) {
         if (event.which === 9) {
           var $container = $(this).closest('.inputContainer');
           var rte2 = $container.next('.inputContainer').find('> .inputSmall > .rte2-wrapper').data('rte2');
@@ -231,4 +235,60 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
       }
     }
   });
+
+  // Highlight overlaid fields.
+  bsp_utils.onDomInsert(document, '.objectInputs', {
+    insert: function (inputs) {
+      var $inputs = $(inputs);
+      var $form = $inputs.closest('.contentForm');
+      var diffs = $form.attr('data-overlay-differences');
+
+      if (diffs) {
+        diffs = $.parseJSON(diffs);
+        diffs = diffs[$inputs.attr('data-object-id')];
+
+        if (diffs) {
+          $.each(diffs, function (name) {
+            $inputs.find('> .inputContainer[data-field-name="' + name +'"]').addClass('inputContainer-overlaid');
+          });
+        }
+      }
+    }
+  });
+
+  // Add overlaid fields count to the tabs.
+  $(window).resize(bsp_utils.throttle(100, function () {
+    $('.tabs > li').each(function () {
+      var $tab = $(this);
+      var $inputs = $tab.closest('.objectInputs');
+      var name = $tab.attr('data-tab');
+      var count = 0;
+
+      $inputs.find('> .inputContainer[data-tab="' + name + '"]').each(function () {
+        var $input = $(this);
+
+        if ($input.hasClass('inputContainer-overlaid')) {
+          ++ count;
+
+        } else {
+          count += $input.find('.inputContainer-overlaid').length;
+        }
+      });
+
+      var $tabLink = $tab.find('> a');
+      var $count = $tabLink.find('.OverlaidCount');
+
+      if (count > 0) {
+        if ($count.length === 0) {
+          $count = $('<span/>', { 'class': 'OverlaidCount' });
+          $tabLink.append($count);
+        }
+
+        $count.text(count);
+
+      } else {
+        $count.remove();
+      }
+    });
+  }));
 });

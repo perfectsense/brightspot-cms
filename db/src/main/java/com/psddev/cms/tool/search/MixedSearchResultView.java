@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.Tool;
+import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.StorageItem;
@@ -26,7 +28,25 @@ public class MixedSearchResultView extends ListSearchResultView {
 
     @Override
     public boolean isSupported(Search search) {
-        return search.getSelectedType() == null;
+        if (search.getSelectedType() != null) {
+            return false;
+
+        } else {
+            Set<ObjectType> types = search.getTypes();
+
+            if (types.isEmpty()) {
+                return true;
+
+            } else {
+                for (ObjectType type : search.getTypes()) {
+                    if (type.getPreviewField() == null) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
     }
 
     @Override
