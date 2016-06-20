@@ -46,6 +46,7 @@ import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
+import org.apache.commons.io.FilenameUtils;
 
 @RoutingFilter.Path(application = "cms", value = "/content/uploadFiles")
 @SuppressWarnings("serial")
@@ -197,7 +198,7 @@ public class UploadFiles extends PageServlet {
                                 continue;
                             }
 
-                            String fileName = file.getName();
+                            String fileName = FilenameUtils.getName(file.getName());
                             String path = StorageItemField.createStorageItemPath(null, fileName);
 
                             Map<String, List<String>> httpHeaders = new LinkedHashMap<String, List<String>>();

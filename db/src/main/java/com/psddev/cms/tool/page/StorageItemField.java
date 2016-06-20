@@ -50,6 +50,7 @@ import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeReference;
+import org.apache.commons.io.FilenameUtils;
 
 /**
  * @deprecated
@@ -288,7 +289,7 @@ public class StorageItemField extends PageServlet {
                         FileItem fileItem = mpRequest.getFileItem(fileName);
 
                         if (fileItem != null) {
-                            name = fileItem.getName();
+                            name = FilenameUtils.getName(fileItem.getName());
                             fileContentType = fileItem.getContentType();
                             fileSize = fileItem.getSize();
 
