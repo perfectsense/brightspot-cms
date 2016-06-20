@@ -1675,6 +1675,54 @@ public class ToolPageContext extends WebPageContext {
         return formatUserDateTimeWith(dateTime, "hh:mm aa");
     }
 
+    public void writeUserAvatar(ToolUser user, String linkUrl, String linkTarget) throws IOException {
+
+        StorageItem avatar = user.getAvatar();
+
+        writeStart("span", "class", "toolUserAvatar", "title", user.getName());
+        {
+            if (!ObjectUtils.isBlank(linkUrl)) {
+                writeStart("a",
+                    "href", linkUrl,
+                    "target", linkTarget);
+            }
+            {
+                writeHtml(user.getName().substring(0, 1));
+                if (avatar != null) {
+                    writeElement("img",
+                        "src", ImageEditor.Static.resize(ImageEditor.Static.getDefault(), avatar, null, 100, 100).getPublicUrl());
+                } else {
+                    String email = user.getEmail();
+
+                    if (!ObjectUtils.isBlank(email)) {
+                        String hash = StringUtils.hex(StringUtils.md5(email.trim().toLowerCase(Locale.ENGLISH)));
+
+                        writeElement("img",
+                            "src", StringUtils.addQueryParameters(
+                                "https://www.gravatar.com/avatar/" + hash,
+                                "s", 50,
+                                "d", "blank"));
+                    }
+                }
+            }
+            if (!ObjectUtils.isBlank(linkUrl)) {
+                writeEnd();
+            }
+        }
+        writeEnd();
+    }
+
+    public void writeToolViewers(Object object) throws IOException {
+
+        State state = State.getInstance(object);
+        if (state == null) {
+            return;
+        }
+
+        writeStart("div", "class", "toolViewers", "data-content-id", state.getId().toString());
+        writeEnd();
+    }
+
     /**
      * Writes the tool header with the given {@code title}.
      *
@@ -1803,31 +1851,9 @@ public class ToolPageContext extends WebPageContext {
                     }
 
                     if (user != null) {
-                        StorageItem avatar = user.getAvatar();
 
                         writeStart("div", "class", "toolUserDisplay");
-                            writeStart("span", "class", "toolUserAvatar");
-                                writeStart("a",
-                                        "href", cmsUrl("/profilePanel"),
-                                        "target", "profilePanel");
-                                    if (avatar != null) {
-                                        writeElement("img",
-                                                "src", ImageEditor.Static.resize(ImageEditor.Static.getDefault(), avatar, null, 100, 100).getPublicUrl());
-                                    } else {
-                                        String email = user.getEmail();
-
-                                        if (!ObjectUtils.isBlank(email)) {
-                                            String hash = StringUtils.hex(StringUtils.md5(email.trim().toLowerCase(Locale.ENGLISH)));
-
-                                            writeElement("img",
-                                                    "src", StringUtils.addQueryParameters(
-                                                            "https://www.gravatar.com/avatar/" + hash,
-                                                            "s", 50,
-                                                            "d", "blank"));
-                                        }
-                                    }
-                                writeEnd();
-                            writeEnd();
+                            writeUserAvatar(user, cmsUrl("/profilePanel"), "profilePanel");
 
                             writeStart("div", "class", "toolUser");
                                 writeStart("div", "class", "toolUserWelcome");

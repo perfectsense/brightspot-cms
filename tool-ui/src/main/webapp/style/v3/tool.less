@@ -102,6 +102,40 @@
   text-transform: uppercase;
 }
 
+.sizedToolUserAvatar(@-avatar-size) {
+
+  background-color: @color-focus;
+  background-image: url(icon/avatar.svg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: (@-avatar-size - 15px);
+  border-radius: 50%;
+  color: @color-border;
+  height: @-avatar-size;
+  text-align: center;
+  vertical-align: middle;
+  width: @-avatar-size;
+  position: relative;
+
+  img {
+    border-radius: 100%;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .link {
+    display: block;
+    height: 100%;
+    width: 100%;
+    color: transparent;
+  }
+}
+
 .toolUserDisplay {
   @-padding: 10px;
   @-avatar-size: @toolHeader-height - (@-padding * 2);
@@ -123,6 +157,7 @@
   }
 
   .toolUserAvatar {
+    .sizedToolUserAvatar(@-avatar-size);
     margin-left: (@-padding * 2);
   }
 
@@ -148,32 +183,6 @@
 
     .piped {
       margin: 0;
-    }
-  }
-
-  .toolUserAvatar {
-    background-color: @color-focus;
-    background-image: url(icon/avatar.svg);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: (@-avatar-size - 15px);
-    border-radius: 50%;
-    color: @color-border;
-    height: @-avatar-size;
-    text-align: center;
-    vertical-align: middle;
-    width: @-avatar-size;
-
-    img {
-      border-radius: 100%;
-      height: 100%;
-      width: 100%;
-    }
-
-    .link {
-      display: block;
-      height: 100%;
-      width: 100%;
     }
   }
 }
@@ -389,5 +398,49 @@
 
   > h1 {
     display: none;
+  }
+}
+
+.toolViewers {
+
+  overflow: hidden;
+
+  .toolViewer {
+    -webkit-transition: width 0.5s, margin-left 0.5s;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    overflow: hidden;
+    display: block;
+    float: left;
+    border-radius: 100%;
+
+    &:first-child {
+      margin-left: 0;
+    }
+
+    &.viewerClosed {
+      width: 0;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .toolUserAvatar {
+
+      @font-size: 20px;
+      @line-height: @font-size * 5 / 4;
+      display: inline-block;
+      font-size: @font-size;
+      line-height: @line-height;
+      .sizedToolUserAvatar(@line-height);
+      background-color: transparent;
+      background-image: none;
+      color: white;
+    }
+  }
+}
+
+.contentForm {
+  .toolViewers.hasViewers {
+    margin-top: -15px;
   }
 }

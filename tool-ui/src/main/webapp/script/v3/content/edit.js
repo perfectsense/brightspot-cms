@@ -1,4 +1,6 @@
-define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
+define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_utils, rtc, color_utils) {
+
+  var colorsByUuid = { };
 
   rtc.receive('com.psddev.cms.tool.page.content.EditFieldUpdateBroadcast', function(data) {
     var userId = data.userId;
@@ -137,6 +139,58 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
     update();
   });
 
+  rtc.receive('com.psddev.cms.tool.page.content.OpenContentBroadcast', function(data) {
+
+    var userId = data['userId'],
+        contentId = data['contentId'],
+        closed = data['closed'],
+        avatarHtml = data['avatarHtml'];
+
+console.log("heard broadcast for contentId: " + contentId);
+    $('.toolViewers[data-content-id="' + contentId + '"]').each(function() {
+      var $widget = $(this),
+          $viewer = $widget.find('.toolViewer[data-user-id="' + userId + '"]');
+
+      if ($viewer.size() > 0) {
+        $viewer.toggleClass('viewerClosed', closed);
+      }
+
+      if ($viewer.size() === 0 && !closed) {
+
+        $viewer = $('<div />', {
+          'class': 'toolViewer',
+          'data-user-id': userId,
+          'html': avatarHtml
+        });
+
+        $widget.append($viewer);
+      }
+
+      $widget.toggleClass('hasViewers', $widget.find('.toolViewer').not('.viewerClosed').size() > 0);
+    });
+  });
+
+  bsp_utils.onDomInsert(document, '.contentForm', {
+    insert: function(form) {
+
+      var $form = $(form),
+          contentId = $form.attr('data-rtc-content-id');
+
+      console.log("restoring for contentId: " + contentId);
+      // then restore the others
+      rtc.restore('com.psddev.cms.tool.page.content.OpenContentState', {
+        'contentId': contentId
+      }, function() {
+
+        console.log("action for contentId: " + contentId);
+        // establish an open content event first
+        rtc.execute('com.psddev.cms.tool.page.content.OpenContentAction', {
+          'contentId': contentId
+        });
+      });
+    }
+  });
+
   bsp_utils.onDomInsert(document, '.contentForm', {
     insert: function (form) {
       var $form = $(form);
@@ -195,6 +249,22 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
 
         return true;
       });
+    }
+  });
+
+  bsp_utils.onDomInsert(document, '.toolViewer', {
+    'insert': function(viewer) {
+      var $viewer = $(viewer),
+          userId = $viewer.attr('data-user-id'),
+          color = colorsByUuid[userId];
+
+      if (!color) {
+
+        color = color_utils.generateFromHue(color_utils.changeHue(Math.random()));
+        colorsByUuid[userId] = color;
+      }
+
+      $viewer.css('background-color', color);
     }
   });
 
