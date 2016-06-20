@@ -80,7 +80,9 @@ String access = siteData.isGlobal() ? "all" :
 <select class="toggleable" data-root=".widget" name="<%= ownerName %>" style="width: 100%;">
     <option<%= owner == null ? " selected" : "" %> value="" data-show=".siteItem">None</option>
     <% for (Site site : allSites) { %>
+        <% if (wp.hasPermission(site.getPermissionId())) { %>
         <option<%= site.equals(owner) ? " selected" : "" %> value="<%= site.getId() %>" data-show=".siteItem:not(.siteItem-<%= site.getId() %>)" data-hide=".siteItem-<%= site.getId() %>"><%= wp.objectLabel(site) %></option>
+        <% } %>
     <% } %>
 </select>
 
@@ -100,9 +102,15 @@ String access = siteData.isGlobal() ? "all" :
 </select>
 <ul id="<%= sitesContainerId %>">
     <% for (Site site : allSites) { %>
-        <li class="siteItem siteItem-<%= site.getId() %>">
-            <input<%= consumers.contains(site) ? " checked" : "" %> id="<%= wp.createId() %>" name="<%= consumerIdName %>" type="checkbox" value="<%= site.getId() %>">
-            <label for="<%= wp.getId() %>"><%= wp.objectLabel(site) %></label>
-        </li>
+        <% boolean hasPermission = wp.hasPermission(site.getPermissionId()); %>
+        <% String input = "<input" + (consumers.contains(site) ? " checked" : "") + " id=" + wp.createId() + " name=" + consumerIdName + " type=" + (hasPermission ? "checkbox" : "hidden") + " value=" + site.getId() + ">"; %>
+        <% if (hasPermission) { %>
+            <li class="siteItem siteItem-<%= site.getId() %>">
+                <%=input%>
+                <label for="<%= wp.getId() %>"><%= wp.objectLabel(site) %></label>
+            </li>
+        <% } else { %>
+            <%=input%>
+        <% } %>
     <% } %>
 </ul>
