@@ -3975,7 +3975,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // Set a flag so we only update the table cell if user clicks the save button
             self.tableEditCancel = false;
             
-            value = $el.html();
+            value = $el.html().replace(/&nbsp;/g, '');
 
             self.$tableEditDiv.popup('source', $el);
             self.$tableEditDiv.popup('open');
