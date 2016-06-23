@@ -146,7 +146,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
         closed = data['closed'],
         avatarHtml = data['avatarHtml'];
 
-console.log("heard broadcast for contentId: " + contentId);
     $('.toolViewers[data-content-id="' + contentId + '"]').each(function() {
       var $widget = $(this),
           $viewer = $widget.find('.toolViewer[data-user-id="' + userId + '"]');
@@ -176,13 +175,11 @@ console.log("heard broadcast for contentId: " + contentId);
       var $form = $(form),
           contentId = $form.attr('data-rtc-content-id');
 
-      console.log("restoring for contentId: " + contentId);
       // then restore the others
       rtc.restore('com.psddev.cms.tool.page.content.OpenContentState', {
         'contentId': contentId
       }, function() {
 
-        console.log("action for contentId: " + contentId);
         // establish an open content event first
         rtc.execute('com.psddev.cms.tool.page.content.OpenContentAction', {
           'contentId': contentId
