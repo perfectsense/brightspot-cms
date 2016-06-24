@@ -130,6 +130,17 @@ public class Draft extends Content {
                                 return;
                             }
 
+                        } else if (ObjectField.NUMBER_TYPE.equals(fieldType)) {
+                            Double oldValueDouble = ObjectUtils.to(Double.class, oldValue);
+
+                            if (oldValueDouble != null) {
+                                Double newValueDouble = ObjectUtils.to(Double.class, newValue);
+
+                                if (newValueDouble != null && oldValueDouble.equals(newValueDouble)) {
+                                    return;
+                                }
+                            }
+
                         } else if (fieldType.startsWith(ObjectField.SET_TYPE + "/")) {
                             if (ObjectUtils.equals(ObjectUtils.to(Set.class, oldValue), ObjectUtils.to(Set.class, newValue))) {
                                 return;

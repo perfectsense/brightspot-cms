@@ -21,6 +21,8 @@ public class Edit {
     public static void writeOverlayProviderSelect(ToolPageContext page, Object content, OverlayProvider selected) throws IOException {
         List<OverlayProvider> overlayProviders = Query.from(OverlayProvider.class).selectAll();
 
+        overlayProviders.removeIf(p -> !p.shouldOverlay(content));
+
         if (overlayProviders.isEmpty()) {
             return;
         }

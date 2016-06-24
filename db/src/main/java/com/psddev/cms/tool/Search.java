@@ -964,10 +964,15 @@ public class Search extends Record {
                 }
             }
 
-            query.and(CompoundPredicate.combine(
-                    PredicateParser.OR_OPERATOR,
-                    site.itemsPredicate(),
-                    PredicateParser.Static.parse("_type = ?", globalTypes)));
+            if (globalTypes.isEmpty()) {
+                query.and(site.itemsPredicate());
+
+            } else {
+                query.and(CompoundPredicate.combine(
+                        PredicateParser.OR_OPERATOR,
+                        site.itemsPredicate(),
+                        PredicateParser.Static.parse("_type = ?", globalTypes)));
+            }
         }
 
         Collection<String> visibilities = getVisibilities();

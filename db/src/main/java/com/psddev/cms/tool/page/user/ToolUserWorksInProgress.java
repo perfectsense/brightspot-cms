@@ -37,11 +37,20 @@ public class ToolUserWorksInProgress extends PageServlet {
             }
         }
 
-        List<WorkInProgress> wips = Query.from(WorkInProgress.class)
+        Query<WorkInProgress> query = Query.from(WorkInProgress.class)
                 .where("owner = ?", page.getUser())
                 .and("updateDate != missing")
-                .sortDescending("updateDate")
-                .selectAll();
+                .sortDescending("updateDate");
+
+        boolean deleteAll = page.isFormPost() && page.param(String.class, "action-delete-all") != null;
+        List<WorkInProgress> wips = null;
+
+        if (deleteAll) {
+            query.deleteAll();
+
+        } else {
+            wips = query.selectAll();
+        }
 
         page.writeHeader();
 
@@ -51,12 +60,18 @@ public class ToolUserWorksInProgress extends PageServlet {
                 page.writeHtml("Works In Progress");
             page.writeEnd();
 
-            if (wips.isEmpty()) {
+            if (deleteAll) {
+                page.writeStart("div", "class", "message message-info");
+                page.writeHtml("All works in progress deleted!");
+                page.writeEnd();
+
+            } else if (ObjectUtils.isBlank(wips)) {
                 page.writeStart("div", "class", "message message-info");
                 page.writeHtml("No works in progress!");
                 page.writeEnd();
 
             } else {
+                page.writeStart("div", "class", "ToolUserWorksInProgress-body");
                 page.writeStart("ul", "class", "links");
                 {
                     for (WorkInProgress wip : wips) {
@@ -98,6 +113,23 @@ public class ToolUserWorksInProgress extends PageServlet {
                         page.writeEnd();
                     }
                 }
+                page.writeEnd();
+
+                page.writeStart("form",
+                        "class", "ToolUserWorksInProgress-actions",
+                        "method", "post",
+                        "action", page.url(""));
+                {
+
+                    page.writeStart("button",
+                            "class", "link icon icon-action-remove",
+                            "name", "action-delete-all",
+                            "data-confirm-message", "Are you sure you want to delete all your works in progress?",
+                            "value", "true");
+                    page.writeHtml("Delete All Works In Progress");
+                    page.writeEnd();
+                }
+                page.writeEnd();
                 page.writeEnd();
             }
         }

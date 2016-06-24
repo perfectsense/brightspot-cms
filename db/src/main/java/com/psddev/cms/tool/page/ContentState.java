@@ -217,7 +217,8 @@ public class ContentState extends PageServlet {
 
         jsonResponse.put("_differences", differences);
 
-        if (page.param(boolean.class, "wip")
+        if (page.getOverlaidHistory(object) == null
+                && page.param(boolean.class, "wip")
                 && !user.isDisableWorkInProgress()
                 && !Query.from(CmsTool.class).first().isDisableWorkInProgress()) {
 

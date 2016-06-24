@@ -111,10 +111,9 @@
       position: relative;
 
       form {
-        display: none;
         margin: 0;
         position: absolute;
-        right: 20px;
+        right: 0;
         top: 7.5px;
         z-index: 1;
 
@@ -122,18 +121,34 @@
           &:extend(.widget-controls-button all);
 
           .icon-action-delete;
+
+          color: @color-remove;
         }
       }
 
       &:hover {
         form {
-          display: block;
+          right: 20px;
 
           button:hover {
             color: @color-remove;
           }
         }
       }
+    }
+  }
+
+  &-body {
+    margin: 0 -20px;
+    padding: 0 20px;
+  }
+
+  &-actions {
+    margin-top: 5px;
+    margin-right: 7px;
+
+    [name='action-delete-all'] {
+      float: right;
     }
   }
 }

@@ -288,7 +288,7 @@ public class StorageItemField extends PageServlet {
                         FileItem fileItem = mpRequest.getFileItem(fileName);
 
                         if (fileItem != null) {
-                            name = fileItem.getName();
+                            name = StringUtils.getFileName(fileItem.getName());
                             fileContentType = fileItem.getContentType();
                             fileSize = fileItem.getSize();
 

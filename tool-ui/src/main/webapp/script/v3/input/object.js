@@ -188,6 +188,10 @@ function($) {
               $select = shadow.$select,
               $edit = shadow.$edit;
 
+          if (!$input[0].defaultValue && $input.val()) {
+            $input[0].defaultValue = $input.val();
+          }
+
           if ($input.val()) {
             if ($input.attr('data-restorable') === 'false') {
               $input.removeAttr('data-label');

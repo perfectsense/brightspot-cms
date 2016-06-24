@@ -12,7 +12,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
     // Filter out scrollables that aren't in a fixed popup.
     $scrollables.each(function() {
       var $scrollable = $(this);
-      var $popup = $scrollable.closest('.popup');
+      var $popup = $scrollable.closest('.popup, .widget[name="searchAdvancedFull"]');
 
       if (!isFixed($popup)) {
         $scrollable.removeClass('fixedScrollableArea');
