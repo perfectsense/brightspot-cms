@@ -1074,6 +1074,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 
                 var $submenu;
 
+                if (self.$el.attr('data-render-block-elements') === 'true') {
+                    // If ToolUi.RichText(block=true) is used, turn off inline
+                    self.inline = false;
+                }
+
                 // Loop through the toolbar config to set up buttons
                 $.each(config, function(i, item) {
 

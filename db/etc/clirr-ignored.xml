@@ -50,4 +50,10 @@
         <method>boolean clearOnChange()</method>
     </difference>
 
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$RichText</className>
+        <differenceType>7012</differenceType>
+        <method>boolean block()</method>
+    </difference>
+
 </differences>

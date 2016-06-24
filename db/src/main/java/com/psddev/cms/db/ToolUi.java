@@ -79,6 +79,7 @@ public class ToolUi extends Modification<Object> {
     private String referenceableViaClassName;
     private Boolean readOnly;
     private boolean richText;
+    private boolean richTextBlock;
     private String richTextElementTagName;
     private Set<String> richTextElementClassNames;
     private boolean secret;
@@ -551,6 +552,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setRichText(boolean richText) {
         this.richText = richText;
+    }
+
+    public boolean isRichTextBlock() {
+       return this.richTextBlock;
+    }
+
+    public void setRichTextBlock(boolean richTextBlock) {
+        this.richTextBlock = richTextBlock;
     }
 
     public String getRichTextElementTagName() {
@@ -1631,6 +1640,7 @@ public class ToolUi extends Modification<Object> {
     @Target({ ElementType.FIELD, ElementType.METHOD })
     public @interface RichText {
         boolean value() default true;
+        boolean block() default false;
     }
 
     private static class RichTextProcessor implements ObjectField.AnnotationProcessor<RichText> {
@@ -1638,6 +1648,7 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, RichText annotation) {
             field.as(ToolUi.class).setRichText(annotation.value());
+            field.as(ToolUi.class).setRichTextBlock(annotation.block());
         }
     }
 

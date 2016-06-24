@@ -122,7 +122,8 @@ if (validValues != null) {
             "data-user", wp.getObjectLabel(wp.getUser()),
             "data-user-id", wp.getUser() != null ? wp.getUser().getId() : null,
             "data-first-draft", Boolean.TRUE.equals(request.getAttribute("firstDraft")),
-            "data-track-changes", !Boolean.TRUE.equals(request.getAttribute("finalDraft")));
+            "data-track-changes", !Boolean.TRUE.equals(request.getAttribute("finalDraft")),
+            "data-render-block-elements",  ui.isRichTextBlock());
         wp.writeHtml(fieldValue);
     wp.writeEnd();
 }
