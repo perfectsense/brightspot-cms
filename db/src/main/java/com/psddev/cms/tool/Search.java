@@ -1265,6 +1265,7 @@ public class Search extends Record {
 
         if (selectedView.isHtmlWrapped(this, page, itemWriter)) {
             page.writeStart("div", "class", "searchResult-container");
+                page.writeStart("div", "class", "searchResult-items");
                 page.writeStart("div", "class", "searchResult-views");
                     page.writeStart("ul", "class", "piped");
                         for (SearchResultView view : views) {
@@ -1281,6 +1282,7 @@ public class Search extends Record {
 
                 page.writeStart("div", "class", "searchResult-view");
                     boolean viewWritten = writeViewHtml(itemWriter, selectedView);
+                page.writeEnd();
                 page.writeEnd();
 
                 if (viewWritten) {

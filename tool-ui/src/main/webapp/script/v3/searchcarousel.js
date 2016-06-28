@@ -4,7 +4,9 @@ define([ 'jquery', 'bsp-utils', 'v3/input/carousel' ], function($, bsp_utils, ca
     containerSelector         : '.widget-searchCarousel',
     nextAttr                  : 'next-page',
     prevAttr                  : 'prev-page',
-    itemsSelector             : 'a'
+    itemsSelector             : 'a',
+    parentContainerSelector   : '.content-edit',
+    verticalCarouselAttr      : 'data-vertical-carousel'
   };
 
   bsp_utils.onDomInsert(document, settings.containerSelector, {
@@ -13,10 +15,19 @@ define([ 'jquery', 'bsp-utils', 'v3/input/carousel' ], function($, bsp_utils, ca
 
       var carousel;
 
-      var $container = $(container);
+      var $container = $(container),
+          verticalCarousel;
+      var carouselOptions = {numbered:false};
+      
       carousel = Object.create(carouselUtility);
-      carousel.init($container, {numbered:false});
+      
+      // check if data-vertical-carousel attr is set on content-edit class
+      verticalCarousel = $container.parents(settings.parentContainerSelector).attr(settings.verticalCarouselAttr);
+      if (verticalCarousel !== undefined){
+          $.extend(carouselOptions, {vertical:true});
+      }
 
+      carousel.init($container, carouselOptions);
       addTiles($container.children(settings.itemsSelector), false);
       carousel.update();
 
@@ -50,6 +61,8 @@ define([ 'jquery', 'bsp-utils', 'v3/input/carousel' ], function($, bsp_utils, ca
         });
 
       });
+      
+      $container.closest('.content-edit').attr('data-search-carousel-embedded', 'true');
 
       /**
        * Appends or prepends tiles to carousel

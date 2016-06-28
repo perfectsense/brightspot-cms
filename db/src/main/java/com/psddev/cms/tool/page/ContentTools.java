@@ -19,6 +19,8 @@ import java.util.Map;
 
 import javax.servlet.ServletException;
 
+import com.psddev.cms.tool.CmsTool;
+import com.psddev.dari.db.Application;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -443,9 +445,22 @@ public class ContentTools extends PageServlet {
                                         || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, object) != null) {
 
                                     Site site = page.getSite();
-                                    String permalink = site == null
-                                            ? state.as(Directory.ObjectModification.class).getFullPermalink()
-                                            : state.as(Directory.ObjectModification.class).getSitePermalink(site);
+                                    String permalink;
+
+                                    if (site != null) {
+                                        permalink = state.as(Directory.ObjectModification.class).getSitePermalink(site);
+
+                                    } else {
+                                        permalink = state.as(Directory.ObjectModification.class).getSitePermalink(null);
+
+                                        if (!ObjectUtils.isBlank(permalink)) {
+                                            String siteUrl = Application.Static.getInstance(CmsTool.class).getDefaultSiteUrl();
+
+                                            if (!ObjectUtils.isBlank(siteUrl)) {
+                                                permalink = StringUtils.removeEnd(siteUrl, "/") + permalink;
+                                            }
+                                        }
+                                    }
 
                                     if (!ObjectUtils.isBlank(permalink)) {
                                         StringBuilder embedCode = new StringBuilder();

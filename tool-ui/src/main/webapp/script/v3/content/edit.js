@@ -197,7 +197,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
     }
   });
 
-  bsp_utils.onDomInsert(document, '.contentForm', {
+  bsp_utils.onDomInsert(document, '.contentForm[data-field-locking="true"]', {
     insert: function (form) {
       var $form = $(form);
       var contentId = $form.attr('data-rtc-content-id');

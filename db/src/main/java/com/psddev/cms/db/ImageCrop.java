@@ -1,8 +1,10 @@
 package com.psddev.cms.db;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ObjectUtils;
@@ -19,10 +21,28 @@ public class ImageCrop extends Record {
     private double height;
     private List<ImageTextOverlay> textOverlays;
 
+    @SuppressWarnings("unchecked")
+    public static Map<String, ImageCrop> createCrops(Object crops) {
+        Map<String, ImageCrop> cropsMap = new HashMap<>();
+
+        if (crops instanceof Map) {
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>) crops).entrySet()) {
+                Object crop = entry.getValue();
+
+                cropsMap.put(entry.getKey(), crop instanceof Map
+                        ? new ImageCrop((Map<String, Object>) crop)
+                        : new ImageCrop());
+            }
+        }
+
+        return cropsMap;
+    }
+
     public ImageCrop() {
     }
 
     public ImageCrop(Map<String, Object> map) {
+        getState().setId(ObjectUtils.to(UUID.class, map.get("_id")));
         x = ObjectUtils.to(double.class, map.get("x"));
         y = ObjectUtils.to(double.class, map.get("y"));
         width = ObjectUtils.to(double.class, map.get("width"));

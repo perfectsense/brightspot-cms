@@ -2,6 +2,8 @@ package com.psddev.cms.tool.page;
 
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
+import com.psddev.cms.db.Site;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
@@ -10,7 +12,6 @@ import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
-import com.psddev.dari.util.PaginatedResult;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeReference;
@@ -30,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @RoutingFilter.Path(application = "cms", value = BulkArchive.PATH)
 public class BulkArchive extends PageServlet {
@@ -122,14 +124,21 @@ public class BulkArchive extends PageServlet {
                     try {
                         while (queryIterator.hasNext()) {
 
+                            Object item = queryIterator.next();
+
                             try {
                                 if (Action.RESTORE.equals(action)) {
-                                    page.restore(queryIterator.next());
+                                    if (page.isItemActionable(item, false)) {
+                                        page.restore(item);
+                                        successCount ++;
+                                    }
                                 } else if (Action.ARCHIVE.equals(action)) {
-                                    page.trash(queryIterator.next());
+                                    if (page.isItemActionable(item, true)) {
+                                        page.trash(item);
+                                        successCount ++;
+                                    }
                                 }
 
-                                successCount ++;
                             } catch (Exception e) {
                                 page.getErrors().add(e);
                             }
@@ -357,7 +366,7 @@ public class BulkArchive extends PageServlet {
         }
 
         // Produces a Query for objects to be bulk workflow transitioned.
-        public Query itemsQuery() {
+        public Query<?> itemsQuery() {
 
             if (getSearch() != null) {
 
@@ -369,46 +378,48 @@ public class BulkArchive extends PageServlet {
             throw new IllegalStateException("No Search or SearchResultsSelection populated.  Cannot create items Query.");
         }
 
+        public boolean isItemActionable(Object item, boolean archive) {
+
+            State itemState = State.getInstance(item);
+            String typePermissionId = "type/" + itemState.getTypeId();
+            Site site = getSite();
+
+            return !itemState.getType().as(ToolUi.class).isReadOnly()
+                && archive ^ itemState.as(Content.ObjectModification.class).isTrash()
+                && hasPermission(typePermissionId + "/write")
+                && hasPermission(typePermissionId + "/bulkArchive")
+                && (site == null || Site.Static.isObjectAccessible(site, item));
+        }
+
+        public boolean isSearchActionable(Search search, boolean archive) {
+
+            if (search == null) {
+                return false;
+            }
+
+            ObjectType selectedType = search.getSelectedType();
+
+            return (archive ^ getSearch().getVisibilities().contains("b.cms.content.trashed"))
+                && selectedType != null
+                && !Stream.concat(selectedType.findConcreteTypes().stream(), Stream.of(selectedType))
+                .filter(t -> {
+                    String typePermissionId = "type/" + t.getId();
+                    return t.as(ToolUi.class).isReadOnly()
+                        || !hasPermission(typePermissionId + "/write")
+                        || !hasPermission(typePermissionId + "/bulkArchive");
+                })
+                .findAny().isPresent();
+        }
+
         private long getAvailableActionCount(boolean archive) {
 
             if (getSelection() != null) {
 
-                PaginatedResult result = itemsQuery().noCache().select(0, READ_PAGE_SIZE);
+                return itemsQuery().noCache().selectAll().stream().filter(i -> isItemActionable(i, archive)).count();
 
-                int count = 0;
+            } else if (getSearch() != null) {
 
-                do {
-                    for (Object item : result.getItems()) {
-
-                        State itemState = State.getInstance(item);
-                        String typePermissionId = "type/" + itemState.getTypeId();
-
-                        if (archive ^ itemState.as(Content.ObjectModification.class).isTrash()
-                                && hasPermission(typePermissionId + "/write")
-                                && hasPermission(typePermissionId + "/bulkArchive")) {
-
-                            count ++;
-                        }
-                    }
-                } while (result.hasNext() && (result = itemsQuery().noCache().select(result.getNextOffset(), READ_PAGE_SIZE)) != null);
-
-                return count;
-            } else if (getSearch() != null && (archive ^ getSearch().getVisibilities().contains("b.cms.content.trashed"))) {
-
-                ObjectType selectedType = getSearch().getSelectedType();
-
-                if (selectedType == null) {
-                    return 0;
-                }
-
-                String typePermissionId = "type/" + selectedType.getId();
-
-                if (!hasPermission(typePermissionId + "/write")
-                        || !hasPermission(typePermissionId + "/bulkArchive")) {
-                    return 0;
-                }
-
-                return getSearch().toQuery(getSite()).count();
+                return isSearchActionable(getSearch(), archive) ? getSearch().toQuery(getSite()).count() : 0;
             }
 
             return 0;

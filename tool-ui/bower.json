@@ -1,8 +1,6 @@
 {
   "dependencies": {
     "atmosphere": "Atmosphere/atmosphere-javascript#javascript-project-2.2.11",
-    "bsp-autoexpand": "1.0.2",
-    "bsp-autosubmit": "1.0.0",
     "bsp-utils": "2.0.4",
     "codemirror": "5.10.0",
     "css-element-queries": "4250c87c5ab2efd467f99d901252c73eb6bb80ea",
@@ -19,7 +17,8 @@
     "L.GeoSearch": "*",
     "spectrum": "1.3.4",
     "string": "3.3.0",
-    "velocity": "1.1.0"
+    "velocity": "1.1.0",
+    "javascript-undo-manager": "1.0.5"
   },
   "name": "brightspot-cms"
 }

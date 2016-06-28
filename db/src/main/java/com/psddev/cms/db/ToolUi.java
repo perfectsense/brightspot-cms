@@ -1051,6 +1051,7 @@ public class ToolUi extends Modification<Object> {
     }
 
     @Documented
+    @Inherited
     @ObjectType.AnnotationProcessorClass(FieldDisplayOrderProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)

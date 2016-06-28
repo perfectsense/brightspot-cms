@@ -167,7 +167,15 @@
 
   .rte2-toolbar-clear { width:auto; padding-left:0.5em; padding-right:0.5em; }
 
-  .rte2-toolbar-fullscreen { .icon; .icon-fullscreen; }
+  .rte2-toolbar-fullscreen {
+    .icon;
+    .icon-fullscreen;
+
+    .imageEditor-text-toolbar & {
+      display: none !important;
+    }
+  }
+
   .rte2-toolbar-moveLeft { .icon; .icon-arrow-left; }
   .rte2-toolbar-moveUp { .icon; .icon-arrow-up; }
   .rte2-toolbar-moveCenter { .icon; .icon-resize-full; }
@@ -288,12 +296,15 @@
   color: @color-link-dark;
   text-decoration: underline;
 }
+.cms-textAlign-left,
 .rte2-style-align-left {
   text-align:left;
 }
+.cms-textAlign-center,
 .rte2-style-align-center {
   text-align:center;
 }
+.cms-textAlign-right,
 .rte2-style-align-right {
   text-align:right;
 }

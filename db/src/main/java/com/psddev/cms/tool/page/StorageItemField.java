@@ -148,15 +148,10 @@ public class StorageItemField extends PageServlet {
             }
         }
 
-        Map<String, ImageCrop> crops = ObjectUtils.to(new TypeReference<Map<String, ImageCrop>>() {
-        }, fieldValueMetadata.get("cms.crops"));
+        Map<String, ImageCrop> crops = ImageCrop.createCrops(fieldValueMetadata.get("cms.crops"));
         if (crops == null) {
             // for backward compatibility
-            crops = ObjectUtils.to(new TypeReference<Map<String, ImageCrop>>() {
-            }, state.getValue(cropsFieldName));
-        }
-        if (crops == null) {
-            crops = new HashMap<String, ImageCrop>();
+            crops = ImageCrop.createCrops(state.getValue(cropsFieldName));
         }
 
         crops = new TreeMap<String, ImageCrop>(crops);

@@ -186,6 +186,8 @@ public class SearchResultActions extends PageServlet {
             page.writeEnd();
         }
 
+        page.writeStart("div", "class", "searchResult-actions-body");
+
         for (Iterator<? extends SearchResultAction> i = ClassFinder.findClasses(SearchResultAction.class).stream()
                 .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
                 .map(c -> TypeDefinition.getInstance(c).newInstance())
@@ -199,6 +201,8 @@ public class SearchResultActions extends PageServlet {
 
             i.next().writeHtml(page, search, count > 0 ? currentSelection : null);
         }
+
+        page.writeEnd();
     }
 
     private void writeDeleteAction(ToolPageContext page) throws IOException {

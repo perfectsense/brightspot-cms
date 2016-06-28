@@ -207,7 +207,7 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
       var $item = $(item);
 
       if ($item.closest('.objectInputs').find('> .inputContainer[data-tab="' + $item.text() + '"]:not(.contentDiffSame)').length === 0) {
-        $item.hide();
+        $item.attr('data-diff-same', '');
       }
     }
   });

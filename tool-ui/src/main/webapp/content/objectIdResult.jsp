@@ -52,6 +52,7 @@ String removeId = wp.createId();
             var $source = $page.popup('source'),
                     $input = $source.parent().find(':input.objectId'),
                     $link = $(this),
+                    $caption = $link.find('figcaption'),
                     $linkClone = $link.clone().find('span.visibilityLabel').remove().end(),
                     $repeatableObjectId = $source.closest('.inputContainer').find('.repeatableObjectId'),
                     $repeatableForm = $source.closest('.repeatableForm'),
@@ -60,7 +61,7 @@ String removeId = wp.createId();
                     $added;
 
             $input.attr('data-label', $linkClone.text().trim());
-            $input.attr('data-label-html', $linkClone.html().trim());
+            $input.attr('data-label-html', $caption.length > 0 ? $caption.html() : $linkClone.html().trim());
             $input.attr('data-preview', $link.find('img').attr('src'));
             $input.attr('data-visibility', $link.find('span.visibilityLabel').text());
             $input.val($link.attr('data-objectId'));

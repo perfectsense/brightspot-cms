@@ -2,6 +2,7 @@
 
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.content.Edit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.Reference,
@@ -25,19 +26,7 @@ Object fieldValue = state.getValue(fieldName);
 
 String inputName = (String) request.getAttribute("inputName");
 
-String placeholder = ui.getPlaceholder();
-if (field.isRequired()) {
-    if (ObjectUtils.isBlank(placeholder)) {
-        placeholder = "(Required)";
-    } else {
-        placeholder += " (Required)";
-    }
-}
-
-if (ObjectUtils.isBlank(placeholder)) {
-    placeholder = "";
-}
-
+String placeholder = Edit.createPlaceholderText(wp, field);
 Number suggestedMinimum = ui.getSuggestedMinimum();
 Number suggestedMaximum = ui.getSuggestedMaximum();
 

@@ -1,4 +1,4 @@
-define(['string'], function (S) {
+define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
     
 /** Better drop-down list than standard SELECT. */
 (function($, win, undef) {
@@ -18,9 +18,8 @@ define(['string'], function (S) {
       return this.option('classPrefix') + name;
     },
 
-    '_create': function(original) {
+    _initVisible: function ($original) {
       var plugin = this,
-          $original = $(original),
           isFixedPosition = $original.isFixedPosition(),
           isMultiple = $original.is('[multiple]'),
           isSearchable = $original.is('[data-searchable="true"]'),
@@ -45,6 +44,12 @@ define(['string'], function (S) {
       $original.bind('input-disable', function(event, disable) {
         $input.toggleClass('state-disabled', disable);
       });
+      
+      var width = $original.outerWidth();
+      
+      if (isMultiple) {
+        width = width * 2;
+      }
 
       $input = $('<div/>', {
         'class': plugin.className('input'),
@@ -53,8 +58,9 @@ define(['string'], function (S) {
           'margin-left': $original.css('margin-left'),
           'margin-right': $original.css('margin-right'),
           'margin-top': $original.css('margin-top'),
+          'max-width': '100%',
           'position': 'relative',
-          'width': $original.outerWidth()
+          'width': width
         }
       });
 
@@ -385,6 +391,21 @@ define(['string'], function (S) {
         $search.hide();
         $input.append($search);
       }
+    },
+
+    '_create': function(original) {
+      var plugin = this;
+      var $original = $(original);
+      var init = function () {
+        plugin._initVisible($original);
+      };
+
+      $win.resize(function () {
+        if ($original.is(':visible')) {
+          $win.unbind('resize', init);
+          init();
+        }
+      })
     }
   });
 

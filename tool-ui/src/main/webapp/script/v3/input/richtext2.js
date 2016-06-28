@@ -954,6 +954,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             rte.fromHTML(self.$el.val());
             
+            rte.historyClear();
+            
             // Turn track changes back on (if it was on)
             rte.trackSet(trackIsOn);
         },
@@ -2312,6 +2314,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         'id', reference.record._ref,
                         'reference', JSON.stringify(reference));
                 $options.attr('href', optionsUrl);
+                $options.attr('data-frame-post', '');
 
                 // Modify the "Edit" button in the toolbar so it will pop up the edit dialog for the enhancement
                 $edit = $enhancement.find('.rte2-enhancement-toolbar-edit');

@@ -140,6 +140,9 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean optInContentLocking;
 
+    @ToolUi.Tab("UI")
+    private boolean disableFieldLocking;
+
     @ToolUi.Tab("Debug")
     private boolean removeTrailingSlashes;
 
@@ -187,6 +190,9 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean disableWorkInProgress;
+
+    @ToolUi.Tab("Debug")
+    private boolean horizontalSearchCarousel;
 
     @Embedded
     public static class CommonTime extends Record {
@@ -695,6 +701,14 @@ public class CmsTool extends Tool {
         this.optInContentLocking = optInContentLocking;
     }
 
+    public boolean isDisableFieldLocking() {
+        return disableFieldLocking;
+    }
+
+    public void setDisableFieldLocking(boolean disableFieldLocking) {
+        this.disableFieldLocking = disableFieldLocking;
+    }
+
     public boolean isRemoveTrailingSlashes() {
         return removeTrailingSlashes;
     }
@@ -819,6 +833,14 @@ public class CmsTool extends Tool {
 
     public void setDisableWorkInProgress(boolean disableWorkInProgress) {
         this.disableWorkInProgress = disableWorkInProgress;
+    }
+
+    public boolean isHorizontalSearchCarousel() {
+        return horizontalSearchCarousel;
+    }
+
+    public void setHorizontalSearchCarousel(boolean horizontalSearchCarousel) {
+        this.horizontalSearchCarousel = horizontalSearchCarousel;
     }
 
     public String createManualContentLockingNoteText() {

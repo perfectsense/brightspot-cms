@@ -17,6 +17,9 @@
   min-height: 100px;
   padding: 0 (@carousel-nav-width + @carousel-tile-margin);
   position: relative;
+  &.carousel-vertical {
+    padding: (@carousel-nav-width + @carousel-tile-margin) 0;
+  }
 }
 
 .carousel-nav,
@@ -40,7 +43,11 @@
   line-height: @carousel-tile-height;
   position: absolute;
   top: 0;
-
+  .carousel-vertical & {
+    height: auto;
+    line-height: 25px;
+    width: 100%; 
+  }
   &.carousel-nav-hide {
     color: @color-placeholder;
   }
@@ -50,12 +57,25 @@
   .icon-chevron-left;
 
   left: 0;
+  .carousel-vertical & {
+    &:before {
+      transform: rotate(90deg);
+    }
+  }
 }
 
 .carousel-nav-next {
   .icon-chevron-right;
 
   right: 0;
+  .carousel-vertical & {
+    bottom: 0;
+    top: auto;
+    
+    &:before {
+      transform: rotate(90deg);
+    }
+  }
 }
 
 .carousel-viewport {
@@ -63,6 +83,11 @@
   padding-bottom: 20px;
   white-space: nowrap;
   width: 100%;
+  .carousel-vertical & {
+    height: 525px;
+    overflow-y: hidden;      
+  }
+  
 }
 
 .carousel-tiles {
@@ -73,6 +98,9 @@
   padding: 0;
   transition: margin-left @time-fast;
   white-space: nowrap;
+    .carousel-vertical & {
+        transition: margin-top @time-fast;
+    }
 }
 
 .carousel-tile {
@@ -88,7 +116,12 @@
   vertical-align: top;
   white-space: normal;
   width: @carousel-tile-width;
-
+  .carousel-vertical & {
+      display: block;
+    &:not(:last-child) {
+      margin-bottom: @carousel-tile-margin;
+    }
+  }
   &:not(:last-child) {
     margin-right: @carousel-tile-margin;
   }
@@ -124,6 +157,14 @@
       width: @-arrowWidth;
       z-index: 1;
       pointer-events: none;
+
+      [data-vertical-carousel] & {
+        border-color: transparent transparent transparent @color-focus;
+        bottom: auto;
+        left: auto;
+        top: ((@carousel-tile-height - @-arrowWidth) / 2);
+        right: (0 - @-arrowWidth);
+      }
     }
   }
 
@@ -234,10 +275,34 @@
           }
       }
   }
+  .carousel-vertical {
+      &.carousel-wrapper {
+          height: 100%;
+          width: 160px;
+      }
+      .carousel-viewport {
+        height: 100%;
+        padding-right: 20px;
+        width: 180px;
+      }
+  }
+  [data-vertical-carousel] & {
+      bottom: 20px;
+      left: 20px;
+      position: fixed;
+      top: (@toolHeader-height + 20px);
+  }
+}
+
+[data-vertical-carousel][data-search-carousel-embedded].content-edit {
+    padding-left: 180px;
 }
 
 // Temporarily turn off transition for the carousel.
 // Used when prepending a new tile
 .no-transition {
   transition: none;
+  .carousel-vertical & {
+      transition: none;
+  }
 }
