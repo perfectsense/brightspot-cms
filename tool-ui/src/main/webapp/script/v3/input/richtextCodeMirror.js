@@ -1,15 +1,16 @@
-/* global define DOMParser navigator setTimeout window */
+/* global clearTimeout define DOMParser navigator setTimeout window */
 
 define([
     'jquery',
     'bsp-utils',
     'v3/spellcheck',
+    'undomanager',
     'codemirror/lib/codemirror',
     'codemirror/addon/hint/show-hint',
     'codemirror/addon/dialog/dialog',
     'codemirror/addon/search/searchcursor',
     'codemirror/addon/search/search'
-], function($, bsp_utils, spellcheckAPI, CodeMirror) {
+], function($, bsp_utils, spellcheckAPI, UndoManager, CodeMirror) {
     
     var CodeMirrorRte;
 
@@ -349,6 +350,7 @@ define([
             // Create a mapping from self.styles so we can perform quick lookups on the classname
             self.classes = self.getClassNameMap();
 
+            self.historyInit();
             self.enhancementInit();
             self.initListListeners();
             self.dropdownInit();
@@ -940,7 +942,7 @@ define([
                 
                 // Add a space to represent the empty element because CodeMirror needs
                 // a character to display for the user to display the mark.
-                editor.replaceRange(' ', {line:range.from.line, ch:range.from.ch}, null, '+brightspotInlineSetStyle');
+                editor.replaceRange(' ', {line:range.from.line, ch:range.from.ch}, null);
                 
                 range.to.line = range.from.line;
                 range.to.ch = range.from.ch + 1;
@@ -959,7 +961,7 @@ define([
                 }
             }
 
-            mark = editor.markText(range.from, range.to, markOptions);
+            mark = self.historyCreateMark(range.from, range.to, markOptions);
             self.inlineSplitMarkAcrossLines(mark);
 
             // If this is a set of mutually exclusive styles, clear the other styles
@@ -1030,7 +1032,9 @@ define([
 
             editor = self.codeMirror;
             
-            if (styleKey) {
+            if ($.type(styleKey) === 'object') {
+                className = styleKey.className;
+            } else if (styleKey && $.type(styleKey) === 'string') {
                 className = self.styles[styleKey].className;
             }
             
@@ -1052,7 +1056,7 @@ define([
 
                 var fromCh;
                 var marks;
-                var newMark;
+                var markNew;
                 var toCh;
 
                 // Get the character ranges to search within this line.
@@ -1094,8 +1098,8 @@ define([
                     if (!matchesClass) {
                         return;
                     }
-
-                    markerOpts = mark.marker;
+                                        
+                    markerOpts = self.historyGetOptions(mark.marker);
                     markerOpts.addToHistory = false;
 
                     markerOptsNotInclusive = $.extend(true, {}, markerOpts);
@@ -1157,14 +1161,14 @@ define([
                         //      xxx          <-- text to delete (if deleteText is true)
                         
                         // Create a new marker for the text that should remain styled
-                        editor.markText(
+                        markNew = self.historyCreateMark(
                             { line: lineNumber, ch: toCh },
                             { line: lineNumber, ch: to },
                             markerOpts
                         );
-
+                        
                         if (deleteText) {
-                            // Create a marker for the text that will be deleted
+                            // Create a temporary marker for the text that will be deleted
                             // It should be the part of the marked text that is outside the range
                             editor.markText(
                                 { line: lineNumber, ch: from },
@@ -1187,17 +1191,18 @@ define([
                         //      nn           <-- new mark
                         //        xxxxx      <-- text to delete (if deleteText is true)
 
-                        newMark = editor.markText(
+                        markNew = self.historyCreateMark(
                             { line: lineNumber, ch: from },
                             { line: lineNumber, ch: fromCh },
                             markerOptsNotInclusive
                         );
-                        self.inlineMakeInclusivePush(newMark);
+                        
+                        self.inlineMakeInclusivePush(markNew);
                         
                         if (deleteText) {
-                            // Create a marker for the text that will be deleted
+                            // Create a tempoary marker for the text that will be deleted
                             // It should be the part of the marked text that is outside the range
-                            editor.markText(
+                            markNew = editor.markText(
                                 { line: lineNumber, ch: fromCh },
                                 { line: lineNumber, ch: to },
                                 markerOpts
@@ -1222,23 +1227,24 @@ define([
                             return;
                         }
                         
-                        editor.markText(
+                        markNew = self.historyCreateMark(
                             { line: lineNumber, ch: toCh },
                             { line: lineNumber, ch: to },
                             markerOpts
                         );
 
-                        newMark = editor.markText(
+                        markNew = self.historyCreateMark(
                             { line: lineNumber, ch: from },
                             { line: lineNumber, ch: fromCh },
                             markerOptsNotInclusive
                         );
-                        self.inlineMakeInclusivePush(newMark);
+                        
+                        self.inlineMakeInclusivePush(markNew);
                         
                         if (deleteText) {
-                            // Create a marker for the text that will be deleted
+                            // Create a temporary marker for the text that will be deleted
                             // It should be the part of the marked text that is outside the range
-                            editor.markText(
+                            markNew = editor.markText(
                                 { line: lineNumber, ch: fromCh },
                                 { line: lineNumber, ch: toCh },
                                 markerOpts
@@ -1268,7 +1274,7 @@ define([
                     
                     if (position && !(position.from.line === position.to.line && position.from.ch === position.to.ch)) {
 
-                        editor.replaceRange('', position.from, position.to, '+brightspotFormatRemoveClass');
+                        editor.replaceRange('', position.from, position.to);
                         
                         // Trigger a change event for the editor later
                         triggerChange = true;
@@ -1276,7 +1282,7 @@ define([
                 }
                 if (mark.shouldRemove) {
                     
-                    mark.clear();
+                    self.historyRemoveMark(mark);
                     
                     // Trigger a change event for the editor later
                     triggerChange = true;
@@ -1380,7 +1386,7 @@ define([
                 pos = mark.find();
             
                 // Delete the text within the mark
-                self.codeMirror.replaceRange('', pos.from, pos.to, 'brightspotRemoveStyledText');
+                self.codeMirror.replaceRange('', pos.from, pos.to);
 
                 // Delete the mark
                 mark.clear();
@@ -1933,12 +1939,16 @@ define([
 
             var editor;
             var from;
+            var fromCh;
             var lineNumber;
+            var options;
             var pos;
             var self;
             var singleLine;
             var styleObj;
             var to;
+            var toCh;
+            
 
             self = this;
             editor = self.codeMirror;
@@ -1958,29 +1968,22 @@ define([
             from = pos.from;
             to = pos.to;
 
+            options = self.historyGetOptions(mark);
+            
             // Does this mark span multiple lines?
             if (to.line !== from.line) {
 
                 // Loop through the lines that this marker spans and create a marker for each line
                 for (lineNumber = from.line; lineNumber <= to.line; lineNumber++) {
 
-                    var fromCh;
-                    var newMark;
-                    var toCh;
-                    
                     fromCh = (lineNumber === from.line) ? from.ch : 0;
                     toCh = (lineNumber === to.line) ? to.ch : editor.getLine(lineNumber).length;
-
                     
                     // Create a new mark on this line only
-                    newMark = editor.markText(
+                    self.historyCreateMark(
                         { line: lineNumber, ch: fromCh },
                         { line: lineNumber, ch: toCh },
-                        mark
-                    );
-
-                    // Copy any additional attributes that were attached to the old mark
-                    newMark.attributes = mark.attributes;
+                        options);
 
                     // Don't create other marks if this is a singleLine mark
                     if (singleLine) {
@@ -1989,7 +1992,7 @@ define([
                 }
 
                 // Remove the old mark that went across multiple lines
-                mark.clear();
+                self.historyRemoveMark(mark);
             }
         },
 
@@ -2191,6 +2194,7 @@ define([
             } else {
                 styleObj = style;
             }
+            if (!styleObj) { return; }
             className = styleObj.className;
 
             // Create a fake "mark" object for the line
@@ -2209,8 +2213,8 @@ define([
             }
             
             for (lineNumber = range.from.line; lineNumber <= range.to.line; lineNumber++) {
-                
-                editor.addLineClass(lineNumber, 'text', className);
+
+                self.historyCreateLineClass(lineNumber, className);
 
                 // Store the mark data (and attributes) for the block style
                 self.blockSetLineData(styleObj.key, lineNumber, mark);
@@ -2219,7 +2223,9 @@ define([
             // If this is a set of mutually exclusive styles, clear the other styles
             if (styleObj.clear) {
                 $.each(styleObj.clear, function(i, styleKey) {
-                    self.blockRemoveStyle(styleKey, range);
+                    if (self.blockIsStyle(styleKey, range)) {
+                        self.blockRemoveStyle(styleKey, range);
+                    }
                 });
             }
 
@@ -2381,6 +2387,12 @@ define([
             editor = self.codeMirror;
             range = range || self.getRange();
 
+            // styleKey can be an actual key (string) or it can be a style object,
+            // in which case we'll get the key from the object
+            if (typeof styleKey !== 'string') {
+                styleKey = styleKey.key;
+            }
+
             if (styleKey) {
                 if (self.styles[styleKey]) {
                     className = self.styles[styleKey].className;
@@ -2395,16 +2407,14 @@ define([
                 if (className) {
                     
                     // Remove a single class from the line
-                    self.blockRemovePreviewForClass(className, lineNumber);
-                    editor.removeLineClass(lineNumber, 'text', className);
+                    self.historyRemoveLineClass(lineNumber, className);
                     
                 } else {
                     
                     // Remove all classes from the line
                     line = editor.getLineHandle(lineNumber);
                     $.each((line.textClass || '').split(' '), function(i, className) {
-                        self.blockRemovePreviewForClass(className, lineNumber);
-                        editor.removeLineClass(lineNumber, 'text', className);
+                        self.historyRemoveLineClass(lineNumber, className);
                     });
                 }
             }
@@ -3281,6 +3291,14 @@ define([
                 }
             });
 
+            // Update marks to account for undo history marks getting re-created
+            $.each(marks, function(i, mark) {
+                while (mark.markNew) {
+                    mark = mark.markNew;
+                }
+                marks[i] = mark;
+            });
+            
             return marks;
         },
 
@@ -3353,10 +3371,13 @@ define([
                         }
                     }
 
-                    mark.clear();
+                    // Remove the text before the mark is removed, to ensure undo works
                     if (pos) {
-                        self.codeMirror.replaceRange('', {line:pos.from.line, ch:pos.from.ch}, {line:pos.to.line, ch:pos.to.ch}, 'brightspotDropdown');
+                        self.codeMirror.replaceRange('', {line:pos.from.line, ch:pos.from.ch}, {line:pos.to.line, ch:pos.to.ch});
                     }
+                    
+                    mark.clear();
+                    
                     self.focus();
                     self.dropdownCheckCursor();
                     self.triggerChange();
@@ -3686,7 +3707,7 @@ define([
                             
                             // TODO: this seems to interfere with the undo history
                             
-                            editor.replaceRange(' ', changeObj.from, changeObj.to, 'brighspotTrackSpace');
+                            editor.replaceRange(' ', changeObj.from, changeObj.to);
                             changeObj.update(changeObj.from, {line:changeObj.to.line, ch:changeObj.to.ch + 1});
                         }
 
@@ -3835,7 +3856,7 @@ define([
                 if (mark.className === self.styles.trackDelete.className) {
                     // For a delete mark, remove the content
                     mark.clear();
-                    editor.replaceRange('', position.from, position.to, '+brightspotTrackAcceptMark');
+                    editor.replaceRange('', position.from, position.to);
                     self.triggerChange();
                 } else if (mark.className === self.styles.trackInsert.className) {
                     // For an insert mark, leave the content and remove the mark
@@ -3864,7 +3885,7 @@ define([
                 if (mark.className === self.styles.trackInsert.className) {
                     // For an insert mark, remove the content
                     mark.clear();
-                    editor.replaceRange('', position.from, position.to, '+brightspotTrackRejectMark');
+                    editor.replaceRange('', position.from, position.to);
                     self.triggerChange();
                 } else if (mark.className === self.styles.trackDelete.className) {
                     // For a delete mark, leave the content and remove the mark
@@ -4281,7 +4302,7 @@ define([
 
                 // Clear the cut area
                 if (e.type === 'cut') {
-                    editor.replaceRange('', range.from, range.to, 'brightspotCut');
+                    editor.replaceRange('', range.from, range.to);
                 }
 
                 // Don't let the actual cut/copy event occur
@@ -4638,6 +4659,8 @@ define([
             if (self.$el.is('textarea')) {
                 self.$el.show();
             }
+
+            self.historyClear();
             
             // Trigger an event on the textarea to notify other code that the mode has been changed
             self.modeTriggerEvent();
@@ -4655,6 +4678,7 @@ define([
                 self.$el.hide();
             }
             $wrapper.show();
+            self.historyClear();
             
             // Trigger an event on the textarea to notify other code that the mode has been changed
             self.modeTriggerEvent();
@@ -4874,6 +4898,587 @@ define([
         // caseToggle (toggle case of each character)
         // caseSentence (first word cap, others lower)
         // caseTitle (first letter of each word)
+
+        
+        //==================================================
+        // Undo/Redo/History Functions
+        // See also: https://github.com/ArthurClemens/Javascript-Undo-Manager
+        //==================================================
+
+        /**
+         * Initialize the history system for undo/redo.
+         * This replaces the CodeMirror undo/redo with our own,
+         * since CodeMirror doesn't save marks when deleting text.
+         */
+        historyInit: function() {
+            
+            var self, undo;
+            self = this;
+
+            // Create the undo manager object
+            undo = self.undoManager = new UndoManager();
+
+            // Save a limited amount of undo data
+            undo.setLimit(1000);
+
+            // Replace the CodeMirror undo and redo functions with our own
+            self.codeMirror.undo = function(){
+                self.historyUndo();
+            };
+        
+            self.codeMirror.redo = function(){
+                self.historyRedo();
+            };
+
+            // Set up a history queue so multiple changes can be batched together into
+            // a single undo action
+            self.historyQueue = [];
+            
+            // Trigger an event to fire whenever an undo or redo event occurs,
+            // just in case someone wants to listen for it.
+            // Pass "this" as an argument to the event listeners.
+            undo.setCallback(function(){
+                self.$el.trigger('rteHistory', [self]);
+            });
+
+            // Listen for CodeMirror change events and add to our history.
+            self.codeMirror.on('beforeChange', function(instance, beforeChange) {
+                self.historyHandleCodeMirrorEvent(beforeChange);
+            });
+        },
+
+        
+        /**
+         * Add to the history.
+         *
+         * Note if the user has performed undo actions, adding to the history
+         * resets the "redo" counter, so you can no longer redo the actions that
+         * were undone.
+         *
+         * @param {Object} data
+         * @param {Function} data.undo
+         * @param {Function} data.redo
+         *
+         * @example
+         * rte.historyAdd({
+         *   undo: function(){
+         *     // do something to remove the edit
+         *   },
+         *   redo: function() {
+         *     // do something to add the edit back in
+         *   }
+         * });
+         */
+        historyAdd: function(data) {
+            var self;
+            self = this;
+
+            // Don't add to history if we're in the middle of an undo or redo 
+            if (self.historyIsExecuting()) {
+                return;
+            }
+
+            // Set a timeout to add this entry to the history,
+            // so it can be combined with other entries
+            clearTimeout(self.historyQueueTimeout);
+            self.historyQueue.push(data);
+            self.historyQueueTimeout = setTimeout(function(){
+                self.historyProcessQueue();
+            }, 1250);
+
+        },
+
+        
+        /**
+         * Add all the queued events to the history immediately,
+         * then clear the queued events list.
+         */
+        historyProcessQueue: function() {
+            
+            var queue, self;
+            self = this;
+            
+            clearTimeout(self.historyQueueTimeout);
+
+            if (self.historyQueue.length === 0) {
+                return;
+            }
+            
+            // Clone the historyQueue
+            queue = self.historyQueue.slice(0);
+
+            // Clear the historyQueue
+            self.historyQueue = [];
+
+            // Add to the history so all the queued changes will get undo/redo
+            self.undoManager.add({
+                undo: function(){
+                    // Note: in javascript array reverse is in-place.
+                    // So when we redo we'll have to reverse it again
+                    // to get back the original order.
+                    $.each(queue.reverse(), function(i,data) {
+                        data.undo();
+                    });
+                },
+                redo: function(){
+                    // Note: in javascript array reverse is in-place
+                    $.each(queue.reverse(), function(i,data) {
+                        data.redo();
+                    });
+                }
+            });
+        },
+
+        
+        /**
+         * Perform an undo.
+         */
+        historyUndo: function() {
+            var self;
+            self = this;
+
+            // Make sure changes that are queued up are added to the history
+            self.historyProcessQueue();
+            
+            // Tell CodeMirror to avoid updating the DOM until we are done
+            self.codeMirror.operation(function(){
+                self.historyExecuting = true;
+                self.undoManager.undo();
+                self.historyExecuting = false;
+            });
+        },
+
+        
+        /**
+         * Perform a redo.
+         */
+        historyRedo: function() {
+            var self;
+            self = this;
+            
+            // Make sure changes that are queued up are added to the history
+            self.historyProcessQueue();
+
+            // Make sure changes that are queued up are added to the history
+            self.codeMirror.operation(function(){
+                self.historyExecuting = true;
+                self.undoManager.redo();
+                self.historyExecuting = false;
+            });
+        },
+
+        
+        /**
+         * Clear the undo history.
+         */
+        historyClear: function() {
+            var self;
+            self = this;
+            
+            // Make sure changes that are queued up are added to the history
+            self.historyProcessQueue();
+            
+            self.undoManager.clear();
+        },
+
+        
+        /**
+         * Determine if there are any entries in the undo history.
+         */
+        historyHasUndo: function() {
+            var self;
+            self = this;
+            
+            // Make sure changes that are queued up are added to the history
+            self.historyProcessQueue();
+            
+            return self.undoManager.hasUndo();
+        },
+
+        
+        /**
+         * Determine if there are any entries in the undo history.
+         */
+        historyHasRedo: function() {
+            var self;
+            self = this;
+            
+            // Make sure changes that are queued up are added to the history
+            self.historyProcessQueue();
+            
+            return self.undoManager.hasRedo();
+        },
+
+
+        /**
+         * @returns Boolean
+         * Value to tell if a history undo or redo action is currently executing.
+         * Note this only works for synchronous code, if the undo/redo action causes
+         * async code, this will not be accurate.
+         */
+        historyIsExecuting: function() {
+            var self;
+            self = this;
+            return Boolean(self.historyExecuting);
+        },
+
+
+        /**
+         * Handle the beforeChange event from CodeMirror to add to the undo history.
+         * @param {Object} beforeChange
+         * The beforeChange event from CodeMirror.
+         */
+        historyHandleCodeMirrorEvent: function(beforeChange) {
+            
+            var change, marks, marksAndMore, self;
+
+            self = this;
+            
+            // Ignore changes if we're currently performing an undo or redo operation
+            if (self.historyIsExecuting()) {
+                return;
+            }
+                
+            // Ignore changes where we set the origin containing "brightspot",
+            // because in those instances we will add directly to the history
+            if (beforeChange.origin && beforeChange.origin.indexOf('brightspot') !== -1 || beforeChange.origin === 'paste') {
+                return;
+            }
+                
+            // Save a list of the marks that are defined in this range.
+            // We also need to get the position of each mark, because if CodeMirror
+            // removes the mark along with the removed text, then we won't
+            // be able to find the original position of the mark anymore.
+            marks = self.codeMirror.findMarks(beforeChange.from, beforeChange.to);
+            marksAndMore = [];
+            $.each(marks, function(i, mark) {
+                    
+                var markAndMore, pos;
+                
+                // Skip spelling marks
+                if (mark.className === 'rte2-style-spelling') {
+                    return;
+                }
+                
+                markAndMore = {
+                    mark:mark
+                };
+                    
+                if (mark.find) {
+                    pos = mark.find();
+                    markAndMore.position = {
+                        from: { line: pos.from.line, ch: pos.from.ch },
+                        to: { line: pos.to.line, ch: pos.to.ch }
+                    };
+                } else {
+                    // Skip if mark has been removed from the document
+                    return;
+                }
+
+                // Skip empty marks
+                if (pos.from.line == pos.to.line && pos.from.ch === pos.to.ch) {
+                    return;
+                }
+                
+                // Retain the options from the old mark
+                markAndMore.options = self.historyGetOptions(mark);
+                
+                marksAndMore.push(markAndMore);
+            });
+
+            change = {
+                origin: beforeChange.origin,
+                from: beforeChange.from,
+                to: beforeChange.to,
+                text: beforeChange.text,
+                removed: self.codeMirror.getRange(beforeChange.from, beforeChange.to).split('\n'),
+
+                // Save the marks as part of the change object so we can recreate them on undo
+                marks: marksAndMore
+            };
+                
+            self.historyAdd({
+                undo: function() {
+                    self.historyUndoCodeMirrorChange(change);
+                },
+                redo: function() {
+                    self.historyRedoCodeMirrorChange(change);
+                }
+            });
+        },
+
+        /**
+         * Return a list of options that we want to keep from a mark.
+         * To be used when re-creating the mark.
+         * @param  {Object} mark CodeMirror mark
+         * @return {Object} A set of key/value pairs.
+         */
+        historyGetOptions: function(mark) {
+            var options;
+            options = {};
+            $.each(mark, function(prop, value) {
+                switch (prop) {
+                    // List of properties that should be copied/retained from the old mark
+                    // and passed as options on the new mark
+                case 'atomic':
+                case 'attributes':
+                case 'className':
+                case 'clearWhenEmpty':
+                case 'endStyle':
+                case 'startStyle':
+                case 'historyFind':
+                case 'inclusiveRight':
+                case 'inclusiveLeft':
+                case 'triggerChange':
+                    options[prop] = value;
+                }
+            });
+            return options;
+        },
+        
+        /**
+         * Perform an undo action based on a CodeMirror change event that was stored in the history.
+         *
+         * Change event looks like something like this:
+         * {
+         *   "from":{"line":1,"ch":2}, // Coordinates before the change
+         *   "to":{"line":1,"ch":5}, // Coordinates before the change
+         *   "text":["f"], // Text to be added
+         *   "removed":["sti"], // Text that will be removed
+         *   "origin":"+input"
+         * }
+         */
+        historyUndoCodeMirrorChange: function(change) {
+
+            var from, self, to;
+
+            self = this;
+        
+            // Reverse the change event so we put back what was previously there
+            from = change.from;
+            to = {
+                line: from.line + change.text.length - 1,
+                ch: from.ch + change.text[0].length
+            };
+            
+            if (change.text.length > 1) {
+                to.ch = change.text[ change.text.length - 1 ].length;
+            }
+
+            self.codeMirror.replaceRange(change.removed.join('\n'), from, to, 'brightspotUndo');
+            
+            // Now re-add the marks that were possibly removed
+            self.historyCodeMirrorChangeMarks(change);
+        },
+
+        
+        /**
+         * Perform a "redo" action based on a CodeMirror change event that was stored in the history.
+         *
+         * Change event looks like something like this:
+         * {
+         *   "from":{"line":1,"ch":2}, // Coordinates before the change
+         *   "to":{"line":1,"ch":5}, // Coordinates before the change
+         *   "text":["f"], // Text to be added
+         *   "removed":["sti"], // Text that will be removed
+         *   "origin":"+input"
+         * }
+         */
+        historyRedoCodeMirrorChange: function(change) {
+            var editor, self;
+            self = this;
+            editor = self.codeMirror;
+
+            // Replace the text
+            editor.replaceRange(change.text.join('\n'), change.from, change.to, 'brightspotRedo');
+        },
+
+        
+        /**
+         * When doing an undo or redo, recreate marks in the changed area
+         * in case they were modified.
+         */
+        historyCodeMirrorChangeMarks: function(change) {
+            
+            var editor, self;
+            self = this;
+            editor = self.codeMirror;
+            
+            // Re-add the marks that might have been removed due to an undo action
+            if (change.marks && change.marks.length) {
+                $.each(change.marks, function(i, markAndMore) {
+
+                    var mark, markNew, options, position;
+
+                    mark = markAndMore.mark;
+                    position = markAndMore.position;
+                    options = markAndMore.options;
+
+                    // There is a chance that the mark that was saved in this
+                    // change event was cleared and re-created in another change event.
+                    // In that case, a pointer to the new mark was saved on the old mark.
+                    // If we find that pointer, update this to the new one.
+                    while (mark.markNew) {
+                        mark = markAndMore.mark = mark.markNew;
+                    }
+
+                    // Clear the mark because we're going to recreate it.
+                    mark.clear();
+                    
+                    // Recreate a new mark at the previous position.
+                    markNew = editor.markText(position.from, position.to, options);
+                    
+                    // Save a pointer to the new mark on the old mark,
+                    // in case other history events are still pointing to the old mark
+                    mark.markNew = markNew;
+                    
+                    // Update the mark that is saved with the history
+                    markAndMore.mark = markNew;
+                });
+            }
+        },
+
+
+        /**
+         * Remove a mark and add a history event that recreates the mark if the user performs an undo.
+         * @param  {Object} mark A CodeMirror mark.
+         */
+        historyRemoveMark: function(mark) {
+            var options;
+            var pos;
+            var self;
+            self = this;
+            
+            // Save the position of this mark
+            if (mark.find) {
+                pos = mark.find();
+            }
+            if (!pos) {
+                return;
+            }
+            
+            // Save the attributes and options of this mark
+            options = self.historyGetOptions(mark);
+            
+            // Set up a history entry to recreate the mark
+            self.historyAdd({
+                // Undo should recreate the mark
+                undo: function(){
+                    var markNew;
+                    // Find the latest copy of this mark in case other history events have changed it
+                    while (mark.markNew) {
+                        mark = mark.markNew;
+                    }
+                    mark.clear();
+                    markNew = self.codeMirror.markText(pos.from, pos.to, options);
+                    mark.markNew = markNew;
+                    mark = markNew;
+                },
+                // Redo should remove the mark again
+                redo: function(){
+                    // Find the latest copy of this mark in case other history events have changed it
+                    while (mark.markNew) {
+                        mark = mark.markNew;
+                    }
+                    mark.clear();
+                }
+            });
+            
+            // Remove the mark
+            mark.clear();
+        },
+
+
+        /**
+         * Create a mark and add a history event that removes the mark if the user performans an undo.
+         * @param  {[type]} range   Range of characters for the mark.
+         * @param  {[type]} options Options and attributes for the mark.
+         * @return {Object} The mark that was created.
+         */
+        historyCreateMark: function(from, to, options) {
+            var mark;
+            var self;
+            self = this;
+            
+            // Only add a history event if the mark surrounds some characters.
+            if (!(from.line === to.line && from.ch === to.ch)) {
+                
+                self.historyAdd({
+                    undo: function(){
+                        // Find the latest copy of this mark in case other history events have changed it
+                        while (mark.markNew) {
+                            mark = mark.markNew;
+                        }
+                        mark.clear();
+                    },
+                    redo: function(){
+                        var markNew;
+                        // Find the latest copy of this mark in case other history events have changed it
+                        while (mark.markNew) {
+                            mark = mark.markNew;
+                        }
+                        mark.clear();
+                        markNew = self.codeMirror.markText(from, to, options);
+                        mark.markNew = markNew;
+                        mark = markNew;
+                    }
+                });
+            }
+            
+            mark = self.codeMirror.markText(from, to, options);
+            return mark;
+        },
+
+
+        /**
+         * Remove a line class and add a history event that recreates it if the user performans an undo.
+         * @param  {Number} lineNumber
+         * @param  {String} className
+         */
+        historyRemoveLineClass: function(lineNumber, className) {
+            var editor;
+            var self;
+            self = this;
+            editor = self.codeMirror;
+            
+            self.historyAdd({
+                undo: function(){
+                    editor.addLineClass(lineNumber, 'text', className);
+                },
+                redo: function(){
+                    self.blockRemovePreviewForClass(className, lineNumber);
+                    editor.removeLineClass(lineNumber, 'text', className);
+                }
+            });
+            
+            self.blockRemovePreviewForClass(className, lineNumber);
+            editor.removeLineClass(lineNumber, 'text', className);
+        },
+
+        
+        /**
+         * Create a line class and add a history event that removes it if the user performans an undo.
+         * @param  {Number} lineNumber
+         * @param  {String} className
+         */
+        historyCreateLineClass: function(lineNumber, className) {
+            var editor;
+            var self;
+            self = this;
+            editor = self.codeMirror;
+            
+            self.historyAdd({
+                undo: function(){
+                    editor.removeLineClass(lineNumber, 'text', className);
+                },
+                redo: function(){
+                    editor.addLineClass(lineNumber, 'text', className);
+                }
+            });
+            
+            editor.addLineClass(lineNumber, 'text', className);            
+        },
+        
         
         //==================================================
         // Miscelaneous Functions
@@ -5184,11 +5789,188 @@ define([
 
             // Replacing the entire mark range will remove the mark so we need
             // to add text at the end of the mark, then remove the original text
-            self.codeMirror.replaceRange(text, pos.to, pos.to, 'brightspotReplaceMarkText');
+            self.codeMirror.replaceRange(text, pos.to, pos.to);
             if (!(pos.from.line === pos.to.line && pos.from.ch === pos.to.ch)) {
-                self.codeMirror.replaceRange('', pos.from, pos.to, 'brightspotReplaceMarkText');
+                self.codeMirror.replaceRange('', pos.from, pos.to);
             }
         },
+
+        /**
+         * Given a CodeMirror mark, replace the text within it with HTML,
+         * without destroying the mark. This is intended to be used for
+         * inline enhancments where an external popup sets content in the editor.
+         * It also sets up history so undo/redo actions will correctly
+         * maintain the mark.
+         * 
+         * @param  {[type]} mark [description]
+         * @param  {[type]} html [description]
+         * @return {[type]}      [description]
+         */
+        replaceMarkHTML: function(mark, html) {
+            var clearWhenEmpty;
+            var execute;
+            var inclusiveLeft;
+            var inclusiveRight;
+            var markNew;
+            var range;
+            var reset;
+            var self;
+            self = this;
+                        
+            // Remember the settings for inclusive left and inclusive right
+            // so we can restore them later
+            clearWhenEmpty = mark.clearWhenEmpty;
+            inclusiveLeft = mark.inclusiveLeft;
+            inclusiveRight = mark.inclusiveRight;
+            
+            // Remember the position of the mark because if the mark
+            // gets removed we need to recreate it
+            range = self.markGetRange(mark);
+            
+            reset = function() {
+                while (mark.markNew) {
+                    mark = mark.markNew;
+                }
+                mark.inclusiveLeft = inclusiveLeft;
+                mark.inclusiveRight = inclusiveRight;
+                mark.clearWhenEmpty = clearWhenEmpty;
+            };
+            
+            execute = function() {
+                
+                // There is a chance that the mark that was saved in this
+                // change event was cleared and re-created in another change event.
+                // In that case, a pointer to the new mark was saved on the old mark.
+                // If we find that pointer, update this to the new one.
+                while (mark.markNew) {
+                    mark = mark.markNew;
+                }
+                
+                // If the mark was removed we must recreate it
+                if (!mark.find || !mark.find()) {
+                    
+                    // Recreate a new mark at the previous position.
+                    markNew = self.codeMirror.markText(range.from, range.to, self.historyGetOptions(mark));
+                    
+                    // Save a pointer to the new mark on the old mark,
+                    // in case other history events are still pointing to the old mark
+                    mark.markNew = markNew;
+                    
+                    mark = markNew;
+                }
+                
+                // Change the mark so it will expand when we insert content
+                mark.inclusiveLeft = true;
+                mark.inclusiveRight = true;
+                mark.clearWhenEmpty = false;
+                
+                // Replace the content of the mark
+                if (!self.historyIsExecuting()) {
+                    self.fromHTML(html, range, true, true);                    
+                    reset();
+                }
+            };
+            
+            self.historyAdd({
+                undo: function() {
+                    reset();
+                },
+                redo: function() {
+                    // Re-execute the insertion
+                    execute();
+                }
+            });
+            
+            // Execute the insertion now
+            execute();
+
+            // After the change is made, we need to reset the mark
+            self.historyAdd({
+                undo: function() {
+                    // reset();
+                },
+                redo: function() {
+                    reset();
+                }
+            });
+        },
+        
+        
+        /**
+         * Set a property on a mark in a way that supports undo history.
+         * @param  {Object} mark     A CodeMirror mark.
+         * @param  {String} property Name of the property, such as "attributes"
+         * @param  {String} value    Value for the property.
+         */
+        setMarkProperty: function(mark, property, value) {
+        
+            var self;
+            var valueOriginal;
+            self = this;
+            
+            valueOriginal = mark[property];
+            mark[property] = value;
+            
+            self.historyAdd({
+                undo: function() {
+                    // If mark was updated by other history events get latest mark
+                    while (mark.markNew) {
+                        mark = mark.markNew;
+                    }
+                    mark[property] = valueOriginal;
+                },
+                redo: function() {
+                    // If mark was updated by other history events get latest mark
+                    while (mark.markNew) {
+                        mark = mark.markNew;
+                    }
+                    mark[property] = value;
+                }
+            });
+        },
+        
+        /**
+         * Replace a range of text without affecting the style marks
+         * next to or surrounding the range.
+         *
+         * When using the CodeMirror.replaceRange() function, if the
+         * range is next to another mark, adding text to the editor
+         * can have the unwanted side effect of expanding the mark.
+         *
+         * This function takes some steps to ensure that the marks
+         * are not extended.
+         */
+        replaceRangeWithoutStyles: function(from, to, text) {
+
+            var editor, origin, self, toSpace;
+
+            self = this;
+            editor = self.codeMirror;
+            origin = 'brightspotReplaceRangeWithoutStyles';
+            
+            // Replace the range with a single space so we can use it to split
+            // any styles around or next to that range
+            editor.replaceRange(' ', from, to, origin);
+            
+            toSpace = {
+                line: from.line,
+                ch: from.ch + 1
+            };
+            
+            // Remove styles from the single character.
+            // This will split any marks that surround the range.
+            self.removeStyles({
+                from: from,
+                to: toSpace
+            });
+
+            // Insert the text for the undo action after the space so it does not extend any other marks
+            editor.replaceRange(text, toSpace, null, origin);
+            
+            // Now remove the space that we added
+            editor.replaceRange('', from, toSpace, origin);
+        },
+
         
         /**
          * Determine if an element is a "container" for another element.
@@ -6360,7 +7142,9 @@ define([
                 if (!retainStyles) {
                     if (range.from.line === range.to.line && range.from.ch === range.to.ch) {
 
-                        editor.replaceRange(' ', range.from, range.to, 'brightspotRemoveStyles');
+                        // When adding the space so we can remove styles, prevent it from going in the undo history
+                        // by using an origin containing "brightspot"
+                        editor.replaceRange(' ', range.from, range.to, 'brightspotFromHTMLRemoveStyles');
 
                         // Remove styles from the single character
                         self.removeStyles({
@@ -6368,8 +7152,8 @@ define([
                             to: { line:range.from.line, ch:range.from.ch + 1}
                         });
 
-                        // Undo the insertion of the single character so it doesn't appear in the undo history
-                        editor.undo();
+                        // Remove the space that we added
+                        editor.replaceRange('', range.from, {line:range.to.line, ch:range.to.ch + 1}, 'brightspotFromHTMLRemoveStyles');
 
                     } else {
 
@@ -6391,9 +7175,10 @@ define([
                 };
             }
 
-            // Add the plain text into the selected range
-            editor.replaceRange(val, range.to, range.to, 'brightspotPaste');
-            editor.replaceRange('', range.from, range.to, 'brightspotPaste');
+            // Add the plain text to the end of the selected range
+            // Then remove the original text that was already there
+            editor.replaceRange(val, range.to, range.to);
+            editor.replaceRange('', range.from, range.to);
 
             // Before we start adding styles, save the current history.
             // After we add the styles we will restore the history.
@@ -6644,7 +7429,8 @@ define([
                                 matchStyleObj = true;
                             }
                             break;
-
+                        case 'ol':
+                        case 'ul':
                         case 'br':
                             matchStyleObj = true;
                             break;
@@ -6774,17 +7560,6 @@ define([
         },
 
 
-        /**
-         * Clear the undo history for the editor.
-         * For example, you can call this after setting the initial content in the editor.
-         */
-        historyClear: function(){
-            var self;
-            self = this;
-            self.codeMirror.clearHistory();
-        },
-
-
         find: function(){
             var self;
             self = this;
@@ -6834,6 +7609,27 @@ define([
             }
 
             return attr;
+        },
+        
+        
+        /**
+         * Generate a message to display all the marks to the console.
+         * @return {String}
+         */
+        logMarks: function() {
+            var marks;
+            var msg;
+            var self;
+            self = this;
+            marks = self.codeMirror.getAllMarks();
+            msg = '';
+            $.each(marks, function(i,mark) {
+                if (mark.className === 'rte2-style-spelling') {
+                    return;
+                }
+                msg += ' ' + mark.id + ':' + mark.className;
+            })
+            return msg;
         }
         
     };

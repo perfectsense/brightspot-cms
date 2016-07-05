@@ -3,16 +3,12 @@
 @-actions-width: 200px;
 
 .searchResult-container {
-  padding-right: (@-actions-width + (@-actions-padding * 2));
+  display: flex;
+}
 
-  &:before {
-    border-right: 2px solid @color-separator;
-    bottom: 0;
-    content: '';
-    position: absolute;
-    right: (@-actions-width + @-actions-padding - 1px);
-    top: 0;
-  }
+.searchResult-items {
+  flex: 1 1 auto;
+  margin-right: (@-actions-padding - 1px);
 }
 
 .searchResult-views {
@@ -81,13 +77,8 @@
 
 .searchResult-actions {
   border-left: @-actions-borderWidth solid @color-separator;
-  box-sizing: border-box;
-  height: 100%;
-  overflow: auto;
+  flex: 0 0 auto;
   padding-left: (@-actions-padding - (@-actions-borderWidth / 2));
-  position: absolute;
-  right: 0;
-  top: 0;
   width: (@-actions-width + @-actions-padding + (@-actions-borderWidth / 2));
 }
 
@@ -308,16 +299,17 @@
       border-top-left-radius: 0;
       border-top-right-radius: 0;
       margin-top: -1px;
-    }
+      position: relative;
 
-    &:before {
-      border-top: 1px solid @color-separator;
-      content: '';
-      height: 0;
-      left: 10px;
-      position: absolute;
-      top: 29px;
-      right: 35px;
+      &:after {
+        border-top: 1px solid @color-separator;
+        content: '';
+        height: 0;
+        left: 10px;
+        position: absolute;
+        top: 0;
+        right: 10px;
+      }
     }
   }
 
@@ -586,60 +578,14 @@
 }
 
 .widget[name="searchAdvancedFull"] {
-  position: fixed;
-  top: 90px;
-  right: 20px;
-  bottom: 50px;
   left: 20px;
-  height: auto; /* necessary? */
+  margin-bottom: 40px;
+  position: fixed;
+  right: 20px;
+  top: 90px;
 
-  > .searchForm {
-    position: absolute;
-    top: 56px;
-    right: 20px;
-    bottom: 20px;
-    left: 20px;
-
-    .searchControls,
-    .searchResult,
-    .searchResult-container,
-    .searchResult-view,
-    .searchResult-list {
-      position: absolute;
-    }
-
-    .searchControls,
-    .searchResult,
-    .searchResult-container {
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-    }
-
-    .searchResult-view {
-      top: 36px;
-      right: 242px;
-      bottom: 0;
-      left: 0;
-    }
-
-    .searchResult-list {
-      float: none;
-      top: 40px;
-      right: 0;
-      bottom: 0;
-      left: 0;
-    }
-
-    .searchControls,
-    .searchResult-list {
-      overflow-y: auto;
-    }
-
-    .searchResult-actions {
-      bottom: 0;
-    }
+  .searchFilters {
+    margin-bottom: 0;
   }
 }
 

@@ -1,12 +1,14 @@
 package com.psddev.cms.tool.widget;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.ServletException;
 
 import com.psddev.cms.db.Site;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardWidget;
@@ -15,23 +17,40 @@ import com.psddev.dari.util.ObjectUtils;
 
 public class ResourcesWidget extends DashboardWidget {
 
+    @ToolUi.Note("Leave empty to use the items defined globally.")
+    private List<CmsTool.ResourceItem> items;
+
+    public List<CmsTool.ResourceItem> getItems() {
+        if (items == null) {
+            items = new ArrayList<>();
+        }
+        return items;
+    }
+
+    public void setItems(List<CmsTool.ResourceItem> items) {
+        this.items = items;
+    }
+
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
-        List<CmsTool.ResourceItem> resources = null;
-        Site site = page.getSite();
-
-        if (site != null) {
-            resources = site.getResources();
-        }
+        List<CmsTool.ResourceItem> resources = getItems();
 
         if (resources == null || resources.isEmpty()) {
-            resources = page.getCmsTool().getResources();
-        }
+            Site site = page.getSite();
 
-        if (resources != null) {
-            for (Iterator<CmsTool.ResourceItem> i = resources.iterator(); i.hasNext();) {
-                if (ObjectUtils.isBlank(i.next().getUrl())) {
-                    i.remove();
+            if (site != null) {
+                resources = site.getResources();
+            }
+
+            if (resources == null || resources.isEmpty()) {
+                resources = page.getCmsTool().getResources();
+            }
+
+            if (resources != null) {
+                for (Iterator<CmsTool.ResourceItem> i = resources.iterator(); i.hasNext();) {
+                    if (ObjectUtils.isBlank(i.next().getUrl())) {
+                        i.remove();
+                    }
                 }
             }
         }

@@ -28,8 +28,8 @@ require([
   'jquery',
   'jquery.extra',
 
-  'bsp-autoexpand',
-  'bsp-autosubmit',
+  'v3/plugin/auto-expand',
+  'v3/plugin/auto-submit',
   'bsp-uploader',
   'bsp-utils',
   'iframeResizer',
@@ -134,11 +134,10 @@ function() {
     '.fixedScrollable',
     '.searchResult-list',
     '.searchResultTaxonomyColumn ul',
-    '.popup[name="miscSearch"] .searchFiltersRest',
-    '.popup[data-popup-source-class~="objectId-select"] .searchFiltersRest',
+    '.searchFiltersRest',
     '.popup[data-popup-source-class~="objectId-select"] .searchResultList',
-    '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchFiltersRest',
     '.popup[data-popup-source-class~="rte2-enhancement-toolbar-change"] .searchResultList',
+    '.searchResult-actions-body',
     '.ToolUserWorksInProgress-body'
   ].join(','));
 
@@ -354,7 +353,7 @@ function() {
       updateWordCount(
           $input.closest('.inputContainer'),
           $input,
-          $input.val());
+          $input.val() || $input.prop('placeholder'));
     }));
 
     // For original rich text editor, special handling for the word count
@@ -677,16 +676,18 @@ function() {
     }
 
     var label = (isEnhancement ? 'Select Enhancement for ' : (isAdd ? 'Add to ' : 'Select ')) + fieldsLabel;
-    var objectLabel = $input.closest('.contentForm').attr('data-o-label');
-
-    if (objectLabel) {
-      label += ' - ';
-      label += objectLabel;
-    }
+    var objectLabelHtml = $input.closest('.contentForm').find('.ContentLabel').html();
 
     bsp_utils.onDomInsert($popup[0], '> .content > .frame > h1', {
       insert: function (heading) {
-        $(heading).text(label);
+        var $heading = $(heading);
+        
+        $heading.text(label);
+        
+        if (objectLabelHtml) {
+          $heading.append(' - ');
+          $heading.append(objectLabelHtml);
+        }
       }
     });
   });

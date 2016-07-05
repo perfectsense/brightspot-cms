@@ -35,6 +35,10 @@ module.exports = function(grunt) {
                     }
                 ],
 
+                'javascript-undo-manager': [
+                    'lib/undomanager.js'
+                ],
+                
                 'handsontable': [
                     'dist/handsontable.full.css',
                     'dist/handsontable.full.js'

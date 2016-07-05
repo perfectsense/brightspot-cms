@@ -2288,7 +2288,7 @@ public class ToolPageContext extends WebPageContext {
 
         writeStart("script", "type", "text/javascript");
             write("var CONTEXT_PATH = '", cmsUrl("/"), "';");
-            write("var UPLOAD_PATH = ", "'" + Settings.getOrDefault(String.class, "dari/upload/path", "/_dari/upload"), "';");
+            write("var UPLOAD_PATH = ", "'" + getRequest().getContextPath() + StringUtils.ensureStart(Settings.getOrDefault(String.class, "dari/upload/path", "/_dari/upload"), "/"), "';");
             write("var CSS_CLASS_GROUPS = ", ObjectUtils.toJson(cssClassGroups), ";");
             write("var STANDARD_IMAGE_SIZES = ", ObjectUtils.toJson(standardImageSizes), ";");
             write("var RTE_LEGACY_HTML = ", getCmsTool().isLegacyHtml(), ';');

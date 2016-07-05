@@ -10,31 +10,29 @@
 
     <directoryFactory name="DirectoryFactory" class="solr.StandardDirectoryFactory" />
 
-    <indexDefaults>
+    <indexConfig>
         <lockType>native</lockType>
-        <maxFieldLength>10000</maxFieldLength>
-        <mergeFactor>10</mergeFactor>
         <ramBufferSizeMB>32</ramBufferSizeMB>
-        <useCompoundFile>false</useCompoundFile>
+        <mergeFactor>10</mergeFactor>
         <writeLockTimeout>1000</writeLockTimeout>
-    </indexDefaults>
-
-    <jmx />
-
-    <luceneMatchVersion>LUCENE_35</luceneMatchVersion>
-
-    <mainIndex>
         <deletionPolicy class="solr.SolrDeletionPolicy">
             <str name="maxCommitsToKeep">1</str>
             <str name="maxOptimizedCommitsToKeep">0</str>
         </deletionPolicy>
         <infoStream file="INFOSTREAM.txt">false</infoStream>
-        <mergeFactor>10</mergeFactor>
-        <ramBufferSizeMB>32</ramBufferSizeMB>
         <reopenReaders>true</reopenReaders>
         <unlockOnStartup>false</unlockOnStartup>
-        <useCompoundFile>false</useCompoundFile>
-    </mainIndex>
+    </indexConfig>
+
+    <filter class="solr.LimitTokenCountFilterFactory" maxTokenCount="10000"/>
+
+    <jmx />
+
+    <luceneMatchVersion>LUCENE_40</luceneMatchVersion>
+
+    <autoSoftCommit>
+        <maxTime>1000</maxTime>
+    </autoSoftCommit>
 
     <query>
         <documentCache class="solr.LRUCache" autowarmCount="0" initialSize="512" size="512" />
@@ -102,9 +100,30 @@
         </lst>
     </requestHandler>
 
+    <requestHandler name="/get" class="solr.RealTimeGetHandler">
+        <lst name="defaults">
+            <str name="omitHeader">true</str>
+            <str name="wt">json</str>
+            <str name="indent">true</str>
+        </lst>
+    </requestHandler>
+
     <searchComponent name="terms" class="solr.TermsComponent" />
     <searchComponent name="tv" class="solr.TermVectorComponent" />
 
-    <updateHandler class="solr.DirectUpdateHandler2" />
+    <updateHandler class="solr.DirectUpdateHandler2" >
+        <updateLog>
+            <str name="dir">${dataDirectory}/solr</str>
+        </updateLog>
+
+        <autoCommit>
+            <maxTime>15000</maxTime>
+            <openSearcher>false</openSearcher>
+        </autoCommit>
+
+        <autoSoftCommit>
+            <maxTime>1000</maxTime>
+        </autoSoftCommit>
+    </updateHandler>
 
 </config>

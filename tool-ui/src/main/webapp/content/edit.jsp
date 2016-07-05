@@ -277,7 +277,7 @@ if (oldObject != null) {
 <%
 wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel() : null);
 %>
-<div class="content-edit">
+<div class="content-edit"<%= wp.getCmsTool().isHorizontalSearchCarousel() ? "" : " data-vertical-carousel" %>>
 <%
 
     String search = wp.param(String.class, "search");
@@ -307,6 +307,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     "published", null) %>"
             autocomplete="off"
             data-rtc-content-id="<%= draft != null ? draft.getId() : editingState.getId() %>"
+            data-field-locking="<%= !wp.getCmsTool().isDisableFieldLocking() %>"
             data-new="<%= State.getInstance(editing).isNew() %>"
             data-o-id="<%= State.getInstance(selected).getId() %>"
             data-o-label="<%= wp.h(State.getInstance(selected).getLabel()) %>"
@@ -356,7 +357,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         wp.write(": " );
 
-                        wp.writeStart("span", "data-dynamic-html", "${toolPageContext.createObjectLabelHtml(content)}");
+                        wp.writeStart("span", "class", "ContentLabel", "data-dynamic-html", "${toolPageContext.createObjectLabelHtml(content)}");
                             wp.write(wp.createObjectLabelHtml(editing));
                         wp.writeEnd();
                     wp.writeEnd();
@@ -435,42 +436,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 <%
                 wp.include("/WEB-INF/objectMessage.jsp", "object", editing);
 
-                if (history == null
-                        && !editingState.hasAnyErrors()
-                        && !user.isDisableWorkInProgress()
-                        && !wp.getCmsTool().isDisableWorkInProgress()) {
-
-                    WorkInProgress wip = Query.from(WorkInProgress.class)
-                            .where("owner = ?", user)
-                            .and("contentId = ?", editingState.getId())
-                            .first();
-
-                    if (wip != null) {
-                        editingState.setValues(Draft.mergeDifferences(
-                                editingState.getDatabase().getEnvironment(),
-                                editingState.getSimpleValues(),
-                                wip.getDifferences()));
-                    }
-
-                    if (wip != null) {
-                        wp.writeStart("div", "class", "message message-warning WorkInProgressRestoredMessage");
-                            wp.writeStart("div", "class", "WorkInProgressRestoredMessage-actions");
-                                wp.writeStart("a",
-                                        "class", "icon icon-action-remove",
-                                        "href", wp.cmsUrl("/user/wips",
-                                                "action-delete", true,
-                                                "wip", wip.getId(),
-                                                "returnUrl", wp.url("")));
-                                    wp.writeHtml(wp.localize(wip, "action.clearChanges"));
-                                wp.writeEnd();
-                            wp.writeEnd();
-
-                            wp.writeStart("p");
-                                wp.writeHtml(wp.localize(wip, "message.restored"));
-                            wp.writeEnd();
-                        wp.writeEnd();
-                    }
-                }
+                Edit.restoreWorkInProgress(wp, editing);
 
                 Object compareObject = null;
 
@@ -925,8 +891,8 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                         wp.writeEnd();
                                     }
 
-                                    wp.writeStart("div", "class", "widget-publishingWorkflow");
-                                        if (!transitionNames.isEmpty()) {
+                                    if (!transitionNames.isEmpty()) {
+                                        wp.writeStart("div", "class", "widget-publishingWorkflow");
                                             WorkflowLog newLog = new WorkflowLog();
 
                                             if (log != null) {
@@ -970,8 +936,8 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                                     wp.writeHtml(entry.getValue());
                                                 wp.writeEnd();
                                             }
-                                        }
-                                    wp.writeEnd();
+                                        wp.writeEnd();
+                                    }
                                 }
                             }
                         }
@@ -1008,12 +974,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                     }
 
                                     DateTime publishDate;
+                                    String scheduleLabel;
 
                                     if (schedule != null) {
                                         publishDate = wp.toUserDateTime(schedule.getTriggerDate());
+                                        scheduleLabel = wp.localize(editingType, "action.reschedule");
 
                                     } else {
                                         publishDate = wp.param(DateTime.class, "publishDate");
+                                        scheduleLabel = wp.localize(editingType, "action.schedule");
 
                                         if (publishDate == null &&
                                                 (isDraft ||
@@ -1030,6 +999,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                             "type", "text",
                                             "class", "date dateInput",
                                             "data-emptylabel", "Now",
+                                            "data-schedule-label", scheduleLabel,
                                             "name", "publishDate",
                                             "size", 9,
                                             "value", publishDate != null ? publishDate.toString("yyyy-MM-dd HH:mm:ss") : "");
@@ -1037,6 +1007,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                                 wp.writeStart("button",
                                         "name", "action-publish",
+                                        "data-schedule-label", wp.localize(editingType, "action.schedule"),
                                         "value", "true");
                                     ObjectType type = editingState.getType();
                                     if (type != null) {

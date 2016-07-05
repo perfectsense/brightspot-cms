@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema name="dari" version="1.4">
+<schema name="dari" version="1.5">
 
     <defaultSearchField>all</defaultSearchField>
 
     <fields>
+        <field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
         <field name="id" type="uuid" indexed="true" required="true" stored="true" />
         <field name="typeId" type="uuid" indexed="true" required="true" stored="true" />
         <field name="data" type="string" indexed="false" stored="true" />

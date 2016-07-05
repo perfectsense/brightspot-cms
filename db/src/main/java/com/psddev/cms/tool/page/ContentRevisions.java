@@ -129,11 +129,16 @@ public class ContentRevisions extends Widget {
                 page.writeHtml(page.localize(ContentRevisions.class, "title"));
             page.writeEnd();
 
+            State originalState = State.getInstance(Query.fromAll()
+                    .where("_id = ?", object)
+                    .noCache()
+                    .first());
+
             page.writeStart("ul", "class", "links");
                 page.writeStart("li", "class", object.equals(selected) ? "selected" : null);
                     page.writeStart("a", "href", page.originalUrl(null, object));
                         page.writeHtml(ObjectUtils.firstNonNull(
-                                state.getVisibilityLabel(),
+                                originalState.getVisibilityLabel(),
                                 page.localize(ContentRevisions.class, "action.viewLive")));
                     page.writeEnd();
                 page.writeEnd();

@@ -183,13 +183,24 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
             if (diffs) {
               $form.find('.inputContainer').removeClass('state-changed');
+              $form.find('.repeatableForm > ol > li, .repeatableForm > ul > li').removeClass('state-changed');
 
               $.each(diffs, function (id, fields) {
+                if (fields.length === 0) {
+                  return;
+                }
+                
                 var $inputs = $form.find('.objectInputs[data-object-id="' + id + '"]');
 
                 $.each(fields, function (name) {
                   $inputs.find('> .inputContainer[data-field-name="' + name + '"]').addClass('state-changed');
                 });
+                
+                var $li = $inputs.closest('li');
+
+                if ($li.parent().parent().is('.repeatableForm')) {
+                  $li.addClass('state-changed');
+                }
               });
 
               $form.trigger('content-state-differences');

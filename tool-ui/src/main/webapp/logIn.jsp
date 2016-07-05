@@ -170,7 +170,9 @@ if (wp.isFormPost()) {
     float: none;
     height: 100px;
     margin: 30px 0 0 0;
+    position: relative;
     text-align: center;
+    top: 200px;
     width: auto;
 }
 .toolTitle a img {

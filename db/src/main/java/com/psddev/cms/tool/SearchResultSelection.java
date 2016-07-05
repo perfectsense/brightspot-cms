@@ -14,6 +14,7 @@ import com.psddev.dari.db.Record;
 
 public class SearchResultSelection extends Record {
 
+    @Indexed
     private String name;
 
     @Indexed

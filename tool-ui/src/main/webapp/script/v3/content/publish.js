@@ -15,13 +15,13 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
       // Change the publish button label if scheduling.
       if ($dateInput.length === 0) {
         $publishButton.addClass('schedule');
-        $publishButton.text('Schedule');
+        $publishButton.text($publishButton.attr('data-schedule-label'));
 
       } else {
         onChange = function() {
           if ($dateInput.val()) {
             $publishButton.addClass('schedule');
-            $publishButton.text(oldDate && !$newSchedule.val() ? 'Reschedule' : 'Schedule');
+            $publishButton.text($dateInput.attr('data-schedule-label'));
 
           } else {
             $publishButton.removeClass('schedule');

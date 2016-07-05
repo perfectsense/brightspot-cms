@@ -54,7 +54,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Style definitions to pass to the CodeMirrorRte.
          */
         styles: {
-
             bold: {
                 className: 'rte2-style-bold',
                 element: 'b',
@@ -594,6 +593,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.initStyles();
             self.enhancementInit();
             self.inlineEnhancementInit();
+            self.updateLinkInit();
             self.tableInit();
             self.initRte();
             self.tableInitChangeEvent(); // must be after initRte
@@ -954,6 +954,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             rte.fromHTML(self.$el.val());
             
+            rte.historyClear();
+            
             // Turn track changes back on (if it was on)
             rte.trackSet(trackIsOn);
         },
@@ -1081,7 +1083,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     if (self.inline && item.inline === false) {
                         return;
                     }
-
                     if (item.separator) {
 
                         // Add a separator between items
@@ -2312,6 +2313,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         'id', reference.record._ref,
                         'reference', JSON.stringify(reference));
                 $options.attr('href', optionsUrl);
+                $options.attr('data-frame-post', '');
 
                 // Modify the "Edit" button in the toolbar so it will pop up the edit dialog for the enhancement
                 $edit = $enhancement.find('.rte2-enhancement-toolbar-edit');
@@ -3507,8 +3509,41 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 }
             }
         },
+        /*
+         * remove link style definition of the "a" element 
+         * with values provided from inline enhancement (RICH_TEXT_ELEMENTS variable)
+         * 
+         * @returns {undefined}
+         */
+        updateLinkInit: function(){
+            var self;
+            var removeLink;
+            var toolKey;
+                self = this;
+                
+            $.each(self.styles, function(styleKey, styleObj){
+                 if (styleObj.element === 'a' && styleKey !== 'link'){
+                     removeLink = true;
+                     return false;
+                 }
+             });
 
-        
+             if (removeLink) {
+                 $.each(self.toolbarConfig, function(toolbarKey, toolbarObj){
+                     if (toolbarObj.style === 'link'){
+                         toolKey = toolbarKey;
+                         return false;
+                     }
+                  }); 
+
+                delete self.styles.link;
+                if (toolKey !== undefined){
+                   self.toolbarConfig.splice(toolKey, 1);                    
+                }
+
+             }
+        },
+
         /*==================================================
          * Tables
          *==================================================*/
@@ -3936,6 +3971,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 text: 'Set',
                 click: function(event) {
                     event.preventDefault();
+                    self.tableEditSave = true;
                     $(this).popup('close');
                 }
             }).appendTo($controls);
@@ -3945,7 +3981,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 text: 'Cancel',
                 click: function(event) {
                     event.preventDefault();
-                    self.tableEditCancel = true;
                     $(this).popup('close');
                 }
             }).appendTo($controls);
@@ -3973,7 +4008,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.tableEditInit();
 
             // Set a flag so we only update the table cell if user clicks the save button
-            self.tableEditCancel = false;
+            self.tableEditSave = false;
             
             value = $el.html();
 
@@ -3994,12 +4029,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             self.$tableEditDiv.popup('container').one('closed', function(){
 
-                 if (self.tableEditCancel) {
-                     self.tableEditCancel = false;
-                 } else {
+                 if (self.tableEditSave) {
                      value = self.tableEditRte.toHTML();
                      $el.html(value);
                      self.rte.triggerChange();
+                } else {
+                     self.tableEditSave = false;
                  }
 
             });

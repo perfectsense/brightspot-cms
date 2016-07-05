@@ -1,7 +1,19 @@
 .repeatableForm {
+  > ol {
+    counter-reset: item;
+
+    > li {
+      > .repeatableLabel {
+        &:before {
+          content: counter(item) '. ';
+          counter-increment: item;
+        }
+      }
+    }
+  }
+
   > ol,
   > ul {
-    counter-reset: item;
     list-style-type: none;
     margin-bottom: 0;
     margin-left: 0;
@@ -26,11 +38,11 @@
         cursor: pointer;
         left: 0;
         margin: -10px -10px 10px -10px;
-        padding-left: 45px;
+        padding-left: 25px;
         padding-right: 45px;
         position: relative;
 
-        &:before {
+        &:after {
           color: rgba(0, 0, 0, 0.3);
           content: '\25bc';
           font-size: 80%;
@@ -38,17 +50,7 @@
           position: absolute;
         }
 
-        &:after {
-          content: counter(item) '.';
-          counter-increment: item;
-          left: 20px;
-          position: absolute;
-          text-align: right;
-          top: 6px;
-          width: 20px;
-        }
-
-        &:hover:before {
+        &:hover:after {
           color: rgba(0, 0, 0, 0.8);
         }
       }
@@ -82,6 +84,14 @@
         }
       }
 
+      &.state-changed {
+        border-color: @color-change;
+
+        > .repeatableLabel {
+          .background-flat(@color-change);
+        }
+      }
+
       &.collapsed:not(.expanded) {
         padding-bottom: 0;
 
@@ -89,7 +99,7 @@
           border-bottom-style: none;
           margin-bottom: 0;
 
-          &:before {
+          &:after {
             content: '\25ba';
             margin-right: 5px;
           }
@@ -109,7 +119,7 @@
           margin-bottom: 0;
           text-decoration: line-through;
 
-          &:before {
+          &:after {
             visibility: hidden;
           }
         }
@@ -289,18 +299,19 @@
         }
 
         &:before {
+          background: @color-overlay;
+          border: 2px solid white;
+          border-radius: 12px;
+          color: white;
           content: counter(@preview-counter);
-          position:absolute;
-          top:10px;
-          left:10px;
-          background:rgba(64,64,64,0.7);
-          border:2px solid white;
-          border-radius:50%;
-          color:white;
-          height: 20px;
-          width:20px;
-          text-align:center;
-          line-height:16px;
+          height: 24px;
+          left: 10px;
+          line-height: 20px;
+          min-width: 24px;
+          padding: 0 4px;
+          position: absolute;
+          text-align: center;
+          top: 10px;
         }
 
       }
@@ -549,7 +560,7 @@
           margin-bottom: 0;
           text-decoration: line-through;
 
-          &:before {
+          &:after {
             visibility: hidden;
           }
         }
@@ -624,6 +635,48 @@
 }
 
 .repeatableObjectId {
+  > ol,
+  > ul {
+    list-style-type: none;
+    margin-left: 0;
+
+    > li {
+      &:before {
+        display: inline-block;
+        height: 30px;
+        line-height: 30px;
+        min-width: 18px;
+        padding: 0 4px;
+        text-align: center;
+        vertical-align: top;
+      }
+    }
+  }
+
+  > ol {
+    counter-reset: repeatableObjectId;
+
+    > li {
+      &:before {
+        content: counter(repeatableObjectId) '.';
+        counter-increment: repeatableObjectId;
+      }
+
+      &.sortable-dragging:before {
+        counter-increment: none;
+        visibility: hidden;
+      }
+    }
+  }
+
+  > ul {
+    > li {
+      &:before {
+        content: '\25cf';
+      }
+    }
+  }
+
   > ol,
   > ul {
     margin-bottom: 0;
@@ -776,21 +829,20 @@
 
       > li {
         &:before {
-          @length-size: 20px;
-
-          .background-flat(fade(black, 60%));
-
+          background: @color-overlay;
           border: 2px solid white;
-          border-radius: @length-size;
+          border-radius: 12px;
+          color: white;
           counter-increment: listItem;
           content: counter(listItem);
-          height: @length-size;
-          line-height: @length-size;
-          position: absolute;
+          height: 24px;
           left: 10px;
+          line-height: 20px;
+          min-width: 24px;
+          padding: 0 4px;
+          position: absolute;
           text-align: center;
           top: 10px;
-          width: @length-size;
           z-index: 1;
         }
       }
@@ -869,6 +921,7 @@
 
   .addButtonContainer {
     float: left;
+    max-width: 100%;
     position: relative;
 
     > input[type=text] {
@@ -882,8 +935,9 @@
       .icon-plus;
       .icon-only;
 
+      margin-right: 0;
       position: absolute;
-      right: ((@input-height - @iconSize-default) / 2);
+      right: ((@input-height - @iconSize-default) / 2 - 5px);
       top: ((@input-height - @lineHeight-default) / 2);
       width: @iconSize-default;
     }
@@ -1024,9 +1078,6 @@
       background: white;
       border-bottom: 1px solid @color-border;
       padding: 12px 120px 12px 45px;
-      &:after {
-        top: 12px;
-      }
     }
     > .removeButton {
       top: 10px;

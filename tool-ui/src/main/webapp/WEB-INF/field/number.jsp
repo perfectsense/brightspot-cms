@@ -1,6 +1,7 @@
 <%@ page session="false" import="
 
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.content.Edit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.State,
@@ -53,5 +54,5 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 // --- Presentation ---
 
 %><div class="inputSmall">
-    <input id="<%= wp.getId() %>" name="<%= wp.h(inputName) %>" type="text" value="<%= wp.h(state.getValue(fieldName)) %>">
+    <input id="<%= wp.getId() %>" name="<%= wp.h(inputName) %>" type="text" placeholder="<%= wp.h(Edit.createPlaceholderText(wp, field)) %>" value="<%= wp.h(state.getValue(fieldName)) %>">
 </div>

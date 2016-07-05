@@ -31,7 +31,7 @@ public class SelectionsWidget extends AbstractPaginatedResultWidget<SearchResult
     @Override
     public Query<SearchResultSelection> getQuery(ToolPageContext page) {
 
-        Query<SearchResultSelection> query = Query.from(SearchResultSelection.class);
+        Query<SearchResultSelection> query = Query.from(SearchResultSelection.class).where("name != missing");
 
         ToolEntityType entityType = page.pageParam(ToolEntityType.class, TOOL_ENTITY_TYPE_PARAMETER, ToolEntityType.ANYONE);
 

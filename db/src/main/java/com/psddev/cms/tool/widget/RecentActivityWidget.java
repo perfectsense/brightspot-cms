@@ -13,6 +13,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
+import com.psddev.cms.db.PageFilter;
+import com.psddev.cms.db.Renderer;
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
@@ -21,11 +23,14 @@ import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.QueryRestriction;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.view.ViewCreator;
+import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Predicate;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.QueryFilter;
 import com.psddev.dari.db.State;
+import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PaginatedResult;
 
 public class RecentActivityWidget extends DefaultDashboardWidget {
@@ -283,8 +288,26 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                         DateTime updateDateTime = page.toUserDateTime(contentData.getUpdateDate());
                         String updateDate = page.formatUserDate(updateDateTime);
                         ToolUser updateUser = contentData.getUpdateUser();
+                        Integer embedWidth = null;
 
-                        page.writeStart("tr", "data-preview-url", permalink);
+                        if (ObjectUtils.isBlank(permalink)) {
+                            ObjectType contentStateType = contentState.getType();
+
+                            if (contentStateType != null) {
+                                Renderer.TypeModification rendererData = contentStateType.as(Renderer.TypeModification.class);
+                                int previewWidth = rendererData.getEmbedPreviewWidth();
+
+                                if (previewWidth > 0
+                                        && (!ObjectUtils.isBlank(rendererData.getEmbedPath())
+                                        || ViewCreator.findCreatorClass(content, null, PageFilter.EMBED_VIEW_TYPE, null) != null
+                                        || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, content) != null)) {
+                                    permalink = "/_preview?_embed=true&_cms.db.previewId=" + contentState.getId();
+                                    embedWidth = previewWidth;
+                                }
+                            }
+                        }
+
+                        page.writeStart("tr", "data-preview-url", permalink, "data-preview-embed-width", embedWidth);
                             page.writeStart("td", "class", "date");
                                 if (!updateDate.equals(lastUpdateDate)) {
                                     page.writeHtml(updateDate);

@@ -71,7 +71,8 @@ function($, bsp_utils) {
             // @param {Boolean} numbered
             // true = overlay numbers on top of the tiles
             // false = do not overlay numbers on top of the tiles
-            numbered: false
+            numbered: false,
+            vertical: false
 
         },
 
@@ -82,6 +83,7 @@ function($, bsp_utils) {
         classTileActive: 'carousel-tile-active',
         classNavHide: 'carousel-nav-hide',
         classNumbered: 'carousel-numbered',
+        classVertical: 'carousel-vertical',
 
         /**
          * Names for custom events
@@ -162,7 +164,11 @@ function($, bsp_utils) {
             if (self.settings.numbered) {
                 self.dom.carousel.addClass(self.classNumbered);
             }
-
+            // Add the vertical class to the carousel if option is true
+            if (self.settings.vertical) {
+                self.dom.carousel.addClass(self.classVertical);
+            }
+            
             // Save pointers to the elements we will use later
             self.dom.previous = self.dom.carousel.find('.carousel-nav-previous');
             self.dom.next = self.dom.carousel.find('.carousel-nav-next');
@@ -253,7 +259,7 @@ function($, bsp_utils) {
             var layout = self._getLayout();
 
             // Adjust the viewport position to account for a new tile at the beginning
-            var offset = layout.tilesOffset + layout.tileWidth;
+            var offset = layout.tilesOffset + ((self.settings.vertical) ?  layout.tileHeight : layout.tileWidth);
             
             // Turn off transitions for the offset temporarily.
             // When carousel.update() is called again transitions will turn on again.
@@ -398,7 +404,12 @@ function($, bsp_utils) {
             // Sometimes the tilesOffset value can get out of whack
             // (for example if user clicks nav links in quick succession)
             // So re-baseline on a tile border if necessary
-            layout.tilesOffset -= (layout.tilesOffset % layout.tileWidth);
+
+            if (self.settings.vertical) {
+                layout.tilesOffset -= (layout.tilesOffset % layout.tileHeight);
+            }else {
+                layout.tilesOffset -= (layout.tilesOffset % layout.tileWidth);
+            }
 
             var newOffset = 0;
 
@@ -421,16 +432,27 @@ function($, bsp_utils) {
             }
 
             // Calculate the new margin-left value
-            newOffset = layout.tilesOffset + (moveTiles * layout.tileWidth);
+            if (self.settings.vertical) {
+                newOffset = layout.tilesOffset + (moveTiles * layout.tileHeight);
+            }else {
+                newOffset = layout.tilesOffset + (moveTiles * layout.tileWidth);
+            }
 
             // Don't move too far
             if (newOffset < 0) {
                 newOffset = 0;
             }
-
-            // Don't move too far
-            if (newOffset > layout.tilesWidth) {
-                newOffset = layout.tilesOffset;
+            
+            if (self.settings.vertical) {
+                // Don't move too far
+                if (newOffset > layout.tilesHeight) {
+                    newOffset = layout.tilesOffset;
+                }
+            }
+            else {
+                if (newOffset > layout.tilesWidth) {
+                    newOffset = layout.tilesOffset;
+                }        
             }
 
             self._moveTo(newOffset);
@@ -463,10 +485,16 @@ function($, bsp_utils) {
          */
         _setOffset: function(offset) {
             
-            var self = this;
+            var self = this,
+                offsetDirection = "margin-left";
+            
+            if(self.settings.vertical){
+                offsetDirection = "margin-top";
+            }
             
             // Set the left offset to move the tiles to the left within the viewport
-            self.dom.tiles.css('margin-left', '-' + offset + 'px');
+            
+            self.dom.tiles.css(offsetDirection, '-' + offset + 'px');
         },
 
         
@@ -518,16 +546,25 @@ function($, bsp_utils) {
         goToTile: function(n, center) {
             
             var self = this;
-            
+          
             // First get some information about our tiles
             var layout = self._getLayout();
 
             // Now figure out the offset to get to this tile
-            var offset = (n-1) * layout.tileWidth;
+            var offset;
+            if(self.settings.vertical){
+                offset = (n-1) * layout.tileHeight; 
+            }else {
+                offset = (n-1) * layout.tileWidth;
+            }
 
             // Adjust to center the tile in the viewport?
             if (center) {
-                offset = offset - (layout.viewportWidth / 2) + (layout.tileWidth / 2);
+                if(self.settings.vertical){
+                    offset = offset - (layout.viewportHeight / 2) + (layout.tileHeight / 2);
+                }else {
+                    offset = offset - (layout.viewportWidth / 2) + (layout.tileWidth / 2);
+                }
                 if (offset < 0) {
                     offset = 0;
                 }
@@ -567,12 +604,12 @@ function($, bsp_utils) {
             var layout = self._getLayout();
             
             // Now figure out the offset to get to the tile we want
-            var tileOffset = (n-1) * layout.tileWidth;
+            var tileOffset = (n-1) * ((self.settings.vertical)? layout.tileHeight : layout.tileWidth);
 
             // Determine the distance from the current offset to the tile we want
             var offsetDiff = tileOffset - layout.tilesOffset;
 
-            var isVisible = Boolean((offsetDiff > 0) && (offsetDiff + layout.tileWidth < layout.viewportWidth));
+            var isVisible = (self.settings.vertical) ? Boolean((offsetDiff > 0) && (offsetDiff + layout.tileHeight < layout.viewportHeight)): Boolean((offsetDiff > 0) && (offsetDiff + layout.tileWidth < layout.viewportWidth));
             
             return isVisible;
         },
@@ -673,24 +710,27 @@ function($, bsp_utils) {
             layout = {
 
                 viewportWidth: self.dom.viewport.width(),
+                viewportHeight: self.dom.viewport.height(),
 
-                // Get the total width of all tiles
+                // Get the total width and height of all tiles
                 tilesWidth: self.dom.tiles.width(),
+                tilesHeight: self.dom.tiles.height(),
 
-                // Get width of first tile including margin
+                // Get width and height of first tile including margin
                 // (note we assume all tiles will have same width)
                 tileWidth: self.dom.tiles.find('> .carousel-tile:first-child').outerWidth(true),
+                tileHeight: self.dom.tiles.find('> .carousel-tile:first-child').outerHeight(true),
+
 
                 // Get the current left offset of the tiles within the viewport
-                tilesOffset: Math.abs(parseInt(self.dom.tiles.css('margin-left'), 10)) || 0
+                tilesOffset: (self.settings.vertical) ? Math.abs(parseInt(self.dom.tiles.css('margin-top'), 10)) : Math.abs(parseInt(self.dom.tiles.css('margin-left'), 10)) || 0
 
             };
-
             // Calculate how many tiles fit within the viewport
-            layout.tilesPerViewport = Math.floor( layout.viewportWidth / layout.tileWidth );
+            layout.tilesPerViewport = (self.settings.vertical) ? Math.floor( layout.viewportHeight / layout.tileHeight ) : Math.floor( layout.viewportWidth / layout.tileWidth );
 
             // Determine if we are already at the maximum / minimum range of movement
-            layout.atMax = Boolean(layout.tilesWidth - layout.tilesOffset <= layout.viewportWidth);
+            layout.atMax = Boolean((self.settings.vertical) ? layout.tilesHeight - layout.tilesOffset <= layout.viewportHeight : layout.tilesWidth - layout.tilesOffset <= layout.viewportWidth);
             layout.atMin = Boolean(layout.tilesOffset <= 0);
 
             return layout;

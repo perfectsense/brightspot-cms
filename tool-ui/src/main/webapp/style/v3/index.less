@@ -550,9 +550,7 @@
   }
 
   [name='action-publish'] {
-    .widget-publishing[data-publishable] & {
-      margin-bottom: 5px;
-    }
+    margin-bottom: 5px;
 
     & {
       .button-color(@color-publish);
@@ -565,25 +563,12 @@
 }
 
 .widget-publishingExtra {
-  bottom: 26px;
   overflow: hidden;
-  position: absolute;
-  right: 20px;
-
-  .widget-publishing[data-publishable] & {
-    bottom: auto;
-    position: static;
-    right: auto;
-  }
 
   &-left,
   &-right {
     list-style-type: none;
     margin: 0;
-
-    .widget-publishing[data-publishable] & {
-      margin-top: 15px;
-    }
   }
 
   &-left {
@@ -592,6 +577,13 @@
 
   &-right {
     float: right;
+  }
+}
+
+.widget-publishingPublish + .widget-publishingExtra {
+  .widget-publishingExtra-left,
+  .widget-publishingExtra-right {
+    margin-top: 15px;
   }
 }
 
@@ -854,11 +846,6 @@ form[data-type='com.psddev.cms.db.ContentType'] {
   .icon:before {
     display: none !important;
   }
-}
-
-.noToolUser .toolTitle {
-  position: relative;
-  top: 200px;
 }
 
 .widget-logIn {
