@@ -196,18 +196,14 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
     }
   });
 
-  bsp_utils.onDomInsert(document, '.contentForm', {
-    insert: function(form) {
+  bsp_utils.onDomInsert(document, '.contentForm[data-rtc-content-id]', {
+    insert: function (form) {
+      var $form = $(form);
+      var contentId = $form.attr('data-rtc-content-id');
 
-      var $form = $(form),
-          contentId = $form.attr('data-rtc-content-id');
-
-      // then restore the others
       rtc.restore('com.psddev.cms.tool.page.content.OpenContentState', {
         'contentId': contentId
       }, function() {
-
-        // establish an open content event first
         rtc.execute('com.psddev.cms.tool.page.content.OpenContentAction', {
           'contentId': contentId
         });
