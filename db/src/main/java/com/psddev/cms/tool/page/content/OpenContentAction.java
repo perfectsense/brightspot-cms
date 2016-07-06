@@ -10,7 +10,6 @@ class OpenContentAction implements RtcAction {
 
     @Override
     public void execute(Map<String, Object> data, UUID userId, UUID sessionId) {
-
         UUID contentId = ObjectUtils.to(UUID.class, data.get("contentId"));
 
         OpenContent.save(userId, sessionId, contentId);

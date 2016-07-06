@@ -11,9 +11,10 @@ class OpenContentState implements RtcState {
     @Override
     public Iterable<?> create(Map<String, Object> data) {
         return Query.from(OpenContent.class)
-            .where("contentId = ?", data.get("contentId"))
-            .selectAll().stream()
-            .filter(o -> !o.isClosed())
-            .collect(Collectors.toList());
+                .where("contentId = ?", data.get("contentId"))
+                .selectAll()
+                .stream()
+                .filter(o -> !o.isClosed())
+                .collect(Collectors.toList());
     }
 }

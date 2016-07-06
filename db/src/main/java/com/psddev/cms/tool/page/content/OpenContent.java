@@ -16,7 +16,7 @@ public class OpenContent extends Record implements RtcEvent {
     @Indexed
     private UUID contentId;
 
-    private boolean closed = false;
+    private boolean closed;
 
     public UUID getUserId() {
         return userId;
@@ -58,7 +58,6 @@ public class OpenContent extends Record implements RtcEvent {
 
     @Override
     public void onDisconnect() {
-
         setClosed(true);
         saveImmediately();
 
