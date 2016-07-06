@@ -144,6 +144,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
     var closed = data.closed;
     var $publishingHeading = $('.contentForm[data-content-id="' + contentId + '"] .widget-publishing > h1');
     var $message = $publishingHeading.find('> .OpenContentMessage');
+    var $viewers;
 
     if ($message.length === 0) {
       var $noViewers = $('<div/>', {
@@ -151,20 +152,26 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
         html: $publishingHeading.html()
       });
       
-      var $viewers = $('<div/>', {
+      $viewers = $('<div/>', {
         'class': 'OpenContentMessage-viewers'
       });
-      
-      $publishingHeading.html($('<div/>', {
+
+      $message = $('<div/>', {
         'class': 'OpenContentMessage',
         html: [
           $noViewers,
           $viewers
         ]
-      }));
+      });
+      
+      $message.append($noViewers);
+      $message.append($viewers);
+      $publishingHeading.html($message);
+      
+    } else {
+      $viewers = $message.find('> .OpenContentMessage-viewers');
     }
 
-    var $viewers = $message.find('> .OpenContentMessage-viewers')
     var $viewer = $viewers.find('> .OpenContentMessage-viewer[data-user-id="' + userId + '"]');
 
     if ($viewer.length > 0) {
@@ -187,7 +194,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
 
       $viewers.append($viewer);
     }
-    
+
     if ($viewers.find('> .OpenContentMessage-viewer:not([data-closed])').length > 0) {
       $message.attr('data-viewers', true);
       
