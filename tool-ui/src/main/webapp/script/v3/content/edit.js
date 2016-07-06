@@ -149,33 +149,62 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
   });
 
   rtc.receive('com.psddev.cms.tool.page.content.OpenContentBroadcast', function(data) {
+    var userId = data.userId;
+    var avatarHtml = data.avatarHtml;
+    var contentId = data.contentId;
+    var closed = data.closed;
+    var $publishingHeading = $('.contentForm[data-content-id="' + contentId + '"] .widget-publishing > h1');
+    var $message = $publishingHeading.find('> .OpenContentMessage');
 
-    var userId = data['userId'],
-        contentId = data['contentId'],
-        closed = data['closed'],
-        avatarHtml = data['avatarHtml'];
+    if ($message.length === 0) {
+      var $noViewers = $('<div/>', {
+        'class': 'OpenContentMessage-noViewers',
+        html: $publishingHeading.html()
+      });
+      
+      var $viewers = $('<div/>', {
+        'class': 'OpenContentMessage-viewers'
+      });
+      
+      $publishingHeading.html($('<div/>', {
+        'class': 'OpenContentMessage',
+        html: [
+          $noViewers,
+          $viewers
+        ]
+      }));
+    }
 
-    $('.toolViewers[data-content-id="' + contentId + '"]').each(function() {
-      var $widget = $(this),
-          $viewer = $widget.find('.toolViewer[data-user-id="' + userId + '"]');
+    var $viewers = $message.find('> .OpenContentMessage-viewers')
+    var $viewer = $viewers.find('> .OpenContentMessage-viewer[data-user-id="' + userId + '"]');
 
-      if ($viewer.size() > 0) {
-        $viewer.toggleClass('viewerClosed', closed);
+    if ($viewer.length > 0) {
+      if (closed) {
+        $viewer.attr('data-closed', true);
+        
+      } else {
+        $viewer.removeAttr('data-closed');
       }
+      
+    } else if (!closed) {
+      $viewer = $('<div/>', {
+        'class': 'OpenContentMessage-viewer',
+        'data-user-id': userId,
+        html: avatarHtml,
+        css: {
+          'background-color': color_utils.generateFromHue(color_utils.changeHue(Math.random()))
+        }
+      });
 
-      if ($viewer.size() === 0 && !closed) {
-
-        $viewer = $('<div />', {
-          'class': 'toolViewer',
-          'data-user-id': userId,
-          'html': avatarHtml
-        });
-
-        $widget.append($viewer);
-      }
-
-      $widget.toggleClass('hasViewers', $widget.find('.toolViewer').not('.viewerClosed').size() > 0);
-    });
+      $viewers.append($viewer);
+    }
+    
+    if ($viewers.find('> .OpenContentMessage-viewer:not([data-closed])').length > 0) {
+      $message.attr('data-viewers', true);
+      
+    } else {
+      $message.removeAttr('data-viewers');
+    }
   });
 
   bsp_utils.onDomInsert(document, '.contentForm', {
@@ -255,22 +284,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
 
         return true;
       });
-    }
-  });
-
-  bsp_utils.onDomInsert(document, '.toolViewer', {
-    'insert': function(viewer) {
-      var $viewer = $(viewer),
-          userId = $viewer.attr('data-user-id'),
-          color = colorsByUuid[userId];
-
-      if (!color) {
-
-        color = color_utils.generateFromHue(color_utils.changeHue(Math.random()));
-        colorsByUuid[userId] = color;
-      }
-
-      $viewer.css('background-color', color);
     }
   });
 

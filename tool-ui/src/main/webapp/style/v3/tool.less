@@ -128,6 +128,7 @@
     .link {
       display: block;
       height: 100%;
+      text-decoration: none;
       width: 100%;
     }
   }
@@ -370,38 +371,6 @@
 
   > h1 {
     display: none;
-  }
-}
-
-.toolViewers {
-
-  overflow: hidden;
-
-  .toolViewer {
-    -webkit-transition: width 0.5s, margin-left 0.5s;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    overflow: hidden;
-    display: block;
-    float: left;
-    border-radius: 100%;
-
-    &:first-child {
-      margin-left: 0;
-    }
-
-    &.viewerClosed {
-      width: 0;
-      margin-left: 0;
-      margin-right: 0;
-    }
-
-    .ToolUserAvatar {
-      height: 30px;
-      font-size: 12px;
-      line-height: 30px;
-      width: 30px;
-    }
   }
 }
 

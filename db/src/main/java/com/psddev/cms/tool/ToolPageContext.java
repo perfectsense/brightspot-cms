@@ -1675,17 +1675,6 @@ public class ToolPageContext extends WebPageContext {
         return formatUserDateTimeWith(dateTime, "hh:mm aa");
     }
 
-    public void writeToolViewers(Object object) throws IOException {
-
-        State state = State.getInstance(object);
-        if (state == null) {
-            return;
-        }
-
-        writeStart("div", "class", "toolViewers", "data-content-id", state.getId().toString());
-        writeEnd();
-    }
-
     /**
      * Writes the tool header with the given {@code title}.
      *

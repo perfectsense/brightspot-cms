@@ -594,8 +594,6 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     wp.writeEnd();
                 wp.writeEnd();
 
-                wp.writeToolViewers(editingState);
-
                 if (workStream != null) {
                     long skipped = workStream.countSkipped(user);
                     long complete = workStream.countComplete();
