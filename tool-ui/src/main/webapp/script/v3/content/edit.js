@@ -1,7 +1,5 @@
 define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_utils, rtc, color_utils) {
 
-  var colorsByUuid = { };
-
   rtc.receive('com.psddev.cms.tool.page.content.EditFieldUpdateBroadcast', function(data) {
     var userId = data.userId;
     var userName = data.userName;
@@ -20,20 +18,11 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
 
     var contentId = data.contentId;
 
-    $('.toolViewers[data-content-id="' + contentId + '"] .toolViewer[data-user-id="' + userId + '"]').removeClass('viewerEditing');
-
-    var updatedEditingFlags = false;
-
     $.each(fieldNamesByObjectId, function (objectId, fieldNames) {
       var $inputs = $('form[data-rtc-content-id="' + contentId + '"] .objectInputs[data-id="' + objectId + '"]');
 
       if ($inputs.length === 0) {
         return;
-      }
-
-      if (!updatedEditingFlags) {
-        $('.toolViewers[data-content-id="' + contentId + '"] .toolViewer[data-user-id="' + userId + '"]').addClass('viewerEditing');
-        updatedEditingFlags = true;
       }
 
       $.each(fieldNames, function (i, fieldName) {
