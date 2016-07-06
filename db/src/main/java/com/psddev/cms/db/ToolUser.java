@@ -1,5 +1,7 @@
 package com.psddev.cms.db;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -33,10 +35,13 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
+import com.psddev.dari.util.HtmlWriter;
+import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.Password;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StorageItem;
+import com.psddev.dari.util.StringUtils;
 
 /** User that uses the CMS and other related tools. */
 @ToolUi.DefaultSortField("name")
@@ -1006,6 +1011,53 @@ public class ToolUser extends Record implements ToolEntity {
         }
 
         return null;
+    }
+
+    public String createAvatarHtml() {
+        StringWriter string = new StringWriter();
+        HtmlWriter html = new HtmlWriter(string);
+
+        try {
+            String name = getName();
+
+            html.writeStart("span", "class", "ToolUserAvatar", "title", name);
+            {
+                StringBuilder initials = new StringBuilder();
+                String[] nameParts = name.split("\\s+");
+
+                for (int i = 0, max = Math.min(nameParts.length, 2); i < max; ++ i) {
+                    initials.append(nameParts[i].substring(0, 1).toUpperCase(Locale.ENGLISH));
+                }
+
+                html.writeHtml(initials);
+
+                StorageItem avatar = getAvatar();
+
+                if (avatar != null) {
+                    html.writeElement("img",
+                            "src", ImageEditor.Static.resize(ImageEditor.Static.getDefault(), avatar, null, 100, 100).getPublicUrl());
+
+                } else {
+                    String email = getEmail();
+
+                    if (!ObjectUtils.isBlank(email)) {
+                        String hash = StringUtils.hex(StringUtils.md5(email.trim().toLowerCase(Locale.ENGLISH)));
+
+                        html.writeElement("img",
+                                "src", StringUtils.addQueryParameters(
+                                        "https://www.gravatar.com/avatar/" + hash,
+                                        "s", 100,
+                                        "d", "blank"));
+                    }
+                }
+            }
+            html.writeEnd();
+
+            return string.toString();
+
+        } catch (IOException error) {
+            throw new IllegalStateException(error);
+        }
     }
 
     public static class LoginToken extends Record {
