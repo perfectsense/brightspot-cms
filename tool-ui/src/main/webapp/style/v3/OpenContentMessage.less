@@ -1,23 +1,26 @@
 .OpenContentMessage {
+    height: 36px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 1s;
+
+    &-viewers,
+    &-noViewers {
+        backface-visibility: hidden;
+        left: 0;
+        position: absolute;
+        top: 0;
+    }
+
     &-viewers {
-        display: none;
         height: 25px;
         margin: 6px 0 0 -8px;
         overflow: hidden;
-    }
-
-    &-noViewers {
-        display: block;
+        transform: rotateX(180deg);
     }
 
     &[data-viewers] {
-        .OpenContentMessage-viewers {
-            display: block;
-        }
-
-        .OpenContentMessage-noViewers {
-            display: none;
-        }
+        transform: rotateX(180deg);
     }
 
     &-viewer {
@@ -28,6 +31,9 @@
         width: 25px;
 
         .ToolUserAvatar {
+            .icon;
+            .icon-action-edit;
+
             background: transparent;
             display: block;
             height: 25px;
@@ -37,21 +43,22 @@
             text-shadow: none;
             width: 25px;
 
-            [data-edits] & {
-                .icon;
-                .icon-action-edit;
+            &:before {
+                background: @color-change;
+                border-radius: 50%;
+                bottom: -4px;
+                color: black;
+                line-height: 18px;
+                opacity: 0;
+                position: absolute;
+                right: -6px;
+                transform: scale(.5);
+                transition: opacity .5s;
+                z-index: 1;
+            }
 
-                &:before {
-                    background: @color-change;
-                    border-radius: 50%;
-                    bottom: -4px;
-                    color: black;
-                    line-height: 18px;
-                    position: absolute;
-                    right: -6px;
-                    transform: scale(.5);
-                    z-index: 1;
-                }
+            [data-edits] &:before {
+                opacity: 1;
             }
         }
     }
