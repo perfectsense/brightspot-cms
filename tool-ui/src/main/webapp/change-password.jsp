@@ -93,24 +93,6 @@ wp.writeHeader(null, false);
 %>
 
 <style type="text/css">
-.toolHeader {
-    background-color: transparent;
-    border-style: none;
-}
-.toolTitle {
-    float: none;
-    height: 100px;
-    margin: 30px 0 0 0;
-    text-align: center;
-}
-.toolFooter {
-    border-style: none;
-    text-align: center;
-}
-.toolFooter .build {
-    background-position: top center;
-    text-align: center;
-}
 .widget {
     margin: 0 auto;
     width: 30em;

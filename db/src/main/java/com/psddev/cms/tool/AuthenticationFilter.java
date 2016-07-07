@@ -449,6 +449,10 @@ public class AuthenticationFilter extends AbstractFilter {
         }
 
         public static Preview getCurrentPreview(HttpServletRequest request) {
+            if (getUser(request) == null) {
+                return null;
+            }
+
             Preview preview;
 
             if (Boolean.TRUE.equals(request.getAttribute(PREVIEW_CHECKED_ATTRIBUTE))) {

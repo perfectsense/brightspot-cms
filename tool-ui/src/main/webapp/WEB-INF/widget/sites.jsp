@@ -36,8 +36,11 @@ Site owner = siteData.getOwner();
 Set<Site> consumers = siteData.getConsumers();
 
 if (JspWidget.isUpdating(wp)) {
-    owner = Database.Static.findById(wp.getDatabase(), Site.class, wp.uuidParam(ownerName));
-    siteData.setOwner(owner);
+
+    if (owner == null || wp.hasPermission(owner.getPermissionId())) {
+        owner = Database.Static.findById(wp.getDatabase(), Site.class, wp.uuidParam(ownerName));
+        siteData.setOwner(owner);
+    }
 
     String access = wp.param(accessName);
     consumers.clear();
@@ -77,12 +80,20 @@ String access = siteData.isGlobal() ? "all" :
 <label for="<%= wp.createId() %>">
     <% wp.writeHtml(wp.localize("com.psddev.cms.tool.widget.Sites", "label.owner")); %>
 </label><br>
+
+<% if (owner != null && !wp.hasPermission(owner.getPermissionId())) {%>
+    <div><%= wp.getObjectLabel(owner) %></div>
+
+<% } else {%>
 <select class="toggleable" data-root=".widget" name="<%= ownerName %>" style="width: 100%;">
     <option<%= owner == null ? " selected" : "" %> value="" data-show=".siteItem">None</option>
     <% for (Site site : allSites) { %>
-        <option<%= site.equals(owner) ? " selected" : "" %> value="<%= site.getId() %>" data-show=".siteItem:not(.siteItem-<%= site.getId() %>)" data-hide=".siteItem-<%= site.getId() %>"><%= wp.objectLabel(site) %></option>
+        <% if (wp.hasPermission(site.getPermissionId())) { %>
+            <option<%= site.equals(owner) ? " selected" : "" %> value="<%= site.getId() %>" data-show=".siteItem:not(.siteItem-<%= site.getId() %>)" data-hide=".siteItem-<%= site.getId() %>"><%= wp.objectLabel(site) %></option>
+        <% } %>
     <% } %>
 </select>
+<% } %>
 
 <label for="<%= wp.createId() %>">
     <% wp.writeHtml(wp.localize("com.psddev.cms.tool.widget.Sites", "label.access")); %>
@@ -100,9 +111,14 @@ String access = siteData.isGlobal() ? "all" :
 </select>
 <ul id="<%= sitesContainerId %>">
     <% for (Site site : allSites) { %>
-        <li class="siteItem siteItem-<%= site.getId() %>">
-            <input<%= consumers.contains(site) ? " checked" : "" %> id="<%= wp.createId() %>" name="<%= consumerIdName %>" type="checkbox" value="<%= site.getId() %>">
-            <label for="<%= wp.getId() %>"><%= wp.objectLabel(site) %></label>
-        </li>
+        <% if (wp.hasPermission(site.getPermissionId())) { %>
+            <li class="siteItem siteItem-<%= site.getId() %>">
+                <input<%= consumers.contains(site) ? " checked" : "" %> id="<%= wp.createId() %>" name="<%= consumerIdName %>" type="checkbox" value="<%= site.getId() %>">
+                <label for="<%= wp.getId() %>"><%= wp.objectLabel(site) %></label>
+            </li>
+
+        <% } else if (consumers.contains(site)) { %>
+            <input name="<%= consumerIdName %>" type="hidden" value="<%= site.getId() %>">
+        <% } %>
     <% } %>
 </ul>

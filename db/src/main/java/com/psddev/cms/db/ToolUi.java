@@ -79,6 +79,7 @@ public class ToolUi extends Modification<Object> {
     private String referenceableViaClassName;
     private Boolean readOnly;
     private boolean richText;
+    private boolean richTextInline;
     private String richTextElementTagName;
     private Set<String> richTextElementClassNames;
     private boolean secret;
@@ -551,6 +552,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setRichText(boolean richText) {
         this.richText = richText;
+    }
+
+    public boolean isRichTextInline() {
+        return richTextInline;
+    }
+
+    public void setRichTextInline(boolean richTextInline) {
+        this.richTextInline = richTextInline;
     }
 
     public String getRichTextElementTagName() {
@@ -1624,7 +1633,8 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target field should offer rich-text editing
-     * options.
+     * options. Optionally enable block elements by setting {@code inline}
+     * to {@code} false.
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(RichTextProcessor.class)
@@ -1632,6 +1642,7 @@ public class ToolUi extends Modification<Object> {
     @Target({ ElementType.FIELD, ElementType.METHOD })
     public @interface RichText {
         boolean value() default true;
+        boolean inline() default true;
     }
 
     private static class RichTextProcessor implements ObjectField.AnnotationProcessor<RichText> {
@@ -1639,6 +1650,7 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, RichText annotation) {
             field.as(ToolUi.class).setRichText(annotation.value());
+            field.as(ToolUi.class).setRichTextInline(annotation.inline());
         }
     }
 

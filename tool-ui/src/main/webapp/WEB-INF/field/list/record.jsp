@@ -6,6 +6,7 @@ com.psddev.cms.db.Renderer,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.PageWriter,
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.content.Edit,
 
 com.psddev.dari.db.Database,
 com.psddev.dari.db.Query,
@@ -622,7 +623,11 @@ if (!isValueExternal) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
-                boolean expanded = field.as(ToolUi.class).isExpanded() || itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
+
+                boolean expanded = field.as(ToolUi.class).isExpanded()
+                        || itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded())
+                        || Edit.isWorkInProgressRestored(wp, item);
+
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
                 String weightFieldName = weightedTypesandFieldsMap.get(itemType);

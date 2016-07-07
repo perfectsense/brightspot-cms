@@ -107,7 +107,7 @@ if (validValues != null) {
             "data-rte-tags", ObjectUtils.isBlank(rteTags) ? null : ObjectUtils.toJson(rteTags),
             "data-suggested-maximum", suggestedMaximum != null ? suggestedMaximum.intValue() : null,
             "data-suggested-minimum", suggestedMinimum != null ? suggestedMinimum.intValue() : null,
-            "data-inline", true,
+            "data-inline", ui.isRichTextInline(),
             "data-user", wp.getObjectLabel(wp.getUser()),
             "data-user-id", wp.getUser() != null ? wp.getUser().getId() : null,
             "data-first-draft", Boolean.TRUE.equals(request.getAttribute("firstDraft")),

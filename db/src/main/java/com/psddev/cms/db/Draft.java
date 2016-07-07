@@ -198,7 +198,7 @@ public class Draft extends Content {
         } else if (value instanceof Collection) {
             return ((Collection<Object>) value)
                     .stream()
-                    .map(Draft::minifyValue)
+                    .map(v -> minifyValue(v))
                     .collect(Collectors.toList());
 
         } else {

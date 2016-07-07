@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -36,6 +37,7 @@ public class MetadataAfterSaveTest {
         processor.afterSave(null);
     }
 
+    @Ignore
     @Test
     public void imageStorageItem() throws URISyntaxException, IOException {
         Map<String, Object> metadata = new HashMap<>();

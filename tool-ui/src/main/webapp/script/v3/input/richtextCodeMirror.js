@@ -7429,7 +7429,8 @@ define([
                                 matchStyleObj = true;
                             }
                             break;
-
+                        case 'ol':
+                        case 'ul':
                         case 'br':
                             matchStyleObj = true;
                             break;

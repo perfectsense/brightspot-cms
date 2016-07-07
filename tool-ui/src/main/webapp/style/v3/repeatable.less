@@ -84,6 +84,14 @@
         }
       }
 
+      &.state-changed {
+        border-color: @color-change;
+
+        > .repeatableLabel {
+          .background-flat(@color-change);
+        }
+      }
+
       &.collapsed:not(.expanded) {
         padding-bottom: 0;
 

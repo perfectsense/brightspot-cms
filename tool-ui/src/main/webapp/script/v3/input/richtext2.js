@@ -54,7 +54,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Style definitions to pass to the CodeMirrorRte.
          */
         styles: {
-
             bold: {
                 className: 'rte2-style-bold',
                 element: 'b',
@@ -594,6 +593,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.initStyles();
             self.enhancementInit();
             self.inlineEnhancementInit();
+            self.updateLinkInit();
             self.tableInit();
             self.initRte();
             self.tableInitChangeEvent(); // must be after initRte
@@ -1083,7 +1083,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     if (self.inline && item.inline === false) {
                         return;
                     }
-
                     if (item.separator) {
 
                         // Add a separator between items
@@ -3510,8 +3509,41 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 }
             }
         },
+        /*
+         * remove link style definition of the "a" element 
+         * with values provided from inline enhancement (RICH_TEXT_ELEMENTS variable)
+         * 
+         * @returns {undefined}
+         */
+        updateLinkInit: function(){
+            var self;
+            var removeLink;
+            var toolKey;
+                self = this;
+                
+            $.each(self.styles, function(styleKey, styleObj){
+                 if (styleObj.element === 'a' && styleKey !== 'link'){
+                     removeLink = true;
+                     return false;
+                 }
+             });
 
-        
+             if (removeLink) {
+                 $.each(self.toolbarConfig, function(toolbarKey, toolbarObj){
+                     if (toolbarObj.style === 'link'){
+                         toolKey = toolbarKey;
+                         return false;
+                     }
+                  }); 
+
+                delete self.styles.link;
+                if (toolKey !== undefined){
+                   self.toolbarConfig.splice(toolKey, 1);                    
+                }
+
+             }
+        },
+
         /*==================================================
          * Tables
          *==================================================*/
