@@ -17,9 +17,11 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
     }
 
     var contentId = data.contentId;
+    var $form = $('form[data-rtc-content-id="' + contentId + '"]');
+    var hasEdits;
 
     $.each(fieldNamesByObjectId, function (objectId, fieldNames) {
-      var $inputs = $('form[data-rtc-content-id="' + contentId + '"] .objectInputs[data-id="' + objectId + '"]');
+      var $inputs = $form.find('.objectInputs[data-id="' + objectId + '"]');
 
       if ($inputs.length === 0) {
         return;
@@ -37,6 +39,8 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
         });
 
         if (!nested) {
+          hasEdits = true;
+          
           $container.addClass('inputContainer-pending');
 
           $container.find('> .inputLabel').after($('<div/>', {
@@ -63,6 +67,13 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function($, bsp_ut
         }
       });
     });
+    
+    if (hasEdits) {
+      $form.attr('data-edits', true);
+      
+    } else {
+      $form.removeAttr('data-edits');
+    }
   });
 
   rtc.receive('com.psddev.cms.tool.page.content.PublishBroadcast', function(data) {

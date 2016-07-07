@@ -36,6 +36,23 @@
             line-height: 25px;
             text-shadow: none;
             width: 25px;
+
+            [data-edits] & {
+                .icon;
+                .icon-action-edit;
+
+                &:before {
+                    background: @color-change;
+                    border-radius: 50%;
+                    bottom: -4px;
+                    color: black;
+                    line-height: 18px;
+                    position: absolute;
+                    right: -6px;
+                    transform: scale(.5);
+                    z-index: 1;
+                }
+            }
         }
     }
 }
