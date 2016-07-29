@@ -1785,8 +1785,23 @@ public class PageFilter extends AbstractFilter {
 
             if (entry != null) {
                 String path = absoluteUrl.substring(entry.getKey().length() - 1);
-                if (path.length() == 0) {
+
+                // In most cases the char count of 'absoluteUrl' will be longer than the char count of 'entry.getKey()'.
+                // However, that is not the case for home page of a site that has URL path it
+                // (for example, a site whose base site URL is https://www.example.com/siteone, instead of
+                //  https://siteone.example.com).
+                // Therefore, an extra checking is needed on the conditional statement below to avoid a slash
+                // from being added at the end.
+
+                if (path.length() == 0
+                        &&
+                        (absoluteUrl.length() > entry.getKey().length()
+                            ||
+                         !Query.from(CmsTool.class).first().isRemoveTrailingSlashes())) {
                     fixPath(request, servletPath + "/");
+
+                } else if ("/".equals(path) && !"/".equals(servletPath) && Query.from(CmsTool.class).first().isRemoveTrailingSlashes()) {
+                    fixPath(request, servletPath.substring(0, servletPath.length() - 1));
                 }
 
                 site = Query.from(Site.class).where("_id = ?", entry.getValue()).first();
