@@ -13,6 +13,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.psddev.cms.view.ViewBinding;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.IoUtils;
@@ -20,6 +21,8 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 import com.psddev.dari.util.TypeReference;
+
+@ViewBinding(value = ExternalContentViewModel.class, types = RichTextViewBuilder.REFERENCE_VIEW_TYPE)
 
 /**
  * @see <a href="http://oembed.com/">oEmbed Specification</a>
