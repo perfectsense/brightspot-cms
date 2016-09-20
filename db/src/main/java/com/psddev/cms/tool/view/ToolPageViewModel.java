@@ -1,7 +1,9 @@
 package com.psddev.cms.tool.view;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Map;
 
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.view.ViewModel;
@@ -32,5 +34,18 @@ public abstract class ToolPageViewModel<M> extends ViewModel<M> {
         }
 
         return newDelegate.toString();
+    }
+
+    /**
+     * Invokes {@link ToolPageContext#localize(Object, Map, String)}, and returns a
+     * localized String value
+     */
+    public String localize(Object object, Map<String, Object> contextOverrides, String string) {
+        try {
+            return page.localize(object, contextOverrides, string);
+        } catch (IOException e) {
+            // Ignore.
+        }
+        return null;
     }
 }
