@@ -34,7 +34,12 @@ java.util.Set,
 java.util.TreeSet
 " %>
 <%@ page import="com.psddev.dari.util.StringUtils" %>
-<%@ page import="com.psddev.dari.db.DatabaseEnvironment" %><%
+<%@ page import="
+com.psddev.dari.db.DatabaseEnvironment,
+com.psddev.cms.tool.DashboardWidget,
+com.psddev.dari.util.ClassFinder,
+java.lang.reflect.Modifier,
+com.psddev.dari.util.TypeDefinition" %><%
 
 // --- Logic ---
 
@@ -166,6 +171,14 @@ wp.writeStart("div", "class", "inputSmall permissions");
             for (Widget widget : wp.getCmsTool().findPlugins(Widget.class)) {
                 wp.writeStart("li");
                     writeChild(wp, permissions, widget, widget.getPermissionId());
+                wp.writeEnd();
+            }
+            Set<Class<? extends DashboardWidget>> dashboardWidgetClasses = ClassFinder.Static.findClasses(DashboardWidget.class);
+            dashboardWidgetClasses.removeIf(c -> c.isInterface() || Modifier.isAbstract(c.getModifiers()));
+            for (Class<? extends DashboardWidget> clazz : dashboardWidgetClasses) {
+                wp.writeStart("li");
+                    DashboardWidget dashboardWidgetInstance = TypeDefinition.getInstance(clazz).newInstance();
+                    writeChild(wp, permissions, dashboardWidgetInstance, dashboardWidgetInstance.getPermissionId());
                 wp.writeEnd();
             }
         wp.writeEnd();

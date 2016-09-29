@@ -11,6 +11,14 @@ public abstract class DashboardWidget extends Record {
 
     public abstract void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException;
 
+    /**
+     * Returns the ID that represents this DashboardWidget class for use in
+     * permissions.
+     */
+    public String getPermissionId() {
+        return "widget/" + getClass().getCanonicalName();
+    }
+
     @Override
     public String getLabel() {
         return StringUtils.toLabel(getClass().getSimpleName());
