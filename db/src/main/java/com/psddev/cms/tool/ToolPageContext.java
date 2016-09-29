@@ -2439,10 +2439,13 @@ public class ToolPageContext extends WebPageContext {
                 typeIds.setLength(typeIds.length() - 1);
             }
 
+            String fieldPredicate = field.getPredicate();
+            boolean isDynamicPredicate = fieldPredicate == null || fieldPredicate.contains("?");
+
             writeElement("input",
                     "type", "text",
                     "class", "objectId",
-                    "data-dynamic-predicate", field.getPredicate(),
+                    isDynamicPredicate ? "data-dynamic-predicate" : "data-additional-query", fieldPredicate,
                     "data-generic-argument-index", field.getGenericArgumentIndex(),
                     "data-dynamic-placeholder", ui.getPlaceholderDynamicText(),
                     "data-dynamic-field-name", field.getInternalName(),
