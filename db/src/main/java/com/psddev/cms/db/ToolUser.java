@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.google.common.io.BaseEncoding;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
+import com.psddev.cms.tool.DashboardWrapper;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
 import com.psddev.dari.db.Application;
@@ -73,7 +74,15 @@ public class ToolUser extends Record implements ToolEntity {
 
     private StorageItem avatar;
 
+    @DisplayName("Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardWrapper dashboardWrapper;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the `Dashboard` field above instead.")
+    @Embedded
     private Dashboard dashboard;
 
     @ToolUi.Hidden
@@ -246,10 +255,25 @@ public class ToolUser extends Record implements ToolEntity {
         this.avatar = avatar;
     }
 
+    public DashboardWrapper getDashboardWrapper() {
+        if (dashboardWrapper == null && getDashboard() != null) {
+            DashboardWrapper.EmbeddedDashboard dashboard = new DashboardWrapper.EmbeddedDashboard();
+            dashboard.setDashboard(getDashboard());
+            return dashboard;
+        }
+        return dashboardWrapper;
+    }
+
+    public void setDashboardWrapper(DashboardWrapper dashboardWrapper) {
+        this.dashboardWrapper = dashboardWrapper;
+    }
+
+    @Deprecated
     public Dashboard getDashboard() {
         return dashboard;
     }
 
+    @Deprecated
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
     }

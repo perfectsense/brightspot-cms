@@ -77,7 +77,15 @@ public class CmsTool extends Tool {
     @DisplayName("Two Factor Authentication Required?")
     private boolean tfaRequired;
 
+    @DisplayName("Default Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardWrapper dashboardWrapper;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the `Default Dashboard` field above instead.")
+    @Embedded
     private Dashboard defaultDashboard;
 
     @ToolUi.Tab("RTE")
@@ -506,10 +514,25 @@ public class CmsTool extends Tool {
         return commonTimes;
     }
 
+    public DashboardWrapper getDashboardWrapper() {
+        if (dashboardWrapper == null && getDefaultDashboard() != null) {
+            DashboardWrapper.EmbeddedDashboard dashboard = new DashboardWrapper.EmbeddedDashboard();
+            dashboard.setDashboard(getDefaultDashboard());
+            return dashboard;
+        }
+        return dashboardWrapper;
+    }
+
+    public void setDashboardWrapper(DashboardWrapper dashboardWrapper) {
+        this.dashboardWrapper = dashboardWrapper;
+    }
+
+    @Deprecated
     public Dashboard getDefaultDashboard() {
         return defaultDashboard;
     }
 
+    @Deprecated
     public void setDefaultDashboard(Dashboard defaultDashboard) {
         this.defaultDashboard = defaultDashboard;
     }

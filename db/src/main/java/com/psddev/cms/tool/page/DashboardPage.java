@@ -13,6 +13,7 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardColumn;
 import com.psddev.cms.tool.DashboardWidget;
+import com.psddev.cms.tool.DashboardWrapper;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
@@ -31,21 +32,35 @@ public class DashboardPage extends PageServlet {
     @Override
     public void doService(ToolPageContext page) throws IOException, ServletException {
         ToolUser user = page.getUser();
-        Dashboard dashboard = user.getDashboard();
-        String dashboardId = "user";
+        Dashboard dashboard = null;
+        DashboardWrapper dashboardWrapper = user.getDashboardWrapper();
+        String dashboardId = null;
+
+        if (dashboardWrapper != null) {
+            dashboard = dashboardWrapper.getDashboard();
+            dashboardId = "user";
+        }
 
         if (dashboard == null) {
             ToolRole role = user.getRole();
 
             if (role != null) {
-                dashboard = role.getDashboard();
-                dashboardId = "role";
+                dashboardWrapper = role.getDashboardWrapper();
+
+                if (dashboardWrapper != null) {
+                    dashboard = dashboardWrapper.getDashboard();
+                    dashboardId = "role";
+                }
             }
         }
 
         if (dashboard == null) {
-            dashboard = page.getCmsTool().getDefaultDashboard();
-            dashboardId = "tool";
+            dashboardWrapper = page.getCmsTool().getDashboardWrapper();
+
+            if (dashboardWrapper != null) {
+                dashboard = dashboardWrapper.getDashboard();
+                dashboardId = "tool";
+            }
         }
 
         if (dashboard == null) {

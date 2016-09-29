@@ -2,6 +2,7 @@ package com.psddev.cms.db;
 
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
+import com.psddev.cms.tool.DashboardWrapper;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Query;
@@ -22,7 +23,15 @@ public class ToolRole extends Record implements ToolEntity {
 
     private transient SparseSet permissionsCache;
 
+    @DisplayName("Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardWrapper dashboardWrapper;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the `Dashboard` field above instead.")
+    @Embedded
     private Dashboard dashboard;
 
     @ToolUi.DisplayName("Common Content Settings")
@@ -66,10 +75,25 @@ public class ToolRole extends Record implements ToolEntity {
         return permissionsCache.contains(permissionId);
     }
 
+    public DashboardWrapper getDashboardWrapper() {
+        if (dashboardWrapper == null && getDashboard() != null) {
+            DashboardWrapper.EmbeddedDashboard dashboard = new DashboardWrapper.EmbeddedDashboard();
+            dashboard.setDashboard(getDashboard());
+            return dashboard;
+        }
+        return dashboardWrapper;
+    }
+
+    public void setDashboardWrapper(DashboardWrapper dashboardWrapper) {
+        this.dashboardWrapper = dashboardWrapper;
+    }
+
+    @Deprecated
     public Dashboard getDashboard() {
         return dashboard;
     }
 
+    @Deprecated
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
     }

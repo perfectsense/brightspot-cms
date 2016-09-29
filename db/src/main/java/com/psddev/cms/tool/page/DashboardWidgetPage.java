@@ -8,6 +8,7 @@ import javax.servlet.ServletException;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardColumn;
 import com.psddev.cms.tool.DashboardWidget;
+import com.psddev.cms.tool.DashboardWrapper;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
@@ -33,19 +34,20 @@ public class DashboardWidgetPage extends PageServlet {
         pathInfo = StringUtils.removeStart(pathInfo, "/");
         pathInfo = StringUtils.removeEnd(pathInfo, "/");
         String[] pathInfoParts = pathInfo.split("/");
-        Dashboard dashboard;
+        Dashboard dashboard = null;
+        DashboardWrapper dashboardWrapper = null;
 
         switch (pathInfoParts[0]) {
             case "user" :
-                dashboard = page.getUser().getDashboard();
+                dashboardWrapper = page.getUser().getDashboardWrapper();
                 break;
 
             case "role" :
-                dashboard = page.getUser().getRole().getDashboard();
+                dashboardWrapper = page.getUser().getRole().getDashboardWrapper();
                 break;
 
             case "tool" :
-                dashboard = page.getCmsTool().getDefaultDashboard();
+                dashboardWrapper = page.getCmsTool().getDashboardWrapper();
                 break;
 
             case "default" :
@@ -54,6 +56,10 @@ public class DashboardWidgetPage extends PageServlet {
 
             default :
                 throw new IllegalArgumentException();
+        }
+
+        if (dashboardWrapper != null) {
+            dashboard = dashboardWrapper.getDashboard();
         }
 
         DashboardWidget widget = null;

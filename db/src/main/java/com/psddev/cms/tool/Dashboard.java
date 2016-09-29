@@ -11,10 +11,11 @@ import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.TypeDefinition;
 import com.psddev.dari.util.UuidUtils;
 
-@Dashboard.Embedded
 public class Dashboard extends Record {
 
     private static final String WIDGET_ID_NAME_PREFIX = Dashboard.class.getName() + "/";
+
+    private String name;
 
     private List<DashboardColumn> columns;
 
@@ -64,6 +65,14 @@ public class Dashboard extends Record {
     @Deprecated
     public static Dashboard getDefaultDashboard() {
         return createDefaultDashboard();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<DashboardColumn> getColumns() {
