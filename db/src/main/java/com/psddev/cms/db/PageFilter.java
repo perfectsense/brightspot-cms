@@ -108,6 +108,9 @@ public class PageFilter extends AbstractFilter {
     public static final String EMBED_OBJECT_RENDERER_CONTEXT = "_embed";
 
     public static final String PAGE_VIEW_TYPE = "cms.page";
+    public static final String PREVIEW_VIEW_TYPE = "cms.preview";
+
+    public static final String VIEW_TYPE_PARAMETER = "_viewType";
 
     /**
      * Returns {@code true} if rendering the given {@code request} has
@@ -1093,18 +1096,48 @@ public class PageFilter extends AbstractFilter {
             throws IOException, ServletException {
 
         ViewRequest viewRequest = new ServletViewRequest(request);
-        Object view = viewRequest.createView(ObjectUtils.firstNonBlank(request.getParameter("_viewType"), PAGE_VIEW_TYPE), object);
+        Object view = null;
 
-        if (view == null) {
-            PageViewClass annotation = object.getClass().getAnnotation(PageViewClass.class);
-            Class<?> layoutViewClass = annotation != null ? annotation.value() : null;
+        String viewType = request.getParameter(VIEW_TYPE_PARAMETER);
+        if (!ObjectUtils.isBlank(viewType)) {
+            view = viewRequest.createView(viewType, object);
 
-            if (layoutViewClass != null) {
-                view = viewRequest.createView(layoutViewClass, object);
+            if (view == null) {
+                LOGGER.warn("Could not create view of type ["
+                        + viewType
+                        + "] for object of type ["
+                        + object.getClass()
+                        + "]!");
+            }
 
-                if (view == null) {
+        } else {
+            // Try to create a view for the PREVIEW_VIEW_TYPE...
+            if (Static.isPreview(request)) {
+                view = viewRequest.createView(PREVIEW_VIEW_TYPE, object);
+            }
+
+            // ...but still always fallback to PAGE_VIEW_TYPE if no preview found.
+            if (view == null) {
+                view = viewRequest.createView(PAGE_VIEW_TYPE, object);
+            }
+
+            if (view == null) {
+                PageViewClass annotation = object.getClass().getAnnotation(PageViewClass.class);
+                Class<?> layoutViewClass = annotation != null ? annotation.value() : null;
+
+                if (layoutViewClass != null) {
+                    view = viewRequest.createView(layoutViewClass, object);
+
+                    if (view == null) {
+                        LOGGER.warn("Could not create view of type ["
+                                + layoutViewClass.getName()
+                                + "] for object of type ["
+                                + object.getClass()
+                                + "]!");
+                    }
+                } else {
                     LOGGER.warn("Could not create view of type ["
-                            + layoutViewClass.getName()
+                            + (Static.isPreview(request) ? PREVIEW_VIEW_TYPE : PAGE_VIEW_TYPE)
                             + "] for object of type ["
                             + object.getClass()
                             + "]!");
