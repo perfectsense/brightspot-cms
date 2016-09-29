@@ -1,16 +1,24 @@
 package com.psddev.cms.db;
 
-import com.psddev.dari.db.Record;
-import com.psddev.dari.db.Query;
-import com.psddev.dari.util.PeriodicValue;
-import com.psddev.dari.util.PullThroughValue;
-
-import java.util.Collections;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.common.base.Optional;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Record;
+import com.psddev.dari.db.State;
+import com.psddev.dari.util.ObjectUtils;
 
 /** Represents a standard image size. */
 @ToolUi.IconName("object-standardImageSize")
@@ -19,36 +27,35 @@ public class StandardImageSize extends Record {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardImageSize.class);
 
-    private static final PullThroughValue<PeriodicValue<List<StandardImageSize>>>
-            ALL = new PullThroughValue<PeriodicValue<List<StandardImageSize>>>() {
+    private static final LoadingCache<Optional<UUID>, Map<String, StandardImageSize>>
+        IMAGE_SIZES = CacheBuilder.newBuilder().refreshAfterWrite(30, TimeUnit.SECONDS).build(new CacheLoader<Optional<UUID>, Map<String, StandardImageSize>>() {
 
         @Override
-        protected PeriodicValue<List<StandardImageSize>> produce() {
-            return new PeriodicValue<List<StandardImageSize>>() {
+        public Map<String, StandardImageSize> load(Optional<UUID> uuid) throws Exception {
+            Query<StandardImageSize> query = Query.from(StandardImageSize.class);
 
-                @Override
-                protected List<StandardImageSize> update() {
+            if (!uuid.isPresent()) {
+                query.and(Site.CONSUMERS_FIELD + " is missing || " + Site.IS_GLOBAL_FIELD + " = true");
+            } else {
+                query.and(Site.CONSUMERS_FIELD + " = ?", uuid.get());
+            }
 
-                    Query<StandardImageSize> query = Query.from(StandardImageSize.class).sortAscending("displayName");
-                    Date cacheUpdate = getUpdateDate();
-                    Date databaseUpdate = query.lastUpdate();
-                    if (databaseUpdate == null || (cacheUpdate != null && !databaseUpdate.after(cacheUpdate))) {
-                        List<StandardImageSize> sizes = get();
-                        return sizes != null ? sizes : Collections.<StandardImageSize>emptyList();
-                    }
+            List<StandardImageSize> sizes = query.selectAll();
+            Map<String, StandardImageSize> map = new HashMap<>();
 
-                    LOGGER.info("Loading image sizes");
-                    return query.selectAll();
-                }
-            };
+            if (!ObjectUtils.isBlank(sizes)) {
+                sizes.forEach(size -> map.put(size.getInternalName(), size));
+            }
+
+            return map;
         }
-    };
+    });
 
-    @Indexed(unique = true)
+    @Indexed
     @Required
     private String displayName;
 
-    @Indexed(unique = true)
+    @Indexed
     @Required
     private String internalName;
 
@@ -61,9 +68,44 @@ public class StandardImageSize extends Record {
     private CropOption cropOption;
     private ResizeOption resizeOption;
 
-    /** Returns a list of all the image sizes. */
     public static List<StandardImageSize> findAll() {
-        return ALL.get().get();
+        try {
+            return new ArrayList<>(IMAGE_SIZES.get(Optional.absent()).values());
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public static StandardImageSize findByInternalName(String internalName) {
+        return findByInternalName(null, internalName);
+    }
+
+    public static StandardImageSize findByInternalName(Site site, String internalName) {
+
+        StandardImageSize size = null;
+
+        try {
+            Map<String, StandardImageSize> sizes = IMAGE_SIZES.get(site != null ? Optional.of(site.getId()) : Optional.<UUID>absent());
+
+            if (!ObjectUtils.isBlank(sizes)) {
+                size = sizes.get(internalName);
+            }
+
+            //fall back to global image sizes
+            if (site != null && size == null) {
+
+                sizes = IMAGE_SIZES.get(Optional.<UUID>absent());
+
+                if (!ObjectUtils.isBlank(sizes)) {
+                    size = sizes.get(internalName);
+                }
+            }
+
+        } catch (Exception e) {
+            //ignore
+        }
+
+        return size;
     }
 
     public String getDisplayName() {
@@ -120,5 +162,35 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    @Override
+    public void beforeSave() {
+
+        Set<Site> consumers = this.as(Site.ObjectModification.class).getConsumers();
+        State state = this.getState();
+        ObjectField errorField;
+        String errorMessage;
+        StandardImageSize duplicate;
+
+        Query<StandardImageSize> query = Query.from(StandardImageSize.class);
+        query.where("id != ?", this.getId());
+        query.and("internalName = ? || displayName = ?", this.getInternalName(), this.getDisplayName());
+
+        if (ObjectUtils.isBlank(consumers)) {
+            query.and(Site.CONSUMERS_FIELD + " is missing");
+            errorMessage = "Must be unique, but duplicate found at ";
+        } else {
+            query.and(Site.CONSUMERS_FIELD + " = ?", consumers);
+            errorMessage = "Must be unique per site, but duplicate found at ";
+        }
+
+        duplicate = query.first();
+
+        if (duplicate != null) {
+            errorMessage += duplicate.getId();
+            errorField = this.getInternalName().equals(duplicate.getInternalName()) ? state.getField("internalName") : state.getField("displayName");
+            state.addError(errorField, errorMessage);
+        }
     }
 }

@@ -1,21 +1,15 @@
 <%@ page session="false" import="
 
+java.util.List,
 com.psddev.cms.db.ReferentialTextMarker,
+com.psddev.cms.db.Site,
 com.psddev.cms.db.StandardImageSize,
-com.psddev.cms.tool.Area,
-com.psddev.cms.tool.Tool,
 com.psddev.cms.tool.ToolPageContext,
-com.psddev.cms.tool.Widget,
-
 com.psddev.dari.db.Application,
-com.psddev.dari.db.ObjectType,
+
 com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
-com.psddev.dari.db.WebResourceOverride,
-
-java.util.Arrays,
-java.util.List
-" %><%
+com.psddev.dari.db.WebResourceOverride" %><%
 
 // --- Logic ---
 
@@ -38,7 +32,7 @@ if (selected != null && wp.tryStandardUpdate(selected)) {
 }
 
 State selectedState = State.getInstance(selected);
-List<StandardImageSize> standardImageSizes = Query.from(StandardImageSize.class).sortAscending("displayName").select();
+List<StandardImageSize> standardImageSizes = Query.from(StandardImageSize.class).where(Site.CONSUMERS_FIELD + " is missing || " + Site.IS_GLOBAL_FIELD + " = true").sortAscending("displayName").select();
 
 // --- Presentation ---
 

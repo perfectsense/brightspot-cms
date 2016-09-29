@@ -76,6 +76,9 @@ public class Site extends Record {
     @ToolUi.Tab("Advanced")
     private Set<Site> accessibleSites;
 
+    @JunctionField(CONSUMERS_FIELD)
+    private List<StandardImageSize> standardImageSizes;
+
     /** @deprecated Use {@link Static#findAll} instead. */
     @Deprecated
     public static List<Site> findAll() {
@@ -186,6 +189,14 @@ public class Site extends Record {
             accessibleSites = new LinkedHashSet<Site>();
         }
         return accessibleSites;
+    }
+
+    public List<StandardImageSize> getStandardImageSizes() {
+        return standardImageSizes;
+    }
+
+    public void setStandardImageSizes(List<StandardImageSize> standardImageSizes) {
+        this.standardImageSizes = standardImageSizes;
     }
 
     /** Sets the list of other sites that this one can access. */
