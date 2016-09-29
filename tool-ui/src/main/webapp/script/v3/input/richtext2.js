@@ -1330,6 +1330,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             $button.on('click', function(event) {
                 event.preventDefault();
+                event.stopPropagation();
                 self.toolbarHandleClick(item, event);
             });
 
