@@ -106,6 +106,7 @@ $.plugin2('tabbed', {
 
             if (urlMatch) {
                 urlMatch = urlMatch[2];
+                urlMatch = decodeURIComponent(urlMatch);                
 
                 if (urlMatch) {
                     urlMatch = decodeURIComponent(urlMatch);                
