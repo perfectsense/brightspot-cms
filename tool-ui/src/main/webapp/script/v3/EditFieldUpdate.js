@@ -35,8 +35,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                     contentData = fetchData(contentId);
                     if (typeof contentData === 'object' && contentData instanceof Array) {
 
-                        console.log("CACHE RESTORE", contentData);
-
                         for (i = 0; i < contentData.length; i += 1) {
 
                             updateContainer(container, contentData[i]);
@@ -53,7 +51,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
         if (contentIds.length > 0) {
 
-            console.log("RTC RESTORE ", contentIds);
             rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
                 contentId: contentIds
             });
@@ -63,8 +60,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
     // caches the specified viewer data in the specified cache object,
     // keyed by contentId then userId.
     function cacheData(cache, data) {
-
-        console.log("CACHE", data);
 
         var contentId = data.contentId,
             userId = data.userId,
@@ -134,7 +129,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
     // to be used by fetchData
     function observeData(data) {
 
-        console.log("OBSERVE", data);
         cacheData(shortViewerDataCache, data);
     }
 
