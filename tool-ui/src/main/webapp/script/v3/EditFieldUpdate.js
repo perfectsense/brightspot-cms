@@ -13,6 +13,23 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         return colorsByUuid[uuid];
     }
 
+    function cleanUnusedDataFromCache() {
+
+        var cleanCache = { };
+
+        $('[data-rtc-content-id]').each(function() {
+            var contentId = $(this).attr('data-rtc-content-id'),
+                cachedData = fetchData(contentId);
+
+            if (cachedData) {
+                cleanCache[contentId] = cachedData;
+            }
+        });
+
+        shortViewerDataCache = { };
+        longViewerDataCache = cleanCache;
+    }
+
     // restores viewer data on the specified containers,
     // fetching from cache if available, otherwise making
     // an rtc.restore call for the data
@@ -48,6 +65,8 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 }
             }
         });
+
+        cleanUnusedDataFromCache();
 
         if (contentIds.length > 0) {
 
