@@ -148,11 +148,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
     // to be used by fetchData
     function observeData(data) {
 
-        var contentId = data.contentId;
-
-        if (contentId && $('[data-rtc-content-id="' + contentId + '"]').size() > 0) {
-            cacheData(shortViewerDataCache, data);
-        }
+        cacheData(shortViewerDataCache, data);
     }
 
     // shared-use function for updating a container element either from cached data
