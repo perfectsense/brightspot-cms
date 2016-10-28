@@ -76,6 +76,17 @@ public class ContentState extends PageServlet {
                 ? (Map<String, Object>) ObjectUtils.fromJson(oldValuesString)
                 : Draft.findOldValues(object);
 
+        // Change the old values to include the draft differences so that
+        // the change detection during draft edit work correctly.
+        Draft draft = page.getOverlaidDraft(object);
+
+        if (draft != null) {
+            oldValues = Draft.mergeDifferences(
+                    state.getDatabase().getEnvironment(),
+                    oldValues,
+                    draft.getDifferences());
+        }
+
         // Change the old values to include the overlay differences so that
         // the change detection during overlay edit work correctly.
         Overlay overlay = Edit.getOverlay(object);
