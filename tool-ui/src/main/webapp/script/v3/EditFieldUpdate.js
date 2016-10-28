@@ -219,9 +219,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
     // shared-use function for updating a container element either from cached data
     // stored in dataByContentId or from an EditFieldUpdateBroadcast RTC event
-    function updateContainer(containerElement, data) {
+    function updateContainer(container, data) {
 
-        var $container = $(containerElement),
+        var $container = $(container),
             userId = data.userId,
             closed = data.closed,
             userAvatarHtml = data.userAvatarHtml,
@@ -471,8 +471,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 id;
 
             $(containers).each(function () {
-                var container = this,
-                    $container = $(container),
+                var $container = $(this),
                     contentId,
                     contentData,
                     i;
@@ -487,7 +486,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
                             for (i = 0; i < contentData.length; i += 1) {
 
-                                updateContainer(container, contentData[i]);
+                                updateContainer($container, contentData[i]);
                             }
 
                         } else {
@@ -501,9 +500,12 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
             if (contentIds.length > 0) {
 
-                for (i = 0; i < contentId.length; i += 1) {
+                // push all content IDs onto list of IDs pending restore
+                // to increase the likelihood that multiple observed
+                // mutations are batched into a single rtc.restore request
+                for (i = 0; i < contentIds.length; i += 1) {
 
-                    id = contentId[i];
+                    id = contentIds[i];
                     if (id && pendingRestoreIds.indexOf(id) === -1) {
                         pendingRestoreIds.push(id);
                     }
