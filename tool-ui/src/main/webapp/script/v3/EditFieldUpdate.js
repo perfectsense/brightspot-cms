@@ -217,47 +217,6 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         return colorsByUuid[uuid];
     }
 
-    function restoreByContentId(contentId) {
-
-        if (contentId) {
-
-            if (contentId instanceof Array) {
-
-                var i, id;
-
-                for (i = 0; i < contentId.length; i += 1) {
-
-                    id = contentId[i];
-                    if (id && pendingRestoreIds.indexOf(id) === -1) {
-                        pendingRestoreIds.push(id);
-                    }
-                }
-
-            } else if (pendingRestoreIds.indexOf(contentId) === -1) {
-
-                pendingRestoreIds.push(contentId);
-            }
-
-            if (pendingRestore) {
-                window.clearTimeout(pendingRestore);
-            }
-
-            if (pendingRestoreIds.length > 0) {
-
-                pendingRestore = window.setTimeout(function() {
-
-                    VIEWERS_CACHE.clearUnused();
-
-                    rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
-                        contentId: pendingRestoreIds
-                    });
-
-                    pendingRestoreIds = [ ];
-                }, 250);
-            }
-        }
-    }
-
     // shared-use function for updating a container element either from cached data
     // stored in dataByContentId or from an EditFieldUpdateBroadcast RTC event
     function updateContainer(containerElement, data) {
@@ -507,7 +466,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
             // fetching from cache if available, otherwise making
             // an rtc.restore call for the data
 
-            var contentIds = [ ];
+            var contentIds = [ ],
+                i,
+                id;
 
             $(containers).each(function () {
                 var container = this,
@@ -538,7 +499,34 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 }
             });
 
-            restoreByContentId(contentIds);
+            if (contentIds.length > 0) {
+
+                for (i = 0; i < contentId.length; i += 1) {
+
+                    id = contentId[i];
+                    if (id && pendingRestoreIds.indexOf(id) === -1) {
+                        pendingRestoreIds.push(id);
+                    }
+                }
+
+                if (pendingRestore) {
+                    window.clearTimeout(pendingRestore);
+                }
+
+                if (pendingRestoreIds.length > 0) {
+
+                    pendingRestore = window.setTimeout(function() {
+
+                        VIEWERS_CACHE.clearUnused();
+
+                        rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
+                            contentId: pendingRestoreIds
+                        });
+
+                        pendingRestoreIds = [ ];
+                    }, 250);
+                }
+            }
         }
     });
 });
