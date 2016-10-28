@@ -1,8 +1,212 @@
 define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_utils, rtc, color_utils) {
 
     var colorsByUuid = {},
-        shortViewerDataCache = { },
-        longViewerDataCache = { };
+        pendingRestoreIds = [ ],
+        pendingRestore = null,
+        VIEWERS_CACHE = (function() {
+
+            var shortViewerDataCache = { },
+                longViewerDataCache = { },
+                hitCount = 0,
+                missCount = 0,
+                fetchCount = 0,
+                putCount = 0,
+
+                debugViewersCache = function() {
+                    return window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
+                },
+
+                report = function(force) {
+
+                    if (debugViewersCache() && !force && !((putCount + fetchCount) % 15 === 0)) {
+                        return;
+                    }
+
+                    var total = hitCount + missCount,
+                        ratio = (total === 0 && hitCount === 0) ? 0.0 : (total === 0 ? 1.0 : (hitCount === 0 ? 0.0 : hitCount / total));
+
+                    ratio *= 100;
+
+                    console.log(
+                        "putCount: ", putCount,
+                        ", fetchCount: ", fetchCount,
+                        ", ratio: ", ratio + "%",
+                        ", short_sz: ", Object.keys(shortViewerDataCache).length,
+                        "long_sz: ", Object.keys(longViewerDataCache).length
+                    );
+                },
+
+                // caches the specified viewer data in the specified cache object,
+                // keyed by contentId then userId.
+                cacheData = function(cache, data) {
+
+                    putCount += 1;
+
+                    var contentId = data.contentId,
+                        userId = data.userId,
+                        contentData,
+                        userDataIndex = undefined,
+                        i;
+
+                    contentData = cache[contentId];
+
+                    if (contentData === undefined) {
+                        contentData = [ ];
+                        cache[contentId] = contentData;
+                    }
+
+                    for (i = 0; i < contentData.length; i += 1) {
+                        if (contentData[i].userId === userId) {
+                            userDataIndex = i;
+                        }
+                    }
+
+                    if (userDataIndex !== undefined && userDataIndex >= 0) {
+                        contentData.splice(userDataIndex, 1, data);
+                    } else {
+                        contentData.push(data);
+                    }
+
+                    report();
+                },
+
+                // fetches data from cache, combining short-term
+                // cache into long-term cache for the requested contentId
+                // as applicable, then returning the updated or existing
+                // long-term cache value
+                fetchData = function(contentId) {
+
+                    fetchCount += 1;
+
+                    var i,
+                        shortCacheData = shortViewerDataCache[contentId],
+                        longCacheData = longViewerDataCache[contentId],
+                        result;
+
+                    if (shortCacheData === undefined) {
+
+                        // no short cache,
+                        // return long cache data
+                        result = longCacheData;
+
+                    } else if (longCacheData === undefined) {
+
+                        // copy short cache data to long cache,
+                        // delete short cache data
+                        longViewerDataCache[contentId] = shortCacheData;
+                        delete shortViewerDataCache[contentId];
+                        result = longViewerDataCache[contentId];
+
+                    } else {
+
+                        // merge short cache data to long cache,
+                        // delete short cache data
+
+                        for (i = 0; i < shortCacheData.length; i += 1) {
+
+                            cacheData(longViewerDataCache, shortCacheData[i]);
+                        }
+
+                        delete shortViewerDataCache[contentId];
+
+                        result = longViewerDataCache[contentId];
+                    }
+
+                    report();
+
+                    return result;
+                },
+
+                containsKey = function(key) {
+                    return shortViewerDataCache[key] || longViewerDataCache[key];
+                };
+
+            return {
+
+                putEmpty: function(key) {
+
+                    if (!shortViewerDataCache[key]) {
+
+                        if (debugViewersCache()) {
+                            console.log("%cSEED", "color: green", key);
+                        }
+
+                        shortViewerDataCache[key] = [ ];
+                    }
+                },
+
+                put: function(data) {
+
+                    if (data && data.contentId) {
+
+                        // only cache data that's existed or been
+                        // pre-seeded to ensure that data in the
+                        // cache was intentionally placed there
+                        // starting with a restore
+                        if (containsKey(data.contentId)) {
+
+                            if (debugViewersCache()) {
+                                console.log("PUT", data.contentId);
+                            }
+
+                            cacheData(shortViewerDataCache, data);
+                        } else {
+
+                            if (debugViewersCache()) {
+                                console.log("SKIP", data.contentId);
+                            }
+                        }
+                    }
+                },
+
+                fetch: function(contentId) {
+
+                    var result = fetchData(contentId);
+
+                    if (result) {
+
+                        hitCount += 1;
+                        if (debugViewersCache()) {
+                            console.log("%cCACHE HIT", "color: blue", contentId);
+                        }
+
+                    } else {
+
+                        missCount += 1;
+
+                        if (debugViewersCache()) {
+                            console.log("%cCACHE MISS", "color: red", contentId);
+                        }
+                    }
+
+                    return result;
+                },
+
+                clearUnused: function() {
+
+                    if (debugViewersCache()) {
+                        console.log("CLEAR");
+                    }
+
+                    // clean out unused cache entries before making call to restore
+                    var cleanCache = { };
+
+                    $('[data-rtc-content-id]').each(function() {
+                        var contentId = $(this).attr('data-rtc-content-id'),
+                            cachedData = fetchData(contentId);
+
+                        if (cachedData) {
+                            cleanCache[contentId] = cachedData;
+                        }
+                    });
+
+                    shortViewerDataCache = { };
+                    longViewerDataCache = cleanCache;
+                }
+            };
+        })();
+
+    window.VIEWERS_CACHE = VIEWERS_CACHE;
 
     function backgroundColor(uuid) {
 
@@ -13,145 +217,44 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         return colorsByUuid[uuid];
     }
 
-    function cleanUnusedDataFromCache() {
+    function restoreByContentId(contentId) {
 
-        var cleanCache = { };
+        if (contentId) {
 
-        $('[data-rtc-content-id]').each(function() {
-            var contentId = $(this).attr('data-rtc-content-id'),
-                cachedData = fetchData(contentId);
+            if (contentId instanceof Array) {
 
-            if (cachedData) {
-                cleanCache[contentId] = cachedData;
-            }
-        });
+                var i, id;
 
-        shortViewerDataCache = { };
-        longViewerDataCache = cleanCache;
-    }
+                for (i = 0; i < contentId.length; i += 1) {
 
-    // restores viewer data on the specified containers,
-    // fetching from cache if available, otherwise making
-    // an rtc.restore call for the data
-    function restoreData($containers) {
-
-        var contentIds = [ ];
-
-        $($containers).each(function () {
-            var container = this,
-                $container = $(container),
-                contentId,
-                contentData,
-                i;
-
-            if (!$container.is('form')) {
-                contentId = $container.attr('data-rtc-content-id');
-
-                if (contentId) {
-
-                    contentData = fetchData(contentId);
-                    if (typeof contentData === 'object' && contentData instanceof Array) {
-
-                        for (i = 0; i < contentData.length; i += 1) {
-
-                            updateContainer(container, contentData[i]);
-                        }
-
-                    } else {
-
-                        shortViewerDataCache[contentId] = [ ];
-                        contentIds.push(contentId);
+                    id = contentId[i];
+                    if (id && pendingRestoreIds.indexOf(id) === -1) {
+                        pendingRestoreIds.push(id);
                     }
                 }
+
+            } else if (pendingRestoreIds.indexOf(contentId) === -1) {
+
+                pendingRestoreIds.push(contentId);
             }
-        });
 
-        cleanUnusedDataFromCache();
-
-        if (contentIds.length > 0) {
-
-            rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
-                contentId: contentIds
-            });
-        }
-    }
-
-    // caches the specified viewer data in the specified cache object,
-    // keyed by contentId then userId.
-    function cacheData(cache, data) {
-
-        var contentId = data.contentId,
-            userId = data.userId,
-            contentData,
-            userDataIndex = undefined,
-            i;
-
-        contentData = cache[contentId];
-
-        if (contentData === undefined) {
-            contentData = [ ];
-            cache[contentId] = contentData;
-        }
-
-        for (i = 0; i < contentData.length; i += 1) {
-            if (contentData[i].userId === userId) {
-                userDataIndex = i;
+            if (pendingRestore) {
+                window.clearTimeout(pendingRestore);
             }
-        }
 
-        if (userDataIndex !== undefined && userDataIndex >= 0) {
-            contentData.splice(userDataIndex, 1, data);
-        } else {
-            contentData.push(data);
-        }
-    }
+            if (pendingRestoreIds.length > 0) {
 
-    // fetches data from cache, combining short-term
-    // cache into long-term cache for the requested contentId
-    // as applicable, then returning the updated or existing
-    // long-term cache value
-    function fetchData(contentId) {
+                pendingRestore = window.setTimeout(function() {
 
-        var i,
-            shortCacheData = shortViewerDataCache[contentId],
-            longCacheData = longViewerDataCache[contentId];
+                    VIEWERS_CACHE.clearUnused();
 
-        if (shortCacheData === undefined) {
+                    rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
+                        contentId: pendingRestoreIds
+                    });
 
-            // no short cache,
-            // return long cache data
-            return longCacheData;
-
-        } else if (longCacheData === undefined) {
-
-            // copy short cache data to long cache,
-            // delete short cache data
-            longViewerDataCache[contentId] = shortCacheData;
-            delete shortViewerDataCache[contentId];
-            return longViewerDataCache[contentId];
-        }
-
-        // merge short cache data to long cache,
-        // delete short cache data
-
-        for (i = 0; i < shortCacheData.length; i += 1) {
-
-            cacheData(longViewerDataCache, shortCacheData[i]);
-        }
-
-        delete shortViewerDataCache[contentId];
-
-        return longViewerDataCache[contentId];
-    }
-
-    // pushes the observed data into short-term cache,
-    // to be used by fetchData
-    function observeData(data) {
-
-        var contentId = data.contentId;
-
-        if (contentId && $('[data-rtc-content-id="' + contentId + '"]').size() > 0) {
-            cacheData(shortViewerDataCache, data);
+                    pendingRestoreIds = [ ];
+                }, 250);
+            }
         }
     }
 
@@ -241,22 +344,26 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
     rtc.receive('com.psddev.cms.tool.page.content.EditFieldUpdateBroadcast', function(data) {
 
-        var contentId = data.contentId;
+        var contentId = data.contentId,
+            $containers,
+            userId,
+            fieldNamesByObjectId;
 
         if (!contentId) {
             return;
         }
 
-        observeData(data);
-
-        var $containers = $('[data-rtc-content-id="' + contentId + '"]');
+        $containers = $('[data-rtc-content-id="' + contentId + '"]');
         
         if ($containers.length === 0) {
+
             return;
         }
+
+        VIEWERS_CACHE.put(data);
         
-        var userId = data.userId;
-        var fieldNamesByObjectId = data.fieldNamesByObjectId;
+        userId = data.userId;
+        fieldNamesByObjectId = data.fieldNamesByObjectId;
 
         $containers.each(function() {
 
@@ -396,7 +503,42 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
         afterInsert: function (containers) {
 
-            restoreData(containers);
+            // restores viewer data on the specified containers,
+            // fetching from cache if available, otherwise making
+            // an rtc.restore call for the data
+
+            var contentIds = [ ];
+
+            $(containers).each(function () {
+                var container = this,
+                    $container = $(container),
+                    contentId,
+                    contentData,
+                    i;
+
+                if (!$container.is('form')) {
+                    contentId = $container.attr('data-rtc-content-id');
+
+                    if (contentId) {
+
+                        contentData = VIEWERS_CACHE.fetch(contentId);
+                        if (typeof contentData === 'object' && contentData instanceof Array) {
+
+                            for (i = 0; i < contentData.length; i += 1) {
+
+                                updateContainer(container, contentData[i]);
+                            }
+
+                        } else {
+
+                            VIEWERS_CACHE.putEmpty(contentId);
+                            contentIds.push(contentId);
+                        }
+                    }
+                }
+            });
+
+            restoreByContentId(contentIds);
         }
     });
 });
