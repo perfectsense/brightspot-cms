@@ -1,8 +1,6 @@
 define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_utils, rtc, color_utils) {
 
     var colorsByUuid = {},
-        pendingRestoreIds = [ ],
-        pendingRestore = null,
         VIEWERS_CACHE = (function() {
 
             var viewerDataCache = { },
@@ -10,6 +8,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 missCount = 0,
                 fetchCount = 0,
                 putCount = 0,
+                cleanCallCount = 0,
 
                 debugViewersCache = function() {
                     return true || window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
@@ -144,6 +143,12 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 },
 
                 clearUnused: function() {
+
+                    cleanCallCount += 1;
+
+                    if (!(cleanCallCount % 20 === 0)) {
+                        return;
+                    }
 
                     if (debugViewersCache()) {
                         console.log("CLEAR");
@@ -460,34 +465,11 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
             if (contentIds.length > 0) {
 
-                // push all content IDs onto list of IDs pending restore
-                // to increase the likelihood that multiple observed
-                // mutations are batched into a single rtc.restore request
-                for (i = 0; i < contentIds.length; i += 1) {
+                VIEWERS_CACHE.clearUnused();
 
-                    id = contentIds[i];
-                    if (id && pendingRestoreIds.indexOf(id) === -1) {
-                        pendingRestoreIds.push(id);
-                    }
-                }
-
-                if (pendingRestore) {
-                    window.clearTimeout(pendingRestore);
-                }
-
-                if (pendingRestoreIds.length > 0) {
-
-                    pendingRestore = window.setTimeout(function() {
-
-                        VIEWERS_CACHE.clearUnused();
-
-                        rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
-                            contentId: pendingRestoreIds
-                        });
-
-                        pendingRestoreIds = [ ];
-                    }, 250);
-                }
+                rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
+                    contentId: contentIds
+                });
             }
         }
     });
