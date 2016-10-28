@@ -11,7 +11,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 cleanCallCount = 0,
 
                 debugViewersCache = function() {
-                    return true || window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
+                    return window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
                 },
 
                 report = function(force) {
