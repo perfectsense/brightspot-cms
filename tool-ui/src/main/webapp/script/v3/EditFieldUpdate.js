@@ -5,15 +5,14 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         pendingRestore = null,
         VIEWERS_CACHE = (function() {
 
-            var shortViewerDataCache = { },
-                longViewerDataCache = { },
+            var viewerDataCache = { },
                 hitCount = 0,
                 missCount = 0,
                 fetchCount = 0,
                 putCount = 0,
 
                 debugViewersCache = function() {
-                    return window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
+                    return true || window.LOG_VIEWERS_REPORTS && typeof console !== "undefined";
                 },
 
                 report = function(force) {
@@ -31,8 +30,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                         "putCount: ", putCount,
                         ", fetchCount: ", fetchCount,
                         ", ratio: ", ratio + "%",
-                        ", short_sz: ", Object.keys(shortViewerDataCache).length,
-                        "long_sz: ", Object.keys(longViewerDataCache).length
+                        "size: ", Object.keys(viewerDataCache).length
                     );
                 },
 
@@ -70,68 +68,31 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                     report();
                 },
 
-                // fetches data from cache, combining short-term
-                // cache into long-term cache for the requested contentId
-                // as applicable, then returning the updated or existing
-                // long-term cache value
+                // fetches data from cache
                 fetchData = function(contentId) {
 
                     fetchCount += 1;
 
-                    var i,
-                        shortCacheData = shortViewerDataCache[contentId],
-                        longCacheData = longViewerDataCache[contentId],
-                        result;
-
-                    if (shortCacheData === undefined) {
-
-                        // no short cache,
-                        // return long cache data
-                        result = longCacheData;
-
-                    } else if (longCacheData === undefined) {
-
-                        // copy short cache data to long cache,
-                        // delete short cache data
-                        longViewerDataCache[contentId] = shortCacheData;
-                        delete shortViewerDataCache[contentId];
-                        result = longViewerDataCache[contentId];
-
-                    } else {
-
-                        // merge short cache data to long cache,
-                        // delete short cache data
-
-                        for (i = 0; i < shortCacheData.length; i += 1) {
-
-                            cacheData(longViewerDataCache, shortCacheData[i]);
-                        }
-
-                        delete shortViewerDataCache[contentId];
-
-                        result = longViewerDataCache[contentId];
-                    }
-
                     report();
 
-                    return result;
+                    return viewerDataCache[contentId];
                 },
 
                 containsKey = function(key) {
-                    return shortViewerDataCache[key] || longViewerDataCache[key];
+                    return viewerDataCache[key];
                 };
 
             return {
 
                 putEmpty: function(key) {
 
-                    if (!shortViewerDataCache[key]) {
+                    if (!viewerDataCache[key]) {
 
                         if (debugViewersCache()) {
                             console.log("%cSEED", "color: green", key);
                         }
 
-                        shortViewerDataCache[key] = [ ];
+                        viewerDataCache[key] = [ ];
                     }
                 },
 
@@ -149,7 +110,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                                 console.log("PUT", data.contentId);
                             }
 
-                            cacheData(shortViewerDataCache, data);
+                            cacheData(viewerDataCache, data);
                         } else {
 
                             if (debugViewersCache()) {
@@ -200,8 +161,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                         }
                     });
 
-                    shortViewerDataCache = { };
-                    longViewerDataCache = cleanCache;
+                    viewerDataCache = cleanCache;
                 }
             };
         })();
