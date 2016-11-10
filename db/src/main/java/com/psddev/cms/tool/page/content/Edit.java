@@ -153,7 +153,6 @@ public class Edit {
             long contentTime = contentUpdate.getTime();
 
             if (wipCreate.getTime() < contentTime && contentTime <= wipUpdate.getTime()) {
-                System.out.println("race condition delete");
                 wip.delete();
                 return;
             }
