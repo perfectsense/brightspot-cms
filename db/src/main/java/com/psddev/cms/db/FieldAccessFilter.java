@@ -12,7 +12,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.psddev.dari.db.Database;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.State;
@@ -163,30 +162,15 @@ public class FieldAccessFilter extends AbstractFilter {
         JspBufferFilter.Static.overrideBuffer(0);
 
         try {
-            FieldAccessDatabase db = new FieldAccessDatabase(Static.getDisplayIds(request));
-
-            db.setDelegate(Database.Static.getDefault());
-            Database.Static.overrideDefault(db);
+            Object mainObject = PageFilter.Static.getMainObject(request);
+            FieldAccessListener listener = new FieldAccessListener(request);
 
             try {
-                Object mainObject = PageFilter.Static.getMainObject(request);
-
-                if (mainObject != null) {
-                    db.addDisplayIds(mainObject);
-                }
-
-                FieldAccessListener listener = new FieldAccessListener(request);
-
-                try {
-                    State.Static.addListener(listener);
-                    doInclude(request, response, chain);
-
-                } finally {
-                    State.Static.removeListener(listener);
-                }
+                State.Static.addListener(listener);
+                doInclude(request, response, chain);
 
             } finally {
-                Database.Static.restoreDefault();
+                State.Static.removeListener(listener);
             }
 
         } finally {
