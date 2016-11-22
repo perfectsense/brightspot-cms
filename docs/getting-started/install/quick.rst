@@ -11,7 +11,7 @@ Step 1. Download
 
 .. note::
 
-    If you have **git** installed, you can alternatively ``git clone`` this repository.
+    If you have **git** installed, you can alternatively ``git clone`` `the repository <https://github.com/perfectsense/brightspot-demo>`_.
 
 Step 2. Extract
 ===============
