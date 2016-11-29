@@ -6782,6 +6782,7 @@ define([
             var enhancementsByLine;
             var html;
             var lineNo;
+            var needBR;
             var rangeWasSpecified;
             var self;
 
@@ -6986,6 +6987,9 @@ define([
                             // Now determine which element to create for the line.
                             // For example, if it is a list then we would create an 'LI' element.
                             htmlStartOfLine += openElement(styleObj, lineStyleData.attributes);
+                            
+                            // Since this is a block element, we do not need a BR to end the previous line
+                            needBR = false;
                         }
                     }); // .each(lineClasses)
 
@@ -7012,11 +7016,18 @@ define([
                             // list text: <li>previous_text<br/>this_text
                             if (!containerClosed) {
                                 html += '<br/>';
+                                needBR = false;
                             }
                         }
                     }
                 } // if lineNo is in range
  
+                // Does the previous line need to end with a line break?
+                if (needBR) {
+                    html += '<br/>';
+                    needBR = false;
+                }
+                
                 // Determine if there are any enhancements on this line
                 if (enhancementsByLine[lineNo] && options.enhancements !== false) {
                     
@@ -7343,8 +7354,9 @@ define([
                     } else if (charInRange && rawLastChar && !self.rawBr) {
                         html += '\n';
                     } else if (charInRange && containerActive.length === 0) {
-                        // No block elements so add a line break
-                        html += '<br/>';
+                        // There is no block element on this line, so set a flag to add a BR element at the start
+                        // of the next line (unless that next line contains a block element)
+                        needBR = true;
                     }
 
                     // Add any content that needs to go after the line
