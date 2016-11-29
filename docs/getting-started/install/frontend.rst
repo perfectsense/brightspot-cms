@@ -1,5 +1,5 @@
 =======================================
-Frontend
+Frontend-Only Installation
 =======================================
 
 .. Can't get enumerated sublists to work. It worked in previous enviornments.

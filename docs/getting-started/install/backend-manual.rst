@@ -1,8 +1,10 @@
+.. Merged with content from Ryan's development.rst. Dev may prefer to call this "Development Installation". If that's the case, does that mean that the quick install is not a development install?
+
 =======================================
-Backend: Manual Setup
+Manual Installation
 =======================================
 
-Backend development requires that you use Maven to build and package the Brightspot platform into a WAR and deploy it. This setup procedure requires that you manually install and configure the software prerequisites, and deploy the Brightspot WAR file in the Tomcat application server. 
+This procedure requires that you manually install and configure the software prerequisites, use Maven to build and package the Brightspot platform into a WAR, and deploy it in the Tomcat application server. 
 
 **Prerequisites**
 
@@ -38,8 +40,9 @@ Download and install the following software:
 
      <a href="https://tomcat.apache.org/download-80.cgi" target="_blank">Tomcat 8</a>
 
+\
 
-**To set up a backend development environment:**
+**To set up a development environment:**
 
 1. Create an empty database in :ref:`MySQL <mysql-label>`. 
 
@@ -71,7 +74,7 @@ Record the database name; you will specify it in the Tomcat context.xml file.
 Tomcat
 -------
 
-**Configure Tomcat to run Brightspot projects:**  
+**Configure Tomcat to run Brightspot projects:**
 
 1. Add MySQL connector.
 
@@ -83,7 +86,7 @@ Tomcat
 
    ::
 
-      cp mysql-connector-java-5.1.39-bin.jar <TomcatRoot>/lib
+      cp mysql-connector-java-5.*.jar <TomcatRoot>/lib
 
 2. Add a local storage directory.
 
@@ -91,19 +94,19 @@ Tomcat
 
    ::
       
-      mkdir <TomcatRoot>/webapps/media
+       mkdir <TomcatRoot>/webapps/media
 
 3. Replace the default context.xml file in Tomcat with a new file containing the default Brightspot configurations:
 
    #. In the Tomcat ``conf`` folder, make a copy of the default context.xml file and rename it.
    
-   #. Create a new context.xml in the Tomcat conf folder.
+   #. Create a new context.xml in the Tomcat ``conf`` folder.
    
    #. Open the |context_link| and copy the contents.
 
       .. |context_link| raw:: html
 
-       <a href="sampleContext.html" target="_blank">sample context.xml file</a>
+        <a href="sampleContext.html" target="_blank">sample context.xml file</a>
 
    #. Paste the contents into the new context.xml file in the Tomcat ``conf`` folder.
 
@@ -116,6 +119,7 @@ Tomcat
 
     3) The method currently used is to use a rst-formatted version of context.xml in the source. It is then built into an html version that's accessed on the doc server. 
 
+\
 
 4. In context.xml, replace the following placeholders:
 
@@ -124,7 +128,7 @@ Tomcat
    | ``DATABASE_USER`` with the name of the user that created the MySQL database.
    | ``DATABASE_PASS`` with the password that created the MySQL database.
    | ``TOMCAT_PATH``  with the path to Tomcat.
-
+\
    
 .. note:: The context.xml file referenced in this topic is a basic version of the Brightspot configuration. However, you can expand context.xml for future projects, or use multiple context.xml files for multiple Brightspot projects. The recommended best practice is to run an instance of Tomcat for each Brightspot project. The context.xml file will contain project-specific settings and point to a project specific database. When running multiple projects locally, you can stop Tomcat or use a different port for each project to run them concurrently.
 
@@ -188,6 +192,10 @@ Build a Brightspot Project
 
 You build a Brightspot project from a Maven archetype. The target of the Maven build is the Brightspot platform packaged in a WAR file and the Styleguide developer platform.
 
+.. note::
+
+    For information about Brightspot releases or upgrading to a new version, see the `Brightspot Releases <http://www.brightspot.com/docs/3.2/updates/about-brightspot-upgrades>`_.
+
 1. Get the starter Brightspot project.
 
    You can use either Git or Maven to get the project. Use Maven if no Git repository exists.
@@ -195,7 +203,11 @@ You build a Brightspot project from a Maven archetype. The target of the Maven b
 
    **To use Git:**
 
-   a) Clone the Brightspot repository on your local drive.
+   a) |clone_link| the brightspot-cms repository on your local drive.
+
+      .. |clone_link| raw:: html
+
+        <a href="https://github.com/perfectsense/brightspot-cms" target="_blank">Clone</a>
 
    b) Navigate to the top-level folder of the repository where the pom.xml file resides. This file defines Brightspot and Dari dependencies.
 
@@ -263,12 +275,12 @@ Start the Application Server
    | *contextPath* reflects the name of the WAR file, for example: ``http://localhost:8080/bsPlatform/cms``.
 
 \     
-   .. note:: If the name of your WAR file is ROOT.war, then the do not specify a context path, for example ``http://localhost:8080/cms``.
+.. note:: If the name of your WAR file is ROOT.war, then the do not specify a context path, for example ``http://localhost:8080/cms``.
 
 
-   The Brightspot login page appears. This is the default landing page.
+The Brightspot login page appears. This is the default landing page.
 
-   .. image:: images/bs_login.png
+.. image:: images/bs_login.png
 
 3. Follow up the Brightspot deployment with the following actions:
 
