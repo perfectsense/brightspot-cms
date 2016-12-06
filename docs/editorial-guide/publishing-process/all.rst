@@ -15,10 +15,7 @@ This chapter shows you how to use the Publish widget to manage content publishin
 .. note:: 
     The screenshots in this chapter reflect the default Dashboard UI. However, the Brightspot platform is highly customizable. The appearance and availability of widgets can vary, depending on role permissions, workflow associations, and other customizations. Therefore, the Dashboard UI for your installation might appear differently from the UI illustrated in this chapter. 
 
-    The default Dashboard UI can be viewed in the Inspire Confidence demo, which you can :doc:`download<../demoinstall/docker_platform>` and run locally. 
-
-.. todo::
-     Fix link to IC demo
+    The default Dashboard UI can be viewed in the :doc:`Inspire Confidence demo<../../getting-started/demo-install/all>`, which you can download  and run locally. 
 
 The following screenshot is a generic view of the Publish widget in the new content state. The Workflow tab is included in the Publish widget for content types associated with a workflow.
 
@@ -43,10 +40,11 @@ No saved content is ever lost.  All of the revisions of a content item provide a
 
 
 .. toctree:: 
-   :hidden:		
+   :includehidden:
+   :hidden:
 
    pub-new
-   Pub-draft
+   pub-draft
    pub-wf
    pub-preview
    pub-live
@@ -55,6 +53,7 @@ No saved content is ever lost.  All of the revisions of a content item provide a
    pub-rename
    pub-widget-ref
 
+.. Ideally, pub-live-group would appear as a subtopic of pub-live
 
 
 

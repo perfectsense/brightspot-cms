@@ -1,8 +1,3 @@
-.. raw:: html
-
-    <style> .red {color:red}</style>
-
-
 Publishing with a Named Schedule
 ---------------------------------
 
@@ -76,6 +71,8 @@ A named schedule is an object with a trigger publication date. When a named sche
 
 **See also:**
 :doc:`../versioning/all`
+
+
 
 
 

@@ -7,6 +7,14 @@
 
     <span class="red">PSD explanation about this screen?</span>
 
+.. This fixes the sizes of the two image maps. Without it, the images are resized, breaking the area coordinates.
+.. raw:: html
+
+    <style>
+     #mapImage1 { height: 467px; width: 629px; overflow: scroll;}
+     #mapImage2 { height: 488px; width: 595px; overflow: scroll;}
+    </style>
+
 .. raw:: html
 
 
@@ -34,18 +42,20 @@ The first diagram shows the pre-publication content states, starting with creati
 
 .. |prePubMap| raw:: html
 
-     <img src="../../_images/prepubdiagram.png" usemap="#prePub" alt="Content states prior to publish">
+     <img id="mapImage1" src="../../../_images/prepubdiagram.png" usemap="#prePub" alt="Content states prior to publish">
      <map name="prePub" id="prePub">
-       <area alt="" title="state1" href="#state1" shape="rect" coords="25,80,180,142" />
-       <area alt="" title="" href="#state2" shape="rect" coords="180,80,290,235" />
-       <area alt="" title="" href="#state3" shape="rect" coords="333,120,440,210" />
-       <area alt="" title="" href="#state4" shape="rect" coords="329,335,445,400" />
-       <area alt="" title="" href="#state4a" shape="rect" coords="180,335,290,400" />
-       <area alt="" title="" href="#state5" shape="rect" coords="490,120,600,185" />
-       <area alt="" title="" href="#state6" shape="rect" coords="510,340,650,440 />
+       <area alt="" title="state1" href="#state1" shape="rect" coords="10,100,139,155" />
+       <area alt="" title="" href="#state2" shape="rect" coords="165,100,280,210" />
+       <area alt="" title="" href="#state3" shape="rect" coords="310,120,425,210" />
+       <area alt="" title="" href="#state4" shape="rect" coords="310,300,435,375" />
+       <area alt="" title="" href="#state4a" shape="rect" coords="170,325,280,390" />
+       <area alt="" title="" href="#state5" shape="rect" coords="475,100,585,165" />
+       <area alt="" title="" href="#state6" shape="rect" coords="490,315,625,415 />
      </map>
-.. Do rst refernence so Sphinx build copies it to output directory. Give it 0 width/height so it does not appear twice on the page.
+.. Do rst reference so the Sphinx build copies it to output directory. Give it 0 width/height so it does not appear twice on the page.
 .. image:: ./images/prepubdiagram.png
+    :width: 0px
+    :height: 0px
 
 \
 
@@ -56,15 +66,14 @@ The second diagram shows the post-publication content states, in which published
 
 .. |postPubMap| raw:: html
 
-     <img src="../../_images/postpubdiagram.png" usemap="#postPub" alt="Content states after publish">
+     <img id="mapImage2" src="../../../_images/postpubdiagram.png" usemap="#postPub" alt="Content states after publish">
      <map name="postPub" id="postPub">
        <area alt="" title="" href="#state5" shape="rect" coords="45,55,165,125" />
        <area alt="" title="" href="#state6" shape="rect" coords="150,157,305,267" />
-       <area alt="" title="" href="#state7" shape="rect" coords="345,157,500,267" />
-       <area alt="" title="" href="#state8" shape="rect" coords="360,360,480,430" />
-       <area alt="" title="" href="#state9" shape="rect" coords="30,345,175,390" />
-       <area alt="" title="" href="#state5" shape="rect" coords="539,157,685,225" />
-     </map>
+       <area alt="" title="" href="#state7" shape="rect" coords="300,125,455,260" />
+       <area alt="" title="" href="#state8" shape="rect" coords="325,325,435,390" />
+       <area alt="" title="" href="#state9" shape="rect" coords="30,300,165,340" />
+       <area alt="" title="" href="#state5" shape="rect" coords="500,130,720,200" />
 .. image:: ./images/postpubdiagram.png
     :width: 0px
     :height: 0px

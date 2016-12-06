@@ -71,8 +71,11 @@ A revision scheduled for publication is a scheduled published event, and such ev
 | **See also:**
 | :doc:`../versioning/all`
 
-.. toctree:: 
-   :hidden: 
 
-    pub-live-group
+.. toctree:: 
+   :hidden:
+    
+   pub-live-group
+
+.. In the current build system, this sub-toctree is ignored.
 

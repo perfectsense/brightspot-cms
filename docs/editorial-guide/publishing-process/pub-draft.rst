@@ -11,10 +11,10 @@ You can save content as a draft, an action which persists the content to the Bri
 
 A draft can be edited, previewed, published, or deleted. Draft content remains in that state until you publish it, at which time the content goes live immediately, replacing previously published content. 
 
+.. note::
+    When working with draft revisions, make sure that you save edits before navigating away from the Content Edit page or closing the browser tab.
 
-**Note**: When working with draft revisions, make sure that you save edits before navigating away from the Content Edit page or closing the browser tab.
-
-On the Content Edit page, the Revisions widget includes all drafts in the total list of revisions for a particular content item. On the main Dashboard page, the Unpublished Drafts widget lists all of unpublished drafts for every content item on the site.
+On the Content Edit page, the Revisions widget includes all drafts in the total list of revisions for a particular content item. On the main Dashboard page, the :doc:`Unpublished Drafts <../dashboard/drafts>` widget lists all of unpublished drafts for every content item on the site.
 
 You can create drafts from new content that has not yet been published, or from currently published (live) content.
 
@@ -34,9 +34,9 @@ You can create drafts from new content that has not yet been published, or from 
 2. Use the Revisions widget to create a second draft and to give it a name.
 
 
-  With new, unpublished content, the Content Editor provides a side-by-side comparison between the initial draft and any additional draft that is currently selected (not shown). Additionally, the Publish widget provides the option of merging the content of an additional draft with the content of the initial draft.
+   With new, unpublished content, the Content Editor provides a side-by-side comparison between the initial draft and any additional draft that is currently selected (not shown). Additionally, the Publish widget provides the option of merging the content of an additional draft with the content of the initial draft.
 
-  .. image:: ./images/pubrevisionswidget.png
+   .. image:: ./images/pubrevisionswidget.png
     :width: 706px
     :height: 521px
 
@@ -71,6 +71,5 @@ The following example indicates that two post-publication drafts have been creat
 Note that with previously published content, the Content Editor provides a side-by-side comparison between the live revision and the draft that is currently selected. 
 
 | **See also:**
-| Unpublished Drafts widget
-| :doc:`../versioning/versioning`
+| :doc:`../versioning/all`
 
