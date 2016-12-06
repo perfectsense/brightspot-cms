@@ -1,6 +1,6 @@
-================================
+--------------------------------
 Working with One-off Dashboards
-================================
+--------------------------------
 
 Unlike a shared dashboard, a one-off dashboard is limited for use by the creator only. A one-off dashboard can be modified, but it cannot be versioned or archived. If you replace a one-off dashboard with another dashboard, the replaced dashboard is permanently deleted by the system. 
 

@@ -1,6 +1,6 @@
-==========================================
+--------------------------------
 Working with Shared Dashboards
-==========================================
+--------------------------------
 
 A shared dashboard is available for use by all Brightspot users. It be created by any user who has the required dashboard permission.
 
@@ -55,6 +55,12 @@ A dashboard item can be archived, which removes the dashboard from use but keeps
 
 | **See also:**
 | :doc:`../versioning/all`
+
+
+.. toctree::
+   :hidden:
+
+   dash-editpage
 
 
 
