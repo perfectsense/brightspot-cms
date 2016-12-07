@@ -4,7 +4,18 @@ Quick Installation
 
 This option should be used for developers looking to experiment with Brightspot locally. The sole dependency for running this project is Java 8.
 
-Step 1. Download
+Step 1. Download and Install Java Development Kit (JDK)
+=======================================================
+
+The JDK is necessary to run Britghtspot locally.
+
+Go to the `Java SE Downloads <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`_ page and click **JDK**.
+
+.. note::
+
+    Ensure your PATH variable points to bin/java or bin/java.exe.
+
+Step 2. Download
 ================
 
 `Download the ZIP <https://github.com/perfectsense/brightspot-tutorial/archive/master.zip>`_ for the `Brightspot Tutorial <https://github.com/perfectsense/brightspot-tutorial>`_ project.
@@ -13,12 +24,12 @@ Step 1. Download
 
     If you have **git** installed, you can alternatively ``git clone`` `the repository <https://github.com/perfectsense/brightspot-tutorial>`_.
 
-Step 2. Extract
+Step 3. Extract
 ===============
 
-If you've downloaded the ZIP from Step 1, extract the ZIP in a location of your choice.
+If you've downloaded the ZIP from Step 2, extract the ZIP in a location of your choice.
 
-Step 3. Run
+Step 4. Run
 ===========
 
 The Brightspot Demo project contains scripts for OSX/Linux and Windows environments.
