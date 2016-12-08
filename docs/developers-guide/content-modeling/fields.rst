@@ -76,7 +76,12 @@ To do this, create the object to be referenced:
         private String name;
     }
 
-.. image:: http://cdn.brightspotcms.psdops.com/dims4/default/6e7c24c/2147483647/resize/700x/quality/90/?url=http%3A%2F%2Fd3qqon7jsl4v2v.cloudfront.net%2F75%2F55%2F8e226e25436a9fbb153137469c7b%2Fscreen-shot-2014-11-11-at-43235-pmpng.41.09%20PM.png
+
+.. image:: ./images/new-author.png
+         :width: 543px
+         :height: 224px
+
+
 
 Next, add the newly created Author object to the Article:
 
@@ -88,7 +93,10 @@ Next, add the newly created Author object to the Article:
         private Author author;
     }
 
-.. image:: http://cdn.brightspotcms.psdops.com/dims4/default/d995d9e/2147483647/resize/700x/quality/90/?url=http%3A%2F%2Fd3qqon7jsl4v2v.cloudfront.net%2Fac%2F30%2F65d0bf6e4f008821b2565cb98099%2Fscreen-shot-2014-11-11-at-43039-pmpng.39.28%20PM.png
+.. image:: ./images/search-author.png
+         :width: 767px
+         :height: 571px
+
 
 Date Widget
 ~~~~~~~~~~~
