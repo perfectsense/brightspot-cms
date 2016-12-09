@@ -1225,6 +1225,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             %>
 
             <div class="widget-preview_controls">
+                <a class="share-email" target="shareEmailPopup" href="<%= wp.url("/content/emailPreview.jsp", "id", state.getId()) %>"><button><% wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Edit", "action.share")); %></button></a>
                 <form enctype="multipart/form-data" action="<%= wp.url("/content/sharePreview.jsp") %>" method="post" target="_blank">
                     <input name="<%= PageFilter.PREVIEW_ID_PARAMETER %>" type="hidden" value="<%= state.getId() %>">
                     <% if (site != null) { %>
@@ -1233,9 +1234,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     <input name="<%= PageFilter.PREVIEW_OBJECT_PARAMETER %>" type="hidden">
                     <input type="hidden" name="scheduleId" value="<%= user.getCurrentSchedule() != null ? user.getCurrentSchedule().getId() : "" %>">
                     <input name="previewDate" type="hidden">
-                    <button class="action-share">
-                        <% wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Edit", "action.share")); %>
-                    </button>
+                    <button class="action-share">Preview</button>
                 </form>
 
                 <%
@@ -1890,6 +1889,12 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     return true;
                 }
             });
+
+            // Attach popup to email share preview form
+            var $sharePreviewPopup = $("#sendSharePreview");
+            $sharePreviewPopup.popup();
+            $sharePreviewPopup.popup('container').attr('id', 'shareEmailPopup');
+            $sharePreviewPopup.popup('close');
         })(jQuery, window);
     </script>
 <% } %>
