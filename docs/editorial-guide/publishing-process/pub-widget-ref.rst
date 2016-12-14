@@ -3,9 +3,6 @@
     <style> .red {color:red}</style>
 
 
-.. |redText| raw:: html
-
-    <span class="red">PSD explanation about this screen?</span>
 
 .. This fixes the sizes of the two image maps. Without it, the images are resized, breaking the area coordinates.
 .. raw:: html
@@ -15,7 +12,6 @@
      #mapImage2 { height: 488px; width: 595px; overflow: scroll;}
     </style>
 
-.. raw:: html
 
 
 ==========================================
@@ -108,7 +104,7 @@ The following Brightspot content states determine the Publish Widget UI function
 
 | *Current Context*: New content, not yet saved or moved into a workflow (WF).
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 
 ============= ============
@@ -158,7 +154,7 @@ For new, unsaved content, the Revision widget is not rendered in the Content Edi
 
 | *Previous Context*: :ref:`state1`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -213,7 +209,7 @@ For initial draft state, the Revision widget is similar to the following:
 
 | *Previous Context*: :ref:`state1` or  :ref:`state2` or  :ref:`state4a`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -273,7 +269,7 @@ Submitted             Rejected           Resubmitted
 
 | *Previous Context*: :ref:`state1` or  :ref:`state2` or :ref:`state3` or :ref:`state4a`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -322,7 +318,7 @@ For new scheduled content, the Revision widget is similar to the following:
 
 | *Previous Context*: :ref:`state4`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -378,7 +374,7 @@ For previously scheduled content that was unscheduled from publication, the Revi
 
 | *Previous Context*: :ref:`state1` or :ref:`state2` or :ref:`state3` or :ref:`state4` or :ref:`state6` or :ref:`state7`    
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -431,7 +427,7 @@ For published content that has transitioned through various draft states, the Re
 
 | *Previous Context*:  :ref:`state5`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -492,7 +488,7 @@ For published content that is updated, the Revision widget is similar to the fol
 
 | *Previous Context*:  :ref:`state6`
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -556,7 +552,7 @@ Submitted             Rejected           Resubmitted
 
 | *Previous Context*:  :ref:`state5` or :ref:`state6` or :ref:`state7`    
 
-| *Brightspot Notes*: |redText|
+| *Brightspot Notes*: 
 
 ============= ============
 Workflow Tab  Publish Tab
@@ -609,7 +605,7 @@ For updated content that is scheduled for republication, the Revision widget is 
 
 .. | *Previous Context*:  :ref:`state8`
 
-.. | *Brightspot Notes*: |redText|
+.. | *Brightspot Notes*: 
 
 .. ============= ============
 .. Workflow Tab  Publish Tab
@@ -662,8 +658,7 @@ For updated content that is scheduled for republication, the Revision widget is 
 
 | *Previous Context*: :ref:`state5`
 
-| *Brightspot Notes*: |redText|
-
+| *Brightspot Notes*: 
 ============= ============
 Workflow Tab  Publish Tab
 ============= ============
