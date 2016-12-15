@@ -274,8 +274,9 @@ Start the Application Server
    | *port* is the port number that you specified in context.xml.
    | *contextPath* reflects the name of the WAR file, for example: ``http://localhost:8080/bsPlatform/cms``.
 
-\     
-.. note:: If the name of your WAR file is ROOT.war, then the do not specify a context path, for example ``http://localhost:8080/cms``.
+\    
+ 
+.. note:: If the name of your WAR file is ROOT.war, then do not specify a context path, for example ``http://localhost:8080/cms``.
 
 
 The Brightspot login page appears. This is the default landing page.

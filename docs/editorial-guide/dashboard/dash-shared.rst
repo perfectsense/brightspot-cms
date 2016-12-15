@@ -45,13 +45,7 @@ A dashboard item can be archived, which removes the dashboard from use but keeps
 
    To create or edit a shared dashboard, see :doc:`dash-editpage`.
 
-#. Optional: From the Dashboard window, configure the following widgets:
-
-   - :doc:`resources`
-
-   - :doc:`common-content`. You can set the content types for which to create new instances, and you can set existing instances of content types to access from this widget. 
-
-   - :doc:`bulk-upload`
+#. Optional: From the Dashboard window, configure the following widgets: :doc:`resources`, :doc:`common-content`, and :doc:`bulk-upload`
 
 
    .. note:: The widgets available for configuration are dependant on the dashboard system level: global, site, role, or personal.

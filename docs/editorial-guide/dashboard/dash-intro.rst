@@ -1,6 +1,7 @@
-==========================================
+
+==================
 Custom Dashboards
-==========================================
+==================
 
 The CMS provides a default dashboard. Set at the global level of the system, the default dashboard is available to all users of the system.
 
@@ -83,13 +84,6 @@ The following table provides an example of the system logic applied when two das
 | **See also:**
 | :doc:`../versioning/all`
 
-.. toctree:: 
-   :hidden:		
-
-    dash-oneoff
-    dash-shared
-    dash-editpage
-   
 
 
 
