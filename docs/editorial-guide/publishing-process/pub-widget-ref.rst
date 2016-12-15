@@ -482,9 +482,6 @@ For published content that is updated, the Revision widget is similar to the fol
 ====================================================
 
 | *Current Context*: Updated content that was previously saved as a draft and is not transitioned through a workflow. Each workflow transistion is saved as a new workflow draft. 
-.. raw:: html
-
-   <span class="red">[fe] The actual behavior that I see is that the workflow is listed in the References widget (see ticket 2563).</span>
 
 | *Previous Context*:  :ref:`state6`
 
