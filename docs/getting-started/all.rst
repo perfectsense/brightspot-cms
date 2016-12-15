@@ -8,6 +8,7 @@
 
     Getting Started <self>
     intro/all
+    demo-install/all
     install/all
     hello-world/all
     creating-content/all
