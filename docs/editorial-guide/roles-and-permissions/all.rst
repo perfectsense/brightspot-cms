@@ -1,7 +1,3 @@
-.. |emDash| raw:: html
-
-   &#8212;
-
 Roles, Users, and Permissions
 =============================
 
