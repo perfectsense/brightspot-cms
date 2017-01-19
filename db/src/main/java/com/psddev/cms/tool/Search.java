@@ -209,6 +209,10 @@ public class Search extends Record {
         setIgnoreSite(page.param(boolean.class, IGNORE_SITE_PARAMETER));
         setFrameNameSuffix(page.param(String.class, FRAME_NAME_SUFFIX_PARAMETER));
 
+        if (getSelectedType() == null && getTypes().size() == 1) {
+            setSelectedType(getTypes().iterator().next());
+        }
+
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.initializeSearch(this, page);
         }
