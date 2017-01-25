@@ -1,9 +1,11 @@
 package com.psddev.cms.view;
 
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.Once;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StringUtils;
 
+import com.psddev.dari.util.TypeDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import java.util.function.Supplier;
@@ -94,6 +97,15 @@ class ViewMap implements Map<String, Object> {
                         (m1, m2) -> m1,
                         // store them in the unresolved map
                         () -> unresolved));
+
+        if (view instanceof ViewModel) {
+            Object model = ((ViewModel) view).model;
+
+            ClassFinder.findConcreteClasses(ViewModelOverlay.class).stream()
+                    .map(c -> TypeDefinition.getInstance(c).newInstance().create(model))
+                    .filter(Objects::nonNull)
+                    .forEach(overlay -> unresolved.putAll(overlay));
+        }
 
         if (includeClassName) {
             resolved.put("class", view.getClass().getName());
@@ -210,7 +222,7 @@ class ViewMap implements Map<String, Object> {
      */
     private Object convertValue(String key, Object value) {
 
-        if (value instanceof String) {
+        if (value instanceof CharSequence) {
             return value;
 
         } else if (value instanceof Boolean) {

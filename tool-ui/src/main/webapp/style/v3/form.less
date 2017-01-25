@@ -169,6 +169,10 @@
     }
   }
 
+  &.inputContainer-unlabeled:before {
+    display: none;
+  }
+
   // Most reliable way to clear floats and avoid margin collapse after the input container
   // As described here: https://css-tricks.com/snippets/css/clear-fix/
   &:after {
@@ -249,6 +253,10 @@
     margin: 0 0 5px 0;
     padding: 5px;
     width: auto;
+  }
+
+  .inputContainer-unlabeled > & {
+    display: none;
   }
 }
 
@@ -352,10 +360,18 @@
     margin-left: 0;
     padding-left: 2px;
   }
+
+  .inputContainer-unlabeled > & {
+    margin-left: 0;
+  }
 }
 
 .inputLargeLike {
   padding: 10px 0 0 41px;
+
+  .inputContainer-unlabeled > & {
+    padding: 0;
+  }
 }
 
 .inputLarge {
@@ -377,6 +393,10 @@
     position: absolute;
     width: 7.5px;
     top: 0;
+
+    .inputContainer-unlabeled > & {
+      display: none;
+    }
   }
 
   .inputContainer.state-changed > &:before {
