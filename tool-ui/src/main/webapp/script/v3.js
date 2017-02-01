@@ -77,7 +77,7 @@ require([
 
   'v3/Dropbox',
   'v3/EditFieldUpdate',
-        
+
   'v3/dashboard',
   'v3/sticky',
   'v3/content/diff',
@@ -465,14 +465,29 @@ function() {
       $body.append($cover);
 
       // Valid file drop zones.
-      $('.inputContainer .action-upload, .uploadable .uploadableLink').each(function() {
+      $('.inputContainer .action-upload, .uploadable .uploadableLink, .fileSelector').each(function() {
         var $upload = $(this),
             $container = $upload.closest('.inputContainer, .uploadable'),
             overlayCss,
             $dropZone,
             $dropLink,
             $fileInputContainer,
-            $fileInput;
+            $fileInput,
+            $fileSelector,
+            $fileSelectorSelect,
+            $fileSelectorInput,
+            $fileSelectorLabel;
+
+        // Check if this is a FileSelector widget, such as used to upload a single new file
+        if ($(this).is('.fileSelector')) {
+          $fileSelector = $(this);
+          $fileSelectorSelect = $(this).find('> select[name $= "file.action"]');
+          $fileSelectorLabel = $(this).find('> .dropDown-input > .dropDown-label');
+          $fileSelectorInput = $(this).find('> input[name $= "file.file"]');
+          // The existing drag and drop code used a link to display the "Drop Files Here" text,
+          // so we'll create a link that can be used
+          $upload = $('<a>', {href: '#'}).on('click', function(){ return false; });
+        }
 
         overlayCss = $.extend($container.offset(), {
           'height': $container.outerHeight(),
@@ -500,6 +515,11 @@ function() {
           'multiple': 'multiple'
         });
 
+        // For a file selector, don't allow multiple files to be dropped
+        if ($fileSelector && !$fileSelectorInput.attr('multiple')) {
+          $fileInput.removeAttr('multiple');
+        }
+
         // On file drop, replace the appropriate input.
         $fileInput.one('change', function() {
           var dropLinkOffset = $dropLink.offset(),
@@ -507,45 +527,86 @@ function() {
               replaceFileInput;
 
           $cover.hide();
-          $dropLink.click();
           $fileInputContainer.hide();
 
-          $frame = $('.frame[name="' + $dropLink.attr('target') + '"]');
+          // Are we dealing with a FileSelector control, or an upload link?
+          if ($fileSelector) {
 
-          // Position the popup over the drop link.
-          $frame.popup('source', $upload, {
-            'pageX': dropLinkOffset.left + $dropLink.outerWidth() / 2,
-            'pageY': dropLinkOffset.top + $dropLink.outerHeight()
-          });
+            // Change the FileSelector control to "New Upload"
+            $fileSelectorSelect.val('newUpload').trigger('change');
+            $fileSelectorLabel.trigger('dropDown-update');
 
-          // Closing the popup resets the drag-and-drop.
-          $frame.popup('container').bind('close', function() {
+            // Copy attributes from the original file input to the replacement file input
+            $.each([ 'class', 'id', 'name', 'style', 'data-bsp-uploader', 'data-input-name', 'data-type-id' ], function(index, name) {
+
+              var val;
+
+              val = $fileSelectorInput.attr(name) || '';
+
+              // For the class name we need to remove bsp-onDomInsert-inserted*
+              // so we can re-create the bsp-uploader plugin on the new file input
+              if (name === 'class') {
+                val = val.replace(/\bbsp-onDomInsert-inserted-\d+\b/g, ' ');
+              }
+
+              $fileInput.attr(name, val);
+            });
+
+            // Replace the original file input with the new one
+            $fileSelectorInput.replaceWith($fileInput);
+            $fileSelectorInput = $fileInput;
+
+            // Trigger a change event so the upload plugin will run and upload the image
+            // We must do this after a timeout to give time for the upload plugin to initialize
+            setTimeout(function(){
+              $fileSelectorInput.change();
+            }, 100);
+
+            // Clear the drag and drop regions
             $cover.trigger('dragleave');
-          });
 
-          replaceFileInput = function() {
-            var $frameFileInput = $frame.find(':file').eq(0);
+          } else {
 
-            if ($frameFileInput.length !== 1) {
-              setTimeout(replaceFileInput, 20);
+            // We are dealing with an upload link, so click it to make the popup appear
+            $dropLink.click();
 
-            } else {
-              $.each([ 'class', 'id', 'name', 'style' ], function(index, name) {
-                $fileInput.attr(name, $frameFileInput.attr(name) || '');
-              });
+            $frame = $('.frame[name="' + $dropLink.attr('target') + '"]');
 
-              $frameFileInput.after($fileInput);
-              $frameFileInput.remove();
-              $frameFileInput = $fileInput;
-              $frameFileInput.change();
+            // Position the popup over the drop link.
+            $frame.popup('source', $upload, {
+              'pageX': dropLinkOffset.left + $dropLink.outerWidth() / 2,
+              'pageY': dropLinkOffset.top + $dropLink.outerHeight()
+            });
+
+            // Closing the popup resets the drag-and-drop.
+            $frame.popup('container').bind('close', function() {
+              $cover.trigger('dragleave');
+            });
+
+            replaceFileInput = function() {
+              var $frameFileInput = $frame.find(':file').eq(0);
+
+              if ($frameFileInput.length !== 1) {
+                setTimeout(replaceFileInput, 20);
+
+              } else {
+                $.each([ 'class', 'id', 'name', 'style' ], function(index, name) {
+                  $fileInput.attr(name, $frameFileInput.attr(name) || '');
+                });
+
+                $frameFileInput.after($fileInput);
+                $frameFileInput.remove();
+                $frameFileInput = $fileInput;
+                $frameFileInput.change();
+              }
+            };
+
+            replaceFileInput();
+
+            //re-initialize uploader plugin, if necessary (not necessary for uploadFile-legacy servlet)
+            if ($dropLink.attr('href').indexOf('uploadFiles') === -1) {
+              $fileInput.attr('data-bsp-uploader', ' ');
             }
-          };
-
-          replaceFileInput();
-
-          //re-initialize uploader plugin, if necessary (not necessary for uploadFile-legacy servlet)
-          if ($dropLink.attr('href').indexOf('uploadFiles') === -1) {
-            $fileInput.attr('data-bsp-uploader', ' ');
           }
         });
 
@@ -697,9 +758,9 @@ function() {
     bsp_utils.onDomInsert($popup[0], '> .content > .frame > h1', {
       insert: function (heading) {
         var $heading = $(heading);
-        
+
         $heading.text(label);
-        
+
         if (objectLabelHtml) {
           $heading.append(' - ');
           $heading.append(objectLabelHtml);
