@@ -537,7 +537,7 @@ function() {
             $fileSelectorLabel.trigger('dropDown-update');
 
             // Copy attributes from the original file input to the replacement file input
-            $.each([ 'class', 'id', 'name', 'style', 'data-bsp-uploader', 'data-input-name', 'data-type-id' ], function(index, name) {
+            $.each([ 'class', 'id', 'name', 'style', 'data-input-name', 'data-type-id' ], function(index, name) {
 
               var val;
 
@@ -551,6 +551,11 @@ function() {
 
               $fileInput.attr(name, val);
             });
+
+            // Determine if the front-end uploader should be used
+            if ($fileSelectorInput.attr('data-bsp-uploader') !== undefined) {
+              $fileInput.attr('data-bsp-uploader', '');
+            }
 
             // Replace the original file input with the new one
             $fileSelectorInput.replaceWith($fileInput);
