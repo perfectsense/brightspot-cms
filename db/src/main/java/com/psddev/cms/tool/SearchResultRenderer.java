@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -15,6 +17,7 @@ import com.psddev.cms.db.PageFilter;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.util.JspUtils;
+import com.psddev.dari.util.TypeDefinition;
 import org.joda.time.DateTime;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Renderer;
@@ -232,6 +235,20 @@ public class SearchResultRenderer {
         }
 
         if (!resultsDisplayed) {
+            for (QueryRestriction restriction : StreamSupport.stream(QueryRestriction.classIterable().spliterator(), false)
+                    .map(clazz -> TypeDefinition.getInstance(clazz).newInstance())
+                    .filter(restriction -> !restriction.displayOnlyInGlobal())
+                    .collect(Collectors.toList())) {
+
+                page.writeStart("form",
+                        "class", "queryRestrictions",
+                        "data-bsp-autosubmit", "",
+                        "method", "post",
+                        "action", page.url("", Search.OFFSET_PARAMETER, null));
+                    restriction.writeHtml(page);
+                page.writeEnd();
+            }
+
             if (search.findSorts().size() > 1) {
                 page.writeStart("div", "class", "searchSorter");
                     renderSorter();

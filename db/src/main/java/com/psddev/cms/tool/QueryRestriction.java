@@ -8,6 +8,14 @@ import java.io.IOException;
 
 public interface QueryRestriction {
 
+    /**
+     * @return {@code true} if this restriction should only be displayed in
+     * global search, {@code false} otherwise.
+     */
+    default boolean displayOnlyInGlobal() {
+        return true;
+    }
+
     public static Iterable<Class<? extends QueryRestriction>> classIterable() {
         return ClassFinder.Static.findClasses(QueryRestriction.class);
     }
