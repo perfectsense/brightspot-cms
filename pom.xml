@@ -9,11 +9,11 @@
     <parent>
         <groupId>com.psddev</groupId>
         <artifactId>dari-parent</artifactId>
-        <version>3.2.2296-7fc809</version>
+        <version>3.2.2348-dcc2b2</version>
     </parent>
 
     <properties>
-        <dari.version>3.2.2296-7fc809</dari.version>
+        <dari.version>3.2.2348-dcc2b2</dari.version>
     </properties>
 
     <groupId>com.psddev</groupId>
@@ -126,6 +126,12 @@
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
                 <version>2.0.28-beta</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.psddev</groupId>
+                <artifactId>dari-h2</artifactId>
+                <version>${dari.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -27,11 +27,18 @@ public class ImageCrop extends Record {
 
         if (crops instanceof Map) {
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) crops).entrySet()) {
-                Object crop = entry.getValue();
+                Object cropObj = entry.getValue();
 
-                cropsMap.put(entry.getKey(), crop instanceof Map
-                        ? new ImageCrop((Map<String, Object>) crop)
-                        : new ImageCrop());
+                ImageCrop crop;
+                if (cropObj instanceof ImageCrop) {
+                    crop = (ImageCrop) cropObj;
+                } else if (cropObj instanceof Map) {
+                    crop = new ImageCrop((Map<String, Object>) cropObj);
+                } else {
+                    crop = new ImageCrop();
+                }
+
+                cropsMap.put(entry.getKey(), crop);
             }
         }
 
