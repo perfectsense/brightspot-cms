@@ -10,6 +10,7 @@ com.psddev.cms.db.Draft,
 com.psddev.cms.db.Guide,
 com.psddev.cms.db.GuidePage,
 com.psddev.cms.db.History,
+com.psddev.cms.db.Managed,
 com.psddev.cms.db.Page,
 com.psddev.cms.db.PageFilter,
 com.psddev.cms.db.Renderer,
@@ -73,6 +74,15 @@ if (selected == null) {
     wp.writeEnd();
     wp.writeFooter();
     return;
+}
+
+if (selected instanceof Managed) {
+    String managedEditUrl = ((Managed) selected).createManagedEditUrl(wp);
+
+    if (managedEditUrl != null) {
+        response.sendRedirect(managedEditUrl);
+        return;
+    }
 }
 
 State state = State.getInstance(selected);

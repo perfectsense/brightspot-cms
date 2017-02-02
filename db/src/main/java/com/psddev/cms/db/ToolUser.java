@@ -30,6 +30,7 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardContainer;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Query;
@@ -49,7 +50,7 @@ import com.psddev.dari.util.StringUtils;
 @ToolUi.IconName("object-toolUser")
 @Record.BootstrapPackages("Users and Roles")
 @Record.BootstrapTypeMappable(groups = Content.class, uniqueKey = "email")
-public class ToolUser extends Record implements ToolEntity {
+public class ToolUser extends Record implements Managed, ToolEntity {
 
     private static final long TOKEN_CHECK_EXPIRE_MILLISECONDS = 30000L;
 
@@ -1098,6 +1099,11 @@ public class ToolUser extends Record implements ToolEntity {
         } catch (IOException error) {
             throw new IllegalStateException(error);
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/users.jsp", "id", getId());
     }
 
     public static class LoginToken extends Record {

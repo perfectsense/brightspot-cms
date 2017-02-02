@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.psddev.cms.db.Global;
+import com.psddev.cms.db.Managed;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Database;
@@ -25,7 +27,7 @@ import com.psddev.dari.util.TypeDefinition;
 
 /** Brightspot application, typically used by the internal staff. */
 @ToolUi.IconName("object-tool")
-public abstract class Tool extends Application {
+public abstract class Tool extends Application implements Global, Managed {
 
     public static final String CONTENT_BOTTOM_WIDGET_POSITION = "cms.contentBottom";
     public static final String CONTENT_RIGHT_WIDGET_POSITION = "cms.contentRight";
@@ -349,6 +351,11 @@ public abstract class Tool extends Application {
 
             return widgetsTable;
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/settings.jsp", "id", getId());
     }
 
     // --- Deprecated ---

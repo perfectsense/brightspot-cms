@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Draft;
+import com.psddev.cms.db.Global;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolEntity;
@@ -1066,6 +1067,7 @@ public class Search extends Record {
         }
 
         if (!isIgnoreSite()
+                && (selectedType == null || !selectedType.getGroups().contains(Global.class.getName()))
                 && site != null
                 && !site.isAllSitesAccessible()) {
             Set<ObjectType> globalTypes = new HashSet<ObjectType>();
