@@ -157,6 +157,10 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean disableFieldLocking;
 
+    @ToolUi.Placeholder("Vertical")
+    @ToolUi.Tab("UI")
+    private SearchCarouselDisplay searchCarouselDisplay;
+
     @ToolUi.Tab("Debug")
     private boolean removeTrailingSlashes;
 
@@ -207,9 +211,6 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean disableWorkInProgress;
-
-    @ToolUi.Tab("Debug")
-    private boolean horizontalSearchCarousel;
 
     @ToolUi.Tab("Debug")
     private boolean useOldHistoryIndex;
@@ -757,6 +758,14 @@ public class CmsTool extends Tool {
         this.disableFieldLocking = disableFieldLocking;
     }
 
+    public SearchCarouselDisplay getSearchCarouselDisplay() {
+        return searchCarouselDisplay;
+    }
+
+    public void setSearchCarouselDisplay(SearchCarouselDisplay searchCarouselDisplay) {
+        this.searchCarouselDisplay = searchCarouselDisplay;
+    }
+
     public boolean isRemoveTrailingSlashes() {
         return removeTrailingSlashes;
     }
@@ -891,12 +900,14 @@ public class CmsTool extends Tool {
         this.disableWorkInProgress = disableWorkInProgress;
     }
 
+    @Deprecated
     public boolean isHorizontalSearchCarousel() {
-        return horizontalSearchCarousel;
+        return getSearchCarouselDisplay() == SearchCarouselDisplay.HORIZONTAL;
     }
 
+    @Deprecated
     public void setHorizontalSearchCarousel(boolean horizontalSearchCarousel) {
-        this.horizontalSearchCarousel = horizontalSearchCarousel;
+        setSearchCarouselDisplay(horizontalSearchCarousel ? SearchCarouselDisplay.HORIZONTAL : null);
     }
 
     public boolean isUseOldHistoryIndex() {

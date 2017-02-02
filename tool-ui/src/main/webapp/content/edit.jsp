@@ -28,6 +28,7 @@ com.psddev.cms.db.WorkInProgress,
 com.psddev.cms.db.WorkStream,
 com.psddev.cms.tool.CmsTool,
 com.psddev.cms.tool.ContentEditWidgetDisplay,
+com.psddev.cms.tool.SearchCarouselDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
@@ -285,21 +286,25 @@ if (oldObject != null) {
 %>
 <%
 wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel() : null);
+
+SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselDisplay();
 %>
-<div class="content-edit"<%= wp.getCmsTool().isHorizontalSearchCarousel() ? "" : " data-vertical-carousel" %>>
+<div class="content-edit"<%= searchCarouselDisplay == SearchCarouselDisplay.HORIZONTAL ? "" : " data-vertical-carousel" %>>
 <%
 
-    String search = wp.param(String.class, "search");
+    if (searchCarouselDisplay != SearchCarouselDisplay.DISABLED) {
+        String search = wp.param(String.class, "search");
 
-    if (search != null) {
-        wp.writeStart("div", "class", "frame");
-            wp.writeStart("a",
-                    "href", wp.cmsUrl("/searchCarousel",
-                            "id", editingState.getId(),
-                            "search", search,
-                            "draftId", wp.param(UUID.class, "draftId")));
+        if (search != null) {
+            wp.writeStart("div", "class", "frame");
+                wp.writeStart("a",
+                        "href", wp.cmsUrl("/searchCarousel",
+                                "id", editingState.getId(),
+                                "search", search,
+                                "draftId", wp.param(UUID.class, "draftId")));
+                wp.writeEnd();
             wp.writeEnd();
-        wp.writeEnd();
+        }
     }
 
     Overlay overlay = Edit.getOverlay(editing);
