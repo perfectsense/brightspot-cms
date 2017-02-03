@@ -20,6 +20,12 @@
     </difference>
 
     <difference>
+        <className>com/psddev/cms/tool/QueryRestriction</className>
+        <differenceType>7012</differenceType>
+        <method>boolean displayOnlyInGlobal()</method>
+    </difference>
+
+    <difference>
         <className>com/psddev/cms/tool/SearchResultAction</className>
         <differenceType>7012</differenceType>
         <method>java.lang.String getGroup()</method>
@@ -35,12 +41,6 @@
         <className>com/psddev/cms/tool/Tab</className>
         <differenceType>7012</differenceType>
         <method>void onUpdate(com.psddev.cms.tool.ToolPageContext, java.lang.Object)</method>
-    </difference>
-
-    <difference>
-        <className>com/psddev/cms/tool/QueryRestriction</className>
-        <differenceType>7012</differenceType>
-        <method>boolean displayOnlyInGlobal()</method>
     </difference>
 
     <difference>
