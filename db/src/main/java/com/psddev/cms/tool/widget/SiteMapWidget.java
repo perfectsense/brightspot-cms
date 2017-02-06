@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.ToolUi;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
@@ -81,7 +82,7 @@ public class SiteMapWidget extends DashboardWidget {
                     @Override
                     protected Query<?> createQuery(Directory directory) {
                         return (itemType != null ? Query.fromType(itemType) : Query.fromAll())
-                                .and(page.userItemsPredicate())
+                                .and(UserPermissionsProvider.allItemsPredicate(page.getUser()))
                                 .and(page.siteItemsSearchPredicate())
                                 .and(directory.itemsPredicate(page.getSite()))
                                 .sortAscending(Directory.PATHS_FIELD);
@@ -93,7 +94,8 @@ public class SiteMapWidget extends DashboardWidget {
 
         } else if (valueObject != null) {
             Query<?> query = (itemType != null ? Query.fromType(itemType) : Query.fromAll())
-                    .and(page.itemsPredicate())
+                    .and(UserPermissionsProvider.allItemsPredicate(page.getUser()))
+                    .and(page.siteItemsPredicate())
                     .and("* matches ?", value)
                     .and("cms.directory.paths != missing");
 
@@ -106,7 +108,8 @@ public class SiteMapWidget extends DashboardWidget {
                     @Override
                     protected Query<?> createQuery(Directory directory) {
                         return (itemType != null ? Query.fromType(itemType) : Query.fromAll())
-                                .and(page.itemsPredicate())
+                                .and(UserPermissionsProvider.allItemsPredicate(page.getUser()))
+                                .and(page.siteItemsPredicate())
                                 .and(directory.itemsPredicate(page.getSite()))
                                 .and("* matches ?", value)
                                 .and("cms.directory.paths != missing");

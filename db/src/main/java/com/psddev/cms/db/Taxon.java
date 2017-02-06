@@ -96,7 +96,7 @@ public interface Taxon extends Recordable {
             Query<T> query = Query.from(taxonClass).where("cms.taxon.root = true");
 
             Optional.ofNullable(PageContextFilter.Static.getRequestOrNull())
-                    .ifPresent(req -> query.and(UserPermissionsProvider.Static.allItemsPredicate(AuthenticationFilter.Static.getUser(req))));
+                    .ifPresent(request -> query.and(UserPermissionsProvider.allItemsPredicate(AuthenticationFilter.Static.getUser(request))));
 
             if (site != null) {
                 query.and(site.itemsPredicate());

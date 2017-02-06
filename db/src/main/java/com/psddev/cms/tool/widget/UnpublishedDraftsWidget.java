@@ -16,6 +16,7 @@ import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowState;
 import com.psddev.cms.tool.Dashboard;
@@ -119,7 +120,8 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
         PaginatedResult<?> drafts = draftsQuery
                 .and("* matches *")
                 .and(Content.UPDATE_DATE_FIELD + " != missing")
-                .and(page.itemsPredicate())
+                .and(UserPermissionsProvider.allItemsPredicate(page.getUser()))
+                .and(page.siteItemsPredicate())
                 .sortDescending(Content.UPDATE_DATE_FIELD)
                 .selectFiltered(page.param(long.class, "offset"), limit, queryFilter);
 

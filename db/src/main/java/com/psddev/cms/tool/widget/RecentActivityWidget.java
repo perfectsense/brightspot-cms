@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.util.JspUtils;
 import org.joda.time.DateTime;
@@ -72,7 +73,7 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
             Query<?> contentQuery = (itemType != null && !visibilities.contains("d")
                     ? Query.fromType(itemType)
                     : Query.fromGroup(Content.SEARCHABLE_GROUP))
-                    .where(page.userItemsPredicate())
+                    .where(UserPermissionsProvider.allItemsPredicate(page.getUser()))
                     .and(page.siteItemsSearchPredicate())
                     .and(Content.UPDATE_DATE_FIELD + " != missing")
                     .sortDescending(Content.UPDATE_DATE_FIELD);

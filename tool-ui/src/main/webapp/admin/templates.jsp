@@ -8,6 +8,7 @@ com.psddev.cms.db.Section,
 com.psddev.cms.db.VerticalContainerSection,
 com.psddev.cms.db.Template,
 com.psddev.cms.db.ToolUi,
+com.psddev.cms.db.UserPermissionsProvider,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectType,
@@ -47,7 +48,8 @@ if (wp.tryStandardUpdate(selected)) {
                 </li>
                 <% for (Template template : wp.
                         queryFrom(Template.class).
-                        where(wp.itemsPredicate()).
+                        where(UserPermissionsProvider.allItemsPredicate(wp.getUser())).
+                        and(wp.siteItemsPredicate()).
                         sortAscending("name").
                         select()) { %>
                     <li<%= template.equals(selected) ? " class=\"selected\"" : "" %>>
@@ -66,7 +68,8 @@ if (wp.tryStandardUpdate(selected)) {
                 <% for (Section section : Query.
                         from(Section.class).
                         where("isShareable = true").
-                        and(wp.itemsPredicate()).
+                        and(UserPermissionsProvider.allItemsPredicate(wp.getUser())).
+                        and(wp.siteItemsPredicate()).
                         selectAll()) { %>
                     <li<%= section.equals(selected) ? " class=\"selected\"" : "" %>>
                         <a href="<%= wp.objectUrl(null, section) %>"><%= wp.objectLabel(section) %></a>

@@ -36,6 +36,7 @@ import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.ToolUserSearch;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowState;
 import com.psddev.cms.tool.search.ListSearchResultView;
@@ -1066,7 +1067,7 @@ public class Search extends Record {
         }
 
         if (page != null) {
-            query.and(page.userItemsPredicate());
+            query.and(UserPermissionsProvider.allItemsPredicate(page.getUser()));
         }
 
         if (!isIgnoreSite()

@@ -215,7 +215,7 @@ public class WorkStream extends Record {
         if (currentItems != null) {
             Query nextQuery = Query.from(Object.class)
                     .where("_id = ?", currentItems.get(userId))
-                    .and(UserPermissionsProvider.Static.allItemsPredicate(user));
+                    .and(UserPermissionsProvider.allItemsPredicate(user));
 
             if (siteItemsPredicate != null) {
                 nextQuery.and(siteItemsPredicate);
@@ -233,7 +233,7 @@ public class WorkStream extends Record {
         if (next == null) {
             Query<?> query = getQuery().clone()
                     .and("id != ?", Query.from(Object.class).where("cms.workstream.completeIds ^= ?", getId().toString() + ","))
-                    .and(UserPermissionsProvider.Static.allItemsPredicate(user));
+                    .and(UserPermissionsProvider.allItemsPredicate(user));
 
             if (siteItemsPredicate != null) {
                 query.and(siteItemsPredicate);

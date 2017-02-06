@@ -26,39 +26,31 @@ public interface UserPermissionsProvider {
     Predicate itemsPredicate(ToolUser user);
 
     /**
-     * Static utility methods.
+     * Returns a {@link Predicate} that compounds all predicates from
+     * implementations of {@link UserPermissionsProvider}.
+     *
+     * @param user Nullable.
+     * @return Nullable.
      */
-    final class Static {
-
-        private Static() { }
-
-        /**
-         * Returns a {@link Predicate} that compounds all predicates from
-         * implementations of {@link UserPermissionsProvider}.
-         *
-         * @param user Nullable.
-         * @return Nullable.
-         */
-        public static Predicate allItemsPredicate(ToolUser user) {
-            if (user == null) {
-                return null;
-            }
-
-            List<Predicate> predicates = ClassFinder.findConcreteClasses(UserPermissionsProvider.class).stream()
-                    .map(clazz -> TypeDefinition.getInstance(clazz).newInstance())
-                    .map(object -> object.itemsPredicate(user))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            return predicates.isEmpty() ? null : new CompoundPredicate(PredicateParser.OR_OPERATOR, predicates);
+    static Predicate allItemsPredicate(ToolUser user) {
+        if (user == null) {
+            return null;
         }
 
-        /**
-         * @return {@code true} if the {@code object} is accessible by the
-         * given {@code user}, {@code false}.
-         */
-        public static boolean isObjectAccessible(ToolUser user, Object object) {
-            return PredicateParser.Static.evaluate(object, allItemsPredicate(user));
-        }
+        List<Predicate> predicates = ClassFinder.findConcreteClasses(UserPermissionsProvider.class).stream()
+                .map(clazz -> TypeDefinition.getInstance(clazz).newInstance())
+                .map(object -> object.itemsPredicate(user))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return predicates.isEmpty() ? null : new CompoundPredicate(PredicateParser.OR_OPERATOR, predicates);
+    }
+
+    /**
+     * @return {@code true} if the {@code object} is accessible by the
+     * given {@code user}, {@code false}.
+     */
+    static boolean isObjectAccessible(ToolUser user, Object object) {
+        return PredicateParser.Static.evaluate(object, allItemsPredicate(user));
     }
 }
