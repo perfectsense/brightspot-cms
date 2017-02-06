@@ -26,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -251,22 +252,23 @@ public class BulkArchive extends PageServlet {
         private Action action;
 
         public Context(PageContext pageContext) {
-            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null);
+            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null, null);
         }
 
         public Context(ToolPageContext page) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), null, null);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), null, null);
         }
 
         public Context(ToolPageContext page, Search search, SearchResultSelection selection) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), search, selection);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), search, selection);
         }
 
-        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, Search search, SearchResultSelection selection) {
+        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, Writer delegate, Search search, SearchResultSelection selection) {
 
             super(servletContext, request, response);
+            setDelegate(delegate);
 
             String selectionId = param(String.class, SELECTION_ID_PARAMETER);
 

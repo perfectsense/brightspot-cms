@@ -115,7 +115,7 @@ class ViewMap implements Map<String, Object> {
     /**
      * @return the backing view object for this map.
      */
-    public Object getView() {
+    public Object toView() {
         return view;
     }
 

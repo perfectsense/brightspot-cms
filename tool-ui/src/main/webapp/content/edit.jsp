@@ -2,6 +2,8 @@
 
 com.psddev.cms.db.Content,
 com.psddev.cms.db.ContentLock,
+com.psddev.cms.db.ContentTemplate,
+com.psddev.cms.db.ContentTemplateSource,
 com.psddev.cms.db.Copyable,
 com.psddev.cms.db.Overlay,
 com.psddev.cms.db.OverlayProvider,
@@ -10,6 +12,7 @@ com.psddev.cms.db.Draft,
 com.psddev.cms.db.Guide,
 com.psddev.cms.db.GuidePage,
 com.psddev.cms.db.History,
+com.psddev.cms.db.Managed,
 com.psddev.cms.db.Page,
 com.psddev.cms.db.PageFilter,
 com.psddev.cms.db.Renderer,
@@ -28,6 +31,7 @@ com.psddev.cms.db.WorkInProgress,
 com.psddev.cms.db.WorkStream,
 com.psddev.cms.tool.CmsTool,
 com.psddev.cms.tool.ContentEditWidgetDisplay,
+com.psddev.cms.tool.SearchCarouselDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
@@ -74,6 +78,15 @@ if (selected == null) {
     wp.writeEnd();
     wp.writeFooter();
     return;
+}
+
+if (selected instanceof Managed) {
+    String managedEditUrl = ((Managed) selected).createManagedEditUrl(wp);
+
+    if (managedEditUrl != null) {
+        response.sendRedirect(managedEditUrl);
+        return;
+    }
 }
 
 State state = State.getInstance(selected);
@@ -305,21 +318,25 @@ if (oldObject != null) {
 %>
 <%
 wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel() : null);
+
+SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselDisplay();
 %>
-<div class="content-edit"<%= wp.getCmsTool().isHorizontalSearchCarousel() ? "" : " data-vertical-carousel" %>>
+<div class="content-edit"<%= searchCarouselDisplay == SearchCarouselDisplay.HORIZONTAL ? "" : " data-vertical-carousel" %>>
 <%
 
-    String search = wp.param(String.class, "search");
+    if (searchCarouselDisplay != SearchCarouselDisplay.DISABLED) {
+        String search = wp.param(String.class, "search");
 
-    if (search != null) {
-        wp.writeStart("div", "class", "frame");
-            wp.writeStart("a",
-                    "href", wp.cmsUrl("/searchCarousel",
-                            "id", editingState.getId(),
-                            "search", search,
-                            "draftId", wp.param(UUID.class, "draftId")));
+        if (search != null) {
+            wp.writeStart("div", "class", "frame");
+                wp.writeStart("a",
+                        "href", wp.cmsUrl("/searchCarousel",
+                                "id", editingState.getId(),
+                                "search", search,
+                                "draftId", wp.param(UUID.class, "draftId")));
+                wp.writeEnd();
             wp.writeEnd();
-        wp.writeEnd();
+        }
     }
 
     Overlay overlay = Edit.getOverlay(editing);
@@ -387,6 +404,16 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                     wp.write("</option>");
                                 }
                             wp.write("</select>");
+                        }
+
+                        if (state.isNew()) {
+                            ContentTemplate sourceContentTemplate = State.getInstance(editing).as(ContentTemplateSource.class).getSource();
+
+                            if (sourceContentTemplate != null) {
+                                wp.writeHtml(" Using ");
+                                wp.writeHtml(sourceContentTemplate.getName());
+                                wp.writeHtml(" Template");
+                            }
                         }
 
                         wp.write(": " );

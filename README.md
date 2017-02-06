@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/perfectsense/brightspot-cms.svg)](https://travis-ci.org/perfectsense/brightspot-cms)
 
+Note that starting with v3.3.0, the open source license has changed to [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html). Brightspot is also available under a [commercial license](http://www.brightspot.com/licensing).
+
 Welcome to Brightspot
 =========================
 
@@ -100,7 +102,7 @@ Start using Brightspot by first [installing the platform](http://documentation.b
 
 License
 =======
-Brightspot is released under the GPLv2 license.
+Brightspot is released under the [AGPLv3 license](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 Questions / Bugs?
 =====
