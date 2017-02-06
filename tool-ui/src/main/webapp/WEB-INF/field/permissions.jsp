@@ -394,12 +394,14 @@ wp.writeStart("div", "class", "inputSmall permissions");
 
                                 StringBuilder excludeFields = new StringBuilder();
 
-                                for (ObjectField typeField : type.getFields()) {
-                                    String fn = typeField.getInternalName();
+                                if (permissions.contains(typePermissionId) && !permissions.contains(typePermissionId + "/")) {
+                                    for (ObjectField typeField : type.getFields()) {
+                                        String fn = typeField.getInternalName();
 
-                                    if (!permissions.contains(typePermissionId + "/field/" + fn)) {
-                                        excludeFields.append(fn);
-                                        excludeFields.append(" ");
+                                        if (!permissions.contains(typePermissionId + "/field/" + fn)) {
+                                            excludeFields.append(fn);
+                                            excludeFields.append(" ");
+                                        }
                                     }
                                 }
 
