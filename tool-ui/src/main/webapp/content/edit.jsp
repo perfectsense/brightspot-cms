@@ -300,14 +300,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
     <form class="contentForm contentLock"
             method="post"
             enctype="multipart/form-data"
-            action="<%= wp.objectUrl("", selected,
-                    "action-delete", null,
-                    "action-draft", null,
-                    "action-publish", null,
-                    "action-restore", null,
-                    "action-save", null,
-                    "action-trash", null,
-                    "published", null) %>"
+            action="<%= wp.objectEditUrl(selected, "_frame", wp.param(boolean.class, "_frame") ? true : null) %>"
             autocomplete="off"
             <% if (!wp.getCmsTool().isDisableFieldLocking()) { %>
             data-rtc-content-id="<%= draft != null ? draft.getId() : editingState.getId() %>"
@@ -387,7 +380,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 %></h1>
 
                 <div class="widgetControls">
-                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("") %>">
+                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.objectEditUrl(editing) %>">
                         <%= wp.h(wp.localize("com.psddev.cms.tool.page.content.Edit", "action.editFull"))%>
                     </a>
                     <% if (wp.getCmsTool().isEnableAbTesting()) { %>
