@@ -301,12 +301,18 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             method="post"
             enctype="multipart/form-data"
             action="<%= wp.objectUrl("", selected,
-                    "action-delete", null,
-                    "action-draft", null,
-                    "action-publish", null,
-                    "action-restore", null,
-                    "action-save", null,
-                    "action-trash", null,
+                    ToolPageContext.DELETE_ACTION_PARAMETER, null,
+                    ToolPageContext.TRASH_ACTION_PARAMETER, null,
+                    ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.NEW_DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.PUBLISH_ACTION_PARAMETER, null,
+                    ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                    ToolPageContext.SAVE_ACTION_PARAMETER, null,
+                    ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.MERGE_ACTION_PARAMETER, null,
+                    ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                    ToolPageContext.WORKFLOW_ACTION_PARAMETER, null,
+                    ToolPageContext.UNSCHEDULE_ACTION_PARAMETER, null,
                     "published", null) %>"
             autocomplete="off"
             <% if (!wp.getCmsTool().isDisableFieldLocking()) { %>
@@ -387,7 +393,19 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 %></h1>
 
                 <div class="widgetControls">
-                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("") %>">
+                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("",
+                                                                                                        ToolPageContext.DELETE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.TRASH_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.NEW_DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.PUBLISH_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.SAVE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.MERGE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.WORKFLOW_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.UNSCHEDULE_ACTION_PARAMETER, null) %>">
                         <%= wp.h(wp.localize("com.psddev.cms.tool.page.content.Edit", "action.editFull"))%>
                     </a>
                     <% if (wp.getCmsTool().isEnableAbTesting()) { %>
