@@ -6,6 +6,7 @@ import com.psddev.cms.tool.SearchResultField;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Search;
+import com.psddev.dari.db.AggregateDatabase;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.ObjectField;
@@ -92,9 +93,8 @@ public class ExportContent extends PageServlet {
 
         searchQuery.getOptions().put(SqlDatabase.USE_JDBC_FETCH_SIZE_QUERY_OPTION, false);
 
-        if (Database.Static.getDefault() instanceof SqlDatabase) {
-            searchQuery.setSorters(null);
-        }
+        // SqlDatabase#ByIdIterator does not support sorters
+        conditionallyRemoveSorters(searchQuery);
 
         int count = 0;
         for (Object item : searchQuery.iterable(0)) {
@@ -201,6 +201,24 @@ public class ExportContent extends PageServlet {
         }
 
         return urlBuilder.toString();
+    }
+
+    private void conditionallyRemoveSorters(Query query) {
+        boolean usesLegacyDatabase = false;
+
+        Database database = query.getDatabase();
+
+        if (database instanceof SqlDatabase) {
+            usesLegacyDatabase = true;
+        }
+
+        if (database instanceof AggregateDatabase) {
+            usesLegacyDatabase = ((AggregateDatabase) database).getDelegatesByClass(SqlDatabase.class).size() > 0;
+        }
+
+        if (usesLegacyDatabase) {
+            query.setSorters(null);
+        }
     }
 
     private static class Context extends ToolPageContext {
