@@ -127,9 +127,8 @@ wp.write("</div>");
 
 if (testSms) {
     wp.writeStart("button", "class", "Sms-button").writeHtml(wp.localize(TestSms.class, "action.send")).writeEnd();
-    wp.writeStart("div", "class", "Sms-response"); {
+    wp.writeStart("div", "class", "Sms-response");
         wp.writeStart("div", "class", "Sms-pending").writeEnd();
-    }
     wp.writeEnd();
 
     // Sms div.

@@ -773,6 +773,7 @@ public class ToolUi extends Modification<Object> {
     public void setUnlabeled(boolean unlabeled) {
         this.unlabeled = unlabeled ? Boolean.TRUE : null;
     }
+
     public boolean isTestSms() {
         return Boolean.TRUE.equals(testSms);
     }
@@ -782,11 +783,8 @@ public class ToolUi extends Modification<Object> {
     }
 
     /**
-     * Checks if a default {@link SmsProvider} exists, and disallows use of {@link TestSms} in
-     * conjunction with any other text Ui.
-     *
-     * @return {@code true} if default {@link SmsProvider} exists and {@link TestSms} is singular
-     * text Ui annotation, {@code false} otherwise.
+     * @return {@code true} if default {@link SmsProvider} exists and
+     * {@link TestSms} is singular text UI annotation, {@code false} otherwise.
      */
     public boolean isEffectivelyTestSms() {
         try {
@@ -2138,7 +2136,6 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target field should display the test sms option.
-     * Package private.
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(TestSmsProcessor.class)

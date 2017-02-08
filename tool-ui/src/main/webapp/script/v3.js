@@ -55,7 +55,6 @@ require([
   'v3/input/richtext2',
   'v3/input/secret',
   'input/table',
-  'v3/input/TestSms',
   'input/workflow',
 
   'jquery.calendar',
@@ -78,7 +77,8 @@ require([
 
   'v3/Dropbox',
   'v3/EditFieldUpdate',
-        
+  'v3/TestSms',
+
   'v3/dashboard',
   'v3/sticky',
   'v3/content/diff',

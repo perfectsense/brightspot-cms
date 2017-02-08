@@ -24,7 +24,6 @@ public class TestSms extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-
         if (page.isAjaxRequest()) {
             String sms = "This is a test message.";
             String url = Application.Static.getInstance(CmsTool.class).getDefaultToolUrl();
@@ -42,7 +41,7 @@ public class TestSms extends PageServlet {
             }
 
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Request must be ajax!");
         }
     }
 }
