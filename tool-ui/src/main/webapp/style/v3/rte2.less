@@ -457,12 +457,10 @@ li.CodeMirror-hint-active {
   font-size: 70%;
 }
 
-// For enhancements, let the enhancement toolbar overflow the codemirror widget,
-// and reset the z-index because it was causing problems with the submenu hover
+// For enhancements, let the enhancement toolbar overflow the codemirror widget.
 .rte2-codemirror {
   .CodeMirror-linewidget {
     overflow: visible;
-    z-index: inherit;
   }
 }
 
@@ -517,6 +515,7 @@ li.CodeMirror-hint-active {
       border-width: 0 0 1px 0;
       padding-top: 5px;
       margin: 0 -40px;
+      top: 0 !important;
 
       &:after {
         display: none;
@@ -863,7 +862,7 @@ li.CodeMirror-hint-active {
   padding: 3px 6px;
   position: absolute;
   top: 0;
-  z-index: 2;
+  z-index: 5;
 
   &:before {
     border-color: transparent transparent @color-overlay transparent;
@@ -890,8 +889,7 @@ li.CodeMirror-hint-active {
   }
 
   .rte2-dropdown-label,
-  .rte2-dropdown-edit,
-  .rte2-dropdown-clear {
+  a {
     display: table-cell;
   }
 
@@ -903,15 +901,25 @@ li.CodeMirror-hint-active {
     }
   }
 
-  .rte2-dropdown-edit {
+  a:not(:last-of-type) {
     border-right: 1px solid @color-separator;
     margin-right: 5px;
     padding-right: 5px;
   }
 
+  a:not(:first-of-type) {
+    padding-left: 5px;
+  }
+
   .rte2-dropdown-clear {
     color: @color-remove;
-    padding-left: 5px;
+  }
+  
+  .rte2-dropdown-href {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 

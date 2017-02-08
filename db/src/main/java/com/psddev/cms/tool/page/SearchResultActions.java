@@ -1,21 +1,24 @@
 package com.psddev.cms.tool.page;
 
 import java.io.IOException;
-import java.lang.reflect.Modifier;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.ImageTag;
+import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.ResizeOption;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.PageServlet;
@@ -29,6 +32,7 @@ import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.StorageItem;
+import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 import com.psddev.dari.util.UrlBuilder;
 
@@ -154,17 +158,15 @@ public class SearchResultActions extends PageServlet {
 
             page.writeEnd();
 
-            if (count > 0) {
-                page.writeStart("div", "class", "searchResult-action-simple");
-                writeDeleteAction(page);
-                page.writeEnd();
-            }
+            page.writeStart("div", "class", "searchResult-action-simple");
+                writeDeleteAction(page, count);
+            page.writeEnd();
 
         } else if (count > 0) {
 
             page.writeStart("h2");
-            page.writeHtml(page.localize(SearchResultActions.class, "subtitle.selection"));
-            writeDeleteAction(page);
+                page.writeHtml(page.localize(SearchResultActions.class, "subtitle.selection"));
+                writeDeleteAction(page, count);
             page.writeEnd();
         }
 
@@ -188,36 +190,68 @@ public class SearchResultActions extends PageServlet {
 
         page.writeStart("div", "class", "searchResult-actions-body");
 
-        for (Iterator<? extends SearchResultAction> i = ClassFinder.findClasses(SearchResultAction.class).stream()
-                .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
-                .map(c -> TypeDefinition.getInstance(c).newInstance())
-                .sorted(Comparator
-                        .comparing(SearchResultAction::getPosition)
-                        .thenComparing(a -> a.getClass().getSimpleName())
-                        .thenComparing(a -> a.getClass().getName()))
-                .iterator();
-                i.hasNext();
-                ) {
+        for (Map.Entry<String, List<SearchResultAction>> entry : ClassFinder
+                .findConcreteClasses(SearchResultAction.class)
+                .stream()
+                .map(c -> (SearchResultAction) TypeDefinition.getInstance(c).newInstance())
+                .collect(Collectors.groupingBy(
+                        a -> {
+                            String group = a.getGroup();
+                            return StringUtils.isBlank(group) ? "" : group;
+                        },
+                        TreeMap::new,
+                        Collectors.toList()))
+                .entrySet()) {
 
-            i.next().writeHtml(page, search, count > 0 ? currentSelection : null);
+            List<? extends SearchResultAction> actions = entry.getValue();
+
+            Collections.sort(actions, Comparator
+                    .comparing(SearchResultAction::getPosition)
+                    .thenComparing(a -> a.getClass().getSimpleName())
+                    .thenComparing(a -> a.getClass().getName()));
+
+            // Don't write to the page directly so that the group heading can
+            // be omitted if there isn't any output from any of the actions.
+            ToolPageContext outputPage = new ToolPageContext(page.getServletContext(), page.getRequest(), page.getResponse());
+            StringWriter outputWriter = new StringWriter();
+
+            outputPage.setDelegate(outputWriter);
+
+            for (SearchResultAction a : actions) {
+                a.writeHtml(outputPage, search, count > 0 ? currentSelection : null);
+            }
+
+            String output = outputWriter.toString();
+
+            if (!StringUtils.isBlank(output)) {
+                String group = entry.getKey();
+
+                if (!StringUtils.isBlank(group)) {
+                    page.writeStart("h2");
+                    page.writeHtml(Localization.currentUserText(SearchResultActions.class, group, group));
+                    page.writeEnd();
+                }
+
+                page.write(output);
+            }
         }
 
         page.writeEnd();
     }
 
-    private void writeDeleteAction(ToolPageContext page) throws IOException {
+    private void writeDeleteAction(ToolPageContext page, long count) throws IOException {
         if (page.getUser().isSavedSearchResultSelection(page.getUser().getCurrentSearchResultSelection())) {
             page.writeStart("a",
                     "class", "searchResult-selectionReset action action-delete",
                     "href", page.url("", ACTION_PARAMETER, ACTION_CLEAR, SELECTION_ID_PARAMETER, null));
-            page.writeHtml(page.localize(SearchResultActions.class, "action.delete"));
+                page.writeHtml(page.localize(SearchResultActions.class, "action.delete"));
             page.writeEnd();
 
-        } else {
+        } else if (count > 0) {
             page.writeStart("a",
                     "class", "searchResult-selectionReset action action-cancel",
                     "href", page.url("", ACTION_PARAMETER, ACTION_CLEAR, SELECTION_ID_PARAMETER, null));
-            page.writeHtml(page.localize(SearchResultActions.class, "action.clear"));
+                page.writeHtml(page.localize(SearchResultActions.class, "action.clear"));
             page.writeEnd();
         }
     }

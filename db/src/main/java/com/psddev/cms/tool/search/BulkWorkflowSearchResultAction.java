@@ -12,6 +12,11 @@ import java.io.IOException;
 public class BulkWorkflowSearchResultAction implements SearchResultAction {
 
     @Override
+    public String getGroup() {
+        return "Bulk";
+    }
+
+    @Override
     public void writeHtml(ToolPageContext page, Search search, SearchResultSelection selection) throws IOException {
 
         try {

@@ -1,11 +1,12 @@
 package com.psddev.cms.tool.page.content;
 
+import com.psddev.cms.rtc.RtcEvent;
 import com.psddev.dari.db.Record;
 
 import java.util.Map;
 import java.util.UUID;
 
-public class Publish extends Record {
+public class Publish extends Record implements RtcEvent {
 
     @Required
     private UUID userId;
@@ -49,5 +50,9 @@ public class Publish extends Record {
 
     public void setValues(Map<String, Object> values) {
         this.values = values;
+    }
+
+    @Override
+    public void onDisconnect() {
     }
 }

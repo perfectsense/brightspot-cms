@@ -2,7 +2,9 @@ package com.psddev.cms.db;
 
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
+import com.psddev.cms.tool.DashboardContainer;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
@@ -11,7 +13,7 @@ import com.psddev.dari.util.SparseSet;
 
 @ToolUi.IconName("object-toolRole")
 @ToolRole.BootstrapPackages({ "Users and Roles", "Application" })
-public class ToolRole extends Record implements ToolEntity {
+public class ToolRole extends Record implements Managed, ToolEntity {
 
     @Indexed(unique = true)
     @Required
@@ -22,7 +24,15 @@ public class ToolRole extends Record implements ToolEntity {
 
     private transient SparseSet permissionsCache;
 
+    @DisplayName("Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardContainer dashboardContainer;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the Dashboard field above instead.")
+    @Embedded
     private Dashboard dashboard;
 
     @ToolUi.DisplayName("Common Content Settings")
@@ -30,7 +40,7 @@ public class ToolRole extends Record implements ToolEntity {
     private CmsTool.CommonContentSettings roleCommonContentSettings;
 
     @ToolUi.Tab("Advanced")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     @ToolUi.Placeholder("Default")
     private ToolEntityTfaRequired tfaRequired;
 
@@ -66,10 +76,27 @@ public class ToolRole extends Record implements ToolEntity {
         return permissionsCache.contains(permissionId);
     }
 
+    public DashboardContainer getDashboardContainer() {
+        if (dashboardContainer == null && dashboard != null) {
+            DashboardContainer.OneOff oneOff = new DashboardContainer.OneOff();
+            oneOff.setDashboard(dashboard);
+            return oneOff;
+
+        } else {
+            return dashboardContainer;
+        }
+    }
+
+    public void setDashboardContainer(DashboardContainer dashboardContainer) {
+        this.dashboardContainer = dashboardContainer;
+    }
+
+    @Deprecated
     public Dashboard getDashboard() {
         return dashboard;
     }
 
+    @Deprecated
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
     }
@@ -93,5 +120,10 @@ public class ToolRole extends Record implements ToolEntity {
         } else {
             return ToolEntityTfaRequired.REQUIRED.equals(tfaRequired);
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/users.jsp", "id", getId());
     }
 }

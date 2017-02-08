@@ -311,7 +311,7 @@ public abstract class Content extends Record {
                 siteData.setOwner(site);
             }
 
-            Date now = new Date();
+            Date now = new Date(Database.Static.getDefault().now());
             Date publishDate = contentData.getPublishDate();
             ToolUser publishUser = contentData.getPublishUser();
 

@@ -24,9 +24,21 @@ public class ContentExternalPreviewFrame extends PageServlet {
 
         content.setUrl(page.param(String.class, "url"));
 
+        boolean noResponse = content.getResponse() == null;
+
         page.writeTag("!doctype html");
         page.writeStart("html");
             page.writeStart("head");
+                if (noResponse) {
+                    page.writeStylesAndScripts();
+
+                    page.writeStart("style", "type", "text/css");
+                    page.writeCss("body",
+                            "background", "transparent",
+                            "margin", "10px");
+                    page.writeEnd();
+                }
+
                 page.writeStart("script",
                         "type", "text/javascript",
                         "src", page.cmsUrl("/script/iframeResizer.contentWindow.js"));
@@ -34,8 +46,8 @@ public class ContentExternalPreviewFrame extends PageServlet {
             page.writeEnd();
 
             page.writeStart("body");
-                if (content.getResponse() == null) {
-                    page.writeStart("div", "class", "message message-error");
+                if (noResponse) {
+                    page.writeStart("div", "class", "message message-info");
                         page.writeHtml(page.localize(ContentExternalPreviewFrame.class, "error.noPreview"));
                     page.writeEnd();
 

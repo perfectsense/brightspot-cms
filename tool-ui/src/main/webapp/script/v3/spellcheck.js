@@ -12,7 +12,7 @@ define(['jquery'], function($) {
         /**
          * The URL of the spell check service
          */
-        serviceUrl: CONTEXT_PATH + '/spellCheck',
+        serviceUrl: window.CONTEXT_PATH + '/spellCheck',
 
         
         /** The spelling locale will be read from the HTML element in the lang attribute,
@@ -61,7 +61,7 @@ define(['jquery'], function($) {
          */
         lookup: function(words, options) {
             
-            var deferred, self, results, wordsArray, wordsToFetch, wordsUnique;
+            var cachedResult, deferred, self, results, word, wordsArray, wordsToFetch, wordsUnique;
             
             self = this;
 
@@ -86,16 +86,23 @@ define(['jquery'], function($) {
             });
 
             // First check if any of the words are already in the cache so we can avoid making a call to the service
+            // Note we are using a for..in statement here because jquery.each() has a problem dealing with the word
+            // "length", since it uses that to determine if is is dealing with an object or an array.
             wordsToFetch = [];
-            $.each(wordsUnique, function(word){
-                var cachedResult;
+            for (word in wordsUnique) {
+                
+                // Make sure this is actually a word and not some other object property
+                if(!wordsUnique.hasOwnProperty(word)) {
+                    continue;
+                }
+                
                 cachedResult = self.cacheLookup(word);
                 if (cachedResult === undefined || !options.useCache) {
                     wordsToFetch.push(word);
                 } else {
                     results[word] = cachedResult;
                 }
-            });
+            }
 
             // If there are words that are not already cached, make a single ajax call to fetch them all
             if (wordsToFetch.length) {

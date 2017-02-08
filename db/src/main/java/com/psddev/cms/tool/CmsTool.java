@@ -74,10 +74,18 @@ public class CmsTool extends Tool {
     private List<CommonTime> commonTimes;
 
     @ToolUi.Tab("Defaults")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     private boolean tfaRequired;
 
+    @DisplayName("Default Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardContainer dashboardContainer;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the Default Dashboard field above instead.")
+    @Embedded
     private Dashboard defaultDashboard;
 
     @ToolUi.Tab("RTE")
@@ -126,6 +134,9 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean enableFrontEndUploader;
 
+    @ToolUi.Tab("UI")
+    private boolean enableViewers;
+
     @ToolUi.Tab("Debug")
     private boolean displayTypesNotAssociatedWithJavaClasses;
 
@@ -146,6 +157,10 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean disableFieldLocking;
 
+    @ToolUi.Placeholder("Vertical")
+    @ToolUi.Tab("UI")
+    private SearchCarouselDisplay searchCarouselDisplay;
+
     @ToolUi.Tab("Debug")
     private boolean removeTrailingSlashes;
 
@@ -163,6 +178,9 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean alwaysGeneratePermalinks;
+
+    @ToolUi.Tab("Debug")
+    private boolean disableEditFieldUpdateCache;
 
     @ToolUi.Tab("Debug")
     private List<DariSetting> dariSettings;
@@ -193,9 +211,6 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean disableWorkInProgress;
-
-    @ToolUi.Tab("Debug")
-    private boolean horizontalSearchCarousel;
 
     @ToolUi.Tab("Debug")
     private boolean useOldHistoryIndex;
@@ -515,10 +530,27 @@ public class CmsTool extends Tool {
         return commonTimes;
     }
 
+    public DashboardContainer getDashboardContainer() {
+        if (dashboardContainer == null && defaultDashboard != null) {
+            DashboardContainer.OneOff oneOff = new DashboardContainer.OneOff();
+            oneOff.setDashboard(defaultDashboard);
+            return oneOff;
+
+        } else {
+            return dashboardContainer;
+        }
+    }
+
+    public void setDashboardContainer(DashboardContainer dashboardContainer) {
+        this.dashboardContainer = dashboardContainer;
+    }
+
+    @Deprecated
     public Dashboard getDefaultDashboard() {
         return defaultDashboard;
     }
 
+    @Deprecated
     public void setDefaultDashboard(Dashboard defaultDashboard) {
         this.defaultDashboard = defaultDashboard;
     }
@@ -670,6 +702,14 @@ public class CmsTool extends Tool {
         this.enableFrontEndUploader = enableFrontEndUploader;
     }
 
+    public boolean isEnableViewers() {
+        return enableViewers;
+    }
+
+    public void setEnableViewers(boolean enableViewers) {
+        this.enableViewers = enableViewers;
+    }
+
     public boolean isDisplayTypesNotAssociatedWithJavaClasses() {
         return displayTypesNotAssociatedWithJavaClasses;
     }
@@ -716,6 +756,14 @@ public class CmsTool extends Tool {
 
     public void setDisableFieldLocking(boolean disableFieldLocking) {
         this.disableFieldLocking = disableFieldLocking;
+    }
+
+    public SearchCarouselDisplay getSearchCarouselDisplay() {
+        return searchCarouselDisplay;
+    }
+
+    public void setSearchCarouselDisplay(SearchCarouselDisplay searchCarouselDisplay) {
+        this.searchCarouselDisplay = searchCarouselDisplay;
     }
 
     public boolean isRemoveTrailingSlashes() {
@@ -765,6 +813,14 @@ public class CmsTool extends Tool {
 
     public void setAlwaysGeneratePermalinks(boolean alwaysGeneratePermalinks) {
         this.alwaysGeneratePermalinks = alwaysGeneratePermalinks;
+    }
+
+    public boolean isDisableEditFieldUpdateCache() {
+        return disableEditFieldUpdateCache;
+    }
+
+    public void setDisableEditFieldUpdateCache(boolean disableEditFieldUpdateCache) {
+        this.disableEditFieldUpdateCache = disableEditFieldUpdateCache;
     }
 
     public List<DariSetting> getDariSettings() {
@@ -844,12 +900,14 @@ public class CmsTool extends Tool {
         this.disableWorkInProgress = disableWorkInProgress;
     }
 
+    @Deprecated
     public boolean isHorizontalSearchCarousel() {
-        return horizontalSearchCarousel;
+        return getSearchCarouselDisplay() == SearchCarouselDisplay.HORIZONTAL;
     }
 
+    @Deprecated
     public void setHorizontalSearchCarousel(boolean horizontalSearchCarousel) {
-        this.horizontalSearchCarousel = horizontalSearchCarousel;
+        setSearchCarouselDisplay(horizontalSearchCarousel ? SearchCarouselDisplay.HORIZONTAL : null);
     }
 
     public boolean isUseOldHistoryIndex() {
@@ -961,9 +1019,9 @@ public class CmsTool extends Tool {
         }
 
         plugins.add(template = createJspWidget("Template", "template", "/WEB-INF/widget/template.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-        plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
+        plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
         plugins.add(new ContentRevisions());
-        plugins.add(createPageWidget("References", "references", "/content/references", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
+        plugins.add(createPageWidget("References", "references", "/content/references", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
 
         urls.getUpdateDependencies().add(template);
 

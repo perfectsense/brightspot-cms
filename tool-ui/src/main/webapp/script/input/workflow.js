@@ -1,22 +1,21 @@
 define([
     'jquery',
-    'bsp-utils' ],
+    'bsp-utils',
+    'v3/color-utils' ],
 
-function($, bsp_utils) {
+function($, bsp_utils, color_utils) {
     var $win = $(window);
     var getTransitionColor;
 
     (function() {
-        var hue = Math.random(),
-                GOLDEN_RATIO = 0.618033988749895;
+        var hue;
 
         getTransitionColor = function($transition) {
             var transitionColor = $.data($transition[0], 'workflow-transitionColor');
 
             if (!transitionColor) {
-                hue += GOLDEN_RATIO;
-                hue %= 1.0;
-                transitionColor = 'hsl(' + (hue * 360) + ', 50%, 50%)';
+                hue = color_utils.changeHue(hue);
+                transitionColor = color_utils.generateFromHue(hue);
                 $.data($transition[0], 'workflow-transitionColor', transitionColor);
             }
 
@@ -275,51 +274,54 @@ function($, bsp_utils) {
             };
 
             appendTransitionAdd = function($state) {
-                $state.append($('<a/>', {
-                    'class': 'workflowTransitionAdd',
-                    'text': 'Add ' + ($textarea.attr('data-transition-label') || 'Transition'),
-                    'click': function() {
-                        if ($visual.is('.workflowVisual-addingTransition')) {
-                            return true;
-                        }
-
-                        $visual.addClass('workflowVisual-addingTransition');
-
-                        $win.bind('mousemove.workflows', $.throttle(50, function(event) {
-                            var visualOffset = $visual.offset();
-
-                            $arrows.trigger('redraw', [
-                                    $state,
-                                    event.pageX - visualOffset.left,
-                                    event.pageY - visualOffset.top ]);
-                        }));
-
-                        $win.bind('click.workflows', function(event) {
-                            var $target = $(event.target).closest('.workflowState');
-
-                            if ($target.length > 0) {
-                                addTransitionTarget({
-                                    'source': $state.attr('data-id'),
-                                    'target': $target.attr('data-id')
-                                });
+                $state.append($('<div/>', {
+                    'class': 'workflowTransitionAddContainer',
+                    html: $('<a/>', {
+                        'class': 'workflowTransitionAdd',
+                        'text': 'Add ' + ($textarea.attr('data-transition-label') || 'Transition'),
+                        'click': function() {
+                            if ($visual.is('.workflowVisual-addingTransition')) {
+                                return true;
                             }
 
-                            $visual.removeClass('workflowVisual-addingTransition');
-                            $win.unbind('.workflows');
-                            $arrows.trigger('redraw');
+                            $visual.addClass('workflowVisual-addingTransition');
+
+                            $win.bind('mousemove.workflows', $.throttle(50, function(event) {
+                                var visualOffset = $visual.offset();
+
+                                $arrows.trigger('redraw', [
+                                        $state,
+                                        event.pageX - visualOffset.left,
+                                        event.pageY - visualOffset.top ]);
+                            }));
+
+                            $win.bind('click.workflows', function(event) {
+                                var $target = $(event.target).closest('.workflowState');
+
+                                if ($target.length > 0) {
+                                    addTransitionTarget({
+                                        'source': $state.attr('data-id'),
+                                        'target': $target.attr('data-id')
+                                    });
+                                }
+
+                                $visual.removeClass('workflowVisual-addingTransition');
+                                $win.unbind('.workflows');
+                                $arrows.trigger('redraw');
+
+                                return false;
+                            });
 
                             return false;
-                        });
-
-                        return false;
-                    }
+                        }
+                    })
                 }));
             };
 
             addState = function(stateData) {
                 var $state;
 
-                $visual.prepend($state = $('<div/>', {
+                $visual.append($state = $('<div/>', {
                     'class': 'workflowState',
                     'data-id': stateData.id,
                     'css': {
@@ -437,6 +439,17 @@ function($, bsp_utils) {
 
                 $arrows.trigger('redraw');
             }
+
+            $(window).resize(function () {
+                window.requestAnimationFrame(function () {
+                    $arrows.attr({
+                        'width': $visual.width(),
+                        'height': $visual.height()
+                    });
+
+                    $arrows.trigger('redraw');
+                });
+            });
         }
     });
 });

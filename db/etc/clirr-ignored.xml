@@ -22,7 +22,19 @@
     <difference>
         <className>com/psddev/cms/tool/SearchResultAction</className>
         <differenceType>7012</differenceType>
+        <method>java.lang.String getGroup()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/tool/SearchResultAction</className>
+        <differenceType>7012</differenceType>
         <method>int getPosition()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/tool/Tab</className>
+        <differenceType>7012</differenceType>
+        <method>void onUpdate(com.psddev.cms.tool.ToolPageContext, java.lang.Object)</method>
     </difference>
 
     <difference>
@@ -48,6 +60,12 @@
         <className>com/psddev/cms/view/ViewRenderer</className>
         <differenceType>7012</differenceType>
         <method>com.psddev.cms.view.ViewOutput render(java.lang.Object, com.psddev.cms.view.ViewTemplateLoader)</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$CollectionItemWeight</className>
+        <differenceType>7012</differenceType>
+        <method>boolean calculated()</method>
     </difference>
 
     <difference>

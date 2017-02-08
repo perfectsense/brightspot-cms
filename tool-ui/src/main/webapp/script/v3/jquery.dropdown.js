@@ -8,7 +8,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       $doc = $(doc),
       $openOriginal,
       $openList;
-  
+
+  var dropdownIdIndex = 0;
+
   $.plugin2('dropDown', {
     '_defaultOptions': {
       'classPrefix': 'dropDown-'
@@ -36,6 +38,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $list,
           addItem;
 
+      var dropdownId = dropdownIdIndex;
+      ++ dropdownIdIndex;
+
       if (!isMultiple &&
           $original.find('option:selected').length === 0) {
         $original.find('option:first').prop('selected', true);
@@ -53,6 +58,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
 
       $input = $('<div/>', {
         'class': plugin.className('input'),
+        'data-dropdown-id': dropdownId,
         'css': {
           'margin-bottom': $original.css('margin-bottom'),
           'margin-left': $original.css('margin-left'),
@@ -145,7 +151,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       }
 
       $label.bind('dropDown-update', function() {
-        var newLabel = $.map($original.find('option:selected'), function(option) {
+        var newLabel = $.map($original.find('option').filter(':selected'), function(option) {
           return $(option).attr("data-drop-down-html") || $(option).text();
         }).join(', ');
 
@@ -171,6 +177,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
 
       $listContainer = $('<div/>', {
         'class': plugin.className('container'),
+        'data-dropdown-id': dropdownId,
         'data-original-class': $original.attr('class'),
         'css': containerCss
       });

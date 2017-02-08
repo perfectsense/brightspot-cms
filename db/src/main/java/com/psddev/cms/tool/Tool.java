@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.psddev.cms.db.Global;
+import com.psddev.cms.db.Managed;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Database;
@@ -25,7 +27,7 @@ import com.psddev.dari.util.TypeDefinition;
 
 /** Brightspot application, typically used by the internal staff. */
 @ToolUi.IconName("object-tool")
-public abstract class Tool extends Application {
+public abstract class Tool extends Application implements Global, Managed {
 
     public static final String CONTENT_BOTTOM_WIDGET_POSITION = "cms.contentBottom";
     public static final String CONTENT_RIGHT_WIDGET_POSITION = "cms.contentRight";
@@ -159,12 +161,24 @@ public abstract class Tool extends Application {
         return widget;
     }
 
+    protected JspWidget createJspWidget(String displayName, String internalName, String jsp, boolean displayInNonPublishable, String positionName, double positionColumn, double positionRow) {
+        JspWidget widget = createJspWidget(displayName, internalName, jsp, positionName, positionColumn, positionRow);
+        widget.setDisplayInNonPublishable(displayInNonPublishable);
+        return widget;
+    }
+
     protected PageWidget createPageWidget(String displayName, String internalName, String path, String positionName, double positionColumn, double positionRow) {
         PageWidget widget = new PageWidget();
         widget.setDisplayName(displayName);
         widget.setInternalName(internalName);
         widget.setPath(path);
         widget.addPosition(positionName, positionColumn, positionRow);
+        return widget;
+    }
+
+    protected PageWidget createPageWidget(String displayName, String internalName, String path, boolean displayInNonPublishable, String positionName, double positionColumn, double positionRow) {
+        PageWidget widget = createPageWidget(displayName, internalName, path, positionName, positionColumn, positionRow);
+        widget.setDisplayInNonPublishable(displayInNonPublishable);
         return widget;
     }
 
@@ -337,6 +351,11 @@ public abstract class Tool extends Application {
 
             return widgetsTable;
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/settings.jsp", "id", getId());
     }
 
     // --- Deprecated ---

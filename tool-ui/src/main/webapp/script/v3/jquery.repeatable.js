@@ -100,6 +100,7 @@ The HTML within the repeatable element must conform to these standards:
 
                 // Initialize the repeatable utility to get things started
                 repeatable.init($container, options);
+                $container.data('repeatable', repeatable);
             },
 
 
@@ -239,6 +240,9 @@ The HTML within the repeatable element must conform to these standards:
                     // Remove the template from the page
                     $template.remove();
                 });
+
+                // Save form for later use
+                self.dom.$form = self.dom.$list.closest('form');
 
                 // Save templates for later use
                 self.dom.$templates = $templates;
@@ -711,6 +715,72 @@ The HTML within the repeatable element must conform to these standards:
                     self.repositionCollectionItemWeight(oldIndex, newIndex);
 
                 });
+                 
+                var $itemWeightsContainer = self.dom.$list.parent().find('.repeatableForm-itemWeights');
+                self.collectionItemWeightsCalculated = $itemWeightsContainer.data('calculated');
+
+                // If values are calculated, handle updates from cms-updateContentState event
+                if (self.collectionItemWeightsCalculated) {
+                    // TODO: Make this functionality generic, using meta tags or hidden fields
+                    self.dom.$form.on('cms-updateContentState', (function(self) {
+                        return function(event, data) {
+
+                            var allDiffs = $.extend({}, data._differences, data._hiddenDifferences);
+                            if (!allDiffs) {
+                                return;
+                            }
+
+                            $.each(allDiffs, function (id, fields) {
+                                if (fields.length === 0) {
+                                    return;
+                                }
+                                
+                                var $inputs = self.dom.$list.find('.objectInputs[data-object-id="' + id + '"]');
+
+                                if (!$inputs) {
+                                    return;
+                                }
+
+                                $item = $inputs.closest('li');
+
+                                if (!$item) {
+                                    return;
+                                }
+
+                                var weightFieldName = $item.attr('data-weight-field');
+                                if (!weightFieldName){
+                                    return;
+                                }
+
+                                var newWeightFieldValue = fields[weightFieldName];
+                                if (newWeightFieldValue 
+                                        && $item.data('weight-field-value') !== newWeightFieldValue) {
+
+                                    $item.data('weight-field-value', newWeightFieldValue);
+                                    self.updateCollectionItemWeightData($(self.dom.$list
+                                        .siblings('.repeatableForm-itemWeights')
+                                        .find('.repeatableForm-itemWeight')
+                                        .get($item.index())), Math.round(newWeightFieldValue * 100));
+                                    self.fixCollectionItemWeights();
+                                }
+
+                                var weightMarkersFieldName = $item.attr('data-weight-markers-field');
+                                if (!weightMarkersFieldName) {
+                                    return;
+                                }
+
+                                var newWeightMarkersFieldValue = fields[weightMarkersFieldName];
+                                if (newWeightMarkersFieldValue 
+                                        && $item.data('weight-markers-field-value') !== newWeightMarkersFieldValue) {
+                                    
+                                    $item.data('weight-markers-field-value', newWeightMarkersFieldValue);
+                                    self.setCollectionItemWeightMarkers($item); 
+                                }
+                            });
+                        };
+                        }(self)
+                    ));
+                }
               
                 self.initCollectionItemWeightResetButton();
           
@@ -803,7 +873,12 @@ The HTML within the repeatable element must conform to these standards:
                     $itemWeightContainer.children().eq(itemIndex - 1).after($itemWeight);
                 }
 
-                $itemWeight.prepend(self.createCollectionItemWeightHandle($item));
+                self.setCollectionItemWeightMarkers($item);
+
+                // Avoid creating handles if draggable is false
+                if (!self.collectionItemWeightsCalculated) {
+                    $itemWeight.prepend(self.createCollectionItemWeightHandle($item));
+                }
 
                 var itemWeightDoubleValue = $itemWeight.attr('data-weight');
                 
@@ -832,6 +907,30 @@ The HTML within the repeatable element must conform to these standards:
                     self.fixCollectionItemWeights();
                 } else {
                     self.updateCollectionItemWeightData($itemWeight, (itemWeightDoubleValue * 100).toFixed());
+                }
+            },
+
+           /**
+            * Sets markers to repeatableForm-itemWeight.
+            */
+            setCollectionItemWeightMarkers: function(item) {
+                var self = this;
+                var $item = $(item);
+                var $itemWeight = $(self.dom.$list
+                                    .siblings('.repeatableForm-itemWeights')
+                                    .find('.repeatableForm-itemWeight')
+                                    .get($item.index()));
+
+                $itemWeight.find('.repeatableForm-itemWeight-marker').remove();
+
+                var markerValues = $item.data('weight-markers-field-value');
+                if (markerValues) {
+                    Array.prototype.forEach.call(markerValues, function(markerValue, i) {
+                        $itemWeight.append($('<div/>', {
+                            'class': 'repeatableForm-itemWeight-marker',
+                            'style': 'left:' + markerValue * 100 + "%;"
+                        }));
+                    });
                 }
             },
 
@@ -887,6 +986,11 @@ The HTML within the repeatable element must conform to these standards:
 
             initCollectionItemWeightResetButton: function () {
                 var self = this;
+
+                if (self.collectionItemWeightsCalculated) {
+                    return;
+                }
+
                 self.dom.$list.parent().prepend(
                   $('<a>', {
                       'class': 'repeatableForm-weightResetButton',
@@ -1087,9 +1191,6 @@ The HTML within the repeatable element must conform to these standards:
                 if (self.modeIsSingle() && !self.dom.$singleInput.val()) {
                     return false;
                 }
-
-                // ???
-                self.$element.find(".objectId-placeholder").hide();
 
                 // Create a copy of the template to use as the new item
                 $addedItem = $template.clone();
@@ -1515,6 +1616,20 @@ The HTML within the repeatable element must conform to these standards:
                 self.removeItemToggle(item, true);
             },
 
+           /**
+            * Immediately removes an item from
+            * the DOM. Invoked by objectIdResult.jsp.
+            */
+            removeItemImmediately: function(item) {
+                var self = this;
+                var $item = $(item);
+
+                if (self.modeIsWeighted) {
+                    self.removeCollectionItemWeight($item);
+                }
+            
+                $item.remove();
+            },
             
             /**
              * Unmark an item to be removed (that is, restore the item).

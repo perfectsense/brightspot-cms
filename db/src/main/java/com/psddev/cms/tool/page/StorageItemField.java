@@ -565,20 +565,11 @@ public class StorageItemField extends PageServlet {
                         "name", page.h(urlName));
 
                 if (!ObjectUtils.isBlank(page.getCmsTool().getDropboxApplicationKey())) {
-                    page.writeStart("span", "class", "fileSelectorItem fileSelectorDropbox", "style", page.cssString("display", "inline-block", "vertical-align", "bottom"));
-                        page.writeTag("input",
-                                "type", "dropbox-chooser",
-                                "name", page.h(dropboxName),
-                                "data-link-type", "direct",
-                                "style", page.cssString("visibility", "hidden"));
-                    page.writeEnd();
-
-                    page.writeStart("script", "type", "text/javascript");
-                        page.writeRaw(
-                                "$('.fileSelectorDropbox input').on('DbxChooserSuccess', function(event) {\n"
-                                        + "   $(this).val(JSON.stringify(event.originalEvent.files[0]));\n"
-                                        + "});"
-                        );
+                    page.writeStart("span", "class", "fileSelectorItem fileSelectorDropbox");
+                        page.writeElement("input",
+                                "class", "DropboxChooserInput",
+                                "type", "text",
+                                "name", page.h(dropboxName));
                     page.writeEnd();
                 }
             page.writeEnd();

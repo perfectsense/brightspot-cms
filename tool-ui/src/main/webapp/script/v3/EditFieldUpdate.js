@@ -1,4 +1,4 @@
-define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_utils, rtc, color_utils) {
+define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateCache' ], function ($, bsp_utils, rtc, color_utils, efu_cache) {
 
     var colorsByUuid = { };
 
@@ -11,90 +11,106 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         return colorsByUuid[uuid];
     }
 
+    // shared-use function for updating a container element either from cached data
+    // stored in dataByContentId or from an EditFieldUpdateBroadcast RTC event
+    function updateContainer($container, data) {
+        var userId = data.userId;
+        var fieldNamesByObjectId = data.fieldNamesByObjectId;
+        var $viewersContainer = $container.find('[data-rtc-edit-field-update-viewers]');
+
+        if ($viewersContainer.length > 0) {
+            var userAvatarHtml = data.userAvatarHtml;
+            var closed = data.closed;
+            var $viewers = $viewersContainer.find('> .EditFieldUpdateViewers');
+            var $some;
+
+            if ($viewers.length === 0) {
+                var $none = $('<div/>', {
+                    'class': 'EditFieldUpdateViewers-none',
+                    html: $viewersContainer.html()
+                });
+
+                $some = $('<div/>', {
+                    'class': 'EditFieldUpdateViewers-some'
+                });
+
+                $viewers = $('<div/>', {
+                    'class': 'EditFieldUpdateViewers',
+                    html: [
+                        $none,
+                        $some
+                    ]
+                });
+
+                $viewers.append($none);
+                $viewers.append($some);
+                $viewersContainer.html($viewers);
+
+            } else {
+                $some = $viewers.find('> .EditFieldUpdateViewers-some');
+            }
+
+            var $viewer = $some.find('> .EditFieldUpdateViewers-viewer[data-user-id="' + userId + '"]');
+
+            if ($viewer.length > 0) {
+                if (closed) {
+                    $viewer.remove();
+                }
+
+            } else if (!closed) {
+                $viewer = $('<div/>', {
+                    'class': 'EditFieldUpdateViewers-viewer',
+                    'data-user-id': userId,
+                    html: userAvatarHtml
+                });
+
+                $viewer.find('.ToolUserAvatar').css({
+                    'background-color': backgroundColor(userId)
+                });
+
+                $some.append($viewer);
+            }
+
+            function checkFieldNames(id) {
+                var fieldNames = fieldNamesByObjectId[id];
+                return fieldNames && fieldNames.length > 0;
+            }
+
+            if (fieldNamesByObjectId && Object.keys(fieldNamesByObjectId).filter(checkFieldNames).length > 0) {
+                $viewer.attr('data-editing', true);
+
+            } else {
+                $viewer.removeAttr('data-editing');
+            }
+
+            if ($some.find('> .EditFieldUpdateViewers-viewer').length > 0) {
+                $viewers.attr('data-some', true);
+
+            } else {
+                $viewers.removeAttr('data-some');
+            }
+        }
+    }
+
     rtc.receive('com.psddev.cms.tool.page.content.EditFieldUpdateBroadcast', function(data) {
         var contentId = data.contentId;
         var $containers = $('[data-rtc-content-id="' + contentId + '"]');
-        
+
         if ($containers.length === 0) {
             return;
         }
-        
+
+        if (!window.DISABLE_EDIT_FIELD_UPDATE_CACHE) {
+            efu_cache.put(data);
+        }
+
         var userId = data.userId;
         var fieldNamesByObjectId = data.fieldNamesByObjectId;
 
         $containers.each(function() {
-
             var $container = $(this);
 
-            var $viewersContainer = $container.find('[data-rtc-edit-field-update-viewers]');
-
-            if ($viewersContainer.length > 0) {
-                var userAvatarHtml = data.userAvatarHtml;
-                var closed = data.closed;
-                var $viewers = $viewersContainer.find('> .EditFieldUpdateViewers');
-                var $some;
-
-                if ($viewers.length === 0) {
-                    var $none = $('<div/>', {
-                        'class': 'EditFieldUpdateViewers-none',
-                        html: $viewersContainer.html()
-                    });
-
-                    $some = $('<div/>', {
-                        'class': 'EditFieldUpdateViewers-some'
-                    });
-
-                    $viewers = $('<div/>', {
-                        'class': 'EditFieldUpdateViewers',
-                        html: [
-                            $none,
-                            $some
-                        ]
-                    });
-
-                    $viewers.append($none);
-                    $viewers.append($some);
-                    $viewersContainer.html($viewers);
-
-                } else {
-                    $some = $viewers.find('> .EditFieldUpdateViewers-some');
-                }
-
-                var $viewer = $some.find('> .EditFieldUpdateViewers-viewer[data-user-id="' + userId + '"]');
-
-                if ($viewer.length > 0) {
-                    if (closed) {
-                        $viewer.remove();
-                    }
-
-                } else if (!closed) {
-                    $viewer = $('<div/>', {
-                        'class': 'EditFieldUpdateViewers-viewer',
-                        'data-user-id': userId,
-                        html: userAvatarHtml
-                    });
-
-                    $viewer.find('.ToolUserAvatar').css({
-                        'background-color': backgroundColor(userId)
-                    });
-
-                    $some.append($viewer);
-                }
-
-                if (fieldNamesByObjectId && Object.keys(fieldNamesByObjectId).length > 0) {
-                    $viewer.attr('data-editing', true);
-
-                } else {
-                    $viewer.removeAttr('data-editing');
-                }
-
-                if ($some.find('> .EditFieldUpdateViewers-viewer').length > 0) {
-                    $viewers.attr('data-some', true);
-
-                } else {
-                    $viewers.removeAttr('data-some');
-                }
-            }
+            updateContainer($container, data);
 
             if (!$container.is('form')) {
                 return;
@@ -161,6 +177,8 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         })
     });
 
+    var invalidateTimeout;
+
     bsp_utils.onDomInsert(document, '[data-rtc-content-id]', {
         insert: function (container) {
             var $container = $(container);
@@ -175,6 +193,8 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 return;
             }
 
+            var oldFieldNamesByObjectId = null;
+
             function update() {
                 var fieldNamesByObjectId = {};
 
@@ -185,7 +205,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                     (fieldNamesByObjectId[objectId] = fieldNamesByObjectId[objectId] || []).push($container.attr('data-field-name'));
                 });
 
-                if (fieldNamesByObjectId) {
+                if (fieldNamesByObjectId && JSON.stringify(fieldNamesByObjectId) !== JSON.stringify(oldFieldNamesByObjectId)) {
+                    oldFieldNamesByObjectId = fieldNamesByObjectId;
+
                     rtc.execute('com.psddev.cms.tool.page.content.EditFieldUpdateAction', {
                         contentId: contentId,
                         fieldNamesByObjectId: fieldNamesByObjectId
@@ -195,7 +217,11 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
 
             rtc.initialize('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
                 contentId: contentId
-            }, update);
+
+            }, function () {
+                oldFieldNamesByObjectId = null;
+                update();
+            });
 
             var updateTimeout;
 
@@ -207,7 +233,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                 updateTimeout = setTimeout(function () {
                     updateTimeout = null;
                     update();
-                }, 50);
+                }, 1000);
             }
 
             $container.on('blur focus change', ':input', throttledUpdate);
@@ -215,6 +241,10 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
         },
 
         afterInsert: function (containers) {
+
+            // restores viewer data on the specified containers,
+            // fetching from cache if available, otherwise making
+            // an rtc.restore call for the data
             var contentIds = [ ];
 
             $(containers).each(function () {
@@ -224,12 +254,44 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils' ], function ($, bsp_u
                     var contentId = $container.attr('data-rtc-content-id');
 
                     if (contentId) {
-                        contentIds.push(contentId);
+
+                        if (!window.DISABLE_EDIT_FIELD_UPDATE_CACHE) {
+                            var contentData = efu_cache.get(contentId);
+                            var i;
+
+                            if (typeof contentData === 'object' && contentData instanceof Array) {
+                                for (i = 0; i < contentData.length; i += 1) {
+                                    updateContainer($container, contentData[i]);
+                                }
+
+                            } else {
+
+                                efu_cache.init(contentId);
+                                contentIds.push(contentId);
+                            }
+                        } else {
+                            contentIds.push(contentId);
+                        }
                     }
                 }
             });
 
             if (contentIds.length > 0) {
+
+                if (!window.DISABLE_EDIT_FIELD_UPDATE_CACHE) {
+                    if (invalidateTimeout) {
+                        clearTimeout(invalidateTimeout);
+                    }
+
+                    invalidateTimeout = setTimeout(function () {
+                        invalidateTimeout = null;
+
+                        efu_cache.invalidate($('[data-rtc-content-id]').map(function () {
+                            return $(this).attr('data-rtc-content-id');
+                        }).get());
+                    }, 5000);
+                }
+
                 rtc.restore('com.psddev.cms.tool.page.content.EditFieldUpdateState', {
                     contentId: contentIds
                 });

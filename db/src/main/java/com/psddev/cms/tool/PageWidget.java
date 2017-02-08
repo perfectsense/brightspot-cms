@@ -10,6 +10,7 @@ import com.psddev.dari.util.HtmlWriter;
 public class PageWidget extends Widget {
 
     private String path;
+    private boolean displayInNonPublishable;
 
     /** Returns the path. */
     public String getPath() {
@@ -21,7 +22,20 @@ public class PageWidget extends Widget {
         this.path = path;
     }
 
+    public boolean isDisplayInNonPublishable() {
+        return displayInNonPublishable;
+    }
+
+    public void setDisplayInNonPublishable(boolean displayInNonPublishable) {
+        this.displayInNonPublishable = displayInNonPublishable;
+    }
+
     // --- Widget support ---
+
+    @Override
+    public boolean shouldDisplayInNonPublishable() {
+        return isDisplayInNonPublishable();
+    }
 
     @Override
     @SuppressWarnings("resource")

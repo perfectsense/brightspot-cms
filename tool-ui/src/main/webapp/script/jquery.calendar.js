@@ -19,34 +19,34 @@ var updateCalendarView = function(viewDate) {
     var selectedDate = $calendar.data('selectedDate');
     $calendar.data('viewDate', viewDate);
 
-    var viewMonth = viewDate.getMonth();
+    var viewMonth = viewDate.month();
     $calendar.find('> .monthYear > .month').val(viewMonth);
-    $calendar.find('> .monthYear > .year').val(viewDate.getFullYear());
+    $calendar.find('> .monthYear > .year').val(viewDate.year());
 
-    var dayDate = new Date(viewDate.getTime());
-    dayDate.setDate(1);
-    dayDate.setDate(dayDate.getDate() - dayDate.getDay());
+    var dayDate = viewDate.clone();
+    dayDate.date(1);
+    dayDate.date(dayDate.date() - dayDate.day());
     $calendar.find('> .week > .day').each(function() {
 
         var $day = $(this);
-        $day.data('date', new Date(dayDate.getTime()));
+        $day.data('date', dayDate.clone());
 
-        var dayNumber = dayDate.getDate();
+        var dayNumber = dayDate.date();
         $day.text(dayNumber);
 
-        if (viewMonth === dayDate.getMonth()) {
+        if (viewMonth === dayDate.month()) {
             $day.removeClass('offMonth');
         } else {
             $day.addClass('offMonth');
         }
 
-        if (dayDate.getMonth() === selectedDate.getMonth() && dayNumber === selectedDate.getDate()) {
+        if (dayDate.month() === selectedDate.month() && dayNumber === selectedDate.date()) {
             $day.addClass('selected');
         } else {
             $day.removeClass('selected');
         }
 
-        dayDate.setDate(dayNumber + 1);
+        dayDate.date(dayNumber + 1);
     });
 };
 
@@ -60,7 +60,7 @@ var updateInput = function() {
     var selectedDate = $calendar.data('selectedDate');
     var $input = $calendar.data('$input');
 
-    $input.val(selectedDate.getTime());
+    $input.val(selectedDate.valueOf());
     $input.change();
     $calendar.data('$calendarButton').toggleClass('calendarButton-empty', !$input.val());
     $calendar.data('$calendarButton').text(formatDate(selectedDate));
@@ -78,9 +78,9 @@ getCalendar = function() {
         var $month = $('<select/>', {
             'class': 'month',
             'change': function() {
-                var newDate = new Date($calendar.data('viewDate').getTime());
-                newDate.setDate(1);
-                newDate.setMonth($month.val());
+                var newDate = $calendar.data('viewDate').clone();
+                newDate.date(1);
+                newDate.month($month.val());
                 updateCalendarView(newDate);
             }
         });
@@ -103,11 +103,11 @@ getCalendar = function() {
                     if (newYear < 1900) {
                         $year.addClass('invalid');
                     } else {
-                        var newDate = new Date($calendar.data('viewDate').getTime());
-                        newDate.setDate(1);
-                        newDate.setYear(newYear);
+                        var newDate = $calendar.data('viewDate').clone();
+                        newDate.date(1);
+                        newDate.year(newYear);
                         updateCalendarView(newDate);
-                        $calendar.data('selectedDate').setYear(newYear);
+                        $calendar.data('selectedDate').year(newYear);
                         $year.removeClass('invalid');
                     }
                 }
@@ -120,17 +120,17 @@ getCalendar = function() {
         // Month navigation.
         var $previousButton = $('<span/>', { 'class': 'previousButton' });
         $previousButton.bind('click.calendar', function() {
-            var previous = new Date($calendar.data('viewDate').getTime());
-            previous.setDate(1);
-            previous.setMonth(previous.getMonth() - 1);
+            var previous = $calendar.data('viewDate').clone();
+            previous.date(1);
+            previous.month(previous.month() - 1);
             updateCalendarView(previous);
         });
 
         var $nextButton = $('<span/>', { 'class': 'nextButton' });
         $nextButton.bind('click.calendar', function() {
-            var next = new Date($calendar.data('viewDate').getTime());
-            next.setDate(1);
-            next.setMonth(next.getMonth() + 1);
+            var next = $calendar.data('viewDate').clone();
+            next.date(1);
+            next.month(next.month() + 1);
             updateCalendarView(next);
         });
 
@@ -171,8 +171,8 @@ getCalendar = function() {
                     if (!custom) {
                         selectedDate = $calendar.data('selectedDate');
 
-                        selectedDate.setHours(parseInt($selected.attr('data-hour'), 10));
-                        selectedDate.setMinutes(parseInt($selected.attr('data-minute'), 10));
+                        selectedDate.hour(parseInt($selected.attr('data-hour'), 10));
+                        selectedDate.minute(parseInt($selected.attr('data-minute'), 10));
                     }
                 }
             });
@@ -194,7 +194,7 @@ getCalendar = function() {
         var $meridiem = $('<select/>', { 'class': 'meridiem' });
         var $hour = $('<select/>', { 'class': 'hour' });
         var hourChange = function() {
-            $calendar.data('selectedDate').setHours(($meridiem.val() === 'PM' ? 12 : 0) + parseInt($hour.val(), 10));
+            $calendar.data('selectedDate').hour(($meridiem.val() === 'PM' ? 12 : 0) + parseInt($hour.val(), 10));
         };
 
         $meridiem.append($('<option/>', { 'text': 'AM', 'value': 'AM' }));
@@ -215,7 +215,7 @@ getCalendar = function() {
             $minute.append($('<option/>', { 'text': minuteString, 'value': minute }));
         }
         $minute.change(function() {
-            $calendar.data('selectedDate').setMinutes($minute.val());
+            $calendar.data('selectedDate').minute($minute.val());
         });
 
         $time.append($timeSelect);
@@ -246,7 +246,7 @@ getCalendar = function() {
             'click': function() {
                 var $input = $calendar.data('$input');
 
-                $calendar.data('selectedDate', new Date());
+                $calendar.data('selectedDate', moment().tz($('html').attr('data-time-zone')));
                 $input.val('');
                 $input.change();
                 $calendar.data('$calendarButton').toggleClass('calendarButton-empty', !$input.val());
@@ -283,7 +283,7 @@ $.plugin2('calendar', {
         var inputValue = parseInt($input.val(), 10);
 
         if (inputValue) {
-            $calendarButton.text(formatDate(new Date(inputValue)));
+            $calendarButton.text(formatDate(moment(inputValue).tz($('html').attr('data-time-zone'))));
 
         } else {
             $calendarButton.text($input.attr('placeholder') || $input.attr('data-emptylabel') || 'N/A');
@@ -306,19 +306,19 @@ $.plugin2('calendar', {
 
             // Switch to the correct month using the input date.
             var inputValue = parseInt($input.val(), 10);
-            var inputDate = inputValue ? new Date(inputValue) : new Date();
+            var inputDate = (inputValue ? moment(inputValue) : moment()).tz($('html').attr('data-time-zone'));
             $calendar.data('selectedDate', inputDate);
             updateCalendarView(inputDate);
 
             // Set the time.
-            var hour = inputDate.getHours();
+            var hour = inputDate.hour();
             var meridiem = 'AM';
             if (hour >= 12) {
                 hour -= 12;
                 meridiem = 'PM';
             }
             $calendar.find('select.hour').val(hour);
-            $calendar.find('select.minute').val(inputDate.getMinutes());
+            $calendar.find('select.minute').val(inputDate.minute());
             $calendar.find('select.meridiem').val(meridiem);
             $calendar.find('select.timeSelect').change();
 

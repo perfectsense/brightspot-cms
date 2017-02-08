@@ -9,16 +9,16 @@
     <parent>
         <groupId>com.psddev</groupId>
         <artifactId>dari-parent</artifactId>
-        <version>3.2.2272-34adce</version>
+        <version>3.3-SNAPSHOT</version>
     </parent>
 
     <properties>
-        <dari.version>3.2.2272-34adce</dari.version>
+        <dari.version>3.3-SNAPSHOT</dari.version>
     </properties>
 
     <groupId>com.psddev</groupId>
     <artifactId>cms</artifactId>
-    <version>3.2-SNAPSHOT</version>
+    <version>3.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>BrightSpot CMS</name>
@@ -59,7 +59,7 @@
             <dependency>
                 <groupId>com.psddev</groupId>
                 <artifactId>cms-db</artifactId>
-                <version>3.2-SNAPSHOT</version>
+                <version>3.3-SNAPSHOT</version>
             </dependency>
 
             <dependency>
@@ -102,12 +102,6 @@
                 <groupId>javax.servlet.jsp</groupId>
                 <artifactId>javax.servlet.jsp-api</artifactId>
                 <version>2.3.1</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.atmosphere</groupId>
-                <artifactId>atmosphere-runtime</artifactId>
-                <version>2.3.3</version>
             </dependency>
 
             <dependency>

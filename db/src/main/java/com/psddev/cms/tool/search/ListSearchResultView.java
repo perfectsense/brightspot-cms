@@ -285,6 +285,15 @@ public class ListSearchResultView extends AbstractSearchResultView {
                             }
                         }
                     }
+
+                    boolean showViewers = page.getCmsTool().isEnableViewers();
+
+                    if (showViewers) {
+                        page.writeStart("th");
+                            page.writeHtml(page.localize(ListSearchResultView.class, "label.viewers"));
+                        page.writeEnd();
+                    }
+
                 page.writeEnd();
             page.writeEnd();
 
@@ -516,6 +525,20 @@ public class ListSearchResultView extends AbstractSearchResultView {
                                 }
                             }
                         }
+
+                        if (showViewers) {
+                            page.writeStart("td");
+                            {
+                                page.writeStart("div", "class", "EditFieldUpdateViewers", "data-rtc-content-id", itemState.getId().toString());
+                                {
+                                    page.writeStart("div", "data-rtc-edit-field-update-viewers", "");
+                                    page.writeEnd();
+                                }
+                                page.writeEnd();
+                            }
+                            page.writeEnd();
+                        }
+
                     page.writeEnd();
                 }
             page.writeEnd();

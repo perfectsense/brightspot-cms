@@ -1,12 +1,14 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.Draft,
 com.psddev.cms.tool.Search,
 com.psddev.cms.tool.SearchResultRenderer,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.State,
 
-java.io.IOException
+java.io.IOException,
+java.util.UUID
 " %><%
 
 // --- Logic ---
@@ -27,12 +29,24 @@ String removeId = wp.createId();
 
         @Override
         public void renderBeforeItem(Object item) throws IOException {
-            State itemState = State.getInstance(item);
+            UUID typeId;
+            UUID id;
+
+            if (item instanceof Draft) {
+                Draft draft = (Draft) item;
+                typeId = draft.getObjectType().getId();
+                id = draft.getObjectId();
+
+            } else {
+                State itemState = State.getInstance(item);
+                typeId = itemState.getTypeId();
+                id = itemState.getId();
+            }
 
             writer.start("span",
                     "class", "link",
-                    "data-type-id", itemState.getTypeId(),
-                    "data-objectId", itemState.getId());
+                    "data-type-id", typeId,
+                    "data-objectId", id);
         }
 
         @Override
@@ -66,7 +80,7 @@ String removeId = wp.createId();
 
             $input.attr('data-label', $label.clone().find('span.visibilityLabel').remove().end().text().trim());
             $input.attr('data-label-html', $label.html().trim());
-            $input.attr('data-preview', $link.find('img').attr('src'));
+            $input.attr('data-preview', $link.find('img').attr('src') || '');
             $input.attr('data-visibility', $link.find('span.visibilityLabel').text());
             $input.val($link.attr('data-objectId'));
             $input.change();
@@ -162,7 +176,11 @@ String removeId = wp.createId();
                     var $input = $(this);
 
                     if (!$input.val()) {
-                        $input.closest('li').remove();
+                        var $li = $input.closest('li');
+                        var repeatable = $li.closest('.plugin-repeatable').data('repeatable');
+                        if (repeatable) {
+                            repeatable.removeItemImmediately($li);
+                        }
 
                         var $itemEdit = $input.closest('.itemEdit');
 

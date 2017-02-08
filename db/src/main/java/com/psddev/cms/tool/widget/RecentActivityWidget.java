@@ -69,7 +69,9 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
             result = null;
 
         } else {
-            Query<?> contentQuery = (itemType != null ? Query.fromType(itemType) : Query.fromGroup(Content.SEARCHABLE_GROUP))
+            Query<?> contentQuery = (itemType != null && !visibilities.contains("d")
+                    ? Query.fromType(itemType)
+                    : Query.fromGroup(Content.SEARCHABLE_GROUP))
                     .where(page.siteItemsSearchPredicate())
                     .and(Content.UPDATE_DATE_FIELD + " != missing")
                     .sortDescending(Content.UPDATE_DATE_FIELD);
@@ -328,6 +330,16 @@ public class RecentActivityWidget extends DefaultDashboardWidget {
                             page.writeStart("td");
                                 page.writeObjectLabel(updateUser);
                             page.writeEnd();
+
+                            if (page.getCmsTool().isEnableViewers()) {
+                                page.writeStart("td");
+                                    page.writeStart("div", "class", "EditFieldUpdateViewers", "data-rtc-content-id", contentState.getId().toString()); {
+                                        page.writeStart("div", "data-rtc-edit-field-update-viewers", "");
+                                        page.writeEnd();
+                                    } page.writeEnd();
+                                page.writeEnd();
+                            }
+
                         page.writeEnd();
                     }
 

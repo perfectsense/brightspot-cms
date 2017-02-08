@@ -42,6 +42,8 @@ public class ToolUi extends Modification<Object> {
     private Boolean collectionItemProgress;
     private Boolean collectionItemToggle;
     private Boolean collectionItemWeight;
+    private Boolean collectionItemWeightCalculated;
+    private Boolean collectionItemWeightMarker;
     private Boolean colorPicker;
     private String cssClass;
     private Boolean defaultSearchResult;
@@ -95,6 +97,7 @@ public class ToolUi extends Modification<Object> {
     private String tab;
     private String storageSetting;
     private String defaultSortField;
+    private Boolean unlabeled;
     private Boolean testSms;
 
     public boolean isBulkUpload() {
@@ -135,6 +138,22 @@ public class ToolUi extends Modification<Object> {
 
     public void setCollectionItemWeight(boolean collectionItemWeight) {
         this.collectionItemWeight = collectionItemWeight ? Boolean.TRUE : null;
+    }
+
+    public boolean isCollectionItemWeightCalculated() {
+        return Boolean.TRUE.equals(collectionItemWeightCalculated);
+    }
+
+    public void setCollectionItemWeightCalculated(boolean collectionItemWeightCalculated) {
+        this.collectionItemWeightCalculated = collectionItemWeightCalculated ? Boolean.TRUE : null;
+    }
+
+    public boolean isCollectionItemWeightMarker() {
+        return Boolean.TRUE.equals(collectionItemWeightMarker);
+    }
+
+    public void setCollectionItemWeightMarker(boolean collectionItemWeightMarker) {
+        this.collectionItemWeightMarker = collectionItemWeightMarker ? Boolean.TRUE : null;
     }
 
     public boolean isColorPicker() {
@@ -747,6 +766,13 @@ public class ToolUi extends Modification<Object> {
         this.main = main;
     }
 
+    public boolean isUnlabeled() {
+        return Boolean.TRUE.equals(unlabeled);
+    }
+
+    public void setUnlabeled(boolean unlabeled) {
+        this.unlabeled = unlabeled ? Boolean.TRUE : null;
+    }
     public boolean isTestSms() {
         return Boolean.TRUE.equals(testSms);
     }
@@ -910,7 +936,9 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target field should be displayed using the weighted collection UI.
-     * Expected field values are between 0.0 and 1.0.
+     * Expected field values are between 0.0 and 1.0. Fields that are {@code calculated} will
+     * not allow weights to be edited through the default UI.
+     *
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(CollectionItemWeightProcessor.class)
@@ -918,6 +946,7 @@ public class ToolUi extends Modification<Object> {
     @Target(ElementType.FIELD)
     public @interface CollectionItemWeight {
         boolean value() default true;
+        boolean calculated() default false;
     }
 
     private static class CollectionItemWeightProcessor implements ObjectField.AnnotationProcessor<CollectionItemWeight> {
@@ -925,6 +954,28 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, CollectionItemWeight annotation) {
             field.as(ToolUi.class).setCollectionItemWeight(annotation.value());
+            field.as(ToolUi.class).setCollectionItemWeightCalculated(annotation.calculated());
+        }
+    }
+
+    /**
+     * Specifies a field to be used as markers in the UI produced by repeatable objects with
+     * a {@link CollectionItemWeight} annotation. The field may be a {@link Collection} or single
+     * field value of a {@code double} with expected value(s) between 0.0 and 1.0.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(CollectionItemWeightMarkerProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface CollectionItemWeightMarker {
+        boolean value() default true;
+    }
+
+    private static class CollectionItemWeightMarkerProcessor implements ObjectField.AnnotationProcessor<CollectionItemWeightMarker> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, CollectionItemWeightMarker annotation) {
+            field.as(ToolUi.class).setCollectionItemWeightMarker(annotation.value());
         }
     }
 
@@ -949,22 +1000,36 @@ public class ToolUi extends Modification<Object> {
     }
 
     /**
-     * Specifies the CSS class to add to {@code .inputContainer} when
-     * displaying the target field.
+     * Specifies the CSS class to add to the HTML element that represents the
+     * target type or field.
+     *
+     * <p>If the annotation is on a type, the CSS class is added to the
+     * {@code .objectInputs} element.</p>
+     *
+     * <p>If the annotation is on a field, the CSS class is added to the
+     * {@code .inputContainer} element.</p>
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(CssClassProcessor.class)
+    @ObjectType.AnnotationProcessorClass(CssClassProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.FIELD, ElementType.METHOD })
+    @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.TYPE })
     public @interface CssClass {
         String value();
     }
 
-    private static class CssClassProcessor implements ObjectField.AnnotationProcessor<CssClass> {
+    private static class CssClassProcessor implements
+            ObjectField.AnnotationProcessor<CssClass>,
+            ObjectType.AnnotationProcessor<CssClass> {
 
         @Override
         public void process(ObjectType type, ObjectField field, CssClass annotation) {
             field.as(ToolUi.class).setCssClass(annotation.value());
+        }
+
+        @Override
+        public void process(ObjectType type, CssClass annotation) {
+            type.as(ToolUi.class).setCssClass(annotation.value());
         }
     }
 
@@ -1824,6 +1889,24 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, Tab annotation) {
             field.as(ToolUi.class).setTab(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the field should be labeled or not.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(UnlabeledProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface Unlabeled {
+        boolean value() default true;
+    }
+
+    private static class UnlabeledProcessor implements ObjectField.AnnotationProcessor<Unlabeled> {
+        @Override
+        public void process(ObjectType type, ObjectField field, Unlabeled annotation) {
+            field.as(ToolUi.class).setUnlabeled(annotation.value());
         }
     }
 

@@ -89,12 +89,15 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 elementAttr: {
                     'class': 'rte rte-comment'
                 },
-                
+
                 // Hide this style when viewing in "show final" mode
                 showFinal:false,
-                
+
                 // Don't let this style be removed by the "Clear" toolbar button
                 internal: true,
+
+                // Don't allow tracked changes within this style
+                trackChanges: false,
 
                 onCreate: function (mark) {
                     var $html = $('html');
@@ -118,9 +121,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     var label;
 
                     label = '';
-                    
+
                     if (mark.attributes) {
-                        
+
                         user = mark.attributes['data-user-label'];
                         time = mark.attributes['data-time'];
 
@@ -136,7 +139,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                             }
                         }
                     }
-                    
+
                     return label;
                 }
             },
@@ -145,13 +148,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 element: 'a',
                 keymap: ['Ctrl-K', 'Cmd-K'],
                 elementAttrAny: true, // Allow any attributes for this element
-                
+
                 // Do not allow links to span multiple lines
                 singleLine: true,
 
                 // Label to use for the dropdown
                 enhancementName: 'Link',
-                
+
                 onClick: function(event, mark) {
 
                     var self;
@@ -171,7 +174,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // Using a timeout here because we need to let the click event complete,
                     // otherwise the click outside the popup will close the popup!
                     setTimeout(function() {
-                        
+
                         self.linkEdit(mark.attributes, mark).done(function(attributes){
 
                             if (attributes.remove || attributes.href === '' || attributes.href === 'http://') {
@@ -190,8 +193,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                                 mark.clear();
                                 self.rte.triggerChange();
                             }
-                        });
-                        
+                        }).always(function(){
+                            // After editing the link, put the cursor at the end of the link text
+                            // and make sure typing doesn't expand the link.
+                            self.linkAfterEdit();
+                        })
+
                     }, 100);
 
                 }
@@ -209,7 +216,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 element: 'li',
                 elementContainer: 'ul',
                 clear: ['ol', 'alignLeft', 'alignCenter', 'alignRight']
-            },            
+            },
             alignLeft: {
                 className: 'rte2-style-align-left',
                 line: true,
@@ -266,16 +273,16 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          *    }
          */
         clipboardSanitizeTypes: {
-            
+
             'googledocs': {
                 isType: function(content) {
                     return Boolean($(content).find('[id^=docs-internal-guid]').length);
                 },
                 rules: {
-            
+
                     // Note: Google docs encloses the entire document in a 'b' element so we must exclude that one
                     'b[id^=docs-internal-guid]': '',
-            
+
                     // Google docs styles
                     'span[style*="font-style:italic"]': 'italic',
                     'span[style*="font-weight:700"]': 'bold',
@@ -309,7 +316,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     'td[style*="text-decoration:line-through"]': 'strikethrough',
                 }
             },
-            
+
             'msword': {
                 isType: function(content) {
                     return Boolean($(content).find('[class^=Mso]').length);
@@ -319,10 +326,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     // Since we need to modify the 'p' element,
                     // we'll have to repeat some of the 'p' element
                     // rules here to ensure proper ordering of the rules
-                    
+
                     'p[style*="text-align: right"]': 'alignRight',
                     'p[style*="text-align: center"]': 'alignCenter',
-            
+
                     'p[style*="text-align:right"]': 'alignRight',
                     'p[style*="text-align:center"]': 'alignCenter',
 
@@ -347,14 +354,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                 }
             },
-            
+
             'adobeReader': {
                 // Adobe Reader pastes html that is mostly junk: each word is surrounded by a P element.
                 // The best we can do is put a space between each word and output all words without line breaks.
                 isType: function(content, html) {
                     return Boolean(html && html.indexOf('Cocoa HTML Writer') !== -1);
                 },
-                
+
                 rules: {
                     'p': function($el) {
                         var $replacement;
@@ -382,7 +389,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * {Function} to modify the matching element using a custom function
          */
         clipboardSanitizeRules: {
-            
+
             // Any <b> or '<strong>' element should be treated as bold even if it has extra attributes
             // Example MSWord:  <b style="mso-bidi-font-weight:normal">
             'b': 'bold',
@@ -398,7 +405,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             'p[style*="text-align: right"]': 'alignRight',
             'p[style*="text-align: center"]': 'alignCenter',
-            
+
             'p[style*="text-align:right"]': 'alignRight',
             'p[style*="text-align:center"]': 'alignCenter',
 
@@ -413,7 +420,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             'p': 'linebreak'
         },
 
-        
+
         /**
          * Which buttons are in the toolbar?
          * This is an array of toolbar config objects with the following properties:
@@ -594,7 +601,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          */
         contextRoot: null,
 
-        
+
         /**
          * Initialize the rich text editor.
          *
@@ -648,7 +655,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.trackChangesInit();
             self.placeholderInit();
             self.modeInit();
-            
+
             // Refresh the editor after all the initialization is done.
             // We put it in a timeout to ensure the editor has displayed before doing the refresh.
             setTimeout(function(){
@@ -671,7 +678,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // Add any custom styles from teh global CSS_CLASS_GROUPS variable
             self.initStylesCustom();
 
-            $.each(self.styles, function(i,styleObj) {
+            $.each(self.styles, function(styleKey, styleObj) {
+
+                // Save the style key as part of the object so we can use it later
+                styleObj.styleKey = styleKey;
 
                 // Modify the onClick function so it is called in the context of our object,
                 // to allow the onclick function access to other RTE functions
@@ -815,7 +825,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Move textarea after the editor
             self.$el.appendTo(self.$container);
-            
+
             // Since the rte will trigger special events on the container,
             // we should catch them and pass them to the textarea
             self.$editor.on('rteFocus', function(){
@@ -823,14 +833,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 return false;
             });
             self.$editor.on('rteBlur', function(){
-                
+
                 // Set a timeout before performing the blur event.
                 // This is to let other code cancel the blur before it occurs
                 // (such as clicking a toolbar button)
                 self.rteBlurTimeout = setTimeout(function(){
                     self.$el.trigger('rteBlur', [self]);
                 }, 200);
-                
+
                 return false;
             });
             self.$editor.on('rteChange', function(){
@@ -839,11 +849,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 if (self.placeholderIsShowing()) {
                     return false;
                 }
-                
+
                 self.$el.trigger('rteChange', [self]);
                 return false;
             });
-            
+
             // Hide the textarea
             self.$el.hide();
 
@@ -862,8 +872,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.rte.init(self.$editor);
 
             // Set to read only mode if necessary
-            self.rte.readOnlySet( self.$el.closest('.inputContainer-readOnly').length );
-            
+            self.rte.readOnlySet( self.$el.closest('.inputContainer-readOnly, .objectInputs-readOnly').length );
+
             // Override the rich text editor to tell it how enhancements should be imported from HTML
             self.rte.enhancementFromHTML = function($content, line) {
 
@@ -951,7 +961,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.rte.refresh();
         },
 
-        
+
         /**
          * @returns {Boolean}
          */
@@ -959,14 +969,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             return $('body').hasClass('rte-fullscreen');
         },
 
-        
+
         /*==================================================
          * Mode plain or rich
          *==================================================*/
-        
+
         modeInit: function() {
             var self = this;
-            
+
             self.$container.on('rteModeChange', function(event, mode) {
                 if (mode === 'plain') {
                     self.modeSetPlain();
@@ -976,30 +986,30 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
         },
 
-        
+
         modeSetPlain: function() {
             var self = this;
 
             // Mark this as a change
             self.rte.triggerChange();
-            
+
             self.$el.val(self.rte.toHTML());
-            
+
             self.$el.show();
-            
+
             // Trigger a resize event on the window so the textarea will get resized
             $(window).resize();
         },
 
-        
+
         modeSetRich: function() {
             var self = this;
             var rte = self.rte;
             var trackIsOn = rte.trackIsOn();
-            
+
             // Mark this as a change
             self.rte.triggerChange();
-            
+
             self.$el.hide();
 
             // Turn off track changes when converting from plain to rich text
@@ -1007,14 +1017,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             rte.trackSet(false);
 
             rte.fromHTML(self.$el.val());
-            
+
             rte.historyClear();
-            
+
             // Turn track changes back on (if it was on)
             rte.trackSet(trackIsOn);
         },
 
-        
+
         /*==================================================
          * Track Changes
          * Code to save and restor the state of "track changes" for an individual rich text editor.
@@ -1031,13 +1041,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.trackChangesRestore();
         },
 
-        
+
         /**
          * Save the current track changes status.
          * This will normally be saved only when the user submits the form.
          */
         trackChangesSave: function() {
-            
+
             var name;
             var self;
             var state;
@@ -1058,12 +1068,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /**
          *  Restore the track changes status.
          */
         trackChangesRestore: function() {
-            
+
             var name;
             var self;
 
@@ -1077,28 +1087,28 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /**
          * Return the sessions storage name that can be used
          * to save the state for this particular input.
          */
         trackChangesGetName: function() {
-            
+
             var name;
             var self;
-            
+
             self = this;
-            
+
             name = self.$el.closest('.inputContainer').attr('data-name') || '';
-            
+
             if (name) {
                 name = 'bsp.rte2.changesTracking.' + name;
             }
-            
+
             return name;
         },
 
-        
+
         /*==================================================
          * TOOLBAR
          *==================================================*/
@@ -1127,7 +1137,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Recursive function for setting up toolbar menu and submenus
             function toolbarProcess(config, $toolbar) {
-                
+
                 var $submenu;
 
                 // Loop through the toolbar config to set up buttons
@@ -1147,7 +1157,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         // This is a submenu
                         // {submenu:true, text:'', style:'', className:'', submenuItems:[]}
                         $submenu = self.toolbarAddSubmenu(item, $toolbar);
-                        
+
                         toolbarProcess(item.submenu, $submenu);
 
                     } else if (item.custom) {
@@ -1259,7 +1269,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The main toolbar for the RTE.
          */
         toolbarInitRichTextElements: function ($toolbar) {
-            
+
             if (!window.RICH_TEXT_ELEMENTS || RICH_TEXT_ELEMENTS.length === 0) {
                 return;
             }
@@ -1276,7 +1286,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 // For this instance of the RTE, was there a custom list
                 // of elements that should be displayed in the toolbar?
                 if (tags && tags.indexOf(rtElement.tag) < 0) {
-                    
+
                     // Skip this element if it is not listed in the allowed elements
                     return;
                 }
@@ -1287,7 +1297,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 if (rtElement.tag === 'tr' || rtElement.tag === 'td') {
                     return;
                 }
-                
+
                 var styleName = rtElement.styleName;
                 var submenuName = rtElement.submenu;
                 var $submenu;
@@ -1305,11 +1315,22 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     toolbarButton.action = 'table';
                 }
 
+                // The style defined in RICH_TEXT_ELEMENTS might have a submenu property, Which
+                // is the label of a submenu like "My Enhancements".
+                // Multiple styles can be grouped using this submenu name, so we need to ensure
+                // that we only create the submenu once, then use it for any subsequent styles.
                 if (submenuName) {
-                    
+
+                    // Check to see if the submenu has already been created
                     $submenu = submenus[submenuName];
                     if (!$submenu) {
-                        $submenu = submenus[submenuName] = self.toolbarAddSubmenu({text: submenuName}, $toolbar);
+
+                        // The submenu does not exist so create it now and save the value
+                        $submenu = submenus[submenuName] = self.toolbarAddSubmenu({
+                            text: submenuName,
+                            // Save the submenu name in a data attribute so it can be used to style the submenu
+                            attr: {'data-rte-toolbar-submenu': submenuName}
+                        }, $toolbar);
                     }
 
                     self.toolbarAddButton(toolbarButton, $submenu);
@@ -1327,8 +1348,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          *
          * @param {Object} item
          * The toolbar item to add.
-         * @param {Object} item.className
          * @param {Object} item.text
+         * @param {Object} [item.className] Class name for the submenu element
+         * @param {Object} [item.attr] Attributes for the submenu element
          *
          * @param {Object} [$addToSubmenu]
          * Optional submenu where the submenu should be added.
@@ -1343,7 +1365,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var $toolbar = $addToSubmenu || self.$toolbar;
             var $submenu;
 
-            $submenu = $('<li class="rte2-toolbar-submenu ' + (item.className || '') + '"><span></span><ul></ul></li>');
+            $submenu = $('<li class="rte2-toolbar-submenu"><span></span><ul></ul></li>');
+            if (item.className) {
+                $submenu.addClass(item.className);
+            }
+            if (item.attr) {
+                $submenu.attr(item.attr);
+            }
             $submenu.find('span').html(item.text);
             $submenu.appendTo($toolbar);
 
@@ -1443,7 +1471,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if ($button.hasClass('outOfContext')) {
                 return;
             }
-            
+
             rte = self.rte;
 
             styleObj = self.rte.styles[item.style] || {};
@@ -1455,7 +1483,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 case 'caseToggleSmart':
                     rte.caseToggleSmart();
                     break;
-                    
+
                 case 'caseToLower':
                     rte.caseToLower();
                     break;
@@ -1488,18 +1516,18 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                     // Before creating a new enhancement via the toolbar, move the cursor to the start of a non-blank line
                     rte.moveToNonBlank();
-                    
+
                     self.enhancementCreate();
                     break;
 
                 case 'table':
                     self.tableCreate();
                     break;
-                    
+
                 case 'fullscreen':
                     self.fullscreenToggle();
                     break;
-                    
+
                 case 'insert':
                     if (item.value) {
                         // Write value to the DOM and read it back again,
@@ -1508,7 +1536,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         rte.insert(value);
                     }
                     break;
-                    
+
                 case 'marker':
 
                     // Stop the event from propagating, otherwise it will close the enhancement popup
@@ -1556,10 +1584,49 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 event.preventDefault();
 
                 var initialBody = styleObj.initialBody;
+                var prev;
 
                 if (initialBody) {
+
+                    // Move the cursor between lines when adding line marks.
+                    if (styleObj.line) {
+                        var cm = rte.codeMirror;
+                        var curr = cm.getCursor('from').line;
+                        prev = curr - 1;
+
+                        if (prev < 0 || cm.getLine(prev) !== '') {
+                            cm.replaceRange('\n', { line: curr, ch: 0 }, { line: curr, ch: 0 });
+                            cm.setCursor(curr, 0);
+
+                        } else {
+                            cm.setCursor(prev, 0);
+                        }
+                    }
+
                     mark = rte.insert(initialBody, item.style);
+
                     if (mark) {
+
+                        // Make sure that there are blank lines around line
+                        // marks.
+                        if (styleObj.line) {
+                            var from = mark.find().from.line;
+                            prev = from - 1;
+
+                            if (prev < 0 || cm.getLine(prev) !== '') {
+                                cm.replaceRange('\n', { line: from, ch: 0 }, { line: from, ch: 0 });
+                            }
+
+                            var next = mark.find().to.line + 1;
+
+                            if (next >= cm.lineCount() || cm.getLine(next) !== '') {
+                                cm.replaceRange('\n', { line: next, ch: 0 }, { line: next, ch: 0 });
+                            }
+                        }
+
+                        // Set a flag so if the mark is not updated in the popup it can be deleted later
+                        mark.rteMarkInit = true;
+
                         self.inlineEnhancementHandleClick(event, mark);
                     }
 
@@ -1610,10 +1677,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 }
             }
 
-            // Certain styles like comments look strange when there are two
-            // adjacent marks, so combine adjacent marks if possible.
-            rte.inlineCombineAdjacentMarks();
-            
             // Update the toolbar so it makes the buttons active or inactive
             // based on the cursor position or selection
             self.toolbarUpdate();
@@ -1647,7 +1710,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // Show them all if 'rich' mode, otherwise hide them.
             // Later we will show certain actions for 'plain' mode.
             self.$toolbar.children('li').toggle(mode === 'rich');
-            
+
             // First make all the buttons inactive,
             // Then we'll decide which need to be active
             $links = self.$toolbar.find('a');
@@ -1661,15 +1724,15 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // Get all the context elements for the currently selected range of characters
             context = rte.getContext();
             var currentRange = rte.getRange();
-            var currentRangeCollapsed = currentRange.from.line === currentRange.to.line && currentRange.from.ch === currentRange.to.ch;
 
             // Go through each link in the toolbar and see if the style is defined
             $links.each(function(){
 
                 var config;
+                var inContext;
                 var $link;
                 var makeActive;
-                var styleObj;
+                var styleKey;
 
                 $link = $(this);
 
@@ -1678,7 +1741,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 if (!config) {
                     return;
                 }
-                
+
                 // For toolbar actions we need special logic to determine if the button should be "active"
                 // One exception is for inline enhancements, which are treated as a normal style
                 if (config.action && config.action !== 'enhancementInline' && config.action !== 'table') {
@@ -1701,21 +1764,21 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         break;
 
                     case 'fullscreen':
-                        
+
                         // Make the button active if in fullscreen  mode
                         $link.toggleClass('active', self.fullscreenIsActive());
-                        
+
                         // Always show this button when in rich or plain mode
                         $link.parent().show();
                         break;
-                        
+
                     case 'modeToggle':
                         // Make the button active if in 'plain' mode
                         // And always show the button
                         $link.toggleClass('active', mode === 'plain');
                         $link.parent().show();
                         break;
-                        
+
                     } // switch
 
                 } else {
@@ -1748,80 +1811,22 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     }
 
                     // Special case if the toolbar style should only be displayed in certain contexts
-                    styleObj = self.styles[config.style] || {};
-                    $link.removeClass('outOfContext');
+                    styleKey = config.style;
 
                     // Special case for the "Table" button, we will look for a style
                     // definition for the "table" element, to see if it has any
                     // context specified
                     if (config.action === 'table' && self.tableStyleTable) {
-                        styleObj = self.tableStyleTable;
+                        styleKey = self.tableStyleTable.styleKey;
                     }
 
-                    if (styleObj.context) {
-                        
-                        // Loop through all the current contexts.
-                        // Note there can be multiple contexts because multiple characters can be
-                        // selected in the range, and each character might be in a different context.
-                        // For example, if the character R represents the selected range:
-                        // aaa<B>RRR</B>RRR<I>RRR</I>aaa
-                        // Then the context would be B, I, and null.
-                        //
-                        // We must check each context that is selected, to determine if
-                        // the style is allowed in that context.
-                        //
-                        // If the style fails for any one of the contexts, then it
-                        // should be invalid, and we should prevent the user from applying the style
-                        // across the range.
+                    // $link.removeClass('outOfContext');
+                    inContext = self.rte.checkContext(styleKey, currentRange, context);
 
-                        // Loop through all the contexts for the selected range
-                        var validContextInner = true;
-                        $.each(context, function(contextElement) {
-                            if (contextElement === '') {
-                                contextElement = null;
-                            }
-
-                            // If a different root context was specified, then use that as the root element
-                            // For example, if the rte is meant to edit the content inside a '<mycontent>' element,
-                            // then contextRoot would be 'mycontent', and only those elements allowed in that element
-                            // would be allowed.
-                            if (self.contextRoot && contextElement === null) {
-                                contextElement = self.contextRoot;
-                            }
-
-                            // Is this contextElement listed among the context allowed by the current style?
-                            if ($.inArray(contextElement, styleObj.context) === -1) {
-
-                                // Special case - if this style can be toggled, then it should be considered valid
-                                // if the entire range contains this style
-                                if (contextElement === styleObj.element && styleObj.toggle && styles[config.style]) {
-                                    return;
-                                }
-                                
-                                validContextInner = false;
-                                return false; // stop looping
-                            }
-                        });
-
-                        var validContextOuter = false;
-
-                        if (!currentRangeCollapsed) {
-                            validContextOuter = true;
-
-                            $.each(context, function (contextElement, contextOptions) {
-                                if (contextOptions.context && $.inArray(styleObj.element, contextOptions.context) === -1) {
-                                    validContextOuter = false;
-                                    return false;
-                                }
-                            });
-                        }
-
-                        // Set a class on the toolbar button to indicate we are out of context.
-                        // That class will be used to style the button, but also
-                        // to prevent clicking on the button.
-                        $link.toggleClass('outOfContext', !(validContextInner || validContextOuter));
-                    }
-                    
+                    // Set a class on the toolbar button to indicate we are out of context.
+                    // That class will be used to style the button, but also
+                    // to prevent clicking on the button.
+                    $link.toggleClass('outOfContext', !inContext);
                 }
             });
 
@@ -2020,6 +2025,37 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
+         * Code to run after the edit popup was completed or canceled.
+         */
+        linkAfterEdit: function(){
+
+            var range;
+            var self;
+            self = this;
+
+            self.rte.focus();
+
+            // After editing the mark, the range of text will be selected.
+            // Instead we want to put the cursor at the end of the range.
+            range = self.rte.getRange();
+            if (range.from.ch !== range.to.ch) {
+
+                range.from = range.to;
+                self.rte.setSelection(range);
+
+                // Now clear the styles at the cursor point so new characters typed will not expand the link.
+                // However, if user moves the cursor then returns to the end of the link, then characters typed
+                // will be added to the link.
+                self.rte.removeStyles();
+
+                // Make sure the toolbar updates so the link button is not highlighted, so user knows typing
+                // will not expand the link.
+                self.toolbarUpdate();
+            }
+        },
+
+
+        /**
          * Used by the link dialog, this function gets the values from the dialog
          * then resolves the deferred object so we can complete editing the link.
          */
@@ -2041,7 +2077,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             target = $linkDialog.find('.rte2-dialogLinkTarget').val() || '';
             rel = $linkDialog.find('.rte2-dialogLinkRel').val() || '';
             cmsId = $linkDialog.find('.rte2-dialogLinkId').val() || '';
-            
+
             attributes = {};
             attributes.href = href;
 
@@ -2181,7 +2217,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                 // Close the popup - this will also trigger the enhancement display to be updated (see 'close' event below)
                 $target.popup('close');
-                
+
                 // Put focus back on the editor
                 self.focus();
 
@@ -2218,7 +2254,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 // Update the enhancement to show a preview of the content.
                 // This will also remove the enhancement if it is empty.
                 self.enhancementUpdate($enhancement);
-                
+
             });
         },
 
@@ -2271,7 +2307,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 self.enhancementSetCursor(this);
                 self.focus();
             });
-            
+
             // Add the label (preview image and label text)
             $('<div/>', {'class': 'rte2-enhancement-label' }).appendTo($enhancement);
 
@@ -2335,9 +2371,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 self.enhancementRemoveCompletely($enhancement);
                 return;
             }
-            
+
             $content.empty();
-            
+
             if (reference.preview) {
 
                 $('<figure/>', {
@@ -2362,7 +2398,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Modify the Select and Edit buttons in the toolbar
             if (reference.record && reference.record._ref) {
-                
+
                 $select = $enhancement.find('.rte2-enhancement-toolbar-change');
                 $select.text('Change');
 
@@ -2491,7 +2527,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             formAction = self.$el.closest('form').attr('action') || '';
             formId = (/id=([^&]+)/.exec(formAction) || [ ])[1] || '';
             formTypeId = (/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '';
-            
+
             self.enhancementToolbarAddButton({
                 text: 'Select',
                 tooltip: '',
@@ -2676,7 +2712,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self = this;
             $el = self.enhancementGetWrapper(el);
             $el.addClass('toBeRemoved');
-            
+
             // Trigger change event so preview is updated
             self.rte.triggerChange();
         },
@@ -2690,7 +2726,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (mark) {
                 self.rte.enhancementRemove(mark);
             }
-            
+
             // Trigger change event so preview is updated
             self.rte.triggerChange();
         },
@@ -2702,7 +2738,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self = this;
             $el = self.enhancementGetWrapper(el);
             $el.removeClass('toBeRemoved');
-            
+
             // Trigger change event so preview is updated
             self.rte.triggerChange();
         },
@@ -2738,9 +2774,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (direction === 1 || direction === -1) {
 
                 $el = self.enhancementGetWrapper(el);
-                
+
                 topOriginal = $el.offset().top;
-                    
+
                 mark = self.rte.enhancementMove(mark, direction);
 
                 topNew = $el.offset().top;
@@ -2759,7 +2795,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /**
          * Set the editor cursor to the same line that contains the enhancement.
          */
@@ -2769,18 +2805,18 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var self;
 
             self = this;
-            
+
             mark = self.enhancementGetMark(el);
             if (!mark) {
                 return;
             }
 
             line = self.rte.enhancementGetLineNumber(mark);
-            
+
             self.rte.setCursor(line, 0);
         },
 
-        
+
         /**
          * Sets the position for an enhancement.
          *
@@ -3049,7 +3085,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 }
 
                 $sizeLabel.text(sizeDisplayName);
-                
+
             } else {
 
                 // No size is selected so remove label if it exists
@@ -3069,7 +3105,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * jQuery element for the popup.
          */
         enhancementPopupSizesCreate: function(el) {
-            
+
             var $el;
             var $popup;
             var self;
@@ -3077,12 +3113,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             self = this;
             $el = $(el);
-            
+
             sizes = self.enhancementGetSizes();
 
             $popup = $el.data('enhancementSizesPopup');
             if (!$popup) {
-                
+
                 $popup = $('<ul/>', {
                     'class': 'rte2-enhancement-sizes-popup'
                 }).hover(function(event){
@@ -3090,7 +3126,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 }, function(event) {
                     self.enhancementPopupSizesHideDelayed($el);
                 }).css('position', 'absolute').hide().appendTo(document.body);
-                
+
                 $(el).data('enhancementSizesPopup', $popup);
 
                 self.enhancementToolbarAddButton({
@@ -3116,34 +3152,34 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 });
 
             }
-            
+
             return $popup;
         },
 
-        
+
         /**
          * Show the enhancement sizes popup after a short delay.
          * @param {Element} el
          * The image sizes button inside the enhancement element.
          */
         enhancementPopupSizesShowDelayed: function(el) {
-            
+
             var timeout;
             var self;
 
             self = this;
-            
+
             // Cancel any previous attempt to show the popup
             clearTimeout( $(el).data('enhancementPopupSizesHideDelayed') );
-            
+
             timeout = setTimeout(function(){
                 self.enhancementPopupSizesShow(el);
             }, 100);
-            
+
             $(el).data('enhancementPopupSizesShowDelayed', timeout);
         },
 
-        
+
         /**
          * Show the enhancement sizes popup.
          * @param {Element} el
@@ -3167,29 +3203,29 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             $(el).addClass('hovered');
         },
 
-        
+
         /**
          * Hide the enhancement sizes popup after a short delay.
          * @param {Element} el
          * The image sizes button inside the enhancement element.
          */
         enhancementPopupSizesHideDelayed: function(el) {
-            
+
             var timeout;
             var self;
 
             self = this;
-            
+
             // Cancel any previous attempt to show the popup
             clearTimeout( $(el).data('enhancementPopupSizesShowDelayed') );
-            
+
             timeout = setTimeout(function(){
                 self.enhancementPopupSizesHide(el);
             }, 200);
             $(el).data('enhancementPopupSizesHideDelayed', timeout);
         },
 
-        
+
         /**
          * Hide the enhancement sizes popup.
          * @param {Element} el
@@ -3204,7 +3240,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             $(el).removeClass('hovered');
         },
 
-        
+
         /**
          * Get the reference object for the enhancement.
          * @returns {Object}
@@ -3326,7 +3362,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
 
             element = self.enhancementGetElement(el);
-            
+
             if (id) {
 
                 $html = $('<' + element + '/>', {
@@ -3377,7 +3413,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if ($content.is('table')) {
 
                 self.tableCreate($content, line);
-                
+
             } else {
 
                 try {
@@ -3395,7 +3431,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                 // Output html should maintain 'span' or 'button' for the enhancement
                 config.element = $content.is('span') ? 'span' : 'button';
-                
+
                 self.enhancementCreate(config, line);
             }
         },
@@ -3406,7 +3442,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          *==================================================*/
 
         inlineEnhancementInit: function() {
-            
+
             var self;
             self = this;
 
@@ -3419,7 +3455,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
                 // If the style already has an onclick do not change it
                 if (styleObj.onClick) { return; }
-                
+
                 // If this style does not have a popup (no need for the "Edit" button)
                 // and it is a toggle (no need for the "Clear" button)
                 // then do not add an onclick handler (so the dropdown will not appear)
@@ -3431,14 +3467,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
         },
 
-        
+
         inlineEnhancementCreate: function(event, style) {
 
             var mark;
             var self;
-            
+
             self = this;
-            
+
             // Create a new mark then call the onclick function on it
             mark = self.rte.setStyle(style);
             if (mark) {
@@ -3470,7 +3506,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (styleObj.popup === false) {
                 return;
             }
-            
+
             // Stop the click from propagating up to the window
             // because if it did, it would close the popup we will be opening.
             if (event) {
@@ -3487,7 +3523,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             } else {
                 html = self.rte.toHTML(range);
             }
-            
+
             enhancementEditUrl = $.addQueryParameters(
                 window.CONTEXT_PATH + '/content/enhancement.jsp',
                 'typeId', styleObj.enhancementType
@@ -3516,7 +3552,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                         })
                     ]
                 })
-                
+
             }).appendTo(self.$container);
 
             // Set the position of the popup
@@ -3532,21 +3568,21 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // so any popup form can access them
             $divForm.data('rte', self);
             $divForm.data('mark', mark);
-            
+
             // Listen for an 'enhancementUpdate' event that will be triggered on
             // the edit link, so we can tell when the enhancement is updated.
             // The enhancement edit form will trigger this event.
             if (!mark.rteTableMark) {
-                
+
                 // If this mark has rteTableMark=true, that means it is a "fake" CodeMirror mark
-                // that we created for table/tr/td elements. In that case we do not allow the 
+                // that we created for table/tr/td elements. In that case we do not allow the
                 // inline enhancement popup form to modify the html of the table.
-                
+
                 $divForm.on('enhancementUpdate', function(event, html){
                     self.inlineEnhancementReplaceMark(mark, html);
                 });
             }
-            
+
             // Listen for an 'enhancementRead' event that will be triggered on
             // the edit popup, so we can communicate the mark back to the popup form.
             // The enhancement edit form can trigger this event.
@@ -3567,7 +3603,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             // but first wait for the current click to finish so it doesn't interfere
             // with any popups
             setTimeout(function(){
-                
+
                 $divForm.submit();
 
                 // When the popup is closed put focus back on the editor
@@ -3582,7 +3618,6 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                              if (styleObj.readOnly || styleObj.void) {
                                  if (mark.type !== 'range') {
                                     pos = mark.find();
-                                    // Delete below after the mark is cleared
                                     self.rte.codeMirror.replaceRange('', {line:pos.from.line, ch:pos.from.ch}, {line:pos.to.line, ch:pos.to.ch}, 'brightspotMark');
                                 }
                              }
@@ -3594,7 +3629,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     if (event.target !== event.currentTarget) {
                         return;
                     }
-                    
+
                     self.focus();
                     $div.remove();
                     self.rte.triggerChange();
@@ -3607,7 +3642,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
         },
 
-        
+
         /**
          * Given an existing mark, replace the entire mark with new HTML.
          * Note after calling this function, the original mark is no longer
@@ -3620,12 +3655,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * The HTML to replace the mark.
          */
         inlineEnhancementReplaceMark: function(mark, html) {
-            
+
             var range;
             var self;
 
             self = this;
-            
+
             if (html && $.type(html) === 'string') {
                 range = self.rte.markGetRange(mark);
                 if (range.from) {
@@ -3634,9 +3669,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
         /*
-         * remove link style definition of the "a" element 
+         * remove link style definition of the "a" element
          * with values provided from inline enhancement (RICH_TEXT_ELEMENTS variable)
-         * 
+         *
          * @returns {undefined}
          */
         updateLinkInit: function(){
@@ -3644,7 +3679,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var removeLink;
             var toolKey;
                 self = this;
-                
+
             $.each(self.styles, function(styleKey, styleObj){
                  if (styleObj.element === 'a' && styleKey !== 'link'){
                      if (!styleObj.keymap) {
@@ -3661,11 +3696,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                          toolKey = toolbarKey;
                          return false;
                      }
-                  }); 
+                  });
 
                 delete self.styles.link;
                 if (toolKey !== undefined){
-                   self.toolbarConfig.splice(toolKey, 1);                    
+                   self.toolbarConfig.splice(toolKey, 1);
                 }
 
              }
@@ -3693,17 +3728,17 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 case 'table':
                     self.tableStyleTable = styleObj;
                     break;
-                    
+
                 case 'tr':
                     self.tableStyleRow = styleObj;
                     break;
-                
+
                 case 'td':
                 case 'th':
                     self.tableStyleCell = styleObj;
                     break;
                 }
-                
+
             });
         },
 
@@ -3725,27 +3760,27 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
-         * 
+         *
          */
         tableCreate: function($content, line) {
-            
+
             var $div;
             var $placeholder;
             var self;
             var tEdit;
-            
+
             self = this;
 
             // Get the line number where the table should be added
             if (line === undefined) {
                 line = self.rte.getRange().from.line;
             }
-            
+
             // Create wrapper element for the table and add the toolbar
             $div = $('<div/>', {
                 'class': 'rte2-table'
             });
-            
+
             if (!self.rte.readOnlyGet() && !self.placeholderIsShowing()) {
                 $div.append( self.tableToolbarCreate() );
             }
@@ -3803,7 +3838,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Save the table editor on the placeholder so we can get to it later
             $placeholder.data('tableEditor', tEdit);
-            
+
             // Add the div to the editor
             self.rte.enhancementAdd($div[0], line, {
                 block:true,
@@ -3822,7 +3857,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
         },
 
-        
+
         /**
          * Convert the table to HTML.
          * Checks each table, tr, td, th element to see if it has a fake CodeMirror mark
@@ -3838,7 +3873,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var html;
             var self;
             var $table;
-            
+
             self = this;
             $table = $(table);
 
@@ -3857,7 +3892,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             return html;
         },
 
-        
+
         /**
          * Replace the attributes on an element with a new set of attributes.
          */
@@ -3865,7 +3900,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var $el;
             var original;
             var self;
-            
+
             self = this;
             $el = $(el);
             original = self.rte.getAttributes($el);
@@ -3877,9 +3912,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
         },
 
-        
+
         /**
-         * 
+         *
          */
         tableToolbarCreate: function() {
 
@@ -3943,7 +3978,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
-         * 
+         *
          */
         tableMove: function(el, direction) {
 
@@ -3953,7 +3988,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var topNew;
             var topOriginal;
             var topWindow;
-            
+
             self = this;
 
             mark = self.tableGetMark(el);
@@ -3964,9 +3999,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (direction === 1 || direction === -1) {
 
                 $el = self.tableGetWrapper(el);
-                
+
                 topOriginal = $el.offset().top;
-                    
+
                 mark = self.rte.enhancementMove(mark, direction);
 
                 topNew = $el.offset().top;
@@ -3978,9 +4013,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /**
-         * 
+         *
          */
         tableRemove: function (el) {
             var $el;
@@ -3991,9 +4026,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.rte.triggerChange();
         },
 
-        
+
         /**
-         * 
+         *
          */
         tableRemoveCompletely: function (el) {
             var mark;
@@ -4007,7 +4042,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
-         * 
+         *
          */
         tableRestore: function (el) {
             var $el;
@@ -4020,7 +4055,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /**
-         * 
+         *
          */
         tableIsToBeRemoved: function(el) {
             var $el;
@@ -4056,12 +4091,12 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             return self.rte.enhancementGetMark(el);
         },
 
-        
+
         /**
-         * 
+         *
          */
         tableEditInit: function() {
-            
+
             var $controls;
             var self;
 
@@ -4069,19 +4104,19 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Check if editor already exists
             if (self.$tableEditDiv) {
-                
+
                 // Empty the editor
                 self.tableEditRte.rte.empty();
-                
+
                 // Turn off track changes before we add content to the editor
                 self.tableEditRte.rte.trackSet(false);
-            
+
                 return;
             }
-            
+
             // Create popup used to display the editor
             self.$tableEditDiv = $('<div>', {'class':'rte2-table-editor'}).appendTo(document.body);
-            
+
             $('<h1/>', {
                 'class': 'widget-heading',
                 text: 'Edit Table Cell'
@@ -4089,7 +4124,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             self.$tableEditTextarea = $('<textarea>').appendTo(self.$tableEditDiv);
             self.tableEditRte = Object.create(Rte);
-            
+
             self.tableEditRte.init(self.$tableEditTextarea, {
                 contextRoot: 'td',
                 richTextElementTags: self.tableGetRichTextElementTags()
@@ -4106,7 +4141,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     $(this).popup('close');
                 }
             }).appendTo($controls);
-            
+
             self.$tableEditSave = $('<button/>', {
                 'class': 'rte2-table-editor-cancel',
                 text: 'Cancel',
@@ -4122,7 +4157,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.$tableEditDiv.popup('container').attr('name', 'rte2-frame-table-editor');
         },
 
-        
+
         /**
          * Returns a list of elements that should be allowed in a table cell, based on the context rules.
          * This only returns a list if the context rules contain at least one element that has a 'td' context.
@@ -4136,7 +4171,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var tagsArray;
             var self;
             self = this;
-            
+
             // First reverse the context rules so we can perform efficient lookups
             // So for example, we can lookup allowed['td'] and it will show us which styles are allowed inside 'td'
             allowed = {};
@@ -4152,27 +4187,27 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     });
                 }
             })
-                        
+
             // Now see if there are context rules defined for the 'td' element
             if (!allowed.td) {
                 // If there are no context rules for 'td' then return the same element list that
                 // was defined for the main RTE
                 return self.richTextElementTags;
             }
-            
-            // Start with an empty list of elements allowed 
+
+            // Start with an empty list of elements allowed
             tags = {};
-            
+
             // Function to recursively find all the tags allowed within a 'td'
             // plus children tags that should also be allowed
             function processTags(tagsToAdd) {
                 $.each(tagsToAdd, function(tag) {
                     // Check if it's already in the list of tags
                     if (!tags[tag]) {
-                        
+
                         // Add it to the list of tags
                         tags[tag] = true;
-                        
+
                         // Also add the children of this tag
                         if (allowed[tag]) {
                             processTags(allowed[tag]);
@@ -4180,11 +4215,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     }
                 });
             }
-            
+
             // Start the recursive process to find elements allowed in table cells,
             // and children of those elements
             processTags(allowed.td);
-            
+
             // Convert the tags found into an array
             tagsArray = [];
             $.each(tags, function(tag) {
@@ -4192,7 +4227,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
             return tagsArray;
         },
-        
+
 
         /**
          * @param jQuery $el
@@ -4204,14 +4239,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var value;
 
             self = this;
-            
+
             // Set up a nested rich text editor in a popup
             // (but only do this once)
             self.tableEditInit();
 
             // Set a flag so we only update the table cell if user clicks the save button
             self.tableEditSave = false;
-            
+
             value = $el.html();
 
             self.$tableEditDiv.popup('source', $el);
@@ -4242,17 +4277,17 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             });
         },
 
-        
+
         /**
          * Edit the table element attributes.
          * @param {Element|jquery} el
          * The table element to edit.
          */
         tableEditAttrTable: function(el) {
-            
+
             var mark;
             var self;
-            
+
             self = this;
 
             // Make sure there is backend style that is meant for editing the table
@@ -4268,17 +4303,17 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.inlineEnhancementHandleClick(null, mark);
         },
 
-        
+
         /**
          * Edit the tr element attributes.
          * @param {Element|jquery} el
          * The tr element.
          */
         tableEditAttrRow: function(el) {
-            
+
             var mark;
             var self;
-            
+
             self = this;
 
             // Make sure there is backend style that is meant for editing the table
@@ -4288,22 +4323,22 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             if (!mark) { return; }
 
             mark.className = self.tableStyleRow.className;
-            
+
             // Pop up backend form to edit the table attributes
             self.inlineEnhancementHandleClick(null, mark);
         },
 
-        
+
         /**
          * Edit the td element attributes.
          * @param {Element|jquery} el
          * The td or th element.
          */
         tableEditAttrCell: function(el) {
-            
+
             var mark;
             var self;
-            
+
             self = this;
 
             // Make sure there is backend style that is meant for editing the table
@@ -4334,18 +4369,18 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * For example, to add a className.
          */
         tableMarkCreate: function(el, extraAttributes, markParameters) {
-            
+
             var attributes;
             var mark;
             var self;
-            
+
             self = this;
 
             attributes = self.rte.getAttributes(el);
             if (extraAttributes) {
                 $.extend(attributes, extraAttributes);
             }
-            
+
             mark = {
                 rteTableMark:true,
                 attributes: attributes,
@@ -4376,10 +4411,10 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // Save the mark on the element for future use
             $(el).data('tableMark', mark);
-            
+
             return mark;
         },
-        
+
         /**
          * Update the mark for the table element.
          * @param {Element|jquery} el
@@ -4420,17 +4455,17 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             return mark;
         },
 
-        
+
         /*==================================================
          * Placeholder
          *==================================================*/
-        
+
         /**
          * Class added to the editor to style the placeholder when it is showing.
          */
         placeholderClass: 'rte2-placeholder-showing',
 
-        
+
         /**
          * Set the placeholder text for when the editor is empty,
          * and periodically check to see if the placeholder text
@@ -4454,9 +4489,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // When RTE gains focus always remove the placeholder if it is active
             self.$el.on('rteFocus', function(){
-                
+
                 self.placeholderRemove();
-                
+
                 // Note if the textarea is an "editable placeholder" then
                 // on focus the editable placeholder code will put content
                 // back into the RTE.
@@ -4464,9 +4499,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             // When RTE loses focus, check if RTE is empty and if so add the placeholder
             self.$el.on('rteBlur', function(){
-                
+
                 self.placeholderRefresh();
-                
+
                 // Note if the textarea is an "editable placeholder" then
                 // on blur the editable placeholder code will possibly examine
                 // the RTE and empty it again, then call placeholderRefresh again.
@@ -4486,11 +4521,11 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var placeholderIsShowing;
             var self;
             var showPlaceholder;
-            
+
             self = this;
-            
+
             placeholderIsShowing = self.placeholderIsShowing();
-            
+
             // Determine if we should display the placeholder
             if (placeholderIsShowing) {
                 // Placeholder is already showing; however, the placeholder attribute might have
@@ -4512,9 +4547,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /**
-         * Determine if the placeholder is currently showing (based on the placeholderActive flag). 
+         * Determine if the placeholder is currently showing (based on the placeholderActive flag).
          * @returns {Boolean}
          */
         placeholderIsShowing: function() {
@@ -4523,17 +4558,17 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             return Boolean( self.placeholderActive );
         },
 
-        
+
         /**
          * Replaces the content of the editor with the content in the textarea placeholder attribute (if any).
          * Also sets the placeholderActive flag.
          * If the placeholder attribute from the textarea is empty, then it removes the placeholder.
          */
         placeholderShow: function() {
-            
+
             var placeholder;
             var self;
-            
+
             self = this;
 
             // Get the placeholder content from the textarea
@@ -4545,7 +4580,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 self.placeholderRemove();
                 return;
             }
-      
+
             // Set placeholder active to true to other code like toHTML()
             // and events like rteChange can modify their behavior
             self.placeholderActive = true;
@@ -4558,7 +4593,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.fromHTML(placeholder);
         },
 
-        
+
         /**
          * If the placeholder content is currently active, removes it from the editor and clears the editor content.
          */
@@ -4572,7 +4607,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }
         },
 
-        
+
         /*==================================================
          * Preview
          * To support brightspot cms preview functionality,
@@ -4580,7 +4615,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * Triggering an "input" event will update the preview.
          *==================================================*/
 
-        
+
         /**
          * Initialize an event listener so whenever the rich text editor changes,
          * we update the textarea with the latest content, and trigger an
@@ -4589,7 +4624,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
          * This is throttled agressively to prevent performance problems.
          */
         previewInit: function() {
-            
+
             var self;
             self = this;
 
@@ -4598,25 +4633,25 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             }));
         },
 
-        
+
         /**
          * Update the textarea with the latest content from the rich text editor,
          * plus trigger an "input" event so the preview will be updated, and
          * a "change" event so the change indicator can be updated.
          */
         previewUpdate: function() {
-            
+
             var html;
             var self;
             var val;
-            
+
             self = this;
 
             // Do not update if we are in read only mode
             if (self.rte.readOnlyGet()) {
                 return;
             }
-            
+
             // Do not update if the content in the editor has not been changed
             if (!self.changed) {
                 return;
@@ -4625,13 +4660,13 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             html = self.toHTML();
 
             val = self.$el.val();
-            
+
             if (html !== val) {
                 self.$el.val(html).trigger('input').trigger('change');
             }
         },
 
-        
+
         /*==================================================
          * Misc
          *==================================================*/
@@ -4689,14 +4724,14 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self = this;
             clearTimeout(self.rteBlurTimeout);
         },
-        
-        
+
+
         refresh: function() {
             var self;
             self = this;
             self.rte.refresh();
         },
-        
+
         setCursor: function(line, ch) {
             var self;
             self.rte.setCursor(line, ch);
@@ -4780,7 +4815,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
             rte = Object.create(Rte);
             rte.init(input, options);
-            
+
             function updatePreview() {
                 rte.rte.blockEachLineMark(function (name, mark) {
                     var className = mark.className;
@@ -4793,6 +4828,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     if (!styleObj || !styleObj.previewable) {
                         return;
                     }
+
+                    var typeId = styleObj.enhancementType;
                     
                     if (mark.rtePreviewKey !== newPreviewKey) {
                         mark.rtePreviewKey = newPreviewKey;
@@ -4802,7 +4839,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                             url: CONTEXT_PATH + '/content/rte-preview',
 
                             data: {
-                                className: className,
+                                typeId: typeId,
                                 attributes: attributesJson
                             },
 

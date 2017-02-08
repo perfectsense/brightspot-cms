@@ -100,6 +100,10 @@
   }
 }
 
+.fileSelector > select[name$='.action'] {
+  margin-right: 5px;
+}
+
 .inputLike {
   @-borderWidth: 1px;
   @-paddingTB: @input-height - @lineHeight-default - (@-borderWidth * 2);
@@ -163,6 +167,10 @@
     .noToolUser & {
       display: none;
     }
+  }
+
+  &.inputContainer-unlabeled:before {
+    display: none;
   }
 
   // Most reliable way to clear floats and avoid margin collapse after the input container
@@ -246,6 +254,10 @@
     padding: 5px;
     width: auto;
   }
+
+  .inputContainer-unlabeled > & {
+    display: none;
+  }
 }
 
 .inputContainer-error {
@@ -277,7 +289,8 @@
   .repeatableForm-previewable > ol > li,
   .carousel-tile,
   .carousel-nav,
-  .carousel-target-nav {
+  .carousel-target-nav,
+  .rte2-codemirror {
     pointer-events: auto;
   }
 
@@ -347,10 +360,18 @@
     margin-left: 0;
     padding-left: 2px;
   }
+
+  .inputContainer-unlabeled > & {
+    margin-left: 0;
+  }
 }
 
 .inputLargeLike {
   padding: 10px 0 0 41px;
+
+  .inputContainer-unlabeled > & {
+    padding: 0;
+  }
 }
 
 .inputLarge {
@@ -359,7 +380,7 @@
   background-color: white;
   clear: left;
   position: relative;
-  z-index: 0;
+  z-index: inherit;
 
   &:before {
     bottom: 10px;
@@ -372,6 +393,10 @@
     position: absolute;
     width: 7.5px;
     top: 0;
+
+    .inputContainer-unlabeled > & {
+      display: none;
+    }
   }
 
   .inputContainer.state-changed > &:before {

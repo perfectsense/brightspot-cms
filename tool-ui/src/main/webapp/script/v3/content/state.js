@@ -54,6 +54,16 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
               && $(this).closest('.contentDiffCurrent').length === 0;
         });
 
+        var fieldNames = { };
+
+        $form.find('.objectInputs').each(function () {
+          var $inputs = $(this);
+
+          fieldNames[$inputs.attr('data-object-id')] = $.makeArray($inputs.find('> .inputContainer').map(function () {
+            return $(this).attr('data-field-name');
+          }));
+        });
+
         var $publishingHeading = $form.find('.widget-publishing > h1');
 
         $.ajax({
@@ -64,17 +74,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
 
           // If we are looking at a content update, then the current state (for viewing the diff) resides in the form
           // as well. We need to remove that from the form post or it messes up the dynamic values that return.
-          'data': $form.find('[name]').not($form.find('.contentDiffCurrent [name]')).serialize() + $dynamicTexts.map(function() {
+          'data': $form.find('[name]').not($form.find('.contentDiffCurrent [name]')).serialize() + '&_fns=' + encodeURIComponent(JSON.stringify(fieldNames)) + $dynamicTexts.map(function() {
             var $element = $(this);
-            var fieldNames = { };
-
-            $form.find('.objectInputs').each(function () {
-              var $inputs = $(this);
-
-              fieldNames[$inputs.attr('data-object-id')] = $.makeArray($inputs.find('> .inputContainer').map(function () {
-                return $(this).attr('data-field-name');
-              }));
-            });
 
             return '&_fns=' + encodeURIComponent(JSON.stringify(fieldNames)) +
                 '&_dti=' + encodeURIComponent($element.closest('[data-object-id]').attr('data-object-id') || '') +
@@ -87,6 +88,10 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
           }).get().join(''),
 
           'success': function(data) {
+            if (!data) {
+              return;
+            }
+
             if (wipEnabled) {
               var wipMessage = data._wip;
 

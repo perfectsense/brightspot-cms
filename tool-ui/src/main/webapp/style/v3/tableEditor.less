@@ -3,6 +3,12 @@
   position:relative;
   z-index: 3;
 
+}
+
+// Table goes inside here, and if it is too wide it should be scrollable
+.bspTableEditTableWrapper {
+  overflow:auto;
+
   table {
     
     width:100%;
@@ -41,9 +47,30 @@
   }
 }
 
-// Table goes inside here, and if it is too wide it should be scrollable
-.bspTableEditTableWrapper {
-  overflow:auto;
+.bspTableEditSizer {
+  table {
+    border-collapse: separate;
+    border-spacing: 5px;
+    margin: -5px -5px 0 -5px;
+    width: auto;
+  }
+  td, th {
+    cursor: pointer;
+    width:20px;
+    height:20px;
+    border:1px solid @color-border;
+    padding: 0;
+    background-color: #fff;
+  }
+  .active {
+    background-color: @color-focus;
+    border-color: @color-focus;
+  }
+}
+.bspTableEditSizerMessage {
+  .message;
+  .message-info;
+  margin-bottom: 10px;
 }
 
 // Context menu will be positioned using javascript

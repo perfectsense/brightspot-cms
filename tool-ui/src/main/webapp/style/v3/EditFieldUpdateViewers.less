@@ -6,19 +6,26 @@
 
     &-some,
     &-none {
-        background: @color-heading;
         backface-visibility: hidden;
         height: 100%;
         left: 0;
         position: absolute;
         top: 0;
         width: 100%;
+
+        .widget-publishing & {
+            background: @color-heading;
+        }
     }
 
     &-some {
-        margin-left: -8px;
         overflow: hidden;
+        position: relative;
         transform: rotateX(180deg);
+
+        .widget-publishing & {
+            margin-left: -8px;
+        }
     }
 
     &[data-some] {

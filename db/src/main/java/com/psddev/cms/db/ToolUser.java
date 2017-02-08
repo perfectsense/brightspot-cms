@@ -27,8 +27,10 @@ import javax.servlet.http.HttpServletRequest;
 import com.google.common.io.BaseEncoding;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
+import com.psddev.cms.tool.DashboardContainer;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Query;
@@ -48,7 +50,7 @@ import com.psddev.dari.util.StringUtils;
 @ToolUi.IconName("object-toolUser")
 @Record.BootstrapPackages("Users and Roles")
 @Record.BootstrapTypeMappable(groups = Content.class, uniqueKey = "email")
-public class ToolUser extends Record implements ToolEntity {
+public class ToolUser extends Record implements Managed, ToolEntity {
 
     private static final long TOKEN_CHECK_EXPIRE_MILLISECONDS = 30000L;
 
@@ -73,7 +75,15 @@ public class ToolUser extends Record implements ToolEntity {
 
     private StorageItem avatar;
 
+    @DisplayName("Dashboard")
     @ToolUi.Tab("Dashboard")
+    private DashboardContainer dashboardContainer;
+
+    @Deprecated
+    @DisplayName("Legacy Dashboard")
+    @ToolUi.Tab("Dashboard")
+    @ToolUi.Note("Deprecated. Please use the Dashboard field above instead.")
+    @Embedded
     private Dashboard dashboard;
 
     @ToolUi.Hidden
@@ -102,7 +112,7 @@ public class ToolUser extends Record implements ToolEntity {
     private Schedule currentSchedule;
 
     @ToolUi.Tab("Advanced")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     @ToolUi.Placeholder("Default")
     private ToolEntityTfaRequired tfaRequired;
 
@@ -248,10 +258,27 @@ public class ToolUser extends Record implements ToolEntity {
         this.avatar = avatar;
     }
 
+    public DashboardContainer getDashboardContainer() {
+        if (dashboardContainer == null && dashboard != null) {
+            DashboardContainer.OneOff oneOff = new DashboardContainer.OneOff();
+            oneOff.setDashboard(dashboard);
+            return oneOff;
+
+        } else {
+            return dashboardContainer;
+        }
+    }
+
+    public void setDashboardContainer(DashboardContainer dashboardContainer) {
+        this.dashboardContainer = dashboardContainer;
+    }
+
+    @Deprecated
     public Dashboard getDashboard() {
         return dashboard;
     }
 
+    @Deprecated
     public void setDashboard(Dashboard dashboard) {
         this.dashboard = dashboard;
     }
@@ -1025,16 +1052,22 @@ public class ToolUser extends Record implements ToolEntity {
             html.writeStart("span", "class", "ToolUserAvatar", "title", name);
             {
                 StringBuilder initials = new StringBuilder();
-                String[] nameParts = name.split("\\s+");
 
-                for (int i = 0, length = nameParts.length; i < length; ++ i) {
-                    char initial = nameParts[i].charAt(0);
+                if (StringUtils.isBlank(name)) {
+                    initials.append("?");
 
-                    if (Character.isLetter(initial)) {
-                        initials.append(initial);
+                } else {
+                    String[] nameParts = name.trim().split("\\s+");
 
-                        if (initials.length() >= 2) {
-                            break;
+                    for (int i = 0, length = nameParts.length; i < length; ++i) {
+                        char initial = nameParts[i].charAt(0);
+
+                        if (Character.isLetter(initial)) {
+                            initials.append(initial);
+
+                            if (initials.length() >= 2) {
+                                break;
+                            }
                         }
                     }
                 }
@@ -1068,6 +1101,11 @@ public class ToolUser extends Record implements ToolEntity {
         } catch (IOException error) {
             throw new IllegalStateException(error);
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/users.jsp", "id", getId());
     }
 
     public static class LoginToken extends Record {

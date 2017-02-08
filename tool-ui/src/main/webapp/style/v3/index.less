@@ -39,7 +39,6 @@
 @import 'frame.less';
 @import 'guide.less';
 @import 'image-editor.less';
-@import 'inline-editor.less';
 @import 'layout.less';
 @import 'object-id.less';
 @import 'page-layout.less';
@@ -59,20 +58,22 @@
 @import 'work-streams.less';
 @import 'workflow.less';
 
+@import 'DashboardTabSelect.less';
 @import 'EditFieldUpdateViewers.less';
 @import 'ExternalPreviewFrame.less';
+@import 'InlineEditor.less';
 @import 'OverlayProviderSelect.less';
 @import 'Tab.less';
 @import 'ToolUserAvatar.less';
 
 // From Bower.
-@import '../handsontable.full.css';
-@import '../leaflet/leaflet.css';
-@import '../leaflet/leaflet.draw.css';
-@import '../leaflet/l.geosearch.css';
-@import '../leaflet/L.Control.Locate.min.css';
-@import '../nv.d3.css';
-@import '../spectrum.css';
+@import url('../handsontable.full.css');
+@import url('../leaflet/leaflet.css');
+@import url('../leaflet/leaflet.draw.css');
+@import url('../leaflet/l.geosearch.css');
+@import url('../leaflet/L.Control.Locate.min.css');
+@import url('../nv.d3.css');
+@import url('../spectrum.css');
 
 .locationMap, .regionMap {
   min-width: 500px;
@@ -523,6 +524,8 @@
       display: none;
     }
 
+    .inputPending,
+    .inputUpdated,
     .inputSmall,
     .inputLarge {
       margin-left: 0;
@@ -701,6 +704,7 @@
   opacity: 0.5;
   outline-style: solid;
   outline-width: 5px;
+  pointer-events: none;
   height: 20px;
   width: 20px;
   z-index: 10;
@@ -715,10 +719,10 @@
   box-sizing: content-box;
   color: fade(@color-text, 30%);
   display: none;
-  padding: 5px;
+  padding: 2px;
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 2px;
+  top: 4px;
   z-index: 1;
 
   &:hover {
@@ -733,6 +737,17 @@
   .inputContainer.fieldPreview-displaying > & {
     display: block;
     opacity: 1;
+
+    & {
+      background-color: @color-text;
+      color: white;
+      border-radius: 50%;
+
+      &:hover {
+        color: white;
+        text-shadow:none;
+      }
+    }
   }
 }
 

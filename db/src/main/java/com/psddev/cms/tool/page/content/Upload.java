@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.util.UuidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -340,6 +341,10 @@ public class Upload extends PageServlet {
 
     private static ObjectField getPreviewField(ObjectType type) {
         ObjectField previewField = type.getField(type.getPreviewField());
+
+        if (previewField instanceof ObjectMethod) {
+            previewField = null;
+        }
 
         if (previewField == null) {
             for (ObjectField field : type.getFields()) {

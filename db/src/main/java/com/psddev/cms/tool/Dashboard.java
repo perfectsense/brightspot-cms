@@ -6,17 +6,22 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import com.psddev.cms.db.ToolUi;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.TypeDefinition;
 import com.psddev.dari.util.UuidUtils;
 
-@Dashboard.Embedded
 public class Dashboard extends Record {
 
     private static final String WIDGET_ID_NAME_PREFIX = Dashboard.class.getName() + "/";
 
+    private String name;
+
     private List<DashboardColumn> columns;
+
+    @ToolUi.Tab("Tabs")
+    private List<DashboardTab> tabs;
 
     /**
      * Creates a default dashboard containing instances of all classes that
@@ -66,6 +71,14 @@ public class Dashboard extends Record {
         return createDefaultDashboard();
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public List<DashboardColumn> getColumns() {
         if (columns == null) {
             columns = new ArrayList<>();
@@ -75,5 +88,16 @@ public class Dashboard extends Record {
 
     public void setColumns(List<DashboardColumn> columns) {
         this.columns = columns;
+    }
+
+    public List<DashboardTab> getTabs() {
+        if (tabs == null) {
+            tabs = new ArrayList<>();
+        }
+        return tabs;
+    }
+
+    public void setTabs(List<DashboardTab> tabs) {
+        this.tabs = tabs;
     }
 }

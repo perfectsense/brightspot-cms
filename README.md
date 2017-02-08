@@ -1,7 +1,11 @@
+[![Build Status](https://travis-ci.org/perfectsense/brightspot-cms.svg)](https://travis-ci.org/perfectsense/brightspot-cms)
+
+Note that starting with v3.3.0, the open source license has changed to [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.en.html). Brightspot is also available under a [commercial license](http://www.brightspot.com/licensing).
+
 Welcome to Brightspot
 =========================
 
-[www.brightspot.com/docs](http://brightspot.com/docs)
+[www.brightspot.com/docs](http://documentation.brightspot.com/)
 
 **What is Brightspot?**
 
@@ -94,11 +98,11 @@ The Brightspot stack consists of proven open-source software: Java, MySQL, Solr 
 
 Java developers can get started with Brightspot development quickly and easily. Brightspot applications are built with standard Java development techniques.
 
-Start using Brightspot by first [installing the platform](http://www.brightspot.com/docs/3.0/overview/installation).
+Start using Brightspot by first [installing the platform](http://documentation.brightspot.com/docs/3.2/getting-started/installation).
 
 License
 =======
-Brightspot is released under the GPLv2 license.
+Brightspot is released under the [AGPLv3 license](https://www.gnu.org/licenses/agpl-3.0.en.html).
 
 Questions / Bugs?
 =====

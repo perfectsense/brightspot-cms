@@ -60,7 +60,8 @@ public class PreviewDatabase extends ForwardingDatabase {
                     }
 
                     Draft d = (Draft) dObject;
-                    Date triggerDate = d.getSchedule().getTriggerDate();
+                    Schedule schedule = d.getSchedule();
+                    Date triggerDate = schedule != null ? schedule.getTriggerDate() : null;
 
                     if (triggerDate != null
                             && triggerDate.before(date)

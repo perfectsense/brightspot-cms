@@ -1,6 +1,5 @@
 package com.psddev.cms.tool.page;
 
-import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.SearchResultField;
@@ -32,9 +31,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.PageContext;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
 import java.util.List;
@@ -96,8 +95,9 @@ public class ExportContent extends PageServlet {
                             "href", getActionUrl(page, null, Context.ACTION_PARAMETER, true));
                         page.writeHtml(page.localize(
                                 ExportContent.class,
-                                ImmutableMap.of("param", page.getSelection() != null ? " Selected" : " All"),
-                                "action.export"));
+                                page.getSelection() != null
+                                        ? "action.exportSelected"
+                                        : "action.exportAll"));
                     page.writeEnd();
                 page.writeEnd();
             }
@@ -153,23 +153,20 @@ public class ExportContent extends PageServlet {
         private Search search;
         private SearchResultSelection selection;
 
-        public Context(PageContext pageContext) {
-            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null);
-        }
-
         public Context(ToolPageContext page) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), null, null);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), null, null);
         }
 
         public Context(ToolPageContext page, Search search, SearchResultSelection selection) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), search, selection);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), search, selection);
         }
 
-        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, Search search, SearchResultSelection selection) {
+        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, Writer delegate, Search search, SearchResultSelection selection) {
 
             super(servletContext, request, response);
+            setDelegate(delegate);
 
             String selectionId = param(String.class, SELECTION_ID_PARAMETER);
 
@@ -183,7 +180,7 @@ public class ExportContent extends PageServlet {
                 SearchResultSelection queriedSelection = (SearchResultSelection) Query.fromAll().where("_id = ?", selectionId).first();
 
                 if (queriedSelection == null) {
-                    throw new IllegalArgumentException("No SearchResultSelection exists for id " + selectionId);
+                    throw new IllegalArgumentException("No Collection/SearchResultSelection exists for id " + selectionId);
                 }
 
                 setSelection(queriedSelection);

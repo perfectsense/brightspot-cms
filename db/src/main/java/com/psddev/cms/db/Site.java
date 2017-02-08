@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.psddev.cms.tool.ToolPageContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ import com.psddev.dari.util.StorageItem;
 /** Group of pages that's regarded as one entity. */
 @ToolUi.IconName("object-site")
 @Record.BootstrapPackages("Sites")
-public class Site extends Record {
+public class Site extends Record implements Global, Managed {
 
     private static final String FIELD_PREFIX = "cms.site.";
     private static final Logger LOGGER = LoggerFactory.getLogger(Site.class);
@@ -233,6 +234,11 @@ public class Site extends Record {
                             + Site.CONSUMERS_FIELD + " = ?",
                     consumers, Boolean.TRUE, this, consumers);
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/sites.jsp", "id", getId());
     }
 
     /** Static utility methods. */

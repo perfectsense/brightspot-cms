@@ -27,6 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Preconditions;
+import com.psddev.cms.view.ViewTemplateLoader;
+import com.psddev.dari.util.CompactMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.psddev.cms.tool.AuthenticationFilter;
@@ -103,6 +106,7 @@ public class PageFilter extends AbstractFilter {
     private static final String PATH_MATCHES_ATTRIBUTE = ATTRIBUTE_PREFIX + ".matches";
     private static final String PREVIEW_ATTRIBUTE = ".preview";
     private static final String PERSISTENT_PREVIEW_ATTRIBUTE = ".persistentPreview";
+    private static final String VIEW_TEMPLATE_LOADER_ATTRIBUTE = ATTRIBUTE_PREFIX + ".viewTemplateLoader";
 
     public static final String ABORTED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".aborted";
     public static final String CURRENT_SECTION_ATTRIBUTE = ATTRIBUTE_PREFIX + ".currentSection";
@@ -231,6 +235,65 @@ public class PageFilter extends AbstractFilter {
             request.setAttribute(SUBSTITUTIONS_ATTRIBUTE, substitutions);
         }
         return substitutions;
+    }
+
+    /**
+     * Creates marker HTML that can be inserted into the page to identify
+     * activity with the given {@code name} and {@code data}.
+     *
+     * @param name Nonnull.
+     * @param data Nullable.
+     * @return Nonnull.
+     */
+    public static String createMarkerHtml(String name, Map<String, String> data) {
+        Preconditions.checkNotNull(name);
+
+        StringBuilder marker = new StringBuilder();
+
+        marker.append("<!--");
+        marker.append(name);
+
+        if (data != null) {
+            marker.append(" ");
+            marker.append(ObjectUtils.toJson(data).replace("--", "\\u002d\\u002d"));
+        }
+
+        marker.append("-->");
+
+        return marker.toString();
+    }
+
+    /**
+     * Returns the view template loader associated with the given
+     * {@code request}, creating one if necessary.
+     *
+     * @param request Nonnull.
+     * @return Nonnull.
+     */
+    public static ViewTemplateLoader getViewTemplateLoader(HttpServletRequest request) {
+        Preconditions.checkNotNull(request);
+
+        ViewTemplateLoader loader = (ViewTemplateLoader) request.getAttribute(VIEW_TEMPLATE_LOADER_ATTRIBUTE);
+
+        if (loader == null) {
+            loader = new ServletViewTemplateLoader(request.getServletContext());
+            setViewTemplateLoader(request, loader);
+        }
+
+        return loader;
+    }
+
+    /**
+     * Sets the view template loader to be used within the given
+     * {@code request}.
+     *
+     * @param request Nonnull.
+     * @param loader Nullable.
+     */
+    public static void setViewTemplateLoader(HttpServletRequest request, ViewTemplateLoader loader) {
+        Preconditions.checkNotNull(request);
+
+        request.setAttribute(VIEW_TEMPLATE_LOADER_ATTRIBUTE, loader);
     }
 
     // --- AbstractFilter support ---
@@ -381,7 +444,18 @@ public class PageFilter extends AbstractFilter {
             String externalUrl = Directory.extractExternalUrl(servletPath);
 
             if (externalUrl != null) {
-                response.sendRedirect(externalUrl);
+                if (Directory.Static.findByPath(
+                        Static.getSite(request),
+                        servletPath.endsWith("/")
+                                ? servletPath + "index"
+                                : servletPath) != null) {
+
+                    response.sendRedirect(externalUrl);
+
+                } else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                }
+
                 return;
             }
 
@@ -444,17 +518,18 @@ public class PageFilter extends AbstractFilter {
             // current request is the redirect path, then redirect to the
             // permalink.
             Directory.Path redirectPath = null;
-            boolean isRedirect = false;
+            Directory.PathType redirectType = null;
 
             for (Directory.Path p : State.getInstance(mainObject).as(Directory.Data.class).getPaths()) {
 
-                if (p.getType() == Directory.PathType.REDIRECT
+                if ((p.getType() == Directory.PathType.REDIRECT
+                        || p.getType() == Directory.PathType.REDIRECT_TEMPORARY)
                         && ObjectUtils.equals(p.getSite(), site)) {
                     String path = p.getPath();
                     String requestPath = Static.getPath(request);
 
                     if (requestPath.equalsIgnoreCase(path)) {
-                        isRedirect = true;
+                        redirectType = p.getType();
 
                     } else {
                         // handle wildcards
@@ -470,14 +545,14 @@ public class PageFilter extends AbstractFilter {
                                     String requestPathLeftover = requestPath.substring(wildcardIndex, requestPath.length());
 
                                     if (requestPathLeftover.isEmpty()) {
-                                        isRedirect = true;
+                                        redirectType = Directory.PathType.REDIRECT;
 
                                     } else {
                                         String wildcard = path.substring(wildcardIndex, path.length());
 
                                         if (wildcard.equals("/**")
                                                 || (wildcard.equals("/*") && requestPathLeftover.split("/").length < 3)) {
-                                            isRedirect = true;
+                                            redirectType = Directory.PathType.REDIRECT;
                                         }
                                     }
                                 }
@@ -491,12 +566,20 @@ public class PageFilter extends AbstractFilter {
                 }
             }
 
-            if (isRedirect && redirectPath != null) {
+            if (redirectType != null && redirectPath != null) {
                 String rp = StringUtils.removeEnd(StringUtils.removeEnd(redirectPath.getPath(), "*"), "*");
 
-                JspUtils.redirectPermanently(request, response, site != null
-                        ? site.getPrimaryUrl() + rp
-                        : rp);
+                if (redirectType == Directory.PathType.REDIRECT) {
+                    JspUtils.redirectPermanently(request, response, site != null
+                            ? site.getPrimaryUrl() + rp
+                            : rp);
+
+                } else {
+                    JspUtils.redirect(request, response, site != null
+                            ? site.getPrimaryUrl() + rp
+                            : rp);
+                }
+
                 return;
             }
 
@@ -756,23 +839,6 @@ public class PageFilter extends AbstractFilter {
 
             endPage(request, response, writer, page);
 
-            if (Static.isInlineEditingAllContents(request)) {
-                LazyWriterResponse lazyResponse = (LazyWriterResponse) response;
-                Map<String, String> map = new HashMap<String, String>();
-                State state = State.getInstance(mainObject);
-                StringBuilder marker = new StringBuilder();
-
-                map.put("id", state.getId().toString());
-                map.put("label", state.getLabel());
-                map.put("typeLabel", state.getType().getLabel());
-
-                marker.append("<span class=\"cms-mainObject\" style=\"display: none;\" data-object=\"");
-                marker.append(StringUtils.escapeHtml(ObjectUtils.toJson(map)));
-                marker.append("\"></span>");
-
-                lazyResponse.getLazyWriter().writeLazily(marker.toString());
-            }
-
         } finally {
             Database.Static.restoreDefault();
 
@@ -801,115 +867,21 @@ public class PageFilter extends AbstractFilter {
                 user.saveAction(request, mainObject);
             }
 
-            @SuppressWarnings("all")
-            ToolPageContext page = new ToolPageContext(getServletContext(), request, response);
-            State mainState = State.getInstance(mainObject);
-
-            page.setDelegate(writer instanceof HtmlWriter ? (HtmlWriter) writer : new HtmlWriter(writer));
-
-            page.writeStart("style", "type", "text/css");
-                page.writeCss(".bsp-inlineEditorMain",
-                        "background", "rgba(32, 52, 63, 0.8) !important",
-                        "color", "white !important",
-                        "font-family", "'Helvetica Neue', sans-serif !important",
-                        "font-size", "13px !important",
-                        "font-weight", "normal !important",
-                        "left", "0 !important",
-                        "line-height", "21px !important",
-                        "list-style", "none !important",
-                        "margin", "0 !important",
-                        "padding", "0 !important",
-                        "position", "fixed !important",
-                        "top", "0 !important",
-                        "z-index", "1000001 !important");
-
-                page.writeCss(".bsp-inlineEditorMain a",
-                        "color", "#54d1f0 !important",
-                        "display", "block !important",
-                        "float", "left !important",
-                        "max-width", "250px",
-                        "overflow", "hidden",
-                        "padding", "5px !important",
-                        "text-overflow", "ellipsis",
-                        "white-space", "nowrap");
-
-                page.writeCss(".bsp-inlineEditorMain a:hover",
-                        "background", "#54d1f0 !important",
-                        "color", "black !important");
-
-                page.writeCss(".bsp-inlineEditorMain .bsp-inlineEditorMain_logo",
-                        "padding", "8px 10px !important");
-
-                page.writeCss(".bsp-inlineEditorMain .bsp-inlineEditorMain_logo:hover",
-                        "background", "transparent !important");
-
-                page.writeCss(".bsp-inlineEditorMain .bsp-inlineEditorMain_logo img",
-                        "display", "block !important");
-
-                page.writeCss(".bsp-inlineEditorMain .bsp-inlineEditorMain_remove",
-                        "color", "#ff0e40 !important",
-                        "font-size", "21px");
-            page.writeEnd();
-
-            page.writeStart("div", "class", "bsp-inlineEditorMain");
-                page.writeStart("a",
-                        "class", "bsp-inlineEditorMain_logo",
-                        "target", "_blank",
-                        "href", page.fullyQualifiedToolUrl(CmsTool.class, "/"));
-                    page.writeElement("img",
-                            "src", page.cmsUrl("/style/brightspot.png"),
-                            "alt", "Brightspot",
-                            "width", 104,
-                            "height", 14);
-                page.writeEnd();
-
-                Schedule currentSchedule = user.getCurrentSchedule();
-
-                if (currentSchedule != null) {
-                    page.writeStart("a",
-                            "target", "_blank",
-                            "href", page.fullyQualifiedToolUrl(CmsTool.class, "/scheduleEdit", "id", currentSchedule.getId()));
-                        page.writeHtml("Current Schedule: ");
-                        page.writeObjectLabel(currentSchedule);
-                    page.writeEnd();
-                }
-
-                page.writeStart("a",
-                        "target", "_blank",
-                        "href", page.fullyQualifiedToolUrl(CmsTool.class, "/content/edit.jsp", "id", State.getInstance(mainObject).getId()));
-                    page.writeHtml("Edit ");
-                    page.writeTypeObjectLabel(mainObject);
-                page.writeEnd();
-
-                if (Boolean.TRUE.equals(request.getAttribute(PERSISTENT_PREVIEW_ATTRIBUTE))) {
-                    page.writeStart("a",
-                            "target", "_blank",
-                            "href", page.url("", "_clearPreview", true));
-                        page.writeHtml("(Previewing - View Live Instead)");
-                    page.writeEnd();
-                }
-
-                page.writeStart("a",
-                        "class", "bsp-inlineEditorMain_remove",
-                        "href", "#",
-                        "onclick",
-                                "var main = this.parentNode,"
-                                        + "contents = this.ownerDocument.getElementById('bsp-inlineEditorContents');"
-
-                                + "main.parentNode.removeChild(main);"
-
-                                + "if (contents) {"
-                                    + "contents.parentNode.removeChild(contents);"
-                                + "}"
-
-                                + "return false;");
-                    page.writeHtml("\u00d7");
-                page.writeEnd();
-            page.writeEnd();
-
             if (user.getInlineEditing() != ToolUser.InlineEditing.DISABLED) {
+                ToolPageContext page = new ToolPageContext(getServletContext(), request, response);
+                State mainState = State.getInstance(mainObject);
+
+                page.setDelegate(writer instanceof HtmlWriter ? (HtmlWriter) writer : new HtmlWriter(writer));
+
+                Map<String, String> markerMap = new CompactMap<>();
+
+                markerMap.put("id", mainState.getId().toString());
+                markerMap.put("label", mainState.getLabel());
+                markerMap.put("typeLabel", mainState.getType().getLabel());
+
+                page.write(createMarkerHtml("BrightspotCmsMainObject", markerMap));
                 page.writeStart("iframe",
-                        "class", "cms-inlineEditor",
+                        "class", "BrightspotCmsInlineEditor",
                         "id", "bsp-inlineEditorContents",
                         "onload", "this.style.visibility = 'visible';",
                         "scrolling", "no",
@@ -926,11 +898,11 @@ public class PageFilter extends AbstractFilter {
                                 "width", "100%",
                                 "z-index", 1000000));
                 page.writeEnd();
-            }
-        }
 
-        if (response instanceof LazyWriterResponse) {
-            ((LazyWriterResponse) response).getLazyWriter().writePending();
+                if (response instanceof LazyWriterResponse) {
+                    ((LazyWriterResponse) response).getLazyWriter().writePending();
+                }
+            }
         }
     }
 
@@ -1236,6 +1208,7 @@ public class PageFilter extends AbstractFilter {
 
                 jsonViewRenderer.setIndented(!Settings.isProduction());
                 jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+                jsonViewRenderer.setDisallowMixedOutput(true);
 
                 renderer = jsonViewRenderer;
 
@@ -1249,7 +1222,7 @@ public class PageFilter extends AbstractFilter {
             if (renderer != null) {
 
                 try {
-                    ViewOutput result = renderer.render(viewModel, new ServletViewTemplateLoader(request.getServletContext()));
+                    ViewOutput result = renderer.render(viewModel, getViewTemplateLoader(request));
                     output = result.get();
 
                 } catch (RuntimeException e) {
@@ -1428,6 +1401,7 @@ public class PageFilter extends AbstractFilter {
 
             jsonViewRenderer.setIndented(!Settings.isProduction());
             jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+            jsonViewRenderer.setDisallowMixedOutput(true);
 
             renderer = jsonViewRenderer;
 
@@ -1438,7 +1412,7 @@ public class PageFilter extends AbstractFilter {
         }
 
         if (renderer != null) {
-            ViewOutput result = renderer.render(view, new ServletViewTemplateLoader(request.getServletContext()));
+            ViewOutput result = renderer.render(view, getViewTemplateLoader(request));
             String output = result.get();
 
             if (output != null) {
@@ -1639,8 +1613,11 @@ public class PageFilter extends AbstractFilter {
         }
 
         LazyWriter lazyWriter;
+        String contentType = response.getContentType();
 
-        if (Static.isInlineEditingAllContents(request)) {
+        if (Static.isInlineEditingAllContents(request)
+                && contentType != null
+                && StringUtils.ensureEnd(contentType, ";").startsWith("text/html;")) {
             lazyWriter = new LazyWriter(request, writer);
             writer = lazyWriter;
 
@@ -1681,9 +1658,7 @@ public class PageFilter extends AbstractFilter {
                     }
                 }
 
-                marker.append("<!--brightspot.object-begin ");
-                marker.append(ObjectUtils.toJson(map));
-                marker.append("-->");
+                marker.append(createMarkerHtml("BrightspotCmsObjectBegin", map));
                 lazyWriter.writeLazily(marker.toString());
             }
 
@@ -1703,7 +1678,7 @@ public class PageFilter extends AbstractFilter {
             }
 
             if (lazyWriter != null) {
-                lazyWriter.writeLazily("<!--brightspot.object-end-->");
+                lazyWriter.writeLazily(createMarkerHtml("BrightspotCmsObjectEnd", null));
                 lazyWriter.writePending();
             }
         }

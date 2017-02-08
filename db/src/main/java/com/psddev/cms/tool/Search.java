@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Draft;
+import com.psddev.cms.db.Global;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolEntity;
@@ -93,6 +94,7 @@ public class Search extends Record {
     public static final String SUGGESTIONS_PARAMETER = "sg";
     public static final String TYPES_PARAMETER = "rt";
     public static final String NEW_ITEM_IDS_PARAMETER = "ni";
+    public static final String FRAME_NAME_SUFFIX_PARAMETER = "fns";
 
     public static final String NEWEST_SORT_LABEL = "Newest";
     public static final String NEWEST_SORT_VALUE = "_newest";
@@ -122,8 +124,7 @@ public class Search extends Record {
     private int limit;
     private Set<UUID> newItemIds;
     private boolean ignoreSite;
-
-    private transient String frameNameSuffix;
+    private String frameNameSuffix = generateFrameNameSuffix();
 
     public Search() {
     }
@@ -207,6 +208,7 @@ public class Search extends Record {
         setLimit(page.paramOrDefault(int.class, LIMIT_PARAMETER, 10));
         setNewItemIds(new LinkedHashSet<>(page.params(UUID.class, NEW_ITEM_IDS_PARAMETER)));
         setIgnoreSite(page.param(boolean.class, IGNORE_SITE_PARAMETER));
+        setFrameNameSuffix(page.param(String.class, FRAME_NAME_SUFFIX_PARAMETER));
 
         for (Tool tool : Query.from(Tool.class).selectAll()) {
             tool.initializeSearch(this, page);
@@ -422,6 +424,14 @@ public class Search extends Record {
         this.ignoreSite = ignoreSite;
     }
 
+    public String getFrameNameSuffix() {
+        return frameNameSuffix;
+    }
+
+    public void setFrameNameSuffix(String frameNameSuffix) {
+        this.frameNameSuffix = frameNameSuffix;
+    }
+
     /**
      * Creates a unique frame name that starts with the given {@code prefix}.
      *
@@ -434,10 +444,14 @@ public class Search extends Record {
         Preconditions.checkNotNull(prefix);
 
         if (ObjectUtils.isBlank(frameNameSuffix)) {
-            frameNameSuffix = UUID.randomUUID().toString().replace("-", "");
+            frameNameSuffix = generateFrameNameSuffix();
         }
 
         return prefix + "-" + frameNameSuffix;
+    }
+
+    public static String generateFrameNameSuffix() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     public Set<ObjectType> findValidTypes() {
@@ -515,8 +529,11 @@ public class Search extends Record {
             return getVisibilitiesPredicate(selectedType, Arrays.asList("p"), validTypeIds, showDrafts);
         }
 
-        Set<UUID> visibilityTypeIds = new HashSet<UUID>();
+        Set<UUID> selectedTypeIds = selectedType != null
+                ? selectedType.findConcreteTypes().stream().map(ObjectType::getId).collect(Collectors.toSet())
+                : null;
 
+        Set<UUID> visibilityTypeIds = new HashSet<UUID>();
         Predicate visibilitiesPredicate = null;
         boolean draft = false;
 
@@ -551,51 +568,50 @@ public class Search extends Record {
                 visibilitiesPredicate = CompoundPredicate.combine(
                         PredicateParser.OR_OPERATOR,
                         visibilitiesPredicate,
-                        publishedPredicate);
+                        addSelectedTypeIds(publishedPredicate, selectedTypeIds));
 
             } else if ("d".equals(visibility)) {
                 draft = true;
-                visibilitiesPredicate = CompoundPredicate.combine(
-                        PredicateParser.OR_OPERATOR,
-                        visibilitiesPredicate,
-                        PredicateParser.Static.parse("_type = ?", Draft.class));
+                Predicate draftPredicate = PredicateParser.Static.parse("_type = ? and com.psddev.cms.db.Draft/newContent != true", Draft.class);
 
-            } else if ("w".equals(visibility)) {
-                Set<String> ss = new HashSet<String>();
-
-                for (Workflow w : (selectedType == null
-                        ? Query.from(Workflow.class)
-                        : Query.from(Workflow.class).where("contentTypes = ?", selectedType)).selectAll()) {
-                    for (WorkflowState s : w.getStates()) {
-                        String value = s.getName();
-
-                        ss.add(value);
-                        addVisibilityTypeIds(visibilityTypeIds, validTypeIds, "cms.workflow.currentState", value);
-                    }
+                if (selectedType != null) {
+                    draftPredicate = CompoundPredicate.combine(
+                            PredicateParser.AND_OPERATOR,
+                            draftPredicate,
+                            PredicateParser.Static.parse("com.psddev.cms.db.Draft/objectType = ?", selectedType.findConcreteTypes()));
                 }
 
                 visibilitiesPredicate = CompoundPredicate.combine(
                         PredicateParser.OR_OPERATOR,
                         visibilitiesPredicate,
-                        PredicateParser.Static.parse("cms.workflow.currentState = ?", ss));
+                        draftPredicate);
+
+            } else if ("w".equals(visibility)) {
+                for (Workflow w : (selectedType == null
+                        ? Query.from(Workflow.class)
+                        : Query.from(Workflow.class).where("contentTypes = ?", selectedType)).selectAll()) {
+
+                    for (WorkflowState s : w.getStates()) {
+                        visibilitiesPredicate = CompoundPredicate.combine(
+                                PredicateParser.OR_OPERATOR,
+                                visibilitiesPredicate,
+                                addSelectedTypeIdsWithVisibility("cms.workflow.currentState", s.getName(), selectedTypeIds));
+                    }
+                }
 
             } else if (visibility.startsWith("w.")) {
                 String value = visibility.substring(2);
                 visibilitiesPredicate = CompoundPredicate.combine(
                         PredicateParser.OR_OPERATOR,
                         visibilitiesPredicate,
-                        PredicateParser.Static.parse("cms.workflow.currentState = ?", value));
-
-                addVisibilityTypeIds(visibilityTypeIds, validTypeIds, "cms.workflow.currentState", value);
+                        addSelectedTypeIdsWithVisibility("cms.workflow.currentState", value, selectedTypeIds));
 
             } else if (visibility.startsWith("b.")) {
                 String field = visibility.substring(2);
                 visibilitiesPredicate = CompoundPredicate.combine(
                         PredicateParser.OR_OPERATOR,
                         visibilitiesPredicate,
-                        PredicateParser.Static.parse(field + " = true"));
-
-                addVisibilityTypeIds(visibilityTypeIds, validTypeIds, field, "true");
+                        addSelectedTypeIdsWithVisibility(field, true, selectedTypeIds));
 
             } else if (visibility.startsWith("t.")) {
                 visibility = visibility.substring(2);
@@ -607,9 +623,7 @@ public class Search extends Record {
                     visibilitiesPredicate = CompoundPredicate.combine(
                             PredicateParser.OR_OPERATOR,
                             visibilitiesPredicate,
-                            PredicateParser.Static.parse(field + " = ?", value));
-
-                    addVisibilityTypeIds(visibilityTypeIds, validTypeIds, field, value);
+                            addSelectedTypeIdsWithVisibility(field, value, selectedTypeIds));
                 }
             }
         }
@@ -629,6 +643,47 @@ public class Search extends Record {
 
     }
 
+    private static Predicate addSelectedTypeIds(Predicate predicate, Set<UUID> selectedTypeIds) {
+        if (selectedTypeIds != null) {
+            return CompoundPredicate.combine(
+                    PredicateParser.AND_OPERATOR,
+                    predicate,
+                    PredicateParser.Static.parse("_type = ?", selectedTypeIds));
+
+        } else {
+            return predicate;
+        }
+    }
+
+    private static Predicate addSelectedTypeIdsWithVisibility(String field, Object value, Set<UUID> selectedTypeIds) {
+        Predicate predicate = PredicateParser.Static.parse(field + " = ?", value);
+
+        if (selectedTypeIds != null) {
+            Set<UUID> withVisibility = new HashSet<>(selectedTypeIds);
+            int lastSlashAt = field.lastIndexOf('/');
+            String fieldNameOnly = lastSlashAt > -1 ? field.substring(lastSlashAt + 1) : field;
+            byte[] md5 = StringUtils.md5(fieldNameOnly + "/" + value.toString().trim().toLowerCase(Locale.ENGLISH));
+
+            for (UUID selectedTypeId : selectedTypeIds) {
+                byte[] typeId = UuidUtils.toBytes(selectedTypeId);
+
+                for (int i = 0, length = typeId.length; i < length; ++ i) {
+                    typeId[i] ^= md5[i];
+                }
+
+                withVisibility.add(UuidUtils.fromBytes(typeId));
+            }
+
+            return CompoundPredicate.combine(
+                    PredicateParser.AND_OPERATOR,
+                    predicate,
+                    PredicateParser.Static.parse("_type = ?", withVisibility));
+
+        } else {
+            return predicate;
+        }
+    }
+
     public Query<?> toQuery(Site site) {
         Query<?> query = null;
         Set<ObjectType> types = getTypes();
@@ -636,6 +691,7 @@ public class Search extends Record {
         Set<ObjectType> validTypes = findValidTypes();
         Set<UUID> validTypeIds = null;
         boolean isAllSearchable = true;
+        Collection<String> visibilities = getVisibilities();
 
         if (selectedType != null) {
             if (selectedType.isAbstract()) {
@@ -650,7 +706,9 @@ public class Search extends Record {
                 isAllSearchable = Content.Static.isSearchableType(selectedType);
             }
 
-            query = Query.fromType(selectedType);
+            query = visibilities.contains("d")
+                    ? Query.fromAll()
+                    : Query.fromType(selectedType);
 
         } else {
             for (ObjectType type : validTypes) {
@@ -669,7 +727,9 @@ public class Search extends Record {
 
             if (types.size() == 1) {
                 for (ObjectType type : types) {
-                    query = Query.fromType(type);
+                    query = visibilities.contains("d")
+                            ? Query.fromAll()
+                            : Query.fromType(type);
                     break;
                 }
 
@@ -823,7 +883,11 @@ public class Search extends Record {
             } else {
                 Predicate predicate = null;
 
-                Set<ObjectType> predicateTypes = selectedType != null ? Collections.singleton(selectedType) : validTypes;
+                Set<ObjectType> predicateTypes = validTypes;
+                if (selectedType != null) {
+                    predicateTypes = selectedType.findConcreteTypes();
+                    predicateTypes.retainAll(validTypes);
+                }
 
                 for (ObjectType type : predicateTypes) {
                     String prefix = type.getInternalName() + "/";
@@ -846,7 +910,7 @@ public class Search extends Record {
             }
         }
 
-        if (isOnlyPathed()) {
+        if (isOnlyPathed() && !visibilities.contains("d")) {
             query.and(Directory.Static.hasPathPredicate());
         }
 
@@ -1003,6 +1067,7 @@ public class Search extends Record {
         }
 
         if (!isIgnoreSite()
+                && (selectedType == null || !selectedType.getGroups().contains(Global.class.getName()))
                 && site != null
                 && !site.isAllSitesAccessible()) {
             Set<ObjectType> globalTypes = new HashSet<ObjectType>();
@@ -1026,8 +1091,6 @@ public class Search extends Record {
                         PredicateParser.Static.parse("_type = ?", globalTypes)));
             }
         }
-
-        Collection<String> visibilities = getVisibilities();
 
         query.and(getVisibilitiesPredicate(selectedType, visibilities, validTypeIds, isShowDrafts()));
 
@@ -1173,24 +1236,6 @@ public class Search extends Record {
         }
 
         return query;
-    }
-
-    private static void addVisibilityTypeIds(Set<UUID> visibilityTypeIds, Set<UUID> validTypeIds, String field, String value) {
-        if (validTypeIds == null) {
-            return;
-        }
-
-        byte[] md5 = StringUtils.md5(field + "/" + value.toString().trim().toLowerCase(Locale.ENGLISH));
-
-        for (UUID validTypeId : validTypeIds) {
-            byte[] typeId = UuidUtils.toBytes(validTypeId);
-
-            for (int i = 0, length = typeId.length; i < length; ++ i) {
-                typeId[i] ^= md5[i];
-            }
-
-            visibilityTypeIds.add(UuidUtils.fromBytes(typeId));
-        }
     }
 
     private void addGlobalTypes(Set<ObjectType> globalTypes, ObjectType type) {

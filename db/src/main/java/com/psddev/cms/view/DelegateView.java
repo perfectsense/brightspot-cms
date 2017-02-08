@@ -5,12 +5,12 @@ package com.psddev.cms.view;
  */
 @ViewInterface
 @ViewRendererClass(DelegateViewRenderer.class)
-public interface DelegateView {
+public interface DelegateView<V> {
 
     /**
      * Gets the delegate view.
      *
      * @return the delegate view.
      */
-    Object getDelegate();
+    V getDelegate();
 }

@@ -20,6 +20,7 @@ function($) {
           labelHtml,
           dynamicPlaceholderText,
           dynamicFieldName,
+          isReadOnly,
           placeholder,
           value,
           selectHref,
@@ -61,12 +62,14 @@ function($) {
           placeholder = $input.attr('placeholder');
 
           if (dynamicPlaceholderText) {
-            $select.html($('<span/>', {
-              'type': 'text',
-              'class': 'objectId-placeholder',
-              'data-dynamic-text': dynamicPlaceholderText,
-              'data-dynamic-field-name': dynamicFieldName
-            }));
+            if ($select.find('> .objectId-placeholder').length === 0) {
+              $select.html($('<span/>', {
+                'type': 'text',
+                'class': 'objectId-placeholder',
+                'data-dynamic-text': dynamicPlaceholderText,
+                'data-dynamic-field-name': dynamicFieldName
+              }));
+            }
           } else if (placeholder) {
             $select.html($('<span/>', {
               'class': 'objectId-placeholder',
@@ -173,10 +176,13 @@ function($) {
             '&sg=' + encodeURIComponent($input.attr('data-suggestions') || '')
       });
 
+      var isReadOnly = $input.data('read-only');
+
       $edit = $('<a/>', {
         'class': 'objectId-edit',
+        'data-read-only': isReadOnly,
         'target': target + '-edit',
-        'text': 'Edit'
+        'text': !isReadOnly ? 'Edit' : 'View'
       });
 
       $clear = $('<a/>', {

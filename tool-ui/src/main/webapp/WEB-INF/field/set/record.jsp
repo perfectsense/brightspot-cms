@@ -2,6 +2,7 @@
 
 com.psddev.cms.db.Content,
 com.psddev.cms.db.ToolUi,
+com.psddev.cms.tool.ObjectTypeOrContentTemplate,
 com.psddev.cms.tool.PageWriter,
 com.psddev.cms.tool.Search,
 com.psddev.cms.tool.ToolPageContext,
@@ -135,10 +136,10 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                     <% wp.writeFormFields(item); %>
                 </li>
             <% } %>
-            <% for (ObjectType type : validTypes) { %>
+            <% for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) { %>
                 <script type="text/template">
-                    <li data-type="<%= wp.objectLabel(type) %>">
-                        <a href="<%= wp.cmsUrl("/content/repeatableObject.jsp", "inputName", inputName, "typeId", type.getId()) %>"></a>
+                    <li data-type="<%= otct.getLabel() %>">
+                        <a href="<%= wp.cmsUrl("/content/repeatableObject.jsp", "inputName", inputName, "typeId", otct.getId()) %>"></a>
                     </li>
                 </script>
             <% } %>
@@ -165,7 +166,15 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
         writer.start("div", "class", "inputSmall");
             List<?> items = wp.findDropDownItems(field, new Search(field));
-            Collections.sort(items, new ObjectFieldComparator("_label", false));
+
+            String sortField = field.as(ToolUi.class).getDropDownSortField();
+            if (StringUtils.isBlank(sortField)) {
+                sortField = "_label";
+            }
+            Collections.sort(items, new ObjectFieldComparator(sortField, false));
+            if (field.as(ToolUi.class).isDropDownSortDescending()) {
+                Collections.reverse(items);
+            }
 
             writer.start("select",
                     "multiple", "multiple",

@@ -3,9 +3,13 @@ package com.psddev.cms.db;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.dari.db.Database;
+import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Record;
+import com.psddev.dari.util.StringUtils;
 
-public class ContentType extends Record {
+public class ContentType extends Record implements Global, Managed {
 
     @Indexed
     @Required
@@ -48,5 +52,26 @@ public class ContentType extends Record {
      */
     public void setFields(List<ContentField> fields) {
         this.fields = fields;
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        String internalName = getInternalName();
+
+        if (!StringUtils.isBlank(internalName)) {
+            ObjectType type = Database.Static.getDefault().getEnvironment().getTypes().stream()
+                    .filter(t -> internalName.equals(t.getInternalName()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (type != null) {
+                return page.cmsUrl(
+                        "/adminContentTypes",
+                        "typeId", type.getId(),
+                        "id", getId());
+            }
+        }
+
+        return null;
     }
 }

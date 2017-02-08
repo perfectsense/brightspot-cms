@@ -1,127 +1,125 @@
-(function($, window, undefined) {
+define([ 'jquery', 'v3/RecalculateDimensions' ], function ($, RecalculateDimensions) {
+    var MAIN_TAB_NAME = 'Main',
+            SELECTED_CLASS = 'state-selected';
 
-var MAIN_TAB_NAME = 'Main',
-        SELECTED_CLASS = 'state-selected';
+    $.plugin2('tabbed', {
+        '_create': function(container) {
+            var $container = $(container),
+                    tabs = [ ],
+                    tabItems = { },
+                    $items = $container.find('> [data-tab]'),
+                    containerId,
+                    tabParameter,
+                    tabParameterRe,
+                    $tabs,
+                    urlMatch;
 
-$.plugin2('tabbed', {
-    '_create': function(container) {
-        var $container = $(container),
-                tabs = [ ],
-                tabItems = { },
-                $items = $container.find('> [data-tab]'),
-                containerId,
-                tabParameter,
-                tabParameterRe,
-                $tabs,
-                urlMatch;
-
-        function addTab(name) {
-            tabs.push({
-                'name': name,
-                'items': (tabItems[name] = [ ])
-            });
-        }
-
-        // Main tab should always be first.
-        addTab(MAIN_TAB_NAME);
-
-        // Which items for which tabs?
-        $items.each(function() {
-            var tabName = $(this).attr('data-tab');
-
-            if (!tabItems[tabName]) {
-                addTab(tabName);
+            function addTab(name) {
+                tabs.push({
+                    'name': name,
+                    'items': (tabItems[name] = [ ])
+                });
             }
 
-            tabItems[tabName].push(this);
-        });
+            // Main tab should always be first.
+            addTab(MAIN_TAB_NAME);
 
-        // Delete the main tab if there aren't any items in it.
-        if (tabItems[MAIN_TAB_NAME].length === 0) {
-            delete tabItems[MAIN_TAB_NAME];
-            tabs.shift();
-        }
+            // Which items for which tabs?
+            $items.each(function() {
+                var tabName = $(this).attr('data-tab');
 
-        // Don't show tabs unless there are more than 2.
-        if (tabs.length < 2) {
-            return;
-        }
+                if (!tabItems[tabName]) {
+                    addTab(tabName);
+                }
 
-        // Tab state in the URL?
-        containerId = $container.attr('data-id');
+                tabItems[tabName].push(this);
+            });
 
-        if (containerId) {
-            tabParameter = encodeURIComponent($container.attr('data-id') + '/tab');
-            tabParameterRe = new RegExp('([?&])' + tabParameter + '=([^=]+)');
-        }
+            // Delete the main tab if there aren't any items in it.
+            if (tabItems[MAIN_TAB_NAME].length === 0) {
+                delete tabItems[MAIN_TAB_NAME];
+                tabs.shift();
+            }
 
-        // Create the tabs.
-        $tabs = $('<ul/>', { 'class': 'tabs' });
+            // Don't show tabs unless there are more than 2.
+            if (tabs.length < 2) {
+                return;
+            }
 
-        $.each(tabs, function(i, tab) {
-            $tabs.append($('<li/>', {
-                'class': $(tab.items).find('.message-error').length > 0 ? 'state-error' : '',
-                'data-tab': tab.name,
-                'html': $('<a/>', {
-                    'text': tab.name,
-                    'click': function(event) {
-                        var $selected = $(event.target),
-                                history = window.history,
-                                href,
-                                text;
+            // Tab state in the URL?
+            containerId = $container.attr('data-id');
 
-                        if (containerId && history && history.replaceState) {
-                            href = window.location.href.replace(tabParameterRe, '');
-                            text = $selected.text();
+            if (containerId) {
+                tabParameter = encodeURIComponent($container.attr('data-id') + '/tab');
+                tabParameterRe = new RegExp('([?&])' + tabParameter + '=([^=]+)');
+            }
 
-                            if (text !== MAIN_TAB_NAME) {
-                                href += (href.indexOf('?') > -1 ? '&' : '?') + tabParameter + '=' + encodeURIComponent(text);
+            // Create the tabs.
+            $tabs = $('<ul/>', { 'class': 'tabs' });
+
+            $.each(tabs, function(i, tab) {
+                $tabs.append($('<li/>', {
+                    'class': $(tab.items).find('.message-error').length > 0 ? 'state-error' : '',
+                    'data-tab': tab.name,
+                    'html': $('<a/>', {
+                        'text': tab.name,
+                        'click': function(event) {
+                            var $selected = $(event.target),
+                                    history = window.history,
+                                    href,
+                                    text;
+
+                            if (containerId && history && history.replaceState) {
+                                href = window.location.href.replace(tabParameterRe, '');
+                                text = $selected.text();
+
+                                if (text !== MAIN_TAB_NAME) {
+                                    href += (href.indexOf('?') > -1 ? '&' : '?') + tabParameter + '=' + encodeURIComponent(text);
+                                }
+
+                                history.replaceState('', '', href);
                             }
 
-                            history.replaceState('', '', href);
-                        }
-
-                        $tabs.find('> li').removeClass(SELECTED_CLASS);
-                        $selected.closest('li').addClass(SELECTED_CLASS);
-                        $items.toggleClass('tabs-hidden', true);
-                        $(tab.items).toggleClass('tabs-hidden', false).trigger('tabbedShow');
-                        $tabs.trigger('tabbed-select');
-                        $container.resize();
-                        return false;
-                    }
-                })
-            }));
-        });
-
-        // Select the first tab.
-        $tabs.find('li:first-child').addClass(SELECTED_CLASS);
-        $items.toggleClass('tabs-hidden', true);
-        $(tabs[0].items).toggleClass('tabs-hidden', false);
-        $container.prepend($tabs);
-        $container.resize();
-
-        // Select the tab if it's referenced in the URL.
-        if (containerId) {
-            urlMatch = tabParameterRe.exec(window.location.href);
-
-            if (urlMatch) {
-                urlMatch = urlMatch[2];
-
-                if (urlMatch) {
-                    urlMatch = decodeURIComponent(urlMatch);                
-                    
-                    $tabs.find('> li > a').each(function() {
-                        var $tab = $(this);
-
-                        if ($tab.text() === urlMatch) {
-                            $tab.click();
+                            $tabs.find('> li').removeClass(SELECTED_CLASS);
+                            $selected.closest('li').addClass(SELECTED_CLASS);
+                            $items.toggleClass('tabs-hidden', true);
+                            $(tab.items).toggleClass('tabs-hidden', false).trigger('tabbedShow');
+                            $tabs.trigger('tabbed-select');
+                            RecalculateDimensions.trigger($container);
                             return false;
                         }
-                    });
+                    })
+                }));
+            });
+
+            // Select the first tab.
+            $tabs.find('li:first-child').addClass(SELECTED_CLASS);
+            $items.toggleClass('tabs-hidden', true);
+            $(tabs[0].items).toggleClass('tabs-hidden', false);
+            $container.prepend($tabs);
+            RecalculateDimensions.trigger($container);
+
+            // Select the tab if it's referenced in the URL.
+            if (containerId) {
+                urlMatch = tabParameterRe.exec(window.location.href);
+
+                if (urlMatch) {
+                    urlMatch = urlMatch[2];
+
+                    if (urlMatch) {
+                        urlMatch = decodeURIComponent(urlMatch);
+
+                        $tabs.find('> li > a').each(function() {
+                            var $tab = $(this);
+
+                            if ($tab.text() === urlMatch) {
+                                $tab.click();
+                                return false;
+                            }
+                        });
+                    }
                 }
             }
         }
-    }
+    });
 });
-
-}(jQuery, window));

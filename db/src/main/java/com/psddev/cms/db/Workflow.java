@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectIndex;
@@ -22,7 +23,7 @@ import com.psddev.dari.db.VisibilityValues;
 
 @ToolUi.IconName("object-workflow")
 @Record.BootstrapPackages(value = "Workflows", depends = ObjectType.class)
-public class Workflow extends Record {
+public class Workflow extends Record implements Global, Managed {
 
     @Indexed(unique = true)
     @Required
@@ -314,6 +315,11 @@ public class Workflow extends Record {
         return workflow;
     }
 
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/workflows.jsp", "id", getId());
+    }
+
     @FieldInternalNamePrefix("cms.workflow.")
     public static class Data extends Modification<Object> implements VisibilityLabel, VisibilityValues {
 
@@ -321,8 +327,20 @@ public class Workflow extends Record {
         @ToolUi.Hidden
         private String currentState;
 
+        @Embedded
+        @ToolUi.Hidden
+        private WorkflowLog currentLog;
+
         public String getCurrentState() {
             return currentState;
+        }
+
+        public WorkflowLog getCurrentLog() {
+            return currentLog;
+        }
+
+        public void setCurrentLog(WorkflowLog currentLog) {
+            this.currentLog = currentLog;
         }
 
         /**

@@ -266,8 +266,9 @@ public class Directory extends Record {
     public enum PathType {
 
         PERMALINK("Permalink"),
-        REDIRECT("Redirect"),
-        ALIAS("Alias");
+        ALIAS("Alias"),
+        REDIRECT("Redirect (Permanent)"),
+        REDIRECT_TEMPORARY("Redirect (Temporary)");
 
         private final String displayName;
 

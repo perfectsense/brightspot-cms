@@ -7,7 +7,9 @@ import javax.servlet.ServletException;
 
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardColumn;
+import com.psddev.cms.tool.DashboardTab;
 import com.psddev.cms.tool.DashboardWidget;
+import com.psddev.cms.tool.DashboardContainer;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
@@ -33,19 +35,20 @@ public class DashboardWidgetPage extends PageServlet {
         pathInfo = StringUtils.removeStart(pathInfo, "/");
         pathInfo = StringUtils.removeEnd(pathInfo, "/");
         String[] pathInfoParts = pathInfo.split("/");
-        Dashboard dashboard;
+        Dashboard dashboard = null;
+        DashboardContainer dashboardContainer = null;
 
         switch (pathInfoParts[0]) {
             case "user" :
-                dashboard = page.getUser().getDashboard();
+                dashboardContainer = page.getUser().getDashboardContainer();
                 break;
 
             case "role" :
-                dashboard = page.getUser().getRole().getDashboard();
+                dashboardContainer = page.getUser().getRole().getDashboardContainer();
                 break;
 
             case "tool" :
-                dashboard = page.getCmsTool().getDefaultDashboard();
+                dashboardContainer = page.getCmsTool().getDashboardContainer();
                 break;
 
             case "default" :
@@ -54,6 +57,10 @@ public class DashboardWidgetPage extends PageServlet {
 
             default :
                 throw new IllegalArgumentException();
+        }
+
+        if (dashboardContainer != null) {
+            dashboard = dashboardContainer.getDashboard();
         }
 
         DashboardWidget widget = null;
@@ -72,6 +79,21 @@ public class DashboardWidgetPage extends PageServlet {
                         if (w != null && widgetId.equals(w.getId())) {
                             widget = w;
                             break COLUMNS;
+                        }
+                    }
+                }
+            }
+
+            if (widget == null) {
+                TABS: for (DashboardTab tab : dashboard.getTabs()) {
+                    for (DashboardColumn column : tab.getColumns()) {
+                        if (column != null) {
+                            for (DashboardWidget w : column.getWidgets()) {
+                                if (w != null && widgetId.equals(w.getId())) {
+                                    widget = w;
+                                    break TABS;
+                                }
+                            }
                         }
                     }
                 }

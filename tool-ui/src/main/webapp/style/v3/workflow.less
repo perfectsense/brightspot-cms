@@ -1,77 +1,88 @@
 .workflowVisual {
-  .background-flat(@color-heading);
+    .background-flat(@color-heading);
 
-  border-radius: 4px;
-  min-height: 400px;
-  position: relative;
-  z-index: 0;
+    border-radius: 2px;
+    min-height: 400px;
+    position: relative;
+    z-index: 0;
 }
 
 .workflowState {
-  .background-flat(@color-placeholder);
+    .background-flat(@color-placeholder);
 
-  border-radius: 5px;
-  padding: 10px 20px 10px 10px;
-  position: absolute;
+    border-radius: 2px;
+    cursor: move;
+    padding: 10px;
+    position: absolute;
 
-  .link {
-    color: @color-link-light;
-  }
+    .link {
+        color: @color-link-light;
+    }
 
-  input[type='text'] {
-    width: 8em;
-  }
+    input[type='text'] {
+        border-color: @color-overlay;
+        width: 8em;
+    }
 
-  &[data-id='initial'],
-  &[data-id='final'] {
-    padding-right: 10px;
-  }
+    &[data-id='initial'],
+    &[data-id='final'] {
+        cursor: default;
+        padding-right: 10px;
+    }
 
-  &[data-id='initial'] {
-    left: 10px;
-    top: 40px;
-  }
+    &[data-id='initial'] {
+        left: 10px;
+        top: 40px;
+    }
 
-  &[data-id='final'] {
-    bottom: 10px;
-    right: 10px;
-  }
+    &[data-id='final'] {
+        bottom: 10px;
+        right: 10px;
+    }
 }
 
 .workflowTransition {
-  position: absolute;
+    position: absolute;
 }
 
 .workflowStateRemove,
 .workflowTransitionRemove {
-  .icon;
-  .icon-remove;
-  .icon-only;
+    .icon;
+    .icon-remove;
+    .icon-only;
 
-  color: @color-remove !important;
-  position: absolute;
+    background: @color-remove;
+    border-radius: 50%;
+    color: white !important;
+    margin-right: 0;
+    position: absolute;
 
-  &:hover {
-    background-color: transparent;
-  }
+    &:before {
+        padding-left: 3px;
+    }
 }
 
 .workflowStateRemove {
-  right: 1px;
-  top: 0;
+    right: -9px;
+    top: -8px;
 }
 
 .workflowTransitionRemove {
-  right: -6px;
-  top: -10px;
+    right: -8px;
+    top: -9px;
 }
 
 .workflowStateAdd,
 .workflowTransitionAdd {
-  .icon;
-  .icon-action-add;
+    .icon;
+    .icon-action-add;
 }
 
-.workflowTransitionAdd {
-  display: block;
+.workflowStateAdd {
+    display: block;
+    padding: 10px 0 0 10px;
+}
+
+.workflowTransitionAddContainer {
+    padding-top: 5px;
 }
