@@ -92,6 +92,10 @@ public class ExportContent extends PageServlet {
 
         searchQuery.getOptions().put(SqlDatabase.USE_JDBC_FETCH_SIZE_QUERY_OPTION, false);
 
+        if (Database.Static.getDefault() instanceof SqlDatabase) {
+            searchQuery.setSorters(null);
+        }
+
         int count = 0;
         for (Object item : searchQuery.iterable(0)) {
             page.writeDataRow(item);
