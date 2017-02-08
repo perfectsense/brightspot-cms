@@ -25,6 +25,13 @@ public class TestSms extends PageServlet {
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
         if (page.isAjaxRequest()) {
+            String number = page.param(String.class, "number");
+
+            if (number == null) {
+                page.writeStart("div", "class", "Sms-error").writeHtml(page.localize(TestSms.class, "message.error")).writeEnd();
+                return;
+            }
+
             String sms = "This is a test message.";
             String url = Application.Static.getInstance(CmsTool.class).getDefaultToolUrl();
 
@@ -33,7 +40,7 @@ public class TestSms extends PageServlet {
             }
 
             try {
-                SmsProvider.Static.getDefault().send(null, page.param(String.class, "number"), sms);
+                SmsProvider.Static.getDefault().send(null, number, sms);
                 page.writeStart("div", "class", "Sms-success").writeHtml(page.localize(TestSms.class, "message.success")).writeEnd();
 
             } catch (IllegalStateException error) {
