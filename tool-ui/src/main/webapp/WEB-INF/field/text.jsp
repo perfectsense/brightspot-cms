@@ -2,8 +2,8 @@
 
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
-com.psddev.cms.tool.page.TestSms,
 com.psddev.cms.tool.page.content.Edit,
+com.psddev.cms.tool.page.TestSms,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.Reference,
