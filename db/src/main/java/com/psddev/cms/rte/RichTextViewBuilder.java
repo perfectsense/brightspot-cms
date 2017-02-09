@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import com.google.common.base.Preconditions;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -210,9 +206,6 @@ public class RichTextViewBuilder<V> {
      */
     public List<V> build() {
         List<V> views = new ArrayList<>();
-        Map<String, ObjectType> tagTypes = new HashMap<>(RichTextElement.getConcreteTagTypes());
-
-        tagTypes.put(ReferenceRichTextElement.TAG_NAME, ObjectType.getInstance(ReferenceRichTextElement.class));
 
         Document document = Jsoup.parseBodyFragment(html);
 
@@ -222,7 +215,7 @@ public class RichTextViewBuilder<V> {
             preprocessor.preprocess(document.body());
         }
 
-        toViewNodes(document.body().childNodes(), tagTypes)
+        toViewNodes(document.body().childNodes())
                 .stream()
                 .map(RichTextViewNode::toView)
                 .filter(Objects::nonNull)
@@ -234,27 +227,21 @@ public class RichTextViewBuilder<V> {
     // Traverses the siblings all the way down the tree, collapsing balanced
     // blocks of HTML that do NOT contain any rich text elements into a single
     // HTML string.
-    private List<RichTextViewNode<V>> toViewNodes(List<Node> siblings, Map<String, ObjectType> tagTypes) {
+    private List<RichTextViewNode<V>> toViewNodes(List<Node> siblings) {
         List<RichTextViewNode<V>> viewNodes = new ArrayList<>();
 
         for (Node sibling : siblings) {
             if (sibling instanceof Element) {
                 Element element = (Element) sibling;
-                ObjectType tagType = tagTypes.get(element.tagName());
 
-                if (tagType != null && elementToView != null) {
-                    RichTextElement rte = (RichTextElement) tagType.createObject(null);
+                RichTextElement rte = RichTextElement.fromElement(element);
+                ObjectType tagType = rte != null ? rte.getState().getType() : null;
 
-                    rte.fromAttributes(StreamSupport
-                            .stream(element.attributes().spliterator(), false)
-                            .collect(Collectors.toMap(Attribute::getKey, Attribute::getValue)));
-
-                    rte.fromBody(element.html());
-
+                if (rte != null && elementToView != null) {
                     viewNodes.add(new ElementRichTextViewNode<>(rte, elementToView));
 
                 } else if (tagType == null || keepUnboundElements) {
-                    List<RichTextViewNode<V>> childViewNodes = toViewNodes(element.childNodes(), tagTypes);
+                    List<RichTextViewNode<V>> childViewNodes = toViewNodes(element.childNodes());
                     String html = element.outerHtml();
 
                     if (element.tag().isSelfClosing()) {
