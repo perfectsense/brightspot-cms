@@ -7,7 +7,6 @@ import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Search;
 import com.psddev.dari.db.AggregateDatabase;
-import com.psddev.dari.db.CachingDatabase;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.ForwardingDatabase;
 import com.psddev.dari.db.Metric;
