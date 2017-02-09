@@ -7,7 +7,9 @@ import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Search;
 import com.psddev.dari.db.AggregateDatabase;
+import com.psddev.dari.db.CachingDatabase;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.ForwardingDatabase;
 import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -91,10 +93,7 @@ public class ExportContent extends PageServlet {
             searchQuery.where(page.getSelection().createItemsQuery().getPredicate());
         }
 
-        searchQuery.getOptions().put(SqlDatabase.USE_JDBC_FETCH_SIZE_QUERY_OPTION, false);
-
-        // SqlDatabase#ByIdIterator does not support sorters
-        conditionallyRemoveSorters(searchQuery);
+        addLegacyDatabaseSupport(searchQuery);
 
         int count = 0;
         for (Object item : searchQuery.iterable(0)) {
@@ -203,21 +202,24 @@ public class ExportContent extends PageServlet {
         return urlBuilder.toString();
     }
 
-    private void conditionallyRemoveSorters(Query query) {
+    private void addLegacyDatabaseSupport(Query query) {
         boolean usesLegacyDatabase = false;
 
         Database database = query.getDatabase();
 
-        if (database instanceof SqlDatabase) {
-            usesLegacyDatabase = true;
+        while (database instanceof ForwardingDatabase) {
+            database = ((ForwardingDatabase) database).getDelegate();
         }
 
-        if (database instanceof AggregateDatabase) {
+        if (database instanceof SqlDatabase) {
+            usesLegacyDatabase = true;
+        } else if (database instanceof AggregateDatabase) {
             usesLegacyDatabase = ((AggregateDatabase) database).getDelegatesByClass(SqlDatabase.class).size() > 0;
         }
 
         if (usesLegacyDatabase) {
-            query.setSorters(null);
+            query.getOptions().put(SqlDatabase.USE_JDBC_FETCH_SIZE_QUERY_OPTION, false);
+            query.setSorters(null); // SqlDatabase#ByIdIterator does not support sorters
         }
     }
 
