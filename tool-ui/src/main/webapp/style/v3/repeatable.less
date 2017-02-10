@@ -420,7 +420,7 @@
           }
         }
 
-        &.collapsed {
+        &.collapsed:not(.toBeRemoved) {
           padding-left: 32px;
 
           > .repeatableLabel {
@@ -447,18 +447,18 @@
           }
 
           > .removeButton {
-            right: 0;
-            z-index: 5;
+            bottom: 5px;
+            left: 6px;
+            top: auto;
+            right: auto;
           }
         }
       }
 
-      &:not(.expanded) {
-        &.collapsed,
-        &.toBeRemoved {
-          > .objectInputs {
-            display: none;
-          }
+      &.collapsed:not(.expanded),
+      &.toBeRemoved {
+        > .objectInputs {
+          display: none;
         }
       }
 
