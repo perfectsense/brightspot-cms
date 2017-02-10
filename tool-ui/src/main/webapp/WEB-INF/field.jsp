@@ -5,6 +5,7 @@ com.psddev.cms.db.AbVariationField,
 com.psddev.cms.db.AbVariationObject,
 com.psddev.cms.db.ContentField,
 com.psddev.cms.db.ContentType,
+com.psddev.cms.db.Localization,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.db.ToolUiLayoutElement,
 com.psddev.cms.tool.CmsTool,
@@ -103,6 +104,8 @@ if (!isHidden &&
         ObjectUtils.isBlank(state.get(field.getInternalName()))) {
     isHidden = true;
 }
+
+isHidden = ObjectUtils.to(boolean.class, Localization.currentUserText(field, "field." + field.getInternalName() + ".hidden", String.valueOf(isHidden)));
 
 if (!isHidden && type != null) {
     isHidden = !wp.hasPermission("type/" + field.getParentType().getId() + "/read")
