@@ -234,22 +234,22 @@ public class SearchResultRenderer {
         if (!resultsDisplayed) {
             if (search.findSorts().size() > 1) {
                 page.writeStart("div", "class", "searchSorter");
-                renderSorter();
+                    renderSorter();
                 page.writeEnd();
             }
 
             page.writeStart("div", "class", "searchPagination");
-            renderPagination();
+                renderPagination();
             page.writeEnd();
 
             page.writeStart("div", "class", "searchResultList");
-            if (result.hasPages()) {
-                renderList(result.getItems());
-            } else {
-                renderEmpty();
-            }
+                if (result.hasPages()) {
+                    renderList(result.getItems());
+                } else {
+                    renderEmpty();
+                }
 
-            writeSuggestions();
+                writeSuggestions();
             page.writeEnd();
         }
     }
@@ -266,34 +266,34 @@ public class SearchResultRenderer {
                     "method", "post",
                     "action", page.url("/content/suggestions"),
                     "target", frameName);
-            page.writeElement("input",
-                    "type", "hidden",
-                    "name", "search",
-                    "value", ObjectUtils.toJson(search.getState().getSimpleValues()));
+                page.writeElement("input",
+                        "type", "hidden",
+                        "name", "search",
+                        "value", ObjectUtils.toJson(search.getState().getSimpleValues()));
             page.writeEnd();
         }
     }
 
     private void writeTaxon(Taxon taxon, int nextLevel, String target) throws IOException {
         page.writeStart("li");
-        if (taxon.as(Taxon.Data.class).isSelectable()) {
-            renderBeforeItem(taxon);
-            writeTaxonLabel(taxon);
-            renderAfterItem(taxon);
-        } else {
-            writeTaxonLabel(taxon);
-        }
+            if (taxon.as(Taxon.Data.class).isSelectable()) {
+                renderBeforeItem(taxon);
+                writeTaxonLabel(taxon);
+                renderAfterItem(taxon);
+            } else {
+                writeTaxonLabel(taxon);
+            }
 
-        Predicate predicate = search.toQuery(page.getSite()).getPredicate();
-        Collection<? extends Taxon> children = Taxon.Static.getChildren(taxon, predicate);
+            Predicate predicate = search.toQuery(page.getSite()).getPredicate();
+            Collection<? extends Taxon> children = Taxon.Static.getChildren(taxon, predicate);
 
-        if (children != null && !children.isEmpty()) {
-            page.writeStart("a",
-                    "href", page.url("", TAXON_PARENT_ID_PARAMETER, taxon.as(Taxon.Data.class).getId(), TAXON_LEVEL_PARAMETER, nextLevel),
-                    "class", "searchResultTaxonomyExpand",
-                    "target", target);
-            page.writeEnd();
-        }
+            if (children != null && !children.isEmpty()) {
+                page.writeStart("a",
+                        "href", page.url("", TAXON_PARENT_ID_PARAMETER, taxon.as(Taxon.Data.class).getId(), TAXON_LEVEL_PARAMETER, nextLevel),
+                        "class", "searchResultTaxonomyExpand",
+                        "target", target);
+                page.writeEnd();
+            }
         page.writeEnd();
     }
 
@@ -308,7 +308,7 @@ public class SearchResultRenderer {
             String visibilityLabel = taxon.getState().getVisibilityLabel();
             if (!ObjectUtils.isBlank(visibilityLabel)) {
                 page.writeStart("span", "class", "visibilityLabel");
-                page.writeHtml(visibilityLabel);
+                    page.writeHtml(visibilityLabel);
                 page.writeEnd();
 
                 page.writeHtml(" ");
@@ -323,29 +323,29 @@ public class SearchResultRenderer {
                 "method", "get",
                 "action", page.url(null));
 
-        for (Map.Entry<String, List<String>> entry : StringUtils.getQueryParameterMap(page.url("",
-                Search.SORT_PARAMETER, null,
-                Search.SHOW_MISSING_PARAMETER, null,
-                Search.OFFSET_PARAMETER, null)).entrySet()) {
-            String name = entry.getKey();
+            for (Map.Entry<String, List<String>> entry : StringUtils.getQueryParameterMap(page.url("",
+                    Search.SORT_PARAMETER, null,
+                    Search.SHOW_MISSING_PARAMETER, null,
+                    Search.OFFSET_PARAMETER, null)).entrySet()) {
+                String name = entry.getKey();
 
-            for (String value : entry.getValue()) {
-                page.writeElement("input", "type", "hidden", "name", name, "value", value);
+                for (String value : entry.getValue()) {
+                    page.writeElement("input", "type", "hidden", "name", name, "value", value);
+                }
             }
-        }
 
-        page.writeStart("select", "name", Search.SORT_PARAMETER);
-        for (Map.Entry<String, String> entry : search.findSorts().entrySet()) {
-            String label = entry.getValue();
-            String value = entry.getKey();
+            page.writeStart("select", "name", Search.SORT_PARAMETER);
+                for (Map.Entry<String, String> entry : search.findSorts().entrySet()) {
+                    String label = entry.getValue();
+                    String value = entry.getKey();
 
-            page.writeStart("option",
-                    "value", value,
-                    "selected", value.equals(search.getSort()) ? "selected" : null);
-            page.writeHtml("Sort: ").writeHtml(label);
+                    page.writeStart("option",
+                            "value", value,
+                            "selected", value.equals(search.getSort()) ? "selected" : null);
+                        page.writeHtml("Sort: ").writeHtml(label);
+                    page.writeEnd();
+                }
             page.writeEnd();
-        }
-        page.writeEnd();
 
         page.writeEnd();
     }
@@ -353,31 +353,31 @@ public class SearchResultRenderer {
     public void renderPagination() throws IOException {
         page.writeStart("ul", "class", "pagination");
 
-        if (result.hasPrevious()) {
-            page.writeStart("li", "class", "previous");
-            page.writeStart("a", "href", page.url("", Search.OFFSET_PARAMETER, result.getPreviousOffset()));
-            page.writeHtml("Previous ");
-            page.writeHtml(result.getLimit());
-            page.writeEnd();
-            page.writeEnd();
-        }
+            if (result.hasPrevious()) {
+                page.writeStart("li", "class", "previous");
+                    page.writeStart("a", "href", page.url("", Search.OFFSET_PARAMETER, result.getPreviousOffset()));
+                        page.writeHtml("Previous ");
+                        page.writeHtml(result.getLimit());
+                    page.writeEnd();
+                page.writeEnd();
+            }
 
-        page.writeStart("li");
-        page.writeHtml(result.getFirstItemIndex());
-        page.writeHtml(" to ");
-        page.writeHtml(result.getLastItemIndex());
-        page.writeHtml(" of ");
-        page.writeStart("strong").writeHtml(result.getCount()).writeEnd();
-        page.writeEnd();
+            page.writeStart("li");
+                page.writeHtml(result.getFirstItemIndex());
+                page.writeHtml(" to ");
+                page.writeHtml(result.getLastItemIndex());
+                page.writeHtml(" of ");
+                page.writeStart("strong").writeHtml(result.getCount()).writeEnd();
+            page.writeEnd();
 
-        if (result.hasNext()) {
-            page.writeStart("li", "class", "next");
-            page.writeStart("a", "href", page.url("", Search.OFFSET_PARAMETER, result.getNextOffset()));
-            page.writeHtml("Next ");
-            page.writeHtml(result.getLimit());
-            page.writeEnd();
-            page.writeEnd();
-        }
+            if (result.hasNext()) {
+                page.writeStart("li", "class", "next");
+                    page.writeStart("a", "href", page.url("", Search.OFFSET_PARAMETER, result.getNextOffset()));
+                        page.writeHtml("Next ");
+                        page.writeHtml(result.getLimit());
+                    page.writeEnd();
+                page.writeEnd();
+            }
 
         page.writeEnd();
     }
@@ -410,19 +410,19 @@ public class SearchResultRenderer {
 
         if (!previews.isEmpty()) {
             page.writeStart("div", "class", "searchResultImages");
-            for (Map.Entry<Object, StorageItem> entry : previews.entrySet()) {
-                renderImage(entry.getKey(), entry.getValue());
-            }
+                for (Map.Entry<Object, StorageItem> entry : previews.entrySet()) {
+                    renderImage(entry.getKey(), entry.getValue());
+                }
             page.writeEnd();
         }
 
         if (!items.isEmpty()) {
             page.writeStart("table", "class", "searchResultTable links table-striped pageThumbnails");
-            page.writeStart("tbody");
-            for (Object item : items) {
-                renderRow(item);
-            }
-            page.writeEnd();
+                page.writeStart("tbody");
+                    for (Object item : items) {
+                        renderRow(item);
+                    }
+                page.writeEnd();
             page.writeEnd();
         }
     }
@@ -450,26 +450,26 @@ public class SearchResultRenderer {
         renderBeforeItem(item);
 
         page.writeStart("figure");
-        page.writeElement("img",
-                "src", page.getPreviewThumbnailUrl(item),
-                "alt",
-                (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "")
-                        + (showTypeLabel ? page.getTypeLabel(item) + ": " : "")
-                        + page.getObjectLabel(item));
+            page.writeElement("img",
+                    "src", page.getPreviewThumbnailUrl(item),
+                    "alt",
+                            (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "")
+                                    + (showTypeLabel ? page.getTypeLabel(item) + ": " : "")
+                                    + page.getObjectLabel(item));
 
-        page.writeStart("figcaption");
-        if (showSiteLabel) {
-            page.writeObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner());
-            page.writeHtml(": ");
-        }
+            page.writeStart("figcaption");
+                if (showSiteLabel) {
+                    page.writeObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner());
+                    page.writeHtml(": ");
+                }
 
-        if (showTypeLabel) {
-            page.writeTypeLabel(item);
-            page.writeHtml(": ");
-        }
+                if (showTypeLabel) {
+                    page.writeTypeLabel(item);
+                    page.writeHtml(": ");
+                }
 
-        page.writeObjectLabel(item);
-        page.writeEnd();
+                page.writeObjectLabel(item);
+            page.writeEnd();
         page.writeEnd();
 
         renderAfterItem(item);
@@ -503,141 +503,141 @@ public class SearchResultRenderer {
                 "data-preview-embed-width", embedWidth,
                 "class", State.getInstance(item).getId().equals(page.param(UUID.class, "id")) ? "selected" : null);
 
-        if (sortField != null
-                && ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
-            DateTime dateTime = page.toUserDateTime(itemState.getByPath(sortField.getInternalName()));
+            if (sortField != null
+                    && ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
+                DateTime dateTime = page.toUserDateTime(itemState.getByPath(sortField.getInternalName()));
 
-            if (dateTime == null) {
-                page.writeStart("td", "colspan", 2);
-                page.writeHtml("N/A");
-                page.writeEnd();
-
-            } else {
-                String date = page.formatUserDate(dateTime);
-
-                page.writeStart("td", "class", "date");
-                if (!ObjectUtils.equals(date, request.getAttribute(PREVIOUS_DATE_ATTRIBUTE))) {
-                    request.setAttribute(PREVIOUS_DATE_ATTRIBUTE, date);
-                    page.writeHtml(date);
-                }
-                page.writeEnd();
-
-                page.writeStart("td", "class", "time");
-                page.writeHtml(page.formatUserTime(dateTime));
-                page.writeEnd();
-            }
-        }
-
-        if (showSiteLabel) {
-            page.writeStart("td");
-            page.writeObjectLabel(itemState.as(Site.ObjectModification.class).getOwner());
-            page.writeEnd();
-        }
-
-        if (showTypeLabel) {
-            page.writeStart("td");
-            page.writeTypeLabel(item);
-            page.writeEnd();
-        }
-
-        page.writeStart("td");
-        renderBeforeItem(item);
-        page.writeObjectLabel(item);
-        renderAfterItem(item);
-        page.writeEnd();
-
-        if (sortField != null
-                && !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
-            String sortFieldName = sortField.getInternalName();
-            Object value = itemState.getByPath(sortFieldName);
-
-            page.writeStart("td");
-            if (value instanceof Metric) {
-                page.writeStart("span", "style", page.cssString("white-space", "nowrap"));
-                Double maxSum = (Double) request.getAttribute(MAX_SUM_ATTRIBUTE);
-
-                if (maxSum == null) {
-                    Object maxObject = search.toQuery(page.getSite()).sortDescending(sortFieldName).first();
-                    maxSum = maxObject != null
-                            ? ((Metric) State.getInstance(maxObject).get(sortFieldName)).getSum()
-                            : 1.0;
-
-                    request.setAttribute(MAX_SUM_ATTRIBUTE, maxSum);
-                }
-
-                Metric valueMetric = (Metric) value;
-                Map<DateTime, Double> sumEntries = valueMetric.groupSumByDate(
-                        new MetricInterval.Daily(),
-                        new DateTime().dayOfMonth().roundFloorCopy().minusDays(7),
-                        null);
-
-                double sum = valueMetric.getSum();
-                long sumLong = (long) sum;
-
-                if (sumLong == sum) {
-                    page.writeHtml(String.format("%,2d ", sumLong));
+                if (dateTime == null) {
+                    page.writeStart("td", "colspan", 2);
+                        page.writeHtml("N/A");
+                    page.writeEnd();
 
                 } else {
-                    page.writeHtml(String.format("%,2.2f ", sum));
-                }
+                    String date = page.formatUserDate(dateTime);
 
-                if (!sumEntries.isEmpty()) {
-                    long minMillis = Long.MAX_VALUE;
-                    long maxMillis = Long.MIN_VALUE;
-
-                    for (Map.Entry<DateTime, Double> sumEntry : sumEntries.entrySet()) {
-                        long sumMillis = sumEntry.getKey().getMillis();
-
-                        if (sumMillis < minMillis) {
-                            minMillis = sumMillis;
+                    page.writeStart("td", "class", "date");
+                        if (!ObjectUtils.equals(date, request.getAttribute(PREVIOUS_DATE_ATTRIBUTE))) {
+                            request.setAttribute(PREVIOUS_DATE_ATTRIBUTE, date);
+                            page.writeHtml(date);
                         }
-
-                        if (sumMillis > maxMillis) {
-                            maxMillis = sumMillis;
-                        }
-                    }
-
-                    double cumulativeSum = 0.0;
-                    StringBuilder path = new StringBuilder();
-                    double xRange = maxMillis - minMillis;
-                    int width = 35;
-                    int height = 18;
-
-                    for (Map.Entry<DateTime, Double> sumEntry : sumEntries.entrySet()) {
-                        cumulativeSum += sumEntry.getValue();
-
-                        path.append('L');
-                        path.append((sumEntry.getKey().getMillis() - minMillis) / xRange * width);
-                        path.append(',');
-                        path.append(height - cumulativeSum / maxSum * height);
-                    }
-
-                    path.setCharAt(0, 'M');
-
-                    page.writeStart("svg",
-                            "xmlns", "http://www.w3.org/2000/svg",
-                            "width", width,
-                            "height", height,
-                            "style", page.cssString(
-                                    "display", "inline-block",
-                                    "vertical-align", "middle"));
-                    page.writeStart("path",
-                            "fill", "none",
-                            "stroke", "#444444",
-                            "d", path.toString());
                     page.writeEnd();
+
+                    page.writeStart("td", "class", "time");
+                        page.writeHtml(page.formatUserTime(dateTime));
                     page.writeEnd();
                 }
-                page.writeEnd();
-
-            } else if (value instanceof Recordable) {
-                page.writeHtml(((Recordable) value).getState().getLabel());
-
-            } else {
-                page.writeHtml(value);
             }
+
+            if (showSiteLabel) {
+                page.writeStart("td");
+                    page.writeObjectLabel(itemState.as(Site.ObjectModification.class).getOwner());
+                page.writeEnd();
+            }
+
+            if (showTypeLabel) {
+                page.writeStart("td");
+                    page.writeTypeLabel(item);
+                page.writeEnd();
+            }
+
+            page.writeStart("td");
+                renderBeforeItem(item);
+                page.writeObjectLabel(item);
+                renderAfterItem(item);
             page.writeEnd();
-        }
+
+            if (sortField != null
+                    && !ObjectField.DATE_TYPE.equals(sortField.getInternalType())) {
+                String sortFieldName = sortField.getInternalName();
+                Object value = itemState.getByPath(sortFieldName);
+
+                page.writeStart("td");
+                    if (value instanceof Metric) {
+                        page.writeStart("span", "style", page.cssString("white-space", "nowrap"));
+                            Double maxSum = (Double) request.getAttribute(MAX_SUM_ATTRIBUTE);
+
+                            if (maxSum == null) {
+                                Object maxObject = search.toQuery(page.getSite()).sortDescending(sortFieldName).first();
+                                maxSum = maxObject != null
+                                        ? ((Metric) State.getInstance(maxObject).get(sortFieldName)).getSum()
+                                        : 1.0;
+
+                                request.setAttribute(MAX_SUM_ATTRIBUTE, maxSum);
+                            }
+
+                            Metric valueMetric = (Metric) value;
+                            Map<DateTime, Double> sumEntries = valueMetric.groupSumByDate(
+                                    new MetricInterval.Daily(),
+                                    new DateTime().dayOfMonth().roundFloorCopy().minusDays(7),
+                                    null);
+
+                            double sum = valueMetric.getSum();
+                            long sumLong = (long) sum;
+
+                            if (sumLong == sum) {
+                                page.writeHtml(String.format("%,2d ", sumLong));
+
+                            } else {
+                                page.writeHtml(String.format("%,2.2f ", sum));
+                            }
+
+                            if (!sumEntries.isEmpty()) {
+                                long minMillis = Long.MAX_VALUE;
+                                long maxMillis = Long.MIN_VALUE;
+
+                                for (Map.Entry<DateTime, Double> sumEntry : sumEntries.entrySet()) {
+                                    long sumMillis = sumEntry.getKey().getMillis();
+
+                                    if (sumMillis < minMillis) {
+                                        minMillis = sumMillis;
+                                    }
+
+                                    if (sumMillis > maxMillis) {
+                                        maxMillis = sumMillis;
+                                    }
+                                }
+
+                                double cumulativeSum = 0.0;
+                                StringBuilder path = new StringBuilder();
+                                double xRange = maxMillis - minMillis;
+                                int width = 35;
+                                int height = 18;
+
+                                for (Map.Entry<DateTime, Double> sumEntry : sumEntries.entrySet()) {
+                                    cumulativeSum += sumEntry.getValue();
+
+                                    path.append('L');
+                                    path.append((sumEntry.getKey().getMillis() - minMillis) / xRange * width);
+                                    path.append(',');
+                                    path.append(height - cumulativeSum / maxSum * height);
+                                }
+
+                                path.setCharAt(0, 'M');
+
+                                page.writeStart("svg",
+                                        "xmlns", "http://www.w3.org/2000/svg",
+                                        "width", width,
+                                        "height", height,
+                                        "style", page.cssString(
+                                                "display", "inline-block",
+                                                "vertical-align", "middle"));
+                                    page.writeStart("path",
+                                            "fill", "none",
+                                            "stroke", "#444444",
+                                            "d", path.toString());
+                                    page.writeEnd();
+                                page.writeEnd();
+                            }
+                        page.writeEnd();
+
+                    } else if (value instanceof Recordable) {
+                        page.writeHtml(((Recordable) value).getState().getLabel());
+
+                    } else {
+                        page.writeHtml(value);
+                    }
+                page.writeEnd();
+            }
 
         page.writeEnd();
     }
@@ -656,9 +656,9 @@ public class SearchResultRenderer {
 
     public void renderEmpty() throws IOException {
         page.writeStart("div", "class", "message message-warning");
-        page.writeStart("p");
-        page.writeHtml("No matching items!");
-        page.writeEnd();
+            page.writeStart("p");
+                page.writeHtml("No matching items!");
+            page.writeEnd();
         page.writeEnd();
     }
 }
