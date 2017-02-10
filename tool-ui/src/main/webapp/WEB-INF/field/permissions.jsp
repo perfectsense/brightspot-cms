@@ -472,7 +472,7 @@ private static void writeParent(ToolPageContext wp, Set<String> permissions, Obj
 private static void writeChild(ToolPageContext wp, Set<String> permissions, Object object, String permissionId) throws IOException {
 
     wp.write("<input");
-    if (permissions.contains(permissionId)) {
+    if (permissions.contains(permissionId) && !permissions.contains(permissionId + "/")) {
         wp.write(" checked");
     }
     wp.write(" id=\"");
