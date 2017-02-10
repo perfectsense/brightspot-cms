@@ -12,10 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
+import com.google.common.collect.ImmutableSet;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentTemplate;
 import com.psddev.cms.db.Directory;
@@ -142,14 +144,13 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 }
             }
 
+            Predicate<ObjectType> filter = page.createTypeDisplayPredicate(ImmutableSet.of("write"));
+
             for (ObjectType type : Database.Static.getDefault().getEnvironment().getTypes()) {
-                if (type.isConcrete()
+                if (filter.test(type)
                         && type.getGroups().contains(Directory.Item.class.getName())
                         && !type.getGroups().contains(Singleton.class.getName())
-                        && !typeCounts.containsKey(type)
-                        && page.hasPermission("type/" + type.getId() + "/write")
-                        && !type.as(ToolUi.class).isHidden()) {
-
+                        && !typeCounts.containsKey(type)) {
                     for (ObjectTypeOrContentTemplate otct : page.getObjectTypeOrContentTemplates(Collections.singleton(type), true)) {
                         TypeTemplate typeTemplate = new TypeTemplate(type, otct.getTemplate());
 
