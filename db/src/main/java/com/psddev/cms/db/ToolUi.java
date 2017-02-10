@@ -1337,7 +1337,6 @@ public class ToolUi extends Modification<Object> {
     @Target(ElementType.FIELD)
     public @interface InputSearcherPath {
         String value() default "";
-
         String dynamicPath() default "";
     }
 
