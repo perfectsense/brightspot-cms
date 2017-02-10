@@ -38,12 +38,6 @@
     </difference>
 
     <difference>
-        <className>com/psddev/cms/tool/ToolPageContext</className>
-        <differenceType>6011</differenceType>
-        <field>*_ACTION_PARAMETER</field>
-    </difference>
-
-    <difference>
         <className>com/psddev/cms/view/ViewCreator</className>
         <differenceType>7005</differenceType>
         <method>java.lang.Object createView(java.lang.Object, com.psddev.cms.view.ViewRequest)</method>
