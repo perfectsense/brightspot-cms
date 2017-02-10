@@ -223,9 +223,14 @@ function() {
 
   $doc.onCreate('.searchSuggestionsForm', function() {
     var $suggestionsForm = $(this),
-        $source = $suggestionsForm.popup('source'),
-        $contentForm = $source.closest('.contentForm'),
+        $source = $suggestionsForm,
+        $contentForm,
         search;
+
+    do {
+      $source = $source.popup('source');
+      $contentForm = $source.closest('.contentForm');
+    } while ($contentForm.size() === 0 && $source.size() > 0);
 
     if ($contentForm.length === 0) {
       return;
