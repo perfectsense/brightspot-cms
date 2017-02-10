@@ -6,12 +6,15 @@ import com.psddev.cms.tool.SearchResultField;
 import com.psddev.cms.tool.SearchResultSelection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Search;
+import com.psddev.dari.db.AggregateDatabase;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.ForwardingDatabase;
 import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Recordable;
+import com.psddev.dari.db.SqlDatabase;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CollectionUtils;
@@ -43,6 +46,7 @@ import java.util.Map;
 public class ExportContent extends PageServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportContent.class);
+    private static final long THROTTLE_INTERVAL = 500;
 
     public static final String PATH = "exportContent";
 
@@ -64,44 +68,101 @@ public class ExportContent extends PageServlet {
 
     private void execute(Context page) throws IOException, ServletException {
 
-        if (page.param(boolean.class, Context.ACTION_PARAMETER)) {
-
-            HttpServletResponse response = page.getResponse();
-
-            response.setContentType("text/csv");
-            response.setHeader("Content-Disposition", "attachment; filename=search-result-" + new DateTime(null, page.getUserDateTimeZone()).toString("yyyy-MM-dd-hh-mm-ss") + ".csv");
-
-            page.writeHeaderRow();
-
-            Query searchQuery = page.getSearch().toQuery(page.getSite());
-
-            if (page.getSelection() != null) {
-                searchQuery.where(page.getSelection().createItemsQuery().getPredicate());
-            }
-
-            for (Object item : searchQuery.iterable(0)) {
-                page.writeDataRow(item);
-            }
-
+        if (page.param(boolean.class, Context.WARN_PARAMETER)) {
+            writeExportWarning(page);
+        } else if (page.param(boolean.class, Context.ACTION_PARAMETER)) {
+            writeCsvResponse(page);
         } else {
+            writeExportButton(page);
+        }
+    }
 
-            // Only display the button when a search has been refined to a single type
-            if (page.getSearch() != null && page.getSearch().getSelectedType() != null) {
+    private void writeCsvResponse(Context page) throws IOException {
 
-                page.writeStart("div", "class", "searchResult-action-simple");
-                    page.writeStart("a",
-                            "class", "button",
-                            "target", "_top",
-                            "href", getActionUrl(page, null, Context.ACTION_PARAMETER, true));
-                        page.writeHtml(page.localize(
-                                ExportContent.class,
-                                page.getSelection() != null
-                                        ? "action.exportSelected"
-                                        : "action.exportAll"));
-                    page.writeEnd();
-                page.writeEnd();
+        HttpServletResponse response = page.getResponse();
+
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=search-result-" + new DateTime(null, page.getUserDateTimeZone()).toString("yyyy-MM-dd-hh-mm-ss") + ".csv");
+
+        page.writeHeaderRow();
+
+        Query searchQuery = page.getSearch().toQuery(page.getSite());
+
+        if (page.getSelection() != null) {
+            searchQuery.where(page.getSelection().createItemsQuery().getPredicate());
+        }
+
+        addLegacyDatabaseSupport(searchQuery);
+
+        int count = 0;
+        for (Object item : searchQuery.iterable(0)) {
+            page.writeDataRow(item);
+            count++;
+
+            if (count % 10000 == 0) {
+                try {
+                    Thread.sleep(THROTTLE_INTERVAL);
+                } catch (InterruptedException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
             }
         }
+    }
+
+    private void writeExportWarning(Context page) throws IOException {
+        page.writeStart("div", "class", "message message-warning", "style", "margin-top: 8px");
+            page.writeHtml(page.localize(
+                    ExportContent.class,
+                    "action.exportSizeWarning"
+            ));
+        page.writeEnd();
+
+        page.writeStart("a",
+                "class", "button closeButton",
+                "target", "_top",
+                "onclick", "$(this).closest('.popup').popup('close')",
+                "href", getActionUrl(page, null,
+                        Context.ACTION_PARAMETER, true,
+                        Context.WARN_PARAMETER, false));
+
+            page.writeHtml(page.localize(
+                    ExportContent.class,
+                    "action.exportConfirm"));
+
+        page.writeEnd();
+    }
+
+    private void writeExportButton(Context page) throws IOException {
+
+        Search search = page.getSearch();
+
+        // Only display the button when a search has been refined to a single type
+        if (search == null || search.getSelectedType() == null) {
+            return;
+        }
+
+        String target = "_top";
+        String actionUrl = getActionUrl(page, null, Context.ACTION_PARAMETER, true);
+
+        Query searchQuery = search.toQuery(page.getSite());
+
+        if (searchQuery.hasMoreThan(1000)) {
+            target = "export-warning";
+            actionUrl = getActionUrl(page, null, Context.WARN_PARAMETER, true);
+        }
+
+        page.writeStart("div", "class", "searchResult-action-simple");
+            page.writeStart("a",
+                    "class", "button",
+                    "target", target,
+                    "href", actionUrl);
+                page.writeHtml(page.localize(
+                        ExportContent.class,
+                        page.getSelection() != null
+                                ? "action.exportSelected"
+                                : "action.exportAll"));
+            page.writeEnd();
+        page.writeEnd();
     }
 
     /**
@@ -124,6 +185,8 @@ public class ExportContent extends PageServlet {
             urlBuilder.currentParameters();
         }
 
+        urlBuilder.parameter(Context.WARN_PARAMETER, null);
+
         // SearchResultSelection uses an ID parameter
         urlBuilder.parameter(Context.SELECTION_ID_PARAMETER, page.getSelection() != null ? page.getSelection().getId() : null);
 
@@ -138,11 +201,33 @@ public class ExportContent extends PageServlet {
         return urlBuilder.toString();
     }
 
+    private void addLegacyDatabaseSupport(Query query) {
+        boolean usesLegacyDatabase = false;
+
+        Database database = query.getDatabase();
+
+        while (database instanceof ForwardingDatabase) {
+            database = ((ForwardingDatabase) database).getDelegate();
+        }
+
+        if (database instanceof SqlDatabase) {
+            usesLegacyDatabase = true;
+        } else if (database instanceof AggregateDatabase) {
+            usesLegacyDatabase = ((AggregateDatabase) database).getDelegatesByClass(SqlDatabase.class).size() > 0;
+        }
+
+        if (usesLegacyDatabase) {
+            query.getOptions().put(SqlDatabase.USE_JDBC_FETCH_SIZE_QUERY_OPTION, false);
+            query.setSorters(null); // SqlDatabase#ByIdIterator does not support sorters
+        }
+    }
+
     private static class Context extends ToolPageContext {
 
         public static final String SELECTION_ID_PARAMETER = "selectionId";
         public static final String SEARCH_PARAMETER = "search";
         public static final String ACTION_PARAMETER = "action-download";
+        public static final String WARN_PARAMETER = "action-warn";
 
         private static final String CSV_LINE_TERMINATOR = "\r\n";
         private static final Character CSV_BOUNDARY = '\"';

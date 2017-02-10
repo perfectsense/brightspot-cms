@@ -1208,6 +1208,7 @@ public class PageFilter extends AbstractFilter {
 
                 jsonViewRenderer.setIndented(!Settings.isProduction());
                 jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+                jsonViewRenderer.setDisallowMixedOutput(true);
 
                 renderer = jsonViewRenderer;
 
@@ -1400,6 +1401,7 @@ public class PageFilter extends AbstractFilter {
 
             jsonViewRenderer.setIndented(!Settings.isProduction());
             jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+            jsonViewRenderer.setDisallowMixedOutput(true);
 
             renderer = jsonViewRenderer;
 
