@@ -1343,8 +1343,9 @@ public class ToolUi extends Modification<Object> {
     private static class InputSearcherPathProcessor implements ObjectField.AnnotationProcessor<InputSearcherPath> {
         @Override
         public void process(ObjectType type, ObjectField field, InputSearcherPath annotation) {
-            field.as(ToolUi.class).setInputSearcherPath(annotation.value());
-            field.as(ToolUi.class).setDynamicInputSearcherPath(annotation.dynamicPath());
+            ToolUi fieldMod = field.as(ToolUi.class);
+            fieldMod.setInputSearcherPath(annotation.value());
+            fieldMod.setDynamicInputSearcherPath(annotation.dynamicPath());
         }
     }
 
