@@ -9,11 +9,11 @@ import java.io.IOException;
 public interface QueryRestriction {
 
     /**
-     * @return {@code true} if this restriction should only be displayed in
-     * global search, {@code false} otherwise.
+     * @return {@code true} if this restriction should be displayed in the
+     * search result renderer, {@code false} otherwise.
      */
-    default boolean displayOnlyInGlobal() {
-        return true;
+    default boolean displayInRenderer() {
+        return false;
     }
 
     public static Iterable<Class<? extends QueryRestriction>> classIterable() {

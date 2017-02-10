@@ -22,7 +22,7 @@
     <difference>
         <className>com/psddev/cms/tool/QueryRestriction</className>
         <differenceType>7012</differenceType>
-        <method>boolean displayOnlyInGlobal()</method>
+        <method>boolean displayInRenderer()</method>
     </difference>
 
     <difference>

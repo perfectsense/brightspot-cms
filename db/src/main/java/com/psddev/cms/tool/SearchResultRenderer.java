@@ -237,7 +237,7 @@ public class SearchResultRenderer {
         if (!resultsDisplayed) {
             for (QueryRestriction restriction : StreamSupport.stream(QueryRestriction.classIterable().spliterator(), false)
                     .map(clazz -> TypeDefinition.getInstance(clazz).newInstance())
-                    .filter(restriction -> !restriction.displayOnlyInGlobal())
+                    .filter(QueryRestriction::displayInRenderer)
                     .collect(Collectors.toList())) {
 
                 page.writeStart("form",
