@@ -395,8 +395,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $search.hide();
         });
 
-        $search.hide();
         $input.append($search);
+        $input.css('min-width', $input.outerWidth());
+        $search.hide();
       }
     },
 
