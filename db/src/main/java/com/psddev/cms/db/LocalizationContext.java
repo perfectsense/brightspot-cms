@@ -10,9 +10,11 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CascadingMap;
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.TypeDefinition;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
@@ -98,16 +101,38 @@ public class LocalizationContext {
             argumentsSources.add(overrides);
         }
 
+        List<ClassLoader> customLoaders = ClassFinder
+                .findConcreteClasses(LocalizationClassLoaderProvider.class)
+                .stream()
+                .map(c -> TypeDefinition.getInstance(c).newInstance().getClassLoader())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        ClassLoader defaultLoader = getClass().getClassLoader();
         String pattern = null;
 
         if (baseName != null) {
-            ResourceBundle baseOverride = findBundle(baseName + "Override", source);
-            ResourceBundle baseDefault = findBundle(baseName + "Default", source);
+            for (ClassLoader customLoader : customLoaders) {
+                ResourceBundle customOverride = findBundle(baseName + "Override", source, customLoader);
+
+                if (customOverride != null) {
+                    argumentsSources.add(createBundleMap(customOverride));
+
+                    if (pattern == null) {
+                        pattern = findBundleString(customOverride, key);
+                    }
+                }
+            }
+
+            ResourceBundle baseOverride = findBundle(baseName + "Override", source, defaultLoader);
+            ResourceBundle baseDefault = findBundle(baseName + "Default", source, defaultLoader);
 
             if (baseOverride != null) {
                 argumentsSources.add(createBundleMap(baseOverride));
 
-                pattern = findBundleString(baseOverride, key);
+                if (pattern == null) {
+                    pattern = findBundleString(baseOverride, key);
+                }
             }
 
             if (baseDefault != null) {
@@ -124,14 +149,14 @@ public class LocalizationContext {
         }
 
         if (pattern == null) {
-            ResourceBundle fallbackOverride = findBundle("FallbackOverride", source);
+            ResourceBundle fallbackOverride = findBundle("FallbackOverride", source, defaultLoader);
 
             if (fallbackOverride != null) {
                 pattern = findBundleString(fallbackOverride, key);
             }
 
             if (pattern == null) {
-                ResourceBundle fallbackDefault = findBundle("FallbackDefault", source);
+                ResourceBundle fallbackDefault = findBundle("FallbackDefault", source, defaultLoader);
 
                 if (fallbackDefault != null) {
                     pattern = findBundleString(fallbackDefault, key);
@@ -308,11 +333,12 @@ public class LocalizationContext {
         }
     }
 
-    private ResourceBundle findBundle(String baseName, Locale locale) {
+    private ResourceBundle findBundle(String baseName, Locale locale, ClassLoader loader) {
         try {
             return ResourceBundle.getBundle(
                     baseName,
                     locale,
+                    loader,
                     ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_DEFAULT));
 
         } catch (MissingResourceException error) {
