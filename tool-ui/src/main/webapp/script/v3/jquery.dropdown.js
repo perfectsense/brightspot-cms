@@ -247,6 +247,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         }
       });
 
+      // Recalculate position and size whenever viewport is affected.
+      $(window).bind('resize scroll', bsp_utils.throttle(15, resize));
+
       // Create the list based on the options in the original input.
       addItem = function($option) {
         var $item,
