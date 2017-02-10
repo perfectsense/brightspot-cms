@@ -1,11 +1,13 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.Global,
 com.psddev.cms.db.Site,
 com.psddev.cms.db.ToolUser,
 com.psddev.cms.tool.JspWidget,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.Database,
+com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
 
@@ -24,6 +26,11 @@ if (allSites.isEmpty()) {
 }
 
 Object object = JspWidget.getOriginal(wp);
+
+if (object instanceof Global) {
+    return;
+}
+
 State state = State.getInstance(object);
 Site.ObjectModification siteData = state.as(Site.ObjectModification.class);
 

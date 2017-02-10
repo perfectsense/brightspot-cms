@@ -151,7 +151,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       }
 
       $label.bind('dropDown-update', function() {
-        var newLabel = $.map($original.find('option:selected'), function(option) {
+        var newLabel = $.map($original.find('option').filter(':selected'), function(option) {
           return $(option).attr("data-drop-down-html") || $(option).text();
         }).join(', ');
 

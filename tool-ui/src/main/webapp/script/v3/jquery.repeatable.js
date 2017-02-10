@@ -1192,9 +1192,6 @@ The HTML within the repeatable element must conform to these standards:
                     return false;
                 }
 
-                // ???
-                self.$element.find(".objectId-placeholder").hide();
-
                 // Create a copy of the template to use as the new item
                 $addedItem = $template.clone();
                 $addedItem.removeClass('template');

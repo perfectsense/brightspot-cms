@@ -27,6 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.common.base.Preconditions;
+import com.psddev.cms.view.ViewTemplateLoader;
 import com.psddev.dari.util.CompactMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +106,7 @@ public class PageFilter extends AbstractFilter {
     private static final String PATH_MATCHES_ATTRIBUTE = ATTRIBUTE_PREFIX + ".matches";
     private static final String PREVIEW_ATTRIBUTE = ".preview";
     private static final String PERSISTENT_PREVIEW_ATTRIBUTE = ".persistentPreview";
+    private static final String VIEW_TEMPLATE_LOADER_ATTRIBUTE = ATTRIBUTE_PREFIX + ".viewTemplateLoader";
 
     public static final String ABORTED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".aborted";
     public static final String CURRENT_SECTION_ATTRIBUTE = ATTRIBUTE_PREFIX + ".currentSection";
@@ -232,6 +235,65 @@ public class PageFilter extends AbstractFilter {
             request.setAttribute(SUBSTITUTIONS_ATTRIBUTE, substitutions);
         }
         return substitutions;
+    }
+
+    /**
+     * Creates marker HTML that can be inserted into the page to identify
+     * activity with the given {@code name} and {@code data}.
+     *
+     * @param name Nonnull.
+     * @param data Nullable.
+     * @return Nonnull.
+     */
+    public static String createMarkerHtml(String name, Map<String, String> data) {
+        Preconditions.checkNotNull(name);
+
+        StringBuilder marker = new StringBuilder();
+
+        marker.append("<!--");
+        marker.append(name);
+
+        if (data != null) {
+            marker.append(" ");
+            marker.append(ObjectUtils.toJson(data).replace("--", "\\u002d\\u002d"));
+        }
+
+        marker.append("-->");
+
+        return marker.toString();
+    }
+
+    /**
+     * Returns the view template loader associated with the given
+     * {@code request}, creating one if necessary.
+     *
+     * @param request Nonnull.
+     * @return Nonnull.
+     */
+    public static ViewTemplateLoader getViewTemplateLoader(HttpServletRequest request) {
+        Preconditions.checkNotNull(request);
+
+        ViewTemplateLoader loader = (ViewTemplateLoader) request.getAttribute(VIEW_TEMPLATE_LOADER_ATTRIBUTE);
+
+        if (loader == null) {
+            loader = new ServletViewTemplateLoader(request.getServletContext());
+            setViewTemplateLoader(request, loader);
+        }
+
+        return loader;
+    }
+
+    /**
+     * Sets the view template loader to be used within the given
+     * {@code request}.
+     *
+     * @param request Nonnull.
+     * @param loader Nullable.
+     */
+    public static void setViewTemplateLoader(HttpServletRequest request, ViewTemplateLoader loader) {
+        Preconditions.checkNotNull(request);
+
+        request.setAttribute(VIEW_TEMPLATE_LOADER_ATTRIBUTE, loader);
     }
 
     // --- AbstractFilter support ---
@@ -382,7 +444,18 @@ public class PageFilter extends AbstractFilter {
             String externalUrl = Directory.extractExternalUrl(servletPath);
 
             if (externalUrl != null) {
-                response.sendRedirect(externalUrl);
+                if (Directory.Static.findByPath(
+                        Static.getSite(request),
+                        servletPath.endsWith("/")
+                                ? servletPath + "index"
+                                : servletPath) != null) {
+
+                    response.sendRedirect(externalUrl);
+
+                } else {
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                }
+
                 return;
             }
 
@@ -806,7 +879,7 @@ public class PageFilter extends AbstractFilter {
                 markerMap.put("label", mainState.getLabel());
                 markerMap.put("typeLabel", mainState.getType().getLabel());
 
-                page.write("<!--BrightspotCmsMainObject " + ObjectUtils.toJson(markerMap) + "-->");
+                page.write(createMarkerHtml("BrightspotCmsMainObject", markerMap));
                 page.writeStart("iframe",
                         "class", "BrightspotCmsInlineEditor",
                         "id", "bsp-inlineEditorContents",
@@ -1135,6 +1208,7 @@ public class PageFilter extends AbstractFilter {
 
                 jsonViewRenderer.setIndented(!Settings.isProduction());
                 jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+                jsonViewRenderer.setDisallowMixedOutput(true);
 
                 renderer = jsonViewRenderer;
 
@@ -1148,7 +1222,7 @@ public class PageFilter extends AbstractFilter {
             if (renderer != null) {
 
                 try {
-                    ViewOutput result = renderer.render(viewModel, new ServletViewTemplateLoader(request.getServletContext()));
+                    ViewOutput result = renderer.render(viewModel, getViewTemplateLoader(request));
                     output = result.get();
 
                 } catch (RuntimeException e) {
@@ -1327,6 +1401,7 @@ public class PageFilter extends AbstractFilter {
 
             jsonViewRenderer.setIndented(!Settings.isProduction());
             jsonViewRenderer.setIncludeClassNames(!Settings.isProduction());
+            jsonViewRenderer.setDisallowMixedOutput(true);
 
             renderer = jsonViewRenderer;
 
@@ -1337,7 +1412,7 @@ public class PageFilter extends AbstractFilter {
         }
 
         if (renderer != null) {
-            ViewOutput result = renderer.render(view, new ServletViewTemplateLoader(request.getServletContext()));
+            ViewOutput result = renderer.render(view, getViewTemplateLoader(request));
             String output = result.get();
 
             if (output != null) {
@@ -1583,9 +1658,7 @@ public class PageFilter extends AbstractFilter {
                     }
                 }
 
-                marker.append("<!--BrightspotCmsObjectBegin ");
-                marker.append(ObjectUtils.toJson(map));
-                marker.append("-->");
+                marker.append(createMarkerHtml("BrightspotCmsObjectBegin", map));
                 lazyWriter.writeLazily(marker.toString());
             }
 
@@ -1605,7 +1678,7 @@ public class PageFilter extends AbstractFilter {
             }
 
             if (lazyWriter != null) {
-                lazyWriter.writeLazily("<!--BrightspotCmsObjectEnd-->");
+                lazyWriter.writeLazily(createMarkerHtml("BrightspotCmsObjectEnd", null));
                 lazyWriter.writePending();
             }
         }

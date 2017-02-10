@@ -97,6 +97,7 @@ public class ToolUi extends Modification<Object> {
     private String tab;
     private String storageSetting;
     private String defaultSortField;
+    private Boolean unlabeled;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -772,6 +773,14 @@ public class ToolUi extends Modification<Object> {
         this.main = main;
     }
 
+    public boolean isUnlabeled() {
+        return Boolean.TRUE.equals(unlabeled);
+    }
+
+    public void setUnlabeled(boolean unlabeled) {
+        this.unlabeled = unlabeled ? Boolean.TRUE : null;
+    }
+
     /**
      * Finds a list of all concrete types that can be displayed in the
      * context of this type or field.
@@ -973,22 +982,36 @@ public class ToolUi extends Modification<Object> {
     }
 
     /**
-     * Specifies the CSS class to add to {@code .inputContainer} when
-     * displaying the target field.
+     * Specifies the CSS class to add to the HTML element that represents the
+     * target type or field.
+     *
+     * <p>If the annotation is on a type, the CSS class is added to the
+     * {@code .objectInputs} element.</p>
+     *
+     * <p>If the annotation is on a field, the CSS class is added to the
+     * {@code .inputContainer} element.</p>
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(CssClassProcessor.class)
+    @ObjectType.AnnotationProcessorClass(CssClassProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.FIELD, ElementType.METHOD })
+    @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.TYPE })
     public @interface CssClass {
         String value();
     }
 
-    private static class CssClassProcessor implements ObjectField.AnnotationProcessor<CssClass> {
+    private static class CssClassProcessor implements
+            ObjectField.AnnotationProcessor<CssClass>,
+            ObjectType.AnnotationProcessor<CssClass> {
 
         @Override
         public void process(ObjectType type, ObjectField field, CssClass annotation) {
             field.as(ToolUi.class).setCssClass(annotation.value());
+        }
+
+        @Override
+        public void process(ObjectType type, CssClass annotation) {
+            type.as(ToolUi.class).setCssClass(annotation.value());
         }
     }
 
@@ -1851,6 +1874,24 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, Tab annotation) {
             field.as(ToolUi.class).setTab(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the field should be labeled or not.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(UnlabeledProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface Unlabeled {
+        boolean value() default true;
+    }
+
+    private static class UnlabeledProcessor implements ObjectField.AnnotationProcessor<Unlabeled> {
+        @Override
+        public void process(ObjectType type, ObjectField field, Unlabeled annotation) {
+            field.as(ToolUi.class).setUnlabeled(annotation.value());
         }
     }
 

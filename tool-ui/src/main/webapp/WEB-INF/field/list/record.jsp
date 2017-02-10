@@ -4,6 +4,7 @@ com.psddev.cms.db.BulkUploadDraft,
 com.psddev.cms.db.Content,
 com.psddev.cms.db.Renderer,
 com.psddev.cms.db.ToolUi,
+com.psddev.cms.tool.ObjectTypeOrContentTemplate,
 com.psddev.cms.tool.PageWriter,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.page.content.Edit,
@@ -649,9 +650,9 @@ if (!isValueExternal) {
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
-                boolean expanded = field.as(ToolUi.class).isExpanded()
-                        || itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded())
-                        || Edit.isWorkInProgressRestored(wp, item);
+                boolean itemExpanded = field.as(ToolUi.class).isExpanded() || Edit.isWorkInProgressRestored(wp, item);
+                boolean childExpanded = itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
+                boolean expanded = itemExpanded || childExpanded;
 
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
@@ -662,7 +663,7 @@ if (!isValueExternal) {
                 Double total = weightedTypesAndTotalsMap.get(itemType);
 
                 wp.writeStart("li",
-                        "class", expanded ? "expanded" : null,
+                        "class", itemExpanded ? "expanded" : (childExpanded ? "expanded collapsed" : null),
                         "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
                         "data-label", wp.getObjectLabel(item),
@@ -721,7 +722,8 @@ if (!isValueExternal) {
                 wp.writeEnd();
             }
 
-            for (ObjectType type : validTypes) {
+            for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) {
+                ObjectType type = otct.getType();
 
                 String progressFieldName = progressTypesAndFieldsMap.get(type);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(type);
@@ -732,7 +734,7 @@ if (!isValueExternal) {
                     wp.writeStart("li",
                             "class", displayGrid ? "collapsed" : null,
                             "data-sortable-item-type", type.getId(),
-                            "data-type", wp.getObjectLabel(type),
+                            "data-type", otct.getLabel(),
                             // Add the name of the preview field so the front end knows
                             // if that field is updated it should update the thumbnail
                             "data-preview-field", type.getPreviewField(),
@@ -746,7 +748,7 @@ if (!isValueExternal) {
                         wp.writeStart("a",
                                 "href", wp.cmsUrl("/content/repeatableObject.jsp",
                                         "inputName", inputName,
-                                        "typeId", type.getId()));
+                                        "typeId", otct.getId()));
                         wp.writeEnd();
                     wp.writeEnd();
                 wp.writeEnd();
@@ -836,10 +838,15 @@ if (!isValueExternal) {
         writer.end();
 
         if (displayGrid && !field.as(ToolUi.class).isReadOnly()) {
+
+            String uploadFilesPath = wp.getCmsTool().isEnableFrontEndUploader()
+                    ? "/content/upload"
+                    : "/content/uploadFiles";
+
             writer.start("a",
                     "class", "action-upload",
                     "href", wp.url(
-                            "/content/uploadFiles?" + typeIdsQuery,
+                            uploadFilesPath + "?" + typeIdsQuery,
                             "containerId", containerObjectId,
                             "context", UploadFiles.Context.FIELD),
                     "target", "uploadFiles");

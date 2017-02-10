@@ -33,7 +33,8 @@ javax.servlet.ServletException
 " %><%
 
 ToolPageContext wp = new ToolPageContext(pageContext);
-State state = State.getInstance(request.getAttribute("object"));
+Object object = request.getAttribute("object");
+State state = State.getInstance(object);
 State originalState = State.getInstance(request.getAttribute("original"));
 ObjectField field = (ObjectField) request.getAttribute("field");
 String fieldName = field.getInternalName();
@@ -43,6 +44,12 @@ ObjectType type = field.getParentType();
 boolean isFormPost = (Boolean) request.getAttribute("isFormPost");
 boolean isReadOnly = ui.isReadOnly();
 boolean isHidden = ui.isHidden();
+
+Object container = request.getAttribute("containerObject");
+
+if (!object.equals(container) && field.isIgnoredIfEmbedded()) {
+    isHidden = true;
+}
 
 String tab = null;
 String label = null;
@@ -152,6 +159,10 @@ try {
 
         if (ui.isExpanded()) {
             wp.write(" inputContainer-expanded");
+        }
+
+        if (ui.isUnlabeled()) {
+            wp.write(" inputContainer-unlabeled");
         }
 
         String cssClass = ui.getCssClass();

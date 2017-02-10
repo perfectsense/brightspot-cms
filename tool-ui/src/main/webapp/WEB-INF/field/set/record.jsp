@@ -2,6 +2,7 @@
 
 com.psddev.cms.db.Content,
 com.psddev.cms.db.ToolUi,
+com.psddev.cms.tool.ObjectTypeOrContentTemplate,
 com.psddev.cms.tool.PageWriter,
 com.psddev.cms.tool.Search,
 com.psddev.cms.tool.ToolPageContext,
@@ -135,10 +136,10 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                     <% wp.writeFormFields(item); %>
                 </li>
             <% } %>
-            <% for (ObjectType type : validTypes) { %>
+            <% for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) { %>
                 <script type="text/template">
-                    <li data-type="<%= wp.objectLabel(type) %>">
-                        <a href="<%= wp.cmsUrl("/content/repeatableObject.jsp", "inputName", inputName, "typeId", type.getId()) %>"></a>
+                    <li data-type="<%= otct.getLabel() %>">
+                        <a href="<%= wp.cmsUrl("/content/repeatableObject.jsp", "inputName", inputName, "typeId", otct.getId()) %>"></a>
                     </li>
                 </script>
             <% } %>
