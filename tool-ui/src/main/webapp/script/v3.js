@@ -229,10 +229,14 @@ function() {
 
     do {
       $source = $source.popup('source');
-      $contentForm = $source.closest('.contentForm');
-    } while ($contentForm.size() === 0 && $source.size() > 0);
 
-    if ($contentForm.length === 0) {
+      if ($source !== undefined) {
+        $contentForm = $source.closest('.contentForm');
+      }
+
+    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+
+    if ($contentForm === undefined || $contentForm.length === 0) {
       return;
     }
 
