@@ -2289,7 +2289,8 @@ public class ToolPageContext extends WebPageContext {
                 && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
                 && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || type.getObjectClass() != null)
                 && !(Draft.class.equals(type.getObjectClass()))
-                && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0));
+                && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0))
+                && !ObjectUtils.to(boolean.class, Localization.currentUserText(type, "hidden", String.valueOf(false)));
     }
 
     private void writeTypeSelectReally(
