@@ -86,11 +86,11 @@ if (ObjectUtils.isBlank(tab)) {
 }
 
 if (localizeTab) {
-    tab = wp.localize(field, "tab." + tab);
+    tab = Localization.currentUserText(field, "tab." + tab, tab);
 }
 
 if (ObjectUtils.isBlank(label)) {
-    label = wp.localize(field, "field." + field.getInternalName());
+    label = Localization.currentUserText(field, "field." + field.getInternalName(), field.getDisplayName());
 }
 
 List<String> errors = state.getErrors(field);
