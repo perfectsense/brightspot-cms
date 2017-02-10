@@ -95,7 +95,7 @@ public class SearchCarousel extends PageServlet {
                         "data-objectId", itemState.getId(),
                         "target", "_top",
                         "href", page.objectUrl("/content/edit.jsp", item,
-                                                "search", ObjectUtils.toJson(search.getState().getSimpleValues())));
+                                                "search", selected ? null : ObjectUtils.toJson(search.getState().getSimpleValues())));
 
                     boolean itemPreviewImage = false;
 

@@ -153,6 +153,17 @@ public class ToolPageContext extends WebPageContext {
     public static final String VARIATION_ID_PARAMETER = "variationId";
     public static final String RETURN_URL_PARAMETER = "returnUrl";
 
+    public static final String WORKFLOW_ACTION_PARAMETER = "action-workflow";
+    public static final String NEW_DRAFT_ACTION_PARAMETER = "action-newDraft";
+    public static final String DRAFT_ACTION_PARAMETER = "action-draft";
+    public static final String MERGE_ACTION_PARAMETER = "action-merge";
+    public static final String PUBLISH_ACTION_PARAMETER = "action-publish";
+    public static final String DELETE_ACTION_PARAMETER = "action-delete";
+    public static final String TRASH_ACTION_PARAMETER = "action-trash";
+    public static final String RESTORE_ACTION_PARAMETER = "action-restore";
+    public static final String SAVE_ACTION_PARAMETER = "action-save";
+    public static final String UNSCHEDULE_ACTION_PARAMETER = "action-unschedule";
+
     private static final String ATTRIBUTE_PREFIX = ToolPageContext.class.getName() + ".";
     private static final String ERRORS_ATTRIBUTE = ATTRIBUTE_PREFIX + "errors";
     private static final String FORM_FIELDS_DISABLED_ATTRIBUTE = ATTRIBUTE_PREFIX + "formFieldsDisabled";
@@ -3398,7 +3409,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryDelete(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-delete") == null) {
+                || param(String.class, DELETE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3462,7 +3473,7 @@ public class ToolPageContext extends WebPageContext {
 
     public boolean tryUnschedule(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-unschedule") == null) {
+                || param(String.class, UNSCHEDULE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3575,7 +3586,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryDraft(Object object) {
         if (!isFormPost()
-                || (param(String.class, "action-draft") == null
+                || (param(String.class, DRAFT_ACTION_PARAMETER) == null
                 && param(String.class, "action-draftAndReturn") == null)) {
             return false;
         }
@@ -3665,7 +3676,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryNewDraft(Object object) {
         if (!isFormPost()
-                || (param(String.class, "action-newDraft") == null
+                || (param(String.class, NEW_DRAFT_ACTION_PARAMETER) == null
                 && param(String.class, "action-newDraftAndReturn") == null)) {
             return false;
         }
@@ -3735,7 +3746,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryPublish(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-publish") == null) {
+                || param(String.class, PUBLISH_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3968,7 +3979,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryRestore(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-restore") == null) {
+                || param(String.class, RESTORE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -4004,7 +4015,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean trySave(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-save") == null) {
+                || param(String.class, SAVE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -4056,7 +4067,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryTrash(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-trash") == null) {
+                || param(String.class, TRASH_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -4086,7 +4097,7 @@ public class ToolPageContext extends WebPageContext {
             return false;
         }
 
-        String action = param(String.class, "action-merge");
+        String action = param(String.class, MERGE_ACTION_PARAMETER);
 
         if (ObjectUtils.isBlank(action)) {
             return false;
@@ -4145,7 +4156,7 @@ public class ToolPageContext extends WebPageContext {
             return false;
         }
 
-        String action = param(String.class, "action-workflow");
+        String action = param(String.class, WORKFLOW_ACTION_PARAMETER);
 
         if (ObjectUtils.isBlank(action)) {
             return false;

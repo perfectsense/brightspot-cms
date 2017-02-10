@@ -648,9 +648,9 @@ if (!isValueExternal) {
                 ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
-                boolean expanded = field.as(ToolUi.class).isExpanded()
-                        || itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded())
-                        || Edit.isWorkInProgressRestored(wp, item);
+                boolean itemExpanded = field.as(ToolUi.class).isExpanded() || Edit.isWorkInProgressRestored(wp, item);
+                boolean childExpanded = itemType.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
+                boolean expanded = itemExpanded || childExpanded;
 
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
@@ -661,7 +661,7 @@ if (!isValueExternal) {
                 Double total = weightedTypesAndTotalsMap.get(itemType);
 
                 wp.writeStart("li",
-                        "class", expanded ? "expanded" : null,
+                        "class", itemExpanded ? "expanded" : (childExpanded ? "expanded collapsed" : null),
                         "data-sortable-item-type", itemType.getId(),
                         "data-type", wp.getObjectLabel(itemType),
                         "data-label", wp.getObjectLabel(item),
