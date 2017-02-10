@@ -134,11 +134,6 @@
                                             <className>com/psddev/cms/tool/page/SearchAdvancedFullResult</className>
                                             <differenceType>8001</differenceType>
                                         </difference>
-                                        <difference>
-                                            <className>com/psddev/cms/db/ToolUi$InputSearcherPath</className>
-                                            <method>java.lang.String dynamicPath()</method>
-                                            <differenceType>7012</differenceType>
-                                        </difference>
                                     </ignored>
                                     <logResults>true</logResults>
                                 </configuration>

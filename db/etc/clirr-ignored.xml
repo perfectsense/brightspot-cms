@@ -80,4 +80,10 @@
         <method>java.lang.Iterable close(java.util.Map, java.util.UUID)</method>
     </difference>
 
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$InputSearcherPath</className>
+        <differenceType>7012</differenceType>
+        <method>java.lang.String dynamicPath()</method>
+    </difference>
+
 </differences>
