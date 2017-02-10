@@ -101,6 +101,14 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       function resize() {
+        if (!$input.is(':visible')) {
+          $openOriginal = null;
+          $openList = null;
+          $markerContainer.hide();
+          $listContainer.hide();
+          return;
+        }
+
         var inputOffset = $input.offset();
         var inputWidth = $input.outerWidth(true);
         var winScrollTop = $win.scrollTop();
