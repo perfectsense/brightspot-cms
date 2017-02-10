@@ -199,6 +199,8 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         $openList = $list;
         $markerContainer.show();
         $listContainer.show();
+        $list.scrollTop(0);
+        $list.scrollTop($list.find('.' + plugin.className('listItem-selected')).position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top);
       });
 
       $list.bind('dropDown-close', function() {
