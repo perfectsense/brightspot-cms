@@ -5,6 +5,7 @@ com.psddev.cms.db.AbVariationField,
 com.psddev.cms.db.AbVariationObject,
 com.psddev.cms.db.ContentField,
 com.psddev.cms.db.ContentType,
+com.psddev.cms.db.Localization,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.db.ToolUiLayoutElement,
 com.psddev.cms.tool.CmsTool,
@@ -85,11 +86,11 @@ if (ObjectUtils.isBlank(tab)) {
 }
 
 if (localizeTab) {
-    tab = wp.localize(field, "tab." + tab);
+    tab = Localization.currentUserText(field, "tab." + tab, tab);
 }
 
 if (ObjectUtils.isBlank(label)) {
-    label = wp.localize(field, "field." + field.getInternalName());
+    label = Localization.currentUserText(field, "field." + field.getInternalName(), field.getDisplayName());
 }
 
 List<String> errors = state.getErrors(field);
@@ -103,6 +104,8 @@ if (!isHidden &&
         ObjectUtils.isBlank(state.get(field.getInternalName()))) {
     isHidden = true;
 }
+
+isHidden = ObjectUtils.to(boolean.class, Localization.currentUserText(field, "field." + field.getInternalName() + ".hidden", String.valueOf(isHidden)));
 
 if (!isHidden && type != null) {
     isHidden = !wp.hasPermission("type/" + field.getParentType().getId() + "/read")

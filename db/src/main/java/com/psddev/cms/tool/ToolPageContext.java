@@ -2282,14 +2282,17 @@ public class ToolPageContext extends WebPageContext {
      * @return a new {@code Predicate<ObjectType>}
      */
     public java.util.function.Predicate<ObjectType> createTypeDisplayPredicate(Collection<String> permissions) {
+        return (ObjectType type) -> {
+            Class<?> c = type.getObjectClass();
 
-        return (ObjectType type) ->
-            type.isConcrete()
-                && !Modification.class.isAssignableFrom(type.getObjectClass())
-                && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
-                && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || type.getObjectClass() != null)
-                && !(Draft.class.equals(type.getObjectClass()))
-                && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0));
+            return type.isConcrete()
+                    && (c == null || !Modification.class.isAssignableFrom(c))
+                    && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
+                    && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || c != null)
+                    && !(Draft.class.equals(type.getObjectClass()))
+                    && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0))
+                    && !ObjectUtils.to(boolean.class, Localization.currentUserText(type, "hidden", String.valueOf(false)));
+        };
     }
 
     private void writeTypeSelectReally(
