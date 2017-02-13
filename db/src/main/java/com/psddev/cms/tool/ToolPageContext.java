@@ -2498,6 +2498,9 @@ public class ToolPageContext extends WebPageContext {
                     && ContentEditable.shouldContentBeEditable(state);
             }
 
+            String inputSearcherPath = ui.getInputSearcherPath();
+            String dynamicInputSearcherPath = ui.getDynamicInputSearcherPath();
+
             writeElement("input",
                     "type", "text",
                     "class", "objectId",
@@ -2509,7 +2512,8 @@ public class ToolPageContext extends WebPageContext {
                     "data-label-html", value != null ? createObjectLabelHtml(value) : null,
                     "data-pathed", ToolUi.isOnlyPathed(field),
                     "data-preview", getPreviewThumbnailUrl(value),
-                    "data-searcher-path", ui.getInputSearcherPath(),
+                    "data-dynamic-searcher-path", !ObjectUtils.isBlank(dynamicInputSearcherPath) ? dynamicInputSearcherPath : null,
+                    "data-searcher-path", !ObjectUtils.isBlank(inputSearcherPath) ? inputSearcherPath : null,
                     "data-suggestions", ui.isEffectivelySuggestions(),
                     "data-typeIds", typeIds,
                     "data-visibility", value != null ? state.getVisibilityLabel() : null,

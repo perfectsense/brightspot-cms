@@ -69,6 +69,12 @@
     </difference>
 
     <difference>
+        <className>com/psddev/cms/db/ToolUi$InputSearcherPath</className>
+        <differenceType>7012</differenceType>
+        <method>java.lang.String dynamicPath()</method>
+    </difference>
+
+    <difference>
         <className>com/psddev/cms/db/ToolUi$Placeholder</className>
         <differenceType>7012</differenceType>
         <method>boolean clearOnChange()</method>
