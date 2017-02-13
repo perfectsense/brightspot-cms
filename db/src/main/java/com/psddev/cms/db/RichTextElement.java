@@ -1,5 +1,6 @@
 package com.psddev.cms.db;
 
+import com.psddev.cms.rte.ReferenceRichTextElement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -19,7 +20,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import com.google.common.base.Preconditions;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +55,8 @@ public abstract class RichTextElement extends Record {
                 }
             });
 
+            tagTypes.put(ReferenceRichTextElement.TAG_NAME, ObjectType.getInstance(ReferenceRichTextElement.class));
+
             return Collections.unmodifiableMap(tagTypes);
         }
     };
@@ -66,6 +73,35 @@ public abstract class RichTextElement extends Record {
      */
     public static Map<String, ObjectType> getConcreteTagTypes() {
         return CONCRETE_TAG_TYPES.get();
+    }
+
+    /**
+     * Returns a newly created {@link RichTextElement} from the given
+     * {@link Element} or null if there is no concrete rich text element
+     * type with a {@link Tag#value() tag name} that is equal to the element's
+     * {@linkplain Element#tagName() tag name}.
+     *
+     * @param element Nonnull.
+     * @return The rich text element.
+     */
+    public static RichTextElement fromElement(Element element) {
+        Preconditions.checkNotNull(element);
+
+        ObjectType tagType = getConcreteTagTypes().get(element.tagName());
+
+        if (tagType == null) {
+            return null;
+        }
+
+        RichTextElement rte = (RichTextElement) tagType.createObject(null);
+
+        rte.fromAttributes(StreamSupport
+                .stream(element.attributes().spliterator(), false)
+                .collect(Collectors.toMap(Attribute::getKey, Attribute::getValue)));
+
+        rte.fromBody(element.html());
+
+        return rte;
     }
 
     public abstract void fromAttributes(Map<String, String> attributes);
