@@ -12,8 +12,73 @@ function($, bsp_utils) {
                 'chooseText': 'OK',
                 'preferredFormat': 'hex6',
                 'showAlpha': true,
-                'showInitial': true,
-                'showInput': true
+                'showInitial': false,
+                'showInput': true,
+
+                'show': function () {
+                    function reflow() {
+                        var $input = $(this);
+                        var $replacer = $input.next('.sp-replacer');
+                        var $container = $input.spectrum('container');
+                        var $marker = $container.find('> .ColorDropDownMarker');
+
+                        if ($marker.length === 0) {
+                            $marker = $('<div/>', {
+                                'class': 'ColorDropDownMarker'
+                            });
+
+                            $container.append($marker);
+                        }
+
+                        var replacerTop = $replacer.offset().top;
+                        var containerTop = $container.offset().top;
+
+                        if (containerTop < replacerTop) {
+                            $replacer.addClass('ColorDropDownAbove');
+                            $container.addClass('ColorDropDownAbove');
+                            $container.css('top', containerTop + 1);
+
+                        } else {
+                            $replacer.removeClass('ColorDropDownAbove');
+                            $container.removeClass('ColorDropDownAbove');
+                            $container.css('top', containerTop - 1);
+                        }
+
+                        $marker.css('width', $replacer.outerWidth());
+                    }
+
+                    reflow.call(this);
+                    $(this).on('reflow.spectrum', reflow);
+                },
+
+                'hide': function () {
+                    $(this).off('reflow.spectrum');
+                },
+
+                'change': function (color) {
+                    var $input = $(this);
+                    var $replacer = $input.next('.sp-replacer');
+                    var $preview = $replacer.find('.sp-preview');
+                    var $color = $preview.find('> .ColorPreviewColor');
+
+                    if ($color.length === 0) {
+                        $color = $('<div/>', {
+                            'class': 'ColorPreviewColor'
+                        });
+
+                        $preview.append($color);
+                    }
+
+                    if (color) {
+                        $preview.attr('data-color', color);
+                        $color.show();
+                        $color.css('background-color', color);
+
+                    } else {
+                        $preview.removeAttr('data-color');
+                        $color.hide();
+                    }
+                }
             });
         }
     });

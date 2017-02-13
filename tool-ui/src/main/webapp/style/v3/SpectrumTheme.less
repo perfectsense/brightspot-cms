@@ -1,0 +1,225 @@
+.sp-replacer {
+    &:extend(.input all);
+    cursor: pointer;
+    max-width: 100%;
+    width: 200px;
+
+    .searchFilter & {
+        width: 100%;
+    }
+
+    &.sp-active {
+        border-color: @color-focus;
+
+        &.ColorDropDownAbove {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+        }
+
+        &:not(.ColorDropDownAbove) {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+    }
+
+    .sp-preview {
+        @preview-size: 18px;
+
+        float: left;
+        height: @preview-size;
+        overflow: hidden;
+        position: relative;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 85%;
+
+        .sp-preview-inner {
+            display: none;
+        }
+
+        &:before,
+        .ColorPreviewColor {
+            border-radius: 50%;
+            height: @preview-size;
+            left: 0;
+            position: absolute;
+            top: 0;
+            width: @preview-size;
+        }
+
+        &[data-color]:before {
+            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==) center;
+            content: '';
+        }
+
+        &:after {
+            color: @color-placeholder;
+            content: 'Color';
+            font-style: italic;
+        }
+
+        &[data-color]:after {
+            color: inherit;
+            content: attr(data-color);
+            font-style: inherit;
+            margin-left: (@preview-size + 5px);
+        }
+    }
+
+    .sp-dd {
+        background: url('icon/angle-down.svg') 2px 2px no-repeat;
+        background-size: auto 14px;
+        float: right;
+        overflow: hidden;
+        text-indent: 100%;
+        width: 14px;
+    }
+}
+
+.sp-container {
+    @container-border: 1px;
+    @container-padding: 10px;
+    @container-width: 200px;
+    @between: 5px;
+    @hue-width: 20px;
+    @color-width: (@container-width - (@container-border + @container-padding) * 2 - @between - @hue-width);
+    @alpha-height: 20px;
+
+    background: white;
+    border: @container-border solid @color-focus;
+    box-sizing: border-box;
+    overflow: visible;
+    padding: @container-padding;
+    width: @container-width;
+
+    .ColorDropDownMarker {
+        left: 0;
+        position: absolute;
+        width: 100%;
+
+        &:before {
+            background: white;
+            content: '';
+            height: 1px;
+            left: 0;
+            position: absolute;
+            right: 2px;
+        }
+    }
+
+    &.ColorDropDownAbove {
+        border-top-left-radius: 2px;
+        border-top-right-radius: 2px;
+
+        .ColorDropDownMarker {
+            bottom: 0;
+        }
+    }
+
+    &:not(.ColorDropDownAbove) {
+        border-bottom-left-radius: 2px;
+        border-bottom-right-radius: 2px;
+
+        .ColorDropDownMarker {
+            top: -1px;
+        }
+    }
+
+    .sp-top {
+        display: block;
+        height: @color-width;
+        margin-bottom: (@between + @alpha-height);
+
+        .sp-fill {
+            padding-top: (@between + @color-width);
+        }
+
+        .sp-color {
+            width: @color-width;
+
+            .sp-dragger {
+                margin-left: 2px;
+                margin-top: 2px;
+            }
+        }
+
+        .sp-clear {
+            .icon;
+            .icon-action-cancel;
+            box-sizing: border-box;
+            cursor: pointer;
+            height: @hue-width;
+            left: auto;
+            padding: 1px;
+            top: 0;
+            right: 0;
+            width: @hue-width;
+        }
+
+        .sp-hue {
+            left: auto;
+            height: auto;
+            top: (@between + @hue-width);
+            right: 0;
+            width: @hue-width;
+
+            .sp-slider {
+                background: rgba(255, 255, 255, 0.5);
+                border-radius: 2px;
+                height: 4px;
+                left: -2px;
+                margin-top: 1px;
+                opacity: 1;
+                right: -2px;
+            }
+        }
+
+        .sp-alpha {
+            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==) center;
+            bottom: (0 - @between - @alpha-height);
+            height: @alpha-height;
+
+            .sp-alpha-inner {
+                border: 0;
+                height: 100%;
+
+                .sp-alpha-handle {
+                    background: rgba(255, 255, 255, 0.5);
+                    border-radius: 2px;
+                    bottom: -2px;
+                    margin-left: -1px;
+                    opacity: 1;
+                    top: -2px;
+                    width: 4px;
+                }
+            }
+        }
+    }
+
+    .sp-input-container {
+        padding-top: 10px;
+
+        .sp-input {
+            width: 100%;
+        }
+    }
+
+    .sp-button-container {
+        margin-top: 5px;
+        overflow: hidden;
+
+        .sp-cancel {
+            &:extend(.link all);
+            .icon;
+            .icon-remove;
+            float: right;
+            line-height: 30px;
+        }
+
+        .sp-choose {
+            &:extend(.button all);
+            box-sizing: border-box;
+            float: left;
+        }
+    }
+}
