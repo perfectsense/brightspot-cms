@@ -72,7 +72,7 @@
 
         color: @color-remove;
         position: absolute;
-        right: ((@input-height - @iconSize-default) / 2);
+        right: -2px;
         top: ((@input-height - @lineHeight-default) / 2);
       }
 
@@ -422,6 +422,7 @@
 
         &.collapsed:not(.toBeRemoved) {
           padding-left: 32px;
+          padding-right: 26px;
 
           > .repeatableLabel {
             border-bottom-left-radius: 2px;
@@ -444,13 +445,6 @@
               text-indent: 0;
               top: 5px;
             }
-          }
-
-          > .removeButton {
-            bottom: 5px;
-            left: 6px;
-            top: auto;
-            right: auto;
           }
         }
       }
