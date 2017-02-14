@@ -116,7 +116,11 @@ if (isHidden) {
     if (!isFormPost && !ObjectUtils.isBlank(errors)) {
         wp.write("<div class=\"inputContainer\">");
             wp.write("<div class=\"inputLabel\">");
-            wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", state.getType().getId(), "field", field.getInternalName()), "\">Guide</a>");
+
+            if (type != null && type.getField(fieldName) != null) {
+                wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", type.getId(), "field", fieldName), "\">Guide</a>");
+            }
+
             wp.write("<label for=\"", wp.createId(), "\">");
             wp.write(wp.h(label));
             wp.write("</label></div>");
@@ -231,7 +235,11 @@ try {
         }
 
         wp.write("<div class=\"inputLabel\">");
-        wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", state.getType().getId(), "field", field.getInternalName()), "\">Guide</a>");
+
+        if (type != null && type.getField(fieldName) != null) {
+            wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", type.getId(), "field", fieldName), "\">Guide</a>");
+        }
+
         wp.write("<label for=\"", wp.createId(), "\">");
         wp.write(wp.h(label));
         wp.write("</label></div>");
