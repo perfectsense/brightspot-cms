@@ -6,7 +6,9 @@ define([
 function($, bsp_utils) {
     bsp_utils.onDomInsert(document, ':text.color', {
         'insert': function(input) {
-            $(input).spectrum({
+            var $input = $(input);
+
+            $input.spectrum({
                 'allowEmpty': true,
                 'cancelText': 'Cancel',
                 'chooseText': 'OK',
@@ -80,6 +82,8 @@ function($, bsp_utils) {
                     }
                 }
             });
+
+            $input.next('.sp-replacer').find('.sp-preview').attr('data-placeholder', $input.attr('placeholder'));
         }
     });
 });

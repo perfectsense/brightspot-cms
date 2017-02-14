@@ -79,7 +79,7 @@ if (validValues != null) {
             "type", "text",
             "class", "color",
             "name", inputName,
-            "placeholder", placeholder,
+            "placeholder", ObjectUtils.firstNonBlank(placeholder, "No Color"),
             "value", fieldValue);
 
 } else if (ui.isSecret()) {

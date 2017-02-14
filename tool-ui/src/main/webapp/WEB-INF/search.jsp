@@ -410,6 +410,7 @@ writer.start("div", "class", "searchForm");
                                         "type", "text",
                                         "class", "color",
                                         "name", Search.COLOR_PARAMETER,
+                                        "placeholder", "Color",
                                         "value", search.getColor());
                             writer.writeEnd();
                         }
