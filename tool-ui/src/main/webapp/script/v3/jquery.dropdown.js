@@ -208,7 +208,12 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         $markerContainer.show();
         $listContainer.show();
         $list.scrollTop(0);
-        $list.scrollTop($list.find('.' + plugin.className('listItem-selected')).position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top);
+
+        var $selected = $list.find('.' + plugin.className('listItem-selected'));
+
+        if ($selected.length > 0) {
+            $list.scrollTop($selected.position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top);
+        }
       });
 
       $list.bind('dropDown-close', function() {
