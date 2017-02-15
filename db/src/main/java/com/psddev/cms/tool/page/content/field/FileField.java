@@ -409,11 +409,13 @@ public class FileField extends PageServlet {
                         page.writeEnd();
                     }
 
-                    page.writeStart("option",
-                            "data-hide", ".fileSelectorItem",
-                            "value", "none");
-                        page.writeHtml(page.localize(FileField.class, "option.none"));
-                    page.writeEnd();
+                    if (!field.isRequired()) {
+                        page.writeStart("option",
+                                "data-hide", ".fileSelectorItem",
+                                "value", "none");
+                            page.writeHtml(page.localize(FileField.class, "option.none"));
+                        page.writeEnd();
+                    }
 
                     page.writeStart("option",
                             "data-hide", ".fileSelectorItem",

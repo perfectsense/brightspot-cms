@@ -522,11 +522,13 @@ public class StorageItemField extends PageServlet {
                         page.writeEnd();
                     }
 
-                    page.writeStart("option",
-                            "data-hide", ".fileSelectorItem",
-                            "value", "none");
-                        page.writeHtml(page.localize(StorageItemField.class, "option.none"));
-                    page.writeEnd();
+                    if (!field.isRequired()) {
+                        page.writeStart("option",
+                                "data-hide", ".fileSelectorItem",
+                                "value", "none");
+                            page.writeHtml(page.localize(StorageItemField.class, "option.none"));
+                        page.writeEnd();
+                    }
 
                     page.writeStart("option",
                             "data-hide", ".fileSelectorItem",
