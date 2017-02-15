@@ -176,6 +176,7 @@ function ($, bsp_utils, uploader) {
         $inputWrapper.prev('.inputSmall').remove();
         $inputWrapper.remove();
         $response.find('.fileSelectorItem:not(.fileSelectorExisting)').hide();
+        $response.trigger('create');
 
         //// prevents image pop-in
         //var img = $inputWrapper.find('.imageEditor-image').find('img').first();
