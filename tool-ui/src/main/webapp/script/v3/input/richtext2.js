@@ -1,7 +1,7 @@
 /* jshint undef: true, unused: true, browser: true, jquery: true, devel: true */
 /* global clearTimeout define document RICH_TEXT_ELEMENTS setTimeout window */
 
-define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plugin/popup', 'jquery.extra', 'jquery.handsontable.full'], function($, CodeMirrorRte, tableEditor) {
+define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'bsp-uploader', 'v3/plugin/popup', 'jquery.extra', 'jquery.handsontable.full'], function($, CodeMirrorRte, tableEditor, uploader) {
 
     var CONTEXT_PATH;
     var Rte;
@@ -655,6 +655,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             self.trackChangesInit();
             self.placeholderInit();
             self.modeInit();
+            self.dragDropInit();
 
             // Refresh the editor after all the initialization is done.
             // We put it in a timeout to ensure the editor has displayed before doing the refresh.
@@ -1583,64 +1584,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 event.stopPropagation();
                 event.preventDefault();
 
-                var initialBody = styleObj.initialBody;
-                var prev;
-
-                if (initialBody) {
-
-                    // Move the cursor between lines when adding line marks.
-                    if (styleObj.line) {
-                        var cm = rte.codeMirror;
-                        var curr = cm.getCursor('from').line;
-                        prev = curr - 1;
-
-                        if (prev < 0 || cm.getLine(prev) !== '') {
-                            cm.replaceRange('\n', { line: curr, ch: 0 }, { line: curr, ch: 0 });
-                            cm.setCursor(curr, 0);
-
-                        } else {
-                            cm.setCursor(prev, 0);
-                        }
-                    }
-
-                    mark = rte.insert(initialBody, item.style);
-
-                    if (mark) {
-
-                        // Make sure that there are blank lines around line
-                        // marks.
-                        if (styleObj.line) {
-                            var from = mark.find().from.line;
-                            prev = from - 1;
-
-                            if (prev < 0 || cm.getLine(prev) !== '') {
-                                cm.replaceRange('\n', { line: from, ch: 0 }, { line: from, ch: 0 });
-                            }
-
-                            var next = mark.find().to.line + 1;
-
-                            if (next >= cm.lineCount() || cm.getLine(next) !== '') {
-                                cm.replaceRange('\n', { line: next, ch: 0 }, { line: next, ch: 0 });
-                            }
-                        }
-
-                        // Set a flag so if the mark is not updated in the popup it can be deleted later
-                        mark.rteMarkInit = true;
-
-                        self.inlineEnhancementHandleClick(event, mark);
-                    }
-
-                } else if (styleObj.toggle) {
-
-                    // Check to see if we need to toggle off
-                    mark = rte.toggleStyle(item.style);
-                    if (mark) {
-                        self.inlineEnhancementHandleClick(event, mark);
-                    }
-
-                } else {
-                    self.inlineEnhancementCreate(event, item.style);
-                }
+                self.inlineEnhancementCreateAndEdit(event, item.style);
 
             } else if (item.style) {
 
@@ -3468,7 +3412,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
         },
 
 
-        inlineEnhancementCreate: function(event, style) {
+        inlineEnhancementCreate: function(event, style, fileData) {
 
             var mark;
             var self;
@@ -3479,12 +3423,84 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             mark = self.rte.setStyle(style);
             if (mark) {
                 mark.rteMarkInit = true;
-                self.inlineEnhancementHandleClick(event, mark);
+                self.inlineEnhancementHandleClick(event, mark, fileData);
             }
 
         },
 
-        inlineEnhancementHandleClick: function(event, mark) {
+        inlineEnhancementCreateAndEdit: function(event, style, fileData) {
+
+            var initialBody;
+            var mark;
+            var prev;
+            var rte;
+            var self;
+            var styleObj;
+
+            self = this;
+            rte = self.rte;
+            styleObj = self.rte.styles[style] || {};
+            initialBody = styleObj.initialBody;
+
+            if (initialBody) {
+
+                // Move the cursor between lines when adding line marks.
+                if (styleObj.line) {
+                    var cm = rte.codeMirror;
+                    var curr = cm.getCursor('from').line;
+                    prev = curr - 1;
+
+                    if (prev < 0 || cm.getLine(prev) !== '') {
+                        cm.replaceRange('\n', { line: curr, ch: 0 }, { line: curr, ch: 0 });
+                        cm.setCursor(curr, 0);
+
+                    } else {
+                        cm.setCursor(prev, 0);
+                    }
+                }
+
+                mark = rte.insert(initialBody, style);
+
+                if (mark) {
+
+                    // Make sure that there are blank lines around line
+                    // marks.
+                    if (styleObj.line) {
+                        var from = mark.find().from.line;
+                        prev = from - 1;
+
+                        if (prev < 0 || cm.getLine(prev) !== '') {
+                            cm.replaceRange('\n', { line: from, ch: 0 }, { line: from, ch: 0 });
+                        }
+
+                        var next = mark.find().to.line + 1;
+
+                        if (next >= cm.lineCount() || cm.getLine(next) !== '') {
+                            cm.replaceRange('\n', { line: next, ch: 0 }, { line: next, ch: 0 });
+                        }
+                    }
+
+                    // Set a flag so if the mark is not updated in the popup it can be deleted later
+                    mark.rteMarkInit = true;
+
+                    self.inlineEnhancementHandleClick(event, mark, fileData);
+                }
+
+            } else if (styleObj.toggle) {
+
+                // Check to see if we need to toggle off
+                mark = rte.toggleStyle(style);
+                if (mark) {
+                    self.inlineEnhancementHandleClick(event, mark, fileData);
+                }
+
+            } else {
+                self.inlineEnhancementCreate(event, style, fileData);
+            }
+        },
+
+
+        inlineEnhancementHandleClick: function(event, mark, fileData) {
 
             var $div;
             var $divForm;
@@ -3528,6 +3544,16 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 window.CONTEXT_PATH + '/content/enhancement.jsp',
                 'typeId', styleObj.enhancementType
             );
+
+            // If fileData was provided (from user drag-and-drop an image file in the RTE for example)
+            // then add the file data to the enhancement URL. The popup form that creates the enhancement
+            // is responsible for using the fileData to create an image object on the backend
+            if (fileData) {
+                enhancementEditUrl = $.addQueryParameters(
+                    enhancementEditUrl,
+                    'imageFile', JSON.stringify(fileData)
+                );
+            }
 
             // Create a link for editing the enhancement and position it at the click event
             frameName = 'rte2-frame-enhancement-inline-' + frameTargetCounter++;
@@ -4668,6 +4694,212 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
 
 
         /*==================================================
+         * Drag and Drop
+         * Allow drag-and-drop files to create image elements.
+         * The actual drag and drop code is found elsewhere, but it should trigger an "rteDrop" event
+         * that the RTE listens for. This event contains a file input with file info.
+         * Then the RTE checks to see if the file is a type that is allowed (see dragDropTypes below).
+         * Then the RTE looks at the configured styles, and tries to find one that contains the rteDrop setting,
+         * which indicates the style is to be used for dropped files.
+         * If a style with rteDrop is found, then the RTE uploads the file via a backend service.
+         * This service returns a javascript object containing file data such as path, etc.
+         * Then the RTE creates the style in the editor, and opens the popup form for that style.
+         * When opening the popup form, the RTE sends the file information to the backend.
+         * It is the responsibility of the backend to actually create the image object
+         * for the image file that was uploaded.
+         *==================================================*/
+
+         /**
+          * Options for configuring drag and drop file upload
+          * Specify the mime types that are allowed to be uploaded.
+          * @type {Object}
+          */
+         dragDropTypes: {
+            // '*': true, // Specify '*' to allow any mime type
+            'image/jpeg': true,
+            'image/jpg': true,
+            'image/png': true,
+            'image/gif': true
+         },
+
+
+        /**
+         * Initialize the drag and drop file listener.
+         */
+        dragDropInit: function() {
+            var self;
+            self = this;
+
+            // TODO: there is a CMS setting "CMS > UI > Enable Front End Uploader"
+            // If this is disabled, then the drag and drop upload should not be disabled.
+            // However currently there is no was on the front-end to determine the state of this settings.
+            // I suggest that the RTE element should be modified to add a parameter like data-richtext-drop-allowed
+            // so that parameter can be checked to enable drag and drop.
+            // if (!self.$el.attr('data-richtext-drop-allowed')) { return; }
+
+            // Make sure a style is defined to accept dropped files
+            if (!self.dragDropGetStyle()) {
+                return;
+            }
+
+            // Add a parameter to the container so the drag-and-drop code
+            // will know a file can be dropped here
+            self.$container.attr('data-rte-drop', '');
+
+            // Listen for the rteDrop event which will contain a file input.
+            // This event is triggered by code outside the RTE
+            self.$container.on('rteDrop', function(event, $input) {
+                event.stopPropagation();
+                event.preventDefault();
+                self.dragDropUpload($input);
+            });
+        },
+
+
+        /**
+         * When a file is dropped on the RTE, upload the file and add an element.
+         * @param  {jQuery} $input
+         * An input type=file element that contains the dropped file info.
+         */
+        dragDropUpload: function($input) {
+            var self;
+            var updog;
+
+            self = this;
+
+            // Make sure this file type is allowed
+            if (!self.dragDropFileTypeAllowed($input)) {
+                alert('Files of this type are not allowed.')
+                return;
+            }
+
+            // Check if there is a style defined for accepting dropped Files
+            if (!self.dragDropGetStyle()) {
+                return;
+            }
+
+            // What's updog? It's the uploader. Refer to bsp-uploader.js
+            updog = Object.create(uploader);
+
+            updog.init($input, {
+              path : window.UPLOAD_PATH
+            });
+
+            updog.before = function() {
+            };
+            updog.beforeEach = function() {
+                // TODO: create progress indicator?
+            };
+            updog.progress = function() {
+                // TODO: update progress indicator?
+            };
+            updog.afterEach = function(request, file, i) {
+                var fileData;
+                // After the upload has completed check if it was successful
+                if (request.status == 200) {
+
+                    // TODO: show progress as completed?
+
+                    // Get the file data as a javascript object
+                    fileData = JSON.parse(request.responseText);
+
+                    // Create an element in the the RTE for the dropped image.
+                    self.dragDropInsertElement(fileData);
+
+                } else {
+                    // Error has occurred uploading the file
+                    alert('Unable to upload the file.');
+                }
+
+            };
+            updog.after = function() {
+            };
+
+            // Trigger change event on the file input to start the upload
+            $input.change();
+        },
+
+
+        /**
+          * Given a file that was dropped, determine if it is an allowed file type.
+          * @param  {jQuery} $input
+          * File input that contains the dropped file info.
+          * @return {Boolean}
+          * Returns true if the file type is allowed.
+          */
+         dragDropFileTypeAllowed: function($input) {
+
+             var allowed;
+             var file;
+             var self;
+
+             self = this;
+
+             file = $input[0].files[0];
+             if (!file) {
+                 return false;
+             }
+
+             allowed = self.dragDropTypes;
+
+             // Make sure we actually got a binary file
+             if (file.kind === 'string') {
+                 return false;
+             }
+
+             // Check if '*' was specified as an allowed type, meaning any file type is allowed
+             if (allowed['*']){
+                 return true;
+             } else {
+                 // Check if this specific file type is allowed
+                 return Boolean(allowed[file.type]);
+             }
+         },
+
+
+        /**
+         * After a file has been uploaded, add an image element to the RTE.
+         * The fileData that was returned from the upload service will be passed to the element popup
+         * to allow the element to create any necessary back-end objects needed for the image.
+         * @param  {Object} fileData
+         * The object returned from the upload service.
+         * @return {[type]}
+         */
+        dragDropInsertElement: function(fileData) {
+            var self;
+            var styleKey;
+            self = this;
+
+            // Determine which style is used for dropped images
+            styleKey = self.dragDropGetStyle();
+            if (!styleKey) { return; }
+            self.inlineEnhancementCreateAndEdit(null, styleKey, fileData);
+        },
+
+
+        /**
+         * Check the RTE styles to find one that is configured for rteDrop:true.
+         * This style will be used to create an element for dragged files.
+         * If no such style is found, returns empty string.
+         * @return {String}
+         * The key for the style that supports dropped files.
+         */
+        dragDropGetStyle: function() {
+            var self;
+            var value;
+            self = this;
+            value = '';
+            $.each(self.rte.styles, function(key, styleObj){
+                if (styleObj.rteDrop) {
+                    value = key;
+                    return false;
+                }
+            });
+            return value;
+        },
+
+
+        /*==================================================
          * Misc
          *==================================================*/
 
@@ -4764,7 +4996,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 keymap: rtElement.keymap,
                 clear: rtElement.clear,
                 toggle: rtElement.toggle,
-                previewable: Boolean(rtElement.previewable)
+                previewable: Boolean(rtElement.previewable),
+                rteDrop: Boolean(rtElement.rteDrop)
             };
         });
     }
@@ -4830,7 +5063,7 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                     }
 
                     var typeId = styleObj.enhancementType;
-                    
+
                     if (mark.rtePreviewKey !== newPreviewKey) {
                         mark.rtePreviewKey = newPreviewKey;
 

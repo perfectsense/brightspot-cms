@@ -494,7 +494,7 @@ function() {
       $body.append($cover);
 
       // Valid file drop zones.
-      $('.inputContainer .action-upload, .uploadable .uploadableLink, .fileSelector').each(function() {
+      $('.inputContainer .action-upload, .uploadable .uploadableLink, .fileSelector, .rte2-wrapper[data-rte-drop]').each(function() {
         var $upload = $(this),
             $container = $upload.closest('.inputContainer, .uploadable'),
             overlayCss,
@@ -505,7 +505,8 @@ function() {
             $fileSelector,
             $fileSelectorSelect,
             $fileSelectorInput,
-            $fileSelectorLabel;
+            $fileSelectorLabel,
+            $rte;
 
         // Only add drag and drop if the element is visible.
         // For example, an element might be hidden in another tab,
@@ -522,6 +523,13 @@ function() {
           $fileSelectorInput = $(this).find('> input[name $= "file.file"]');
           // The existing drag and drop code used a link to display the "Drop Files Here" text,
           // so we'll create a link that can be used
+          $upload = $('<a>', {href: '#'}).on('click', function(){ return false; });
+        }
+
+        if ($(this).is('.rte2-wrapper')) {
+          // The existing drag and drop code used a link to display the "Drop Files Here" text,
+          // so we'll create a link that can be used
+          $rte = $(this);
           $upload = $('<a>', {href: '#'}).on('click', function(){ return false; });
         }
 
@@ -606,6 +614,18 @@ function() {
             setTimeout(function(){
               $fileSelectorInput.change();
             }, 100);
+
+            // Clear the drag and drop regions
+            $cover.trigger('dragleave');
+
+          } else if ($rte) {
+
+            // Trigger a custom event to tell the RTE that a file has been dropped.
+            // As part of the custom event we will pass in a copy of the file input
+            // so the RTE can continue from there.
+            // The RTE is responsible for uploading the file, etc.
+            $rteInput = $fileInput.clone();
+            $rte.trigger('rteDrop', [$rteInput]);
 
             // Clear the drag and drop regions
             $cover.trigger('dragleave');
