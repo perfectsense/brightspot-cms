@@ -397,7 +397,7 @@ public class FileField extends PageServlet {
 
                 page.writeStart("select",
                         "class", "toggleable",
-                        "data-root", ".inputSmall",
+                        "data-root", ".inputContainer",
                         "name", page.h(actionName));
 
                     if (fieldValue != null) {
@@ -472,27 +472,27 @@ public class FileField extends PageServlet {
                     page.writeEnd();
                 }
             page.writeEnd();
-
-            if (fieldValue != null) {
-
-                page.writeStart("div",
-                        "class", "fileSelectorItem fileSelectorExisting filePreview");
-
-                    if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
-
-                        ToolUi ui = field.as(ToolUi.class);
-                        String processorPath = ui.getStoragePreviewProcessorPath();
-                        if (processorPath != null) {
-                            JspUtils.include(request, page.getResponse(), page.getWriter(),
-                                    RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
-                                            + StringUtils.ensureStart(processorPath, "/"));
-                        }
-                    } else {
-                        FileContentType.writeFilePreview(page, state, fieldValue);
-                    }
-                page.writeEnd();
-            }
         page.writeEnd();
+
+        if (fieldValue != null) {
+
+            page.writeStart("div",
+                    "class", "inputLarge fileSelectorItem fileSelectorExisting filePreview");
+
+                if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
+
+                    ToolUi ui = field.as(ToolUi.class);
+                    String processorPath = ui.getStoragePreviewProcessorPath();
+                    if (processorPath != null) {
+                        JspUtils.include(request, page.getResponse(), page.getWriter(),
+                                RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
+                                        + StringUtils.ensureStart(processorPath, "/"));
+                    }
+                } else {
+                    FileContentType.writeFilePreview(page, state, fieldValue);
+                }
+            page.writeEnd();
+        }
 
         if (projectUsingBrightSpotImage) {
             page.include("/WEB-INF/field/set/hotSpot.jsp");
