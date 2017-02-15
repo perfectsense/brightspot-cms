@@ -519,7 +519,7 @@ function() {
           $fileSelector = $(this);
           $fileSelectorSelect = $(this).find('> select[name $= "file.action"]');
           $fileSelectorLabel = $(this).find('> .dropDown-input > .dropDown-label');
-          $fileSelectorInput = $(this).find('> input[name $= "file.file"]');
+          $fileSelectorInput = $(this).find('> .fileSelectorNewUpload input[type="file"]');
           // The existing drag and drop code used a link to display the "Drop Files Here" text,
           // so we'll create a link that can be used
           $upload = $('<a>', {href: '#'}).on('click', function(){ return false; });

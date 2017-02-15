@@ -555,11 +555,12 @@ public class StorageItemField extends PageServlet {
                     }
                 page.writeEnd();
 
-                page.writeTag("input",
-                        "class", "fileSelectorItem fileSelectorNewUpload",
-                        "type", "file",
-                        "name", page.h(fileName),
-                        "data-input-name", inputName);
+                page.writeStart("span", "class", "fileSelectorItem fileSelectorNewUpload");
+                    page.writeElement("input",
+                            "type", "file",
+                            "name", page.h(fileName),
+                            "data-input-name", inputName);
+                page.writeEnd();
 
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUrl",

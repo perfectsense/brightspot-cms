@@ -442,13 +442,14 @@ public class FileField extends PageServlet {
                     }
                 page.writeEnd();
 
-                page.writeTag("input",
-                        "class", "fileSelectorItem fileSelectorNewUpload",
-                        "type", "file",
-                        page.getCmsTool().isEnableFrontEndUploader() ? "data-bsp-uploader" : "", "",
-                        "name", page.h(fileParamName),
-                        "data-input-name", inputName,
-                        "data-type-id", state.getTypeId());
+                page.writeStart("span", "class", "fileSelectorItem fileSelectorNewUpload");
+                    page.writeElement("input",
+                            "type", "file",
+                            page.getCmsTool().isEnableFrontEndUploader() ? "data-bsp-uploader" : "", "",
+                            "name", page.h(fileParamName),
+                            "data-input-name", inputName,
+                            "data-type-id", state.getTypeId());
+                page.writeEnd();
 
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUrl",

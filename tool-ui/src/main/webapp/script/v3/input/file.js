@@ -4,6 +4,38 @@ define([
     'bsp-uploader' ],
 function ($, bsp_utils, uploader) {
 
+  bsp_utils.onDomInsert(document, 'input[type="file"]', {
+    insert: function (input) {
+      var $input = $(input);
+
+      $input.wrap(function () {
+        return $('<label/>', {
+          'class': 'UploadChooser',
+          'data-placeholder': $(this).attr('placeholder')
+        });
+      });
+
+      $input.on('change', function (event) {
+        var $label = $(event.target).closest('label');
+        var files = event.target.files;
+
+        if (files) {
+          var length = files.length;
+
+          if (length === 1) {
+            $label.attr('data-value', files[0].name);
+
+          } else if (length > 1) {
+            $label.attr('data-value', length + ' files');
+
+          } else {
+            $label.removeAttr('data-value');
+          }
+        }
+      });
+    }
+  });
+
   function before() {
     var plugin = this;
     var $input = plugin.el;
