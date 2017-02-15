@@ -60,11 +60,26 @@ function ($, bsp_utils, uploader) {
     }
   }
 
+  function findInputWrapper ($input) {
+    var $small = $input.closest('.inputSmall');
+    var $wrapper = $small.next('.inputLarge');
+
+    if ($wrapper.length === 0) {
+      $wrapper = $('<div/>', {
+        'class': 'inputLarge'
+      });
+
+      $small.after($wrapper);
+    }
+
+    return $wrapper;
+  }
+
   function beforeEach(request, file, i) {
     var plugin = this;
     var $input = plugin.el;
     var file = plugin.files[i];
-    var $inputWrapper = $input.closest('.inputSmall');
+    var $inputWrapper = findInputWrapper($input);
 
     $inputWrapper.append(_createProgressHtml());
     var $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
@@ -80,8 +95,7 @@ function ($, bsp_utils, uploader) {
   function progress(event, i) {
     var plugin = this;
 
-    var prog =  plugin.el
-      .closest('.inputSmall')
+    var prog = findInputWrapper(plugin.el)
       .find('[data-progress]')
       .eq(i);
 
@@ -98,7 +112,7 @@ function ($, bsp_utils, uploader) {
   function afterEach(request, file, i) {
     var plugin = this;
     var $input = plugin.el;
-    var $inputWrapper = $input.closest('.inputSmall');
+    var $inputWrapper = findInputWrapper($input);
 
     if (request.status == 200) {
       $inputWrapper
@@ -127,7 +141,7 @@ function ($, bsp_utils, uploader) {
     var $input, $inputWrapper, inputName, params, $uploadPreview, response;
 
     $input = plugin.el;
-    $inputWrapper = $input.closest('.inputSmall');
+    $inputWrapper = findInputWrapper($input);
     $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
     response = request.responseText;
 
@@ -158,7 +172,9 @@ function ($, bsp_utils, uploader) {
         $uploadPreview.detach();
         var $response = $(htmlResponse);
 
-        $inputWrapper.replaceWith($response);
+        $inputWrapper.after($response);
+        $inputWrapper.prev('.inputSmall').remove();
+        $inputWrapper.remove();
         $response.find('.fileSelectorItem:not(.fileSelectorExisting)').hide();
 
         //// prevents image pop-in
@@ -225,7 +241,7 @@ function ($, bsp_utils, uploader) {
     var $input, $inputWrapper, inputName, params, $uploadPreview, response;
 
     $input = plugin.el;
-    $inputWrapper = $input.closest('.inputSmall');
+    $inputWrapper = findInputWrapper($input);
     $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
     $uploadPreview.addClass('error');
   }
