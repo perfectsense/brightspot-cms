@@ -404,28 +404,30 @@ public class UploadFiles extends PageServlet {
                         }
                     page.writeEnd();
                 page.writeEnd();
-            page.writeEnd();
 
-            for (ObjectType type : types) {
-                String name = "typeForm-" + type.getId();
-                Object common = type.createObject(null);
+                page.writeStart("div", "class", "inputLarge");
+                    for (ObjectType type : types) {
+                        String name = "typeForm-" + type.getId();
+                        Object common = type.createObject(null);
 
-                page.writeStart("div", "class", "typeForm " + name);
-                    page.writeElement("input",
-                            "type", "hidden",
-                            "name", name,
-                            "value", State.getInstance(common).getId());
+                        page.writeStart("div", "class", "typeForm " + name);
+                            page.writeElement("input",
+                                    "type", "hidden",
+                                    "name", name,
+                                    "value", State.getInstance(common).getId());
 
-                    ObjectField previewField = getPreviewField(type);
+                            ObjectField previewField = getPreviewField(type);
 
-                    List<String> excludedFields = null;
-                    if (previewField != null) {
-                        excludedFields = Arrays.asList(previewField.getInternalName());
+                            List<String> excludedFields = null;
+                            if (previewField != null) {
+                                excludedFields = Arrays.asList(previewField.getInternalName());
+                            }
+
+                            page.writeSomeFormFields(common, false, null, excludedFields);
+                        page.writeEnd();
                     }
-
-                    page.writeSomeFormFields(common, false, null, excludedFields);
                 page.writeEnd();
-            }
+            page.writeEnd();
 
             page.writeStart("input", "type", "hidden", "name", "context", "value", page.param(Context.class, "context"));
 
