@@ -36,6 +36,7 @@ $.plugin2('sortable', {
 
         $container.delegate(options.itemSelector, 'mousedown.sortable', function(event) {
             var $target = $(event.target);
+            var $targetContainer = $target.closest('._sortable');
 
             if ($target.closest('._sortable')[0] !== container) {
                 return;
@@ -47,7 +48,7 @@ $.plugin2('sortable', {
             }
 
             // Hack to ignore mousedown firing on a scrollbar in Firefox.
-            if (event.pageX > ($target.offset().left + $target.outerWidth() - 20)) {
+            if (event.pageX > ($targetContainer.offset().left + $targetContainer.outerWidth() - 20)) {
                 return;
             }
 
