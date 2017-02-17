@@ -3181,7 +3181,7 @@ public class ToolPageContext extends WebPageContext {
     public void writeViewHtml(Object object, String viewType) throws IOException {
         Preconditions.checkNotNull(object);
 
-        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(null, viewType, object);
+        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(viewType, object);
 
         Preconditions.checkNotNull(viewModelClass, String.format(
                         "Could not find view model for object of type [%s] and view of type [%s]",
