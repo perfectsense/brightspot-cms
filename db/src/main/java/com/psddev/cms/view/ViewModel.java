@@ -30,6 +30,18 @@ public abstract class ViewModel<M> {
     protected M model;
 
     /**
+     * Called during creation of this view model before {@link #onCreate(ViewResponse)}.
+     * The object is fully initialized at this point so it is safe to utilize
+     * full functionality. The default implementation always returns {@code true}.
+     * Sub-classes may override this method to return {@code false} if the
+     * ViewModel creation should not be completed, causing {@code null} to be
+     * returned from the upstream caller.
+     */
+    protected boolean shouldCreate() {
+        return true;
+    }
+
+    /**
      * Called during creation of this view model. The object is fully initialized
      * at this point so it is safe to utilize full functionality.
      *
@@ -106,6 +118,10 @@ public abstract class ViewModel<M> {
                 viewModel.model = model;
 
                 beforeViewModelOnCreate(viewModel);
+
+                if (!viewModel.shouldCreate()) {
+                    return null;
+                }
 
                 viewModel.onCreate(viewResponse);
 
