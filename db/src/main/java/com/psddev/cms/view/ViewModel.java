@@ -220,30 +220,25 @@ public abstract class ViewModel<M> {
             return null;
         }
 
-        try {
-            LoadingCache<Object, Optional<Class<?>>> viewTypes = VIEW_BINDINGS.get(model.getClass());
+        LoadingCache<Object, Optional<Class<?>>> viewTypes = VIEW_BINDINGS.getUnchecked(model.getClass());
 
-            if (viewTypes != null) {
-                Object viewTypeObject = null;
+        if (viewTypes != null) {
+            Object viewTypeObject = null;
 
-                if (viewClass != null) {
-                    viewTypeObject = viewClass;
+            if (viewClass != null) {
+                viewTypeObject = viewClass;
 
-                } else if (viewType != null) {
-                    viewTypeObject = viewType;
-                }
-
-                if (viewTypeObject != null) {
-                    Optional<Class<?>> viewModelClass = viewTypes.get(viewTypeObject);
-
-                    if (viewModelClass.isPresent()) {
-                        return (Class<? extends ViewModel<? super M>>) viewModelClass.get();
-                    }
-                }
+            } else if (viewType != null) {
+                viewTypeObject = viewType;
             }
 
-        } catch (ExecutionException e) {
-            // ignore
+            if (viewTypeObject != null) {
+                Optional<Class<?>> viewModelClass = viewTypes.getUnchecked(viewTypeObject);
+
+                if (viewModelClass.isPresent()) {
+                    return (Class<? extends ViewModel<? super M>>) viewModelClass.get();
+                }
+            }
         }
 
         return null;
