@@ -1,5 +1,6 @@
 package com.psddev.cms.view;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -250,9 +251,10 @@ public abstract class ViewModel<M> {
             return null;
         }
 
-        // if it's a view model class, with no type specified, then just verify that the model types match.
+        // if it's a concrete view model class, with no type specified, then just verify that the model types match.
         if (viewClass != null && viewType == null
-                && ViewModel.class.isAssignableFrom(viewClass)) {
+                && ViewModel.class.isAssignableFrom(viewClass)
+                && !Modifier.isAbstract(viewClass.getModifiers())) {
 
             Class<?> declaredModelClass = TypeDefinition.getInstance(viewClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
 
