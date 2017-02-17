@@ -3,7 +3,9 @@ package com.psddev.cms.view;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.CodeUtils;
 import com.psddev.dari.util.TypeDefinition;
 
@@ -267,6 +270,83 @@ public abstract class ViewModel<M> {
             } else {
                 return null;
             }
+        }
+
+        // Attempt automatic ViewBinding.
+        Class<?> concreteViewModelClass = null;
+
+        // If it's a class with no type specified, try to find a single
+        // compatible concrete ViewModel class using the following rules,
+        // otherwise, do a lookup of the view bindings.
+        // Rules:
+        // 1. All appropriate view model classes should automatically be bound unless it implements ManualView.
+        // 2. This behavior should only trigger on classes that have no @ViewBinding annotations set on it.
+        // 3. If there are multiple valid view model classes, check their inheritance hierarchy and one that extends the rest should win. If they're not related, it's an error.
+        if (viewClass != null && viewType == null) {
+
+            // Check the model (and its annotatable classes) to make sure they contain no ViewBindings (Rule #2)
+            boolean hasViewBindings = ViewUtils.getAnnotatableClasses(modelClass)
+                    .stream()
+                    .map(klass -> klass.getAnnotationsByType(ViewBinding.class))
+                    .map(Arrays::asList)
+                    .flatMap(Collection::stream)
+                    .findFirst()
+                    .isPresent();
+
+            if (!hasViewBindings) {
+                Set<Class<?>> concreteViewClasses = new HashSet<>(ClassFinder.findConcreteClasses(viewClass));
+
+                // ClassFinder only finds sub-classes, so if the current viewClass is also concrete, add it to the set.
+                if (!viewClass.isInterface() && !Modifier.isAbstract(viewClass.getModifiers())) {
+                    concreteViewClasses.add(viewClass);
+                }
+
+                Set<Class<?>> concreteViewModelClasses = concreteViewClasses
+                        .stream()
+                        // It must be a sub-class of ViewModel
+                        .filter(ViewModel.class::isAssignableFrom)
+                        // It should implement ManualView (Rule #1)
+                        .filter(concreteClass -> !ManualView.class.isAssignableFrom(concreteClass))
+                        // It must have the correct generic type argument for its model
+                        .filter(concreteClass -> {
+                            Class<?> declaredModelClass = TypeDefinition.getInstance(concreteClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
+                            return declaredModelClass != null && declaredModelClass.isAssignableFrom(modelClass);
+                        })
+                        .collect(Collectors.toSet());
+
+                // Eliminate any super classes if there are sub-class / super-class
+                // combinations in the set since the sub-class takes precedence (Rule #3).
+                Set<Class<?>> superClassesToRemove = new HashSet<>();
+
+                for (Class<?> concreteClass : concreteViewModelClasses) {
+
+                    Set<Class<?>> superClasses = new HashSet<>();
+
+                    Class<?> superClass = concreteClass.getSuperclass();
+
+                    while (superClass != null) {
+                        superClasses.add(superClass);
+                        superClass = superClass.getSuperclass();
+                    }
+
+                    superClassesToRemove.addAll(superClasses);
+                }
+
+                concreteViewModelClasses.removeAll(superClassesToRemove);
+
+                // If there is exactly one concrete view model class left, then it is automatically bound.
+                if (concreteViewModelClasses.size() == 1) {
+                    concreteViewModelClass = concreteViewModelClasses.iterator().next();
+                }
+            }
+        }
+
+        // if a single concrete view model class was found, then return.
+        if (concreteViewModelClass != null) {
+
+            @SuppressWarnings("unchecked")
+            Class<? extends ViewModel<?>> viewModelClass = (Class<? extends ViewModel<?>>) concreteViewModelClass;
+            return viewModelClass;
 
         } else { // do a lookup of the view bindings on the model.
 
