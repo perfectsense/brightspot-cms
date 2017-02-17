@@ -33,9 +33,13 @@ public class SearchResultItem {
     }
 
     public void writeBeforeHtml(ToolPageContext page, Search search, Object item) throws IOException {
+        boolean searchCarouselDisplayEnabled = page.getCmsTool().getSearchCarouselDisplay() != SearchCarouselDisplay.DISABLED;
+
         page.writeStart("a",
                 "href", page.objectUrl("/content/edit.jsp", item,
-                        "search", ObjectUtils.toJson(search.getState().getSimpleValues())),
+                        "search", searchCarouselDisplayEnabled
+                                ? ObjectUtils.toJson(search.getState().getSimpleValues())
+                                : null),
                 "data-objectId", State.getInstance(item).getId(),
                 "target", "_top");
     }

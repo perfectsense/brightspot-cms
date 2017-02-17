@@ -62,7 +62,7 @@ public class ProfileTab extends ProfilePanelTab {
                             "class", "icon icon-key",
                             "href", page.cmsUrl("/toolUserTfa"),
                             "target", "toolUserTfa");
-                        page.writeHtml(page.localize(ProfileTab.class, user.isTfaEnabled() ? "action.enableTfa" : "action.disableTfa"));
+                        page.writeHtml(page.localize(ProfileTab.class, user.isTfaEnabled() ? "action.disableTfa" : "action.enableTfa"));
                     page.writeEnd();
                 page.writeEnd();
             page.writeEnd();

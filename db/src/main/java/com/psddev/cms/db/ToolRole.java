@@ -4,6 +4,7 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DashboardContainer;
 import com.psddev.cms.tool.ToolEntityTfaRequired;
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
@@ -12,7 +13,7 @@ import com.psddev.dari.util.SparseSet;
 
 @ToolUi.IconName("object-toolRole")
 @ToolRole.BootstrapPackages({ "Users and Roles", "Application" })
-public class ToolRole extends Record implements ToolEntity {
+public class ToolRole extends Record implements Managed, ToolEntity {
 
     @Indexed(unique = true)
     @Required
@@ -39,7 +40,7 @@ public class ToolRole extends Record implements ToolEntity {
     private CmsTool.CommonContentSettings roleCommonContentSettings;
 
     @ToolUi.Tab("Advanced")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     @ToolUi.Placeholder("Default")
     private ToolEntityTfaRequired tfaRequired;
 
@@ -119,5 +120,10 @@ public class ToolRole extends Record implements ToolEntity {
         } else {
             return ToolEntityTfaRequired.REQUIRED.equals(tfaRequired);
         }
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/users.jsp", "id", getId());
     }
 }

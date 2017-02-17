@@ -2,13 +2,16 @@
 
 com.psddev.cms.db.Content,
 com.psddev.cms.db.ToolUser,
+com.psddev.cms.tool.Tab,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
+com.psddev.dari.util.ClassFinder,
 com.psddev.dari.util.ObjectUtils,
+com.psddev.dari.util.TypeDefinition,
 com.psddev.dari.util.TypeReference,
 
 java.util.ArrayList,
@@ -83,5 +86,13 @@ if (object instanceof Query) {
 
 } else {
     state.setJsonString(wp.param("data", ""));
+}
+
+for (Class<? extends Tab> t : ClassFinder.findConcreteClasses(Tab.class)) {
+    Tab tab = TypeDefinition.getInstance(t).newInstance();
+
+    if (tab.shouldDisplay(object)) {
+        tab.onUpdate(wp, object);
+    }
 }
 %>

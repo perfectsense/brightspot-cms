@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.util.JspUtils;
 import org.joda.time.DateTime;
 import com.psddev.cms.db.Directory;
@@ -194,19 +195,12 @@ public class SearchResultRenderer {
             if (!ObjectUtils.isBlank(taxonParentUuid)) {
 
                 Taxon parent = Query.findById(Taxon.class, taxonParentUuid);
-                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(parent, predicate);
-
-                if (site != null && !ObjectUtils.isBlank(taxonResults)) {
-
-                    Collection<Taxon> siteTaxons = new ArrayList<Taxon>();
-
-                    for (Taxon taxon : taxonResults) {
-                        if (PredicateParser.Static.evaluate(taxon, site.itemsPredicate())) {
-                            siteTaxons.add(taxon);
-                        }
-                    }
-                    taxonResults = siteTaxons;
-                }
+                Predicate filterPredicate = (site != null && predicate != null)
+                        ? CompoundPredicate.combine(PredicateParser.AND_OPERATOR, predicate, site.itemsPredicate())
+                        : site != null ? site.itemsPredicate()
+                        : predicate != null ? predicate
+                        : null;
+                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(parent, filterPredicate);
 
             } else {
                 taxonResults = Taxon.Static.getRoots((Class<Taxon>) taxonType.getObjectClass(), site, predicate);

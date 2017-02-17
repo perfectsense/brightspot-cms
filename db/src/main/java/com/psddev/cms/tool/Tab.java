@@ -30,4 +30,13 @@ public interface Tab {
      * @param content Nonnull.
      */
     void writeHtml(ToolPageContext page, Object content) throws IOException;
+
+    /**
+     * Called when updating the given {@code content}.
+     *
+     * @param page Nonnull.
+     * @param content Nonnull.
+     */
+    default void onUpdate(ToolPageContext page, Object content) {
+    }
 }

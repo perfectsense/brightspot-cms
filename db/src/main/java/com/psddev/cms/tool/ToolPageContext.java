@@ -40,6 +40,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 
 import com.google.common.base.Preconditions;
+import com.psddev.cms.db.ContentTemplate;
+import com.psddev.cms.db.ContentTemplateMappings;
 import com.psddev.cms.db.ElFunctionUtils;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.LocalizationContext;
@@ -153,6 +155,17 @@ public class ToolPageContext extends WebPageContext {
     public static final String HISTORY_ID_PARAMETER = "historyId";
     public static final String VARIATION_ID_PARAMETER = "variationId";
     public static final String RETURN_URL_PARAMETER = "returnUrl";
+
+    public static final String WORKFLOW_ACTION_PARAMETER = "action-workflow";
+    public static final String NEW_DRAFT_ACTION_PARAMETER = "action-newDraft";
+    public static final String DRAFT_ACTION_PARAMETER = "action-draft";
+    public static final String MERGE_ACTION_PARAMETER = "action-merge";
+    public static final String PUBLISH_ACTION_PARAMETER = "action-publish";
+    public static final String DELETE_ACTION_PARAMETER = "action-delete";
+    public static final String TRASH_ACTION_PARAMETER = "action-trash";
+    public static final String RESTORE_ACTION_PARAMETER = "action-restore";
+    public static final String SAVE_ACTION_PARAMETER = "action-save";
+    public static final String UNSCHEDULE_ACTION_PARAMETER = "action-unschedule";
 
     private static final String ATTRIBUTE_PREFIX = ToolPageContext.class.getName() + ".";
     private static final String ERRORS_ATTRIBUTE = ATTRIBUTE_PREFIX + "errors";
@@ -826,7 +839,15 @@ public class ToolPageContext extends WebPageContext {
         }
 
         if (object == null && !ObjectUtils.isBlank(validTypes)) {
-            ObjectType selectedType = ObjectType.getInstance(param(UUID.class, TYPE_ID_PARAMETER));
+            UUID typeId = param(UUID.class, TYPE_ID_PARAMETER);
+            ContentTemplate contentTemplate = Query
+                    .from(ContentTemplate.class)
+                    .where("_id = ?", typeId)
+                    .first();
+
+            ObjectType selectedType = contentTemplate != null
+                    ? contentTemplate.getTemplateType()
+                    : ObjectType.getInstance(typeId);
 
             if (selectedType == null) {
                 for (ObjectType type : validTypes) {
@@ -846,7 +867,37 @@ public class ToolPageContext extends WebPageContext {
                     }
 
                     if (object == null) {
-                        object = selectedType.createObject(objectId);
+                        if (contentTemplate == null) {
+                            ToolUser user = getUser();
+
+                            if (user != null) {
+                                Site site = getSite();
+                                ObjectType finalSelectedType = selectedType;
+
+                                contentTemplate = Stream.of(user, user.getRole(), getCmsTool())
+                                        .filter(Objects::nonNull)
+                                        .flatMap(o -> {
+                                            ContentTemplateMappings mappings = o.as(ContentTemplateMappings.class);
+                                            return Stream.concat(
+                                                    mappings.getSiteSpecificDefaults().stream()
+                                                            .filter(m -> m.getSites().contains(site))
+                                                            .flatMap(m -> m.getContentTemplates().stream()),
+                                                    mappings.getGlobalDefaults().stream());
+                                        })
+                                        .filter(t -> finalSelectedType.equals(t.getTemplateType()))
+                                        .findFirst()
+                                        .orElse(null);
+                            }
+                        }
+
+                        if (contentTemplate != null) {
+                            object = contentTemplate.getTemplate();
+                            State.getInstance(object).setId(param(UUID.class, "id"));
+
+                        } else {
+                            object = selectedType.createObject(objectId);
+                        }
+
                         State.getInstance(object).as(Site.ObjectModification.class).setOwner(getSite());
                     }
                 }
@@ -992,6 +1043,14 @@ public class ToolPageContext extends WebPageContext {
     /** Finds an existing object or reserve one. */
     public Object findOrReserve() {
         UUID selectedTypeId = param(UUID.class, TYPE_ID_PARAMETER);
+        ContentTemplate contentTemplate = Query
+                .from(ContentTemplate.class)
+                .where("_id = ?", selectedTypeId)
+                .first();
+
+        if (contentTemplate != null) {
+            selectedTypeId = contentTemplate.getTemplateType().getId();
+        }
 
         return findOrReserve(selectedTypeId != null
                 ? new UUID[] { selectedTypeId }
@@ -2249,14 +2308,17 @@ public class ToolPageContext extends WebPageContext {
      * @return a new {@code Predicate<ObjectType>}
      */
     public java.util.function.Predicate<ObjectType> createTypeDisplayPredicate(Collection<String> permissions) {
+        return (ObjectType type) -> {
+            Class<?> c = type.getObjectClass();
 
-        return (ObjectType type) ->
-            type.isConcrete()
-                && !Modification.class.isAssignableFrom(type.getObjectClass())
-                && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
-                && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || type.getObjectClass() != null)
-                && !(Draft.class.equals(type.getObjectClass()))
-                && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0));
+            return type.isConcrete()
+                    && (c == null || !Modification.class.isAssignableFrom(c))
+                    && (ObjectUtils.isBlank(permissions) || permissions.stream().allMatch((String permission) -> hasPermission("type/" + type.getId() + "/" + permission)))
+                    && (getCmsTool().isDisplayTypesNotAssociatedWithJavaClasses() || c != null)
+                    && !(Draft.class.equals(type.getObjectClass()))
+                    && (!type.isDeprecated() || Query.fromType(type).hasMoreThan(0))
+                    && !ObjectUtils.to(boolean.class, Localization.currentUserText(type, "hidden", String.valueOf(false)));
+        };
     }
 
     private void writeTypeSelectReally(
@@ -2319,12 +2381,12 @@ public class ToolPageContext extends WebPageContext {
             }
 
             if (typeGroups.size() == 1) {
-                writeTypeSelectGroup(selectedTypes, typeGroups.values().iterator().next());
+                writeTypeSelectGroup(selectedTypes, typeGroups.values().iterator().next(), create);
 
             } else {
                 for (Map.Entry<String, List<ObjectType>> entry : typeGroups.entrySet()) {
                     writeStart("optgroup", "label", entry.getKey());
-                        writeTypeSelectGroup(selectedTypes, entry.getValue());
+                        writeTypeSelectGroup(selectedTypes, entry.getValue(), create);
                     writeEnd();
                 }
             }
@@ -2332,15 +2394,16 @@ public class ToolPageContext extends WebPageContext {
         writeEnd();
     }
 
-    private void writeTypeSelectGroup(Collection<ObjectType> selectedTypes, List<ObjectType> types) throws IOException {
+    private void writeTypeSelectGroup(Collection<ObjectType> selectedTypes, List<ObjectType> types, boolean create) throws IOException {
         String previousLabel = null;
 
-        for (ObjectType type : types) {
-            String label = localize(type, "displayName");
+        for (ObjectTypeOrContentTemplate otct : getObjectTypeOrContentTemplates(types, create)) {
+            ObjectType type = otct.getType();
+            String label = otct.getLabel();
 
             writeStart("option",
                     "selected", selectedTypes.contains(type) ? "selected" : null,
-                    "value", type.getId());
+                    "value", otct.getId());
                 writeHtml(label);
                 if (label.equals(previousLabel)) {
                     writeHtml(" (");
@@ -2452,6 +2515,18 @@ public class ToolPageContext extends WebPageContext {
                 typeIds.setLength(typeIds.length() - 1);
             }
 
+            boolean canEdit = true;
+
+            if (value != null) {
+                ObjectType type = state.getType();
+                canEdit = hasPermission("type/" + type.getId() + "/write")
+                    && !type.as(ToolUi.class).isReadOnly()
+                    && ContentEditable.shouldContentBeEditable(state);
+            }
+
+            String inputSearcherPath = ui.getInputSearcherPath();
+            String dynamicInputSearcherPath = ui.getDynamicInputSearcherPath();
+
             writeElement("input",
                     "type", "text",
                     "class", "objectId",
@@ -2463,10 +2538,12 @@ public class ToolPageContext extends WebPageContext {
                     "data-label-html", value != null ? createObjectLabelHtml(value) : null,
                     "data-pathed", ToolUi.isOnlyPathed(field),
                     "data-preview", getPreviewThumbnailUrl(value),
-                    "data-searcher-path", ui.getInputSearcherPath(),
+                    "data-dynamic-searcher-path", !ObjectUtils.isBlank(dynamicInputSearcherPath) ? dynamicInputSearcherPath : null,
+                    "data-searcher-path", !ObjectUtils.isBlank(inputSearcherPath) ? inputSearcherPath : null,
                     "data-suggestions", ui.isEffectivelySuggestions(),
                     "data-typeIds", typeIds,
                     "data-visibility", value != null ? state.getVisibilityLabel() : null,
+                    "data-read-only", !canEdit,
                     "value", value != null ? state.getId() : null,
                     "placeholder", placeholder,
                     attributes);
@@ -3365,7 +3442,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryDelete(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-delete") == null) {
+                || param(String.class, DELETE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3429,7 +3506,7 @@ public class ToolPageContext extends WebPageContext {
 
     public boolean tryUnschedule(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-unschedule") == null) {
+                || param(String.class, UNSCHEDULE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3542,7 +3619,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryDraft(Object object) {
         if (!isFormPost()
-                || (param(String.class, "action-draft") == null
+                || (param(String.class, DRAFT_ACTION_PARAMETER) == null
                 && param(String.class, "action-draftAndReturn") == null)) {
             return false;
         }
@@ -3632,7 +3709,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryNewDraft(Object object) {
         if (!isFormPost()
-                || (param(String.class, "action-newDraft") == null
+                || (param(String.class, NEW_DRAFT_ACTION_PARAMETER) == null
                 && param(String.class, "action-newDraftAndReturn") == null)) {
             return false;
         }
@@ -3676,7 +3753,8 @@ public class ToolPageContext extends WebPageContext {
                     getResponse().sendRedirect(url("",
                             "editAnyway", null,
                             ToolPageContext.DRAFT_ID_PARAMETER, draft.getId(),
-                            ToolPageContext.HISTORY_ID_PARAMETER, null));
+                            ToolPageContext.HISTORY_ID_PARAMETER, null,
+                            "_frame", param(boolean.class, "_frame") ? Boolean.TRUE : null));
                 }
             }
 
@@ -3701,7 +3779,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryPublish(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-publish") == null) {
+                || param(String.class, PUBLISH_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3934,7 +4012,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryRestore(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-restore") == null) {
+                || param(String.class, RESTORE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -3970,7 +4048,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean trySave(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-save") == null) {
+                || param(String.class, SAVE_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -4022,7 +4100,7 @@ public class ToolPageContext extends WebPageContext {
      */
     public boolean tryTrash(Object object) {
         if (!isFormPost()
-                || param(String.class, "action-trash") == null) {
+                || param(String.class, TRASH_ACTION_PARAMETER) == null) {
             return false;
         }
 
@@ -4052,7 +4130,7 @@ public class ToolPageContext extends WebPageContext {
             return false;
         }
 
-        String action = param(String.class, "action-merge");
+        String action = param(String.class, MERGE_ACTION_PARAMETER);
 
         if (ObjectUtils.isBlank(action)) {
             return false;
@@ -4111,7 +4189,7 @@ public class ToolPageContext extends WebPageContext {
             return false;
         }
 
-        String action = param(String.class, "action-workflow");
+        String action = param(String.class, WORKFLOW_ACTION_PARAMETER);
 
         if (ObjectUtils.isBlank(action)) {
             return false;
@@ -4178,6 +4256,40 @@ public class ToolPageContext extends WebPageContext {
         } finally {
             state.endWrites();
         }
+    }
+
+    public List<ObjectTypeOrContentTemplate> getObjectTypeOrContentTemplates(Collection<ObjectType> types, boolean includeContentTemplates) {
+        List<ObjectTypeOrContentTemplate> otcts = new ArrayList<>();
+
+        types.stream()
+                .map(ObjectTypeOrContentTemplate::new)
+                .forEach(otcts::add);
+
+        if (includeContentTemplates) {
+            ToolUser user = getUser();
+
+            if (user != null) {
+                Site site = getSite();
+
+                Stream.of(user, user.getRole(), getCmsTool())
+                        .filter(Objects::nonNull)
+                        .flatMap(o -> {
+                            ContentTemplateMappings mappings = o.as(ContentTemplateMappings.class);
+                            return Stream.concat(
+                                    mappings.getSiteSpecificExtras().stream()
+                                            .filter(m -> m.getSites().contains(site))
+                                            .flatMap(m -> m.getContentTemplates().stream()),
+                                    mappings.getGlobalExtras().stream());
+                        })
+                        .filter(t -> types.contains(t.getTemplateType()))
+                        .distinct()
+                        .forEach(t -> otcts.add(new ObjectTypeOrContentTemplate(t)));
+
+                Collections.sort(otcts);
+            }
+        }
+
+        return otcts;
     }
 
     // --- AuthenticationFilter bridge ---

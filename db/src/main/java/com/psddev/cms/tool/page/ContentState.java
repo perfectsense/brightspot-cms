@@ -341,6 +341,7 @@ public class ContentState extends PageServlet {
         // Evaluate all dynamic texts.
         List<String> dynamicTexts = new ArrayList<String>();
         List<String> dynamicPredicates = new ArrayList<>();
+        List<String> dynamicSearcherPaths = new ArrayList<>();
         JspFactory jspFactory = JspFactory.getDefaultFactory();
         PageContext pageContext = jspFactory.getPageContext(this, page.getRequest(), page.getResponse(), null, false, 0, false);
 
@@ -352,6 +353,7 @@ public class ContentState extends PageServlet {
             List<String> templates = page.params(String.class, "_dtt");
             List<String> contentFieldNames = page.params(String.class, "_dtf");
             List<String> predicates = page.params(String.class, "_dtq");
+            List<String> searcherPaths = page.params(String.class, "_dts");
             int contentFieldNamesSize = contentFieldNames.size();
 
             for (int i = 0, size = templates.size(); i < size; ++ i) {
@@ -372,6 +374,7 @@ public class ContentState extends PageServlet {
 
                 String dynamicText = "";
                 String dynamicPredicate = "";
+                String dynamicSearcherPath = "";
 
                 if (content != null) {
 
@@ -402,6 +405,32 @@ public class ContentState extends PageServlet {
                     }
 
                     try {
+                        pageContext.setAttribute("toolPageContext", page);
+                        pageContext.setAttribute("content", content);
+
+                        ObjectField field = null;
+
+                        String contentFieldName = i < contentFieldNamesSize ? contentFieldNames.get(i) : null;
+                        if (contentFieldName != null) {
+                            field = State.getInstance(content).getField(contentFieldName);
+                        }
+                        pageContext.setAttribute("field", field);
+
+                        dynamicSearcherPath = ((String) expressionFactory.createValueExpression(elContext, searcherPaths.get(i), String.class).getValue(elContext));
+
+                    } catch (RuntimeException error) {
+                        if (Settings.isProduction()) {
+                            LOGGER.warn("Could not generate dynamic text!", error);
+
+                        } else {
+                            StringWriter string = new StringWriter();
+
+                            error.printStackTrace(new PrintWriter(string));
+                            dynamicText = string.toString();
+                        }
+                    }
+
+                    try {
 
                         if (!ObjectUtils.isBlank(predicates.get(i))) {
                             dynamicPredicate = PredicateParser.Static.parse(predicates.get(i), content).toString();
@@ -415,6 +444,7 @@ public class ContentState extends PageServlet {
 
                 dynamicTexts.add(dynamicText);
                 dynamicPredicates.add(dynamicPredicate);
+                dynamicSearcherPaths.add(dynamicSearcherPath);
             }
 
         } finally {
@@ -423,6 +453,7 @@ public class ContentState extends PageServlet {
 
         jsonResponse.put("_dynamicTexts", dynamicTexts);
         jsonResponse.put("_dynamicPredicates", dynamicPredicates);
+        jsonResponse.put("_dynamicSearcherPaths", dynamicSearcherPaths);
 
         // Write the JSON response.
         HttpServletResponse response = page.getResponse();

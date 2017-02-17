@@ -65,6 +65,7 @@ public class ToolUi extends Modification<Object> {
     private String inputProcessorApplication;
     private String inputProcessorPath;
     private String inputSearcherPath;
+    private String dynamicInputSearcherPath;
     private String storagePreviewProcessorApplication;
     private String storagePreviewProcessorPath;
     private String languageTag;
@@ -96,6 +97,7 @@ public class ToolUi extends Modification<Object> {
     private String tab;
     private String storageSetting;
     private String defaultSortField;
+    private Boolean unlabeled;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -427,6 +429,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setInputSearcherPath(String inputSearcherPath) {
         this.inputSearcherPath = inputSearcherPath;
+    }
+
+    public String getDynamicInputSearcherPath() {
+        return dynamicInputSearcherPath;
+    }
+
+    public void setDynamicInputSearcherPath(String dynamicInputSearcherPath) {
+        this.dynamicInputSearcherPath = dynamicInputSearcherPath;
     }
 
     public String getStoragePreviewProcessorPath() {
@@ -761,6 +771,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setMain(boolean main) {
         this.main = main;
+    }
+
+    public boolean isUnlabeled() {
+        return Boolean.TRUE.equals(unlabeled);
+    }
+
+    public void setUnlabeled(boolean unlabeled) {
+        this.unlabeled = unlabeled ? Boolean.TRUE : null;
     }
 
     /**
@@ -1341,13 +1359,16 @@ public class ToolUi extends Modification<Object> {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface InputSearcherPath {
-        String value();
+        String value() default "";
+        String dynamicPath() default "";
     }
 
     private static class InputSearcherPathProcessor implements ObjectField.AnnotationProcessor<InputSearcherPath> {
         @Override
         public void process(ObjectType type, ObjectField field, InputSearcherPath annotation) {
-            field.as(ToolUi.class).setInputSearcherPath(annotation.value());
+            ToolUi fieldMod = field.as(ToolUi.class);
+            fieldMod.setInputSearcherPath(annotation.value());
+            fieldMod.setDynamicInputSearcherPath(annotation.dynamicPath());
         }
     }
 
@@ -1853,6 +1874,24 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, Tab annotation) {
             field.as(ToolUi.class).setTab(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the field should be labeled or not.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(UnlabeledProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.METHOD })
+    public @interface Unlabeled {
+        boolean value() default true;
+    }
+
+    private static class UnlabeledProcessor implements ObjectField.AnnotationProcessor<Unlabeled> {
+        @Override
+        public void process(ObjectType type, ObjectField field, Unlabeled annotation) {
+            field.as(ToolUi.class).setUnlabeled(annotation.value());
         }
     }
 

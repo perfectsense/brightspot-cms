@@ -55,7 +55,7 @@ public interface ViewRenderer {
         }
 
         if (view instanceof ViewMap) {
-            view = ((ViewMap) view).getView();
+            view = ((ViewMap) view).toView();
         }
 
         // we expect a list of size 1
@@ -154,7 +154,7 @@ public interface ViewRenderer {
                         }
 
                         if (view instanceof ViewMap) {
-                            view = ((ViewMap) view).getView();
+                            view = ((ViewMap) view).toView();
                         }
 
                         if (!(view instanceof ViewModel)) {

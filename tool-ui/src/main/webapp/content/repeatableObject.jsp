@@ -1,9 +1,13 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.ContentTemplate,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectType,
-com.psddev.dari.db.State
+com.psddev.dari.db.Query,
+com.psddev.dari.db.State,
+
+java.util.UUID
 " %><%
 
 // --- Logic ---
@@ -14,9 +18,26 @@ if (wp.requireUser()) {
 }
 
 String inputName = wp.param("inputName");
-ObjectType type = ObjectType.getInstance(wp.uuidParam("typeId"));
-Object object = type.createObject(null);
+
+ObjectType type;
+Object object;
+UUID typeId = wp.param(UUID.class, "typeId");
+ContentTemplate template = Query.from(ContentTemplate.class)
+        .where("_id = ?", typeId)
+        .first();
+
+if (template != null) {
+    type = template.getTemplateType();
+    object = template.getTemplate();
+
+} else {
+    type = ObjectType.getInstance(typeId);
+    object = type.createObject(null);
+}
+
 State objectState = State.getInstance(object);
+
+objectState.setId(null);
 
 // --- Presentation ---
 

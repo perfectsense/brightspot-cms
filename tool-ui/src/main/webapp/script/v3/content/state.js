@@ -47,7 +47,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             '[data-dynamic-text]:not([data-dynamic-text=""]),' +
             '[data-dynamic-html]:not([data-dynamic-html=""]),' +
             '[data-dynamic-placeholder]:not([data-dynamic-placeholder=""]),' +
-            '[data-dynamic-predicate]:not([data-dynamic-predicate=""])');
+            '[data-dynamic-predicate]:not([data-dynamic-predicate=""]),' +
+            '[data-dynamic-searcher-path]:not([data-dynamic-searcher-path=""])');
 
         $dynamicTexts = $dynamicTexts.filter(function() {
           return $(this).closest('.collapsed').length === 0
@@ -84,7 +85,8 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 $element.attr('data-dynamic-placeholder') ||
                 '')) +
                   '&_dtf=' + encodeURIComponent($element.attr('data-dynamic-field-name') || '') +
-                  '&_dtq=' + encodeURIComponent($element.attr('data-dynamic-predicate') || '');
+                  '&_dtq=' + encodeURIComponent($element.attr('data-dynamic-predicate') || '') +
+                  '&_dts=' + encodeURIComponent($element.attr('data-dynamic-searcher-path')) || '';
           }).get().join(''),
 
           'success': function(data) {
@@ -120,7 +122,9 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             $dynamicTexts.each(function(index) {
               var $element = $(this),
                   text = data._dynamicTexts[index],
-                  dynamicPredicate = data._dynamicPredicates[index];
+                  dynamicPredicate = data._dynamicPredicates[index],
+                  dynamicSearcherPath = data._dynamicSearcherPaths[index],
+                  refreshObjectId = false;
 
               if ($element.attr('data-placeholder-clear-on-change') === 'true') {
                 var oldClearKey = $element.attr('data-old-clear-key');
@@ -145,9 +149,19 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 }
               }
 
+              if ($element.is('[data-dynamic-searcher-path]')) {
+
+                $element.attr('data-searcher-path', dynamicSearcherPath);
+                refreshObjectId = true;
+              }
+
               if ($element.is('[data-dynamic-predicate]')) {
 
                 $element.attr('data-additional-query', dynamicPredicate);
+                refreshObjectId = true;
+              }
+
+              if (refreshObjectId) {
                 $element.trigger('refresh.objectId');
               }
 
