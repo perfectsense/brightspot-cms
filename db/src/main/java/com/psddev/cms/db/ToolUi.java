@@ -8,6 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -1779,7 +1780,7 @@ public class ToolUi extends Modification<Object> {
         public void process(ObjectType type, ObjectField field, Sortable annotation) {
             ToolUi ui = field.as(ToolUi.class);
             ui.setSortable(annotation.value());
-            Collections.addAll(ui.getSortOperators(), annotation.sortOperators());
+            ui.setSortOperators(new LinkedHashSet<>(Arrays.asList(annotation.sortOperators())));
         }
     }
 
