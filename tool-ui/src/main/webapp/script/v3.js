@@ -963,6 +963,16 @@ function() {
         $('.toolSearch :text').focus();
         return false;
       });
+
+      bsp_utils.onDomInsert(document, '.toolSearch :text', {
+        insert: function (input) {
+          var $input = $(input);
+
+          if ($input.is(':focus')) {
+            $input.focus();
+          }
+        }
+      });
     }());
   });
 });
