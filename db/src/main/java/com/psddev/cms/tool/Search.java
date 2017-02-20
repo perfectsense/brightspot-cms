@@ -68,6 +68,8 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Search extends Record {
 
@@ -103,6 +105,8 @@ public class Search extends Record {
     public static final String RELEVANT_SORT_VALUE = "_relevant";
 
     public static final double RELEVANT_SORT_LABEL_BOOST = 10.0;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
 
     private static final String ASCENDING_SORT_VALUE_SUFFIX = "/sa";
     private static final String DESCENDING_SORT_VALUE_SUFFIX = "/sd";
@@ -525,13 +529,8 @@ public class Search extends Record {
             sorts.put(RELEVANT_SORT_VALUE, RELEVANT_SORT_LABEL);
         }
 
-        try {
-            addSorts(sorts, selectedType);
-            addSorts(sorts, Database.Static.getDefault().getEnvironment());
-
-        } catch (IOException error) {
-            // Ignore.
-        }
+        addSorts(sorts, selectedType);
+        addSorts(sorts, Database.Static.getDefault().getEnvironment());
 
         List<Map.Entry<String, String>> sortsList = new ArrayList<Map.Entry<String, String>>(sorts.entrySet());
 
@@ -553,7 +552,7 @@ public class Search extends Record {
     }
 
     // Adds and localizes sorts.
-    private void addSorts(Map<String, String> sorts, ObjectStruct struct) throws IOException {
+    private void addSorts(Map<String, String> sorts, ObjectStruct struct) {
         if (struct != null) {
             for (ObjectField field : ObjectStruct.Static.findIndexedFields(struct)) {
                 ToolUi ui = field.as(ToolUi.class);
@@ -563,27 +562,31 @@ public class Search extends Record {
                     Map<String, Object> label = ImmutableMap.of("label", Localization.currentUserText(field, "field." + internalName));
                     Set<String> sortOperators = ui.getSortOperators();
 
-                    // Natural sort order if there are no sort operators OR if neither
-                    // ascending/descending sort operators are present.
-                    if (sortOperators.isEmpty()
-                            || (!sortOperators.contains(Sorter.ASCENDING_OPERATOR)
-                            && !sortOperators.contains(Sorter.DESCENDING_OPERATOR))) {
+                    try {
+                        // Natural sort order if there are no sort operators OR if neither
+                        // ascending/descending sort operators are present.
+                        if (sortOperators.isEmpty()
+                                || (!sortOperators.contains(Sorter.ASCENDING_OPERATOR)
+                                && !sortOperators.contains(Sorter.DESCENDING_OPERATOR))) {
 
-                        sorts.put(internalName, page.localize(AbstractSearchResultView.class, label, "option.sort"));
+                            sorts.put(internalName, page.localize(AbstractSearchResultView.class, label, "option.sort"));
 
-                    } else {
+                        } else {
+                            if (sortOperators.contains(Sorter.ASCENDING_OPERATOR)) {
+                                sorts.put(
+                                        internalName + ASCENDING_SORT_VALUE_SUFFIX,
+                                        page.localize(AbstractSearchResultView.class, label, "option.sortAscending"));
+                            }
 
-                        if (sortOperators.contains(Sorter.ASCENDING_OPERATOR)) {
-                            sorts.put(
-                                    internalName + ASCENDING_SORT_VALUE_SUFFIX,
-                                    page.localize(AbstractSearchResultView.class, label, "option.sortAscending"));
+                            if (sortOperators.contains(Sorter.DESCENDING_OPERATOR)) {
+                                sorts.put(
+                                        internalName + DESCENDING_SORT_VALUE_SUFFIX,
+                                        page.localize(AbstractSearchResultView.class, label, "option.sortDescending"));
+                            }
                         }
 
-                        if (sortOperators.contains(Sorter.DESCENDING_OPERATOR)) {
-                            sorts.put(
-                                    internalName + DESCENDING_SORT_VALUE_SUFFIX,
-                                    page.localize(AbstractSearchResultView.class, label, "option.sortDescending"));
-                        }
+                    } catch (IOException error) {
+                        LOGGER.error("Unable to localize sorts!", error);
                     }
                 }
             }
