@@ -1068,6 +1068,7 @@ public class Search extends Record {
 
         if (!isIgnoreSite()
                 && (selectedType == null || !selectedType.getGroups().contains(Global.class.getName()))
+                && types.stream().anyMatch(t -> !t.getGroups().contains(Global.class.getName()))
                 && site != null
                 && !site.isAllSitesAccessible()) {
             Set<ObjectType> globalTypes = new HashSet<ObjectType>();
