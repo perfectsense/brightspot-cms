@@ -69,12 +69,12 @@ public class SearchResultRenderer {
         ToolUi ui = selectedType == null ? null : selectedType.as(ToolUi.class);
         PaginatedResult<?> result = null;
 
-        if (search.getEffectiveSort() == null) {
+        if (search.getSort() == null) {
             if (ui != null && ui.getDefaultSortField() != null) {
-                search.setSorts(ui.getDefaultSortField());
+                search.setSort(ui.getDefaultSortField());
 
             } else if (!ObjectUtils.isBlank(search.getQueryString())) {
-                search.setSorts(Search.RELEVANT_SORT_VALUE);
+                search.setSort(Search.RELEVANT_SORT_VALUE);
 
             } else {
                 Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
@@ -82,10 +82,10 @@ public class SearchResultRenderer {
                 if (f != null
                         && (f.get("") != null
                         || f.get("x") != null)) {
-                    search.setSorts("cms.content.publishDate");
+                    search.setSort("cms.content.publishDate");
 
                 } else {
-                    search.setSorts("cms.content.updateDate");
+                    search.setSort("cms.content.updateDate");
                 }
             }
         }
@@ -97,7 +97,7 @@ public class SearchResultRenderer {
         Exception queryError = null;
 
         if (selectedType != null) {
-            this.sortField = selectedType.getFieldGlobally(search.getEffectiveSort());
+            this.sortField = selectedType.getFieldGlobally(search.getSort());
             this.showTypeLabel = selectedType.as(ToolUi.class).findDisplayTypes().size() != 1;
 
             if (ObjectType.getInstance(ObjectType.class).equals(selectedType)) {
@@ -120,7 +120,7 @@ public class SearchResultRenderer {
             }
 
         } else {
-            this.sortField = Database.Static.getDefault().getEnvironment().getField(search.getEffectiveSort());
+            this.sortField = Database.Static.getDefault().getEnvironment().getField(search.getSort());
             this.showTypeLabel = search.findValidTypes().size() != 1;
         }
 
@@ -335,7 +335,7 @@ public class SearchResultRenderer {
 
                     page.writeStart("option",
                             "value", value,
-                            "selected", value.equals(search.getSort()) ? "selected" : null);
+                            "selected", value.equals(search.getFullyQualifiedSort()) ? "selected" : null);
                         page.writeHtml(label);
                     page.writeEnd();
                 }

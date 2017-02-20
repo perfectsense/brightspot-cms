@@ -105,12 +105,12 @@ public abstract class AbstractSearchResultView implements SearchResultView {
         ObjectType selectedType = search.getSelectedType();
         ToolUi ui = selectedType == null ? null : selectedType.as(ToolUi.class);
 
-        if (search.getEffectiveSort() == null) {
+        if (search.getSort() == null) {
             if (ui != null && ui.getDefaultSortField() != null) {
-                search.setSorts(ui.getDefaultSortField());
+                search.setSort(ui.getDefaultSortField());
 
             } else if (!ObjectUtils.isBlank(search.getQueryString())) {
-                search.setSorts(Search.RELEVANT_SORT_VALUE);
+                search.setSort(Search.RELEVANT_SORT_VALUE);
 
             } else {
                 Map<String, String> f = search.getFieldFilters().get("cms.content.publishDate");
@@ -118,19 +118,19 @@ public abstract class AbstractSearchResultView implements SearchResultView {
                 if (f != null
                         && (f.get("") != null
                         || f.get("x") != null)) {
-                    search.setSorts("cms.content.publishDate");
+                    search.setSort("cms.content.publishDate");
 
                 } else {
-                    search.setSorts("cms.content.updateDate");
+                    search.setSort("cms.content.updateDate");
                 }
             }
         }
 
         if (selectedType != null) {
-            return selectedType.getFieldGlobally(search.getEffectiveSort());
+            return selectedType.getFieldGlobally(search.getSort());
 
         } else {
-            return Database.Static.getDefault().getEnvironment().getField(search.getEffectiveSort());
+            return Database.Static.getDefault().getEnvironment().getField(search.getSort());
         }
     }
 
@@ -164,7 +164,7 @@ public abstract class AbstractSearchResultView implements SearchResultView {
 
                         page.writeStart("option",
                                 "value", value,
-                                "selected", value.equals(search.getSort()) ? "selected" : null);
+                                "selected", value.equals(search.getFullyQualifiedSort()) ? "selected" : null);
                             page.writeHtml(label);
                         page.writeEnd();
                     }
