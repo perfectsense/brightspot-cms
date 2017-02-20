@@ -976,22 +976,36 @@ public class ToolUi extends Modification<Object> {
     }
 
     /**
-     * Specifies the CSS class to add to {@code .inputContainer} when
-     * displaying the target field.
+     * Specifies the CSS class to add to the HTML element that represents the
+     * target type or field.
+     *
+     * <p>If the annotation is on a type, the CSS class is added to the
+     * {@code .objectInputs} element.</p>
+     *
+     * <p>If the annotation is on a field, the CSS class is added to the
+     * {@code .inputContainer} element.</p>
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(CssClassProcessor.class)
+    @ObjectType.AnnotationProcessorClass(CssClassProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.FIELD, ElementType.METHOD })
+    @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.TYPE })
     public @interface CssClass {
         String value();
     }
 
-    private static class CssClassProcessor implements ObjectField.AnnotationProcessor<CssClass> {
+    private static class CssClassProcessor implements
+            ObjectField.AnnotationProcessor<CssClass>,
+            ObjectType.AnnotationProcessor<CssClass> {
 
         @Override
         public void process(ObjectType type, ObjectField field, CssClass annotation) {
             field.as(ToolUi.class).setCssClass(annotation.value());
+        }
+
+        @Override
+        public void process(ObjectType type, CssClass annotation) {
+            type.as(ToolUi.class).setCssClass(annotation.value());
         }
     }
 

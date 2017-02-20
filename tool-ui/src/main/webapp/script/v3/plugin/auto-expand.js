@@ -113,7 +113,7 @@
 
         'expand': function(inputs) {
             var plugin = this;
-            var $inputs = $(inputs);
+            var $inputs = $(inputs).filter(':visible');
             var shadows = [ ];
 
             $inputs.each(function() {

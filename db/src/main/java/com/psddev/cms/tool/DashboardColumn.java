@@ -3,11 +3,13 @@ package com.psddev.cms.tool;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.psddev.cms.db.ToolUi;
 import com.psddev.dari.db.Record;
 
 @DashboardColumn.Embedded
 public class DashboardColumn extends Record {
 
+    @ToolUi.CollectionItemWeight
     private double width;
 
     @Embedded

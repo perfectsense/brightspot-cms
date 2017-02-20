@@ -75,6 +75,7 @@ require([
   'jquery.toggleable',
   'nv.d3',
 
+  'v3/Dropbox',
   'v3/EditFieldUpdate',
         
   'v3/dashboard',
@@ -118,7 +119,7 @@ function() {
   bsp_autoSubmit.live(document, '.autoSubmit');
 
   $doc.calendar('live', ':text.date');
-  $doc.dropDown('live', 'select[multiple], select[data-searchable="true"]');
+  $doc.dropDown('live', 'select');
   $doc.editablePlaceholder('live', ':input[data-editable-placeholder]');
 
   bsp_utils.onDomInsert(document, '.ExternalPreviewFrame', {
@@ -384,22 +385,32 @@ function() {
 
     // For new rich text editor, special handling for the word count.
     // Note this counts only the text content not the final output which includes extra HTML elements.
-    $doc.on('rteChange', $.throttle(1000, function(event, rte) {
+    var rteWordCountInterval;
 
-        var $input, $container, html, $html, text;
+    function rteWordCount(rte) {
+      var $input, $container, html, $html, text;
 
-        $input = rte.$el;
-        $container = $input.closest('.rte2-wrapper').find('> .rte2-toolbar');
+      $input = rte.$el;
+      $container = $input.closest('.rte2-wrapper').find('> .rte2-toolbar');
 
-        html = rte.toHTML();
-        $html = $(new DOMParser().parseFromString(html, "text/html").body);
-        $html.find('del,.rte-comment').remove();
-        $html.find('br,p,div,ul,ol,li').after('\n');
-        text = $html.text();
+      html = rte.toHTML();
+      $html = $(new DOMParser().parseFromString(html, "text/html").body);
+      $html.find('del,.rte-comment').remove();
+      $html.find('br,p,div,ul,ol,li').after('\n');
+      text = $html.text();
 
-        updateWordCount($container, $input, text);
+      updateWordCount($container, $input, text);
+    }
 
-    }));
+    $doc.on('rteChange', function (event, rte) {
+      if (rteWordCountInterval) {
+        clearInterval(rteWordCountInterval);
+      }
+
+      rteWordCountInterval = setTimeout(function () {
+        rteWordCount(rte);
+      }, 1000);
+    });
 
   })();
 

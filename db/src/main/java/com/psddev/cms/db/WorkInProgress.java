@@ -21,6 +21,8 @@ public class WorkInProgress extends Record {
 
     private String contentLabel;
 
+    private Date createDate;
+
     @Indexed
     private Date updateDate;
 
@@ -56,6 +58,14 @@ public class WorkInProgress extends Record {
 
     public void setContentLabel(String contentLabel) {
         this.contentLabel = contentLabel;
+    }
+
+    public Date getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(Date createDate) {
+        this.createDate = createDate;
     }
 
     public Date getUpdateDate() {

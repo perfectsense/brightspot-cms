@@ -21,6 +21,7 @@ public class JspWidget extends Widget {
     private static final String WIDGET_ATTRIBUTE = ATTRIBUTE_PREFIX + "widget";
 
     private String jsp;
+    private boolean displayInNonPublishable;
 
     /**
      * Returns {@code true} if a widget is processing within the given
@@ -56,7 +57,20 @@ public class JspWidget extends Widget {
         this.jsp = jsp;
     }
 
+    public boolean isDisplayInNonPublishable() {
+        return displayInNonPublishable;
+    }
+
+    public void setDisplayInNonPublishable(boolean displayInNonPublishable) {
+        this.displayInNonPublishable = displayInNonPublishable;
+    }
+
     // --- Widget support ---
+
+    @Override
+    public boolean shouldDisplayInNonPublishable() {
+        return isDisplayInNonPublishable();
+    }
 
     @SuppressWarnings("deprecation")
     private String findApplicationJsp() {

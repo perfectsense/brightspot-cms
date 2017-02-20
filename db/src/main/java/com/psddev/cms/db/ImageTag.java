@@ -1005,29 +1005,19 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                         if (originalWidth != null && originalHeight != null) {
 
-                            if (isPaddedCrop) {
-                                crop = getPaddedCrop(crop);
-                            }
-
                             // Handles standard image size with height or width of 0
                             if (height == null && width != null) {
                                 height = (int) (width / (originalCrop.getWidth() / originalCrop.getHeight()));
                             } else if (width == null && height != null) {
                                 width = (int) (height * (originalCrop.getWidth() / originalCrop.getHeight()));
                             }
-
-                            if (isPaddedCrop && height != null && width != null) {
-                                height = (int) ((double) height * crop.getHeight() / originalCrop.getHeight());
-                                width = (int) ((double) width * crop.getWidth() / originalCrop.getWidth());
-                            }
-
                         }
                     }
                     // END LOGIC TO DETERMINE DISPLAY SIZE
 
                     String overlayCss = "#" + id + "{display:inline-block;overflow:hidden;position:relative;width:" + width + "px;height:" + height + "px;}";
 
-                    if (isPaddedCrop(crop)) {
+                    if (isPaddedCrop) {
 
                         crop = getPaddedCrop(crop);
 

@@ -8,8 +8,7 @@ com.psddev.dari.db.Query,
 com.psddev.dari.util.ObjectUtils,
 com.psddev.dari.util.PaginatedResult,
 
-java.util.Iterator,
-java.util.List
+java.util.stream.Collectors
 " %><%
 
 // --- Logic ---
@@ -28,7 +27,7 @@ if (selected instanceof ToolUser) {
 Query<ToolUser> query = Query.from(ToolUser.class).where("name isnt missing").and("cms.content.trashed = true || cms.content.trashed is missing").sortAscending("cms.content.trashed").sortAscending("name");
 String queryString = wp.param("query");
 if (!ObjectUtils.isBlank(queryString)) {
-    query.where("name contains ? or email contains ?", queryString, queryString);
+    query.where("name contains ? or email contains ? or username contains ?", queryString, queryString, queryString);
 }
 
 long offset = wp.longParam("offset", 0L);
@@ -53,7 +52,7 @@ PaginatedResult<ToolUser> users = query.select(offset, wp.intParam("limit", 10))
     </ul>
 
     <ul class="links">
-        <% for (ToolUser user : users.getItems()) { %>
+        <% for (ToolUser user : users.getItems().stream().distinct().collect(Collectors.toList())) { %>
             <li<%= user.equals(selectedUser) ? " class=\"selected\"" : "" %>>
                 <a href="<%= wp.objectUrl("/admin/users.jsp", user,
                         "query", queryString,

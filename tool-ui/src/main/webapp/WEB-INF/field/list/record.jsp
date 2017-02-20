@@ -556,6 +556,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 if (!isValueExternal) {
     Set<ObjectType> bulkUploadTypes = new HashSet<ObjectType>();
     Map<ObjectType, String> weightedTypesAndFieldsMap = new CompactMap<ObjectType, String>();
+    Map<ObjectType, Double> weightedTypesAndTotalsMap = new CompactMap<ObjectType, Double>();
     Map<ObjectType, String> toggleTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, String> progressTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, String> weightMarkersTypesAndFieldsMap = new CompactMap<ObjectType, String>();
@@ -632,6 +633,18 @@ if (!isValueExternal) {
             for (Object item : fieldValue) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
+                String weightFieldName = weightedTypesAndFieldsMap.get(itemType);
+
+                if (!StringUtils.isBlank(weightFieldName)) {
+                    double weight = ObjectUtils.to(double.class, itemState.get(weightFieldName));
+                    Double total = weightedTypesAndTotalsMap.get(itemType);
+                    weightedTypesAndTotalsMap.put(itemType, (total != null ? total : 0.0) + weight);
+                }
+            }
+
+            for (Object item : fieldValue) {
+                State itemState = State.getInstance(item);
+                ObjectType itemType = itemState.getType();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
                 boolean expanded = field.as(ToolUi.class).isExpanded()
@@ -642,6 +655,9 @@ if (!isValueExternal) {
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
                 String weightFieldName = weightedTypesAndFieldsMap.get(itemType);
                 String weightMarkersFieldName = weightMarkersTypesAndFieldsMap.get(itemType);
+
+                Double weight = !StringUtils.isBlank(weightFieldName) ? ObjectUtils.to(double.class, itemState.get(weightFieldName)) : null;
+                Double total = weightedTypesAndTotalsMap.get(itemType);
 
                 wp.writeStart("li",
                         "class", expanded ? "expanded" : null,
@@ -661,7 +677,7 @@ if (!isValueExternal) {
                         "data-weight-markers-field", !StringUtils.isBlank(weightMarkersFieldName) ? weightMarkersFieldName : null,
                         "data-progress-field-value", !StringUtils.isBlank(progressFieldName) ? ObjectUtils.to(int.class, ObjectUtils.to(double.class, itemState.get(progressFieldName)) * 100) : null,
                         "data-toggle-field-value", !StringUtils.isBlank(toggleFieldName) ? ObjectUtils.to(boolean.class, itemState.get(toggleFieldName)) : null,
-                        "data-weight-field-value", !StringUtils.isBlank(weightFieldName) ? ObjectUtils.to(double.class, itemState.get(weightFieldName)) : null,
+                        "data-weight-field-value", weight != null ? (total != null ? weight / total : weight) : null,
                         "data-weight-markers-field-value", !StringUtils.isBlank(weightMarkersFieldName) ? ObjectUtils.to(new TypeReference<List<Double>>() {}, itemState.get(weightMarkersFieldName)) : null
                 );
 
@@ -818,10 +834,15 @@ if (!isValueExternal) {
         writer.end();
 
         if (displayGrid && !field.as(ToolUi.class).isReadOnly()) {
+
+            String uploadFilesPath = wp.getCmsTool().isEnableFrontEndUploader()
+                    ? "/content/upload"
+                    : "/content/uploadFiles";
+
             writer.start("a",
                     "class", "action-upload",
                     "href", wp.url(
-                            "/content/uploadFiles?" + typeIdsQuery,
+                            uploadFilesPath + "?" + typeIdsQuery,
                             "containerId", containerObjectId,
                             "context", UploadFiles.Context.FIELD),
                     "target", "uploadFiles");

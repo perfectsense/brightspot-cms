@@ -22,6 +22,12 @@
     <difference>
         <className>com/psddev/cms/tool/SearchResultAction</className>
         <differenceType>7012</differenceType>
+        <method>java.lang.String getGroup()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/tool/SearchResultAction</className>
+        <differenceType>7012</differenceType>
         <method>int getPosition()</method>
     </difference>
 

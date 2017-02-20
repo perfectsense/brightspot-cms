@@ -1,4 +1,4 @@
-define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
+define([ 'jquery', 'bsp-utils', 'diff', 'v3/RecalculateDimensions' ], function($, bsp_utils, JsDiff, RecalculateDimensions) {
   bsp_utils.onDomInsert(document, '.contentDiff', {
     'insert': function(container) {
       var $container = $(container);
@@ -40,19 +40,21 @@ define([ 'jquery', 'bsp-utils', 'diff' ], function($, bsp_utils, JsDiff) {
         var $both = $left.add($right);
 
         $both.find('.inputContainer').css('height', '');
+        RecalculateDimensions.trigger($container);
       });
 
       $container.bind('contentDiff-sideBySide', function() {
         $container.removeClass('contentDiff-edit').addClass('contentDiff-sideBySide');
         $tabs.find('li').removeClass('state-selected');
         $tabSideBySide.addClass('state-selected');
-        $container.resize();
+        RecalculateDimensions.trigger($container);
       });
 
       var equalizeHeights = $.throttle(100, function() {
-        $container.find('.contentDiffLeft .inputContainer').each(function() {
+        var $contentDiffRightContainers = $container.find('.contentDiffRight .inputContainer');
+        $container.find('.contentDiffLeft .inputContainer').not('.contentDiffSame').each(function() {
           var $leftInput = $(this);
-          var $rightInput = $container.find('.contentDiffRight .inputContainer[data-name="' + $leftInput.attr('data-name') + '"]');
+          var $rightInput = $contentDiffRightContainers.filter('[data-name="' + $leftInput.attr('data-name') + '"]');
           var $bothInputs = $leftInput.add($rightInput);
 
           $bothInputs.css('height', '');

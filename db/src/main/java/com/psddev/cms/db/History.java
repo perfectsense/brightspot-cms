@@ -150,7 +150,7 @@ public class History extends Record {
         }
 
         if (updateDate != null) {
-            label.append(updateDate);
+            label.append(Localization.currentUserDate(updateDate.getTime(), Localization.DATE_AND_TIME_SKELETON));
         }
 
         if (updateUser != null) {

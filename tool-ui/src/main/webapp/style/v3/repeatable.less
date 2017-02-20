@@ -1055,18 +1055,24 @@
 }
 
 .repeatableLabel-progress {
-    
-    position: absolute;
-    top: 10px;
-    right: 175px;
-    
+  font-size: 10px;
+  position: absolute;
+  right: 50px;
+  text-transform: uppercase;
+  top: 2px;
+
+  [data-toggle-field-value] > & {
+    right: 105px;
+  }
+
   .repeatableLabel-progressLabel {
-      display: block;
-      text-align: center;
+    display: block;
+    text-align: center;
   }
     
   .repeatableLabel-progressBar {
-    height: 4px;
+    border-radius: 3px;
+    height: 6px;
     width: 180px;
     background: @color-border;
 
@@ -1080,15 +1086,6 @@
 .repeatableForm-alt {
 
   > ol > li {
-    > .repeatableLabel {
-      background: white;
-      border-bottom: 1px solid @color-border;
-      padding: 12px 120px 12px 45px;
-    }
-    > .removeButton {
-      top: 10px;
-    }
-    
     &[data-progress-field-value] > .repeatableLabel {
       padding-right: 368px;
     }
@@ -1098,18 +1095,25 @@
         background: @color-heading;
       }
 
-      .repeatableLabel-color {
-        visibility: hidden;
+      .repeatableLabel-color:before {
+        background: @color-border;
+        border-radius: 10px;
+        content: '';
+        display: block;
+        height: 100%;
+        width: 100%;
       }
 
       .repeatableLabel-weightLabel:after {
-        content: "-%";
+        content: "0%";
         min-width: 18px;
       }
     }
 
     &.toBeRemoved {
-      .repeatableLabel-toggleLabel, .repeatableLabel-progress {
+      .repeatableLabel-weightLabel,
+      .repeatableLabel-toggleLabel,
+      .repeatableLabel-progress {
         display: none;
       }
     }
@@ -1120,18 +1124,19 @@
 
   > ol > li {
     > .repeatableLabel {
-      padding-left: 120px;
+      padding-left: 90px;
     }
   }
     
   .repeatableForm-itemWeights {
+    border-radius: 2px;
     width: 100%;
     height: 30px;
     margin-bottom: 10px;
     display: flex;
     max-width: 100%;
     overflow: hidden;
-    
+
     &:empty {
       display: none;
     }
@@ -1141,7 +1146,7 @@
     height: 100%;
     position: relative;
     
-    &:after {
+    &:not(:first-child):after {
         content: ' ';
         height: 100%;
         display:inline-block;
@@ -1155,21 +1160,32 @@
   }
 
   .repeatableLabel-weightLabel {
+    height: 20px;
+    left: 30px;
+    line-height: 20px;
+    pointer-events: none;
     position: absolute;
-    top: 12px;
-    left: 48px;
+    top: 5px;
+    width: 45px;
     z-index: 1;
     
     &:after {
+      color: white;
       content: attr(data-weight-label);
       font-weight: bold;
-      top: 2px;
+      height: 100%;
+      left: 0;
+      padding-right: 5px;
       position: absolute;
-      margin-left: 10px;
+      text-align: right;
+      top: 0;
+      width: 100%;
+      z-index: 1;
     }
   }
   
   .repeatableForm-itemWeightHandle {
+    border-radius: 2px;
     position: absolute;
     left: -7px;
     z-index: 2;
@@ -1181,34 +1197,26 @@
     background: white;
     padding: 1px;
     cursor: col-resize;
-    
-    &:before, &:after {
-      color: @color-border;
-      display:inline-block;
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-    
-    &:before {
-      content: '|';
-      width: 14px;
-      text-align: center;
-    }
+
     &:after {
-      width: 16px; 
-      content: '||';
+      bottom: 5px;
+      border-color: @color-overlay;
+      border-style: solid;
+      border-width: 0 1px;
+      content: '';
+      left: 5px;
+      position: absolute;
+      right: 5px;
+      top: 5px;
     }
   }
 
   .repeatableLabel-color {
-    display: inline-block;
-    height: 20px;
-    width: 20px;
+    border-radius: 10px;
+    display: block;
+    height: 100%;
+    width: 100%;
   }
-    
 }
 
 .repeatableLabel-toggle {
@@ -1220,17 +1228,17 @@
   
   + .repeatableLabel-toggleLabel {
     position: absolute;
-    top: 8px;
-    right: 42px;
+    top: 5px;
+    right: 45px;
       
     outline: 0;
     display: block;
-    width: 4em;
-    height: 2em;
+    width: 35px;
+    height: 20px;
     cursor: pointer;
     user-select: none;
     background: @color-border;
-    border-radius: 2em;
+    border-radius: 10px;
     padding: 2px;
     transition: all .4s ease;
      
@@ -1240,8 +1248,8 @@
       border-radius: 50%;
       background: #fff;
       transition: all .2s ease;
-      width: 22px;
-      height: 22px;
+      width: 16px;
+      height: 16px;
       display: block;
     }
   }
@@ -1251,7 +1259,7 @@
       background: @color-publish;
       
       &:after {
-        margin-left: 26px;   
+        margin-left: 15px;
       }
     }
   }

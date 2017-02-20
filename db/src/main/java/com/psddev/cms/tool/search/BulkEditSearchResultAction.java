@@ -19,6 +19,11 @@ import com.psddev.dari.util.UrlBuilder;
 public class BulkEditSearchResultAction implements SearchResultAction {
 
     @Override
+    public String getGroup() {
+        return "Bulk";
+    }
+
+    @Override
     public void writeHtml(
             ToolPageContext page,
             Search search,

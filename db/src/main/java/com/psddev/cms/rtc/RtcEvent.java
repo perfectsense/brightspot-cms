@@ -19,7 +19,6 @@ public interface RtcEvent extends Recordable {
     class Data extends Modification<RtcEvent> {
 
         @Indexed
-        @Required
         private UUID sessionId;
 
         public UUID getSessionId() {

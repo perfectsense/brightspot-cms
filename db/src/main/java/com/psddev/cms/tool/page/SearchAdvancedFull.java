@@ -32,8 +32,11 @@ public class SearchAdvancedFull extends PageServlet {
                         page,
                         page.toolPath(CmsTool.class, "/WEB-INF/search.jsp"),
                         "name", "fullScreen",
+                        "newJsp", "/content/edit.jsp",
+                        "newTarget", "_top",
                         "resultJsp", StringUtils.addQueryParameters("/misc/searchResult.jsp",
-                                Search.IGNORE_SITE_PARAMETER, page.getRequest().getParameter(Search.IGNORE_SITE_PARAMETER)));
+                                Search.IGNORE_SITE_PARAMETER, page.getRequest().getParameter(Search.IGNORE_SITE_PARAMETER),
+                                Search.FRAME_NAME_SUFFIX_PARAMETER, Search.generateFrameNameSuffix()));
             page.writeEnd();
         page.writeFooter();
     }

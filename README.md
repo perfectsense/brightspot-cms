@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/perfectsense/brightspot-cms.svg)](https://travis-ci.org/perfectsense/brightspot-cms)
+
 Welcome to Brightspot
 =========================
 

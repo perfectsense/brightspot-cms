@@ -1,10 +1,14 @@
 define({
   
   generateFromHue: function(hue) {
-    return 'hsl(' + (hue * 360) + ', 50%, 50%)';
+    return 'hsl(' + (hue * 360) + ', 70.1%, 54.1%)';
   },
   
   changeHue: function(hue) {
+    if (!hue) {
+      return 0.5396341463414634;
+    }
+
     var GOLDEN_RATIO = 0.618033988749895;
     hue += GOLDEN_RATIO;
     hue %= 1.0;

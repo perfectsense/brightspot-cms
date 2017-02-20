@@ -31,7 +31,7 @@ public class ToolUserSaveSelection extends PageServlet {
         SearchResultSelection selection = (SearchResultSelection) Query.fromAll().where("_id = ?", selectionId).first();
 
         if (selection == null) {
-            throw new IllegalArgumentException("Could not find a SearchResultSelection for selectionId " + selectionId);
+            throw new IllegalArgumentException("Could not find a Collection/SearchResultSelection for selectionId " + selectionId);
         }
 
         if (page.isFormPost()) {

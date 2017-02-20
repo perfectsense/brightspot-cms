@@ -321,8 +321,20 @@ public class Workflow extends Record {
         @ToolUi.Hidden
         private String currentState;
 
+        @Embedded
+        @ToolUi.Hidden
+        private WorkflowLog currentLog;
+
         public String getCurrentState() {
             return currentState;
+        }
+
+        public WorkflowLog getCurrentLog() {
+            return currentLog;
+        }
+
+        public void setCurrentLog(WorkflowLog currentLog) {
+            this.currentLog = currentLog;
         }
 
         /**

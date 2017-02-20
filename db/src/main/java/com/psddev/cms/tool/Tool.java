@@ -159,12 +159,24 @@ public abstract class Tool extends Application {
         return widget;
     }
 
+    protected JspWidget createJspWidget(String displayName, String internalName, String jsp, boolean displayInNonPublishable, String positionName, double positionColumn, double positionRow) {
+        JspWidget widget = createJspWidget(displayName, internalName, jsp, positionName, positionColumn, positionRow);
+        widget.setDisplayInNonPublishable(displayInNonPublishable);
+        return widget;
+    }
+
     protected PageWidget createPageWidget(String displayName, String internalName, String path, String positionName, double positionColumn, double positionRow) {
         PageWidget widget = new PageWidget();
         widget.setDisplayName(displayName);
         widget.setInternalName(internalName);
         widget.setPath(path);
         widget.addPosition(positionName, positionColumn, positionRow);
+        return widget;
+    }
+
+    protected PageWidget createPageWidget(String displayName, String internalName, String path, boolean displayInNonPublishable, String positionName, double positionColumn, double positionRow) {
+        PageWidget widget = createPageWidget(displayName, internalName, path, positionName, positionColumn, positionRow);
+        widget.setDisplayInNonPublishable(displayInNonPublishable);
         return widget;
     }
 

@@ -3,7 +3,6 @@ package com.psddev.cms.view;
 import com.psddev.cms.db.PageFilter;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.State;
-import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
@@ -56,7 +55,7 @@ public interface ViewRenderer {
         }
 
         if (view instanceof ViewMap) {
-            view = ((ViewMap) view).getView();
+            view = ((ViewMap) view).toView();
         }
 
         // we expect a list of size 1
@@ -155,7 +154,7 @@ public interface ViewRenderer {
                         }
 
                         if (view instanceof ViewMap) {
-                            view = ((ViewMap) view).getView();
+                            view = ((ViewMap) view).toView();
                         }
 
                         if (!(view instanceof ViewModel)) {
@@ -190,11 +189,9 @@ public interface ViewRenderer {
 
                             String viewOutput = viewOutputSupplier.get().get();
 
-                            return () -> "<!--brightspot.object-begin "
-                                    + ObjectUtils.toJson(map)
-                                    + "-->"
-                                    + viewOutput
-                                    + "<!--brightspot.object-end-->";
+                            return () -> PageFilter.createMarkerHtml("BrightspotCmsObjectBegin", map)
+                                    + (viewOutput != null ? viewOutput : "")
+                                    + PageFilter.createMarkerHtml("BrightspotCmsObjectEnd", null);
 
                         } finally {
                             PageFilter.Static.popObject(request);

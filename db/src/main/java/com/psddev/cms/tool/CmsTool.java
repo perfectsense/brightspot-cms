@@ -74,7 +74,7 @@ public class CmsTool extends Tool {
     private List<CommonTime> commonTimes;
 
     @ToolUi.Tab("Defaults")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     private boolean tfaRequired;
 
     @DisplayName("Default Dashboard")
@@ -174,6 +174,9 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean alwaysGeneratePermalinks;
+
+    @ToolUi.Tab("Debug")
+    private boolean disableEditFieldUpdateCache;
 
     @ToolUi.Tab("Debug")
     private List<DariSetting> dariSettings;
@@ -803,6 +806,14 @@ public class CmsTool extends Tool {
         this.alwaysGeneratePermalinks = alwaysGeneratePermalinks;
     }
 
+    public boolean isDisableEditFieldUpdateCache() {
+        return disableEditFieldUpdateCache;
+    }
+
+    public void setDisableEditFieldUpdateCache(boolean disableEditFieldUpdateCache) {
+        this.disableEditFieldUpdateCache = disableEditFieldUpdateCache;
+    }
+
     public List<DariSetting> getDariSettings() {
         if (dariSettings == null) {
             dariSettings = new ArrayList<DariSetting>();
@@ -997,9 +1008,9 @@ public class CmsTool extends Tool {
         }
 
         plugins.add(template = createJspWidget("Template", "template", "/WEB-INF/widget/template.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-        plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
+        plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
         plugins.add(new ContentRevisions());
-        plugins.add(createPageWidget("References", "references", "/content/references", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
+        plugins.add(createPageWidget("References", "references", "/content/references", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
 
         urls.getUpdateDependencies().add(template);
 

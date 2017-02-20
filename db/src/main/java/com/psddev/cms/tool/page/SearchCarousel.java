@@ -1,7 +1,6 @@
 package com.psddev.cms.tool.page;
 
 import com.psddev.cms.db.Site;
-import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
@@ -39,7 +38,14 @@ public class SearchCarousel extends PageServlet {
             search.setOffset(searchOffset);
         }
 
-        PaginatedResult<?> result = search.toQuery(page.getSite()).select(search.getOffset(), search.getLimit());
+        Query<?> searchQuery = search.toQuery(page.getSite());
+
+        UUID currentDraftId = page.param(UUID.class, "draftId");
+        if (currentDraftId != null) {
+            searchQuery.and("id != ?", currentDraftId);
+        }
+
+        PaginatedResult<?> result = searchQuery.select(search.getOffset(), search.getLimit());
 
         List<Object> items = new ArrayList<>();
 
@@ -51,7 +57,13 @@ public class SearchCarousel extends PageServlet {
         boolean included = true;
 
         if (searchOffset == null) { // only splice in the current object if this is the initial page and the current object isn't in the result list
-            Object currentContent = currentContentId == null ? null : Query.fromAll().where("id = ?", currentContentId).first();
+            Object currentContent = null;
+
+            if (currentDraftId != null) {
+                currentContent = Query.fromAll().where("id = ?", currentDraftId).first();
+            } else if (currentContentId != null) {
+                currentContent = Query.fromAll().where("id = ?", currentContentId).first();
+            }
 
             if (currentContent != null && !items.contains(currentContent)) {
                 included = false;
@@ -71,17 +83,19 @@ public class SearchCarousel extends PageServlet {
             for (Object item : items) {
                 State itemState = State.getInstance(item);
                 UUID itemId = itemState.getId();
+
                 StorageItem itemPreview = item instanceof SearchCarouselPreviewable
                         ? ((SearchCarouselPreviewable) item).getSearchCarouselPreview()
                         : itemState.getPreview();
 
+                boolean selected = itemId.equals(currentContentId) || itemId.equals(currentDraftId);
+
                 page.writeStart("a",
-                        "class", (itemId.equals(currentContentId) ? "widget-searchCarousel-item-selected" + (included ? "" : " notIncluded") : null),
+                        "class", (selected ? "widget-searchCarousel-item-selected" + (included ? "" : " notIncluded") : null),
                         "data-objectId", itemState.getId(),
                         "target", "_top",
-                        "href", page.toolUrl(CmsTool.class, "/content/edit.jsp",
-                                "id", itemState.getId(),
-                                "search", ObjectUtils.toJson(search.getState().getSimpleValues())));
+                        "href", page.objectUrl("/content/edit.jsp", item,
+                                                "search", selected ? null : ObjectUtils.toJson(search.getState().getSimpleValues())));
 
                     boolean itemPreviewImage = false;
 

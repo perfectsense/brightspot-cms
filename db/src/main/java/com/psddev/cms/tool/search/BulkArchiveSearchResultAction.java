@@ -12,6 +12,11 @@ import java.io.IOException;
 public class BulkArchiveSearchResultAction implements SearchResultAction {
 
     @Override
+    public String getGroup() {
+        return "Bulk";
+    }
+
+    @Override
     public int getPosition() {
         return Integer.MAX_VALUE;
     }

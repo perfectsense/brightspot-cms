@@ -17,6 +17,8 @@ public class RtcSession extends Record {
     @Indexed
     private long lastPing;
 
+    private boolean closed;
+
     public UUID getUserId() {
         return userId;
     }
@@ -31,6 +33,14 @@ public class RtcSession extends Record {
 
     public void setLastPing(long lastPing) {
         this.lastPing = lastPing;
+    }
+
+    public boolean isClosed() {
+        return closed;
+    }
+
+    public void setClosed(boolean closed) {
+        this.closed = closed;
     }
 
     public void disconnect() {
@@ -54,12 +64,15 @@ public class RtcSession extends Record {
         database.beginWrites();
 
         try {
-            delete();
+            setClosed(true);
+            save();
             events.forEach(e -> e.getState().delete());
             database.commitWrites();
 
         } finally {
             database.endWrites();
         }
+
+        delete();
     }
 }

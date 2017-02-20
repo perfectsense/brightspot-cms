@@ -1,0 +1,116 @@
+.InlineEditorMainObject {
+    background: fade(#20343f, 80%);
+    color: white;
+    display: flex;
+    left: 0;
+    position: fixed;
+    top: 0;
+
+    .link {
+        color: #54d1f0;
+        display: inline-block;
+        padding: 5px;
+
+        &:hover {
+            background: #54d1f0;
+            color: black;
+            text-decoration: none;
+        }
+
+        &.InlineEditorMainObject-logo {
+            background: transparent;
+            padding-left: 10px;
+        }
+
+        &.InlineEditorMainObject-close {
+            color: @color-remove;
+            margin-right: 0;
+            padding: 5px 8px;
+            width: 28px;
+        }
+    }
+
+    &-logo {
+        img {
+            display: block;
+            margin-top: 2px;
+        }
+    }
+
+    &-edit {
+        .icon;
+        .icon-action-edit;
+    }
+
+    &-close {
+        .icon;
+        .icon-action-remove;
+        .icon-only;
+    }
+}
+
+.InlineEditorControls {
+    background: fade(#20343f, 80%);
+    color: white;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+
+    li {
+        float: left;
+        padding: 5px;
+
+        &.InlineEditorLogo {
+            padding: 8px 10px;
+
+            .link:hover {
+                background: transparent;
+            }
+
+            img {
+                display: block;
+            }
+        }
+    }
+
+    .link {
+        color: #54d1f0;
+        display: block;
+        margin: -5px;
+        padding: 5px;
+        position: relative;
+    }
+
+    &.InlineEditorControls-main {
+        left: 0;
+        top: 0;
+        z-index: 1;
+    }
+
+    &.InlineEditorControls-main .link:hover,
+    &.InlineEditorControls-hover {
+        background: #54d1f0;
+
+        &, & .link {
+            color: black;
+            text-decoration: none;
+        }
+    }
+
+    &.InlineEditorControls-under {
+        opacity: 0.5;
+    }
+}
+
+.InlineEditorOutline {
+    display: none;
+    left: 0;
+    outline: 5px solid #54d1f0;
+    position: absolute;
+    top: 0;
+
+    .InlineEditorControls-hover & {
+        display: block;
+    }
+}

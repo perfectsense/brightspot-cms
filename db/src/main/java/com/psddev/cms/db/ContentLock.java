@@ -106,22 +106,15 @@ public class ContentLock extends Record {
                         .noCache()
                         .first();
 
-                Object owner = null;
-                boolean isArchived = false;
-
                 if (lock != null) {
-                    owner = lock.getOwner();
-                    isArchived = State.getInstance(owner).as(Content.ObjectModification.class).isTrash();
+                    Object owner = lock.getOwner();
 
-                    // Owner exists.
-                    if (owner != null && !isArchived) {
+                    // Unlock if owner doesn't exist or is archived
+                    if (owner == null || State.getInstance(owner).as(Content.ObjectModification.class).isTrash()) {
+                        unlock(content, null, owner);
+                    } else {
                         return lock;
                     }
-                }
-
-                // Owner is archived.
-                if (owner != null && isArchived) {
-                    unlock(content, null, owner);
                 }
 
                 lock = new ContentLock();
