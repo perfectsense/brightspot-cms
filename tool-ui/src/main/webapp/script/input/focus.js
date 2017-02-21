@@ -11,7 +11,9 @@ function($, bsp_utils) {
         'insert': function(input) {
             var $input = $(input);
 
-            if ($input.closest('.dashboard-widget').length > 0) {
+            if ($input.closest('.dashboard-widget').length > 0
+                || $input.closest('.widget-queryField').length > 0) {
+
                 return;
             }
 
