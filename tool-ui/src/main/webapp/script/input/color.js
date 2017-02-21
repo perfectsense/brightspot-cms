@@ -4,6 +4,38 @@ define([
     'spectrum' ],
 
 function($, bsp_utils) {
+    function setColorAttribute($replacer, color) {
+        var $preview = $replacer.find('.sp-preview');
+        var $color = $preview.find('> .ColorPreviewColor');
+
+        if ($color.length === 0) {
+            $color = $('<div/>', {
+                'class': 'ColorPreviewColor'
+            });
+
+            $preview.append($color);
+        }
+
+        if (color) {
+            $preview.attr('data-color', color);
+            $color.show();
+            $color.css('background-color', color);
+
+        } else {
+            $preview.removeAttr('data-color');
+            $color.hide();
+        }
+    }
+
+    bsp_utils.onDomInsert(document, '.sp-replacer', {
+        insert: function (replacer) {
+            var $replacer = $(replacer);
+            var $input = $replacer.prev(':text.color');
+
+            setColorAttribute($replacer, $input.val());
+        }
+    });
+
     bsp_utils.onDomInsert(document, ':text.color', {
         'insert': function(input) {
             var $input = $(input);
@@ -58,28 +90,7 @@ function($, bsp_utils) {
                 },
 
                 'change': function (color) {
-                    var $input = $(this);
-                    var $replacer = $input.next('.sp-replacer');
-                    var $preview = $replacer.find('.sp-preview');
-                    var $color = $preview.find('> .ColorPreviewColor');
-
-                    if ($color.length === 0) {
-                        $color = $('<div/>', {
-                            'class': 'ColorPreviewColor'
-                        });
-
-                        $preview.append($color);
-                    }
-
-                    if (color) {
-                        $preview.attr('data-color', color);
-                        $color.show();
-                        $color.css('background-color', color);
-
-                    } else {
-                        $preview.removeAttr('data-color');
-                        $color.hide();
-                    }
+                    setColorAttribute($(this).next('.sp-replacer'), color);
                 }
             });
 
