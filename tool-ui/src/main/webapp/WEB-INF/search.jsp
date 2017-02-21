@@ -1,6 +1,7 @@
 <%@ page session="false" import="
 
 com.psddev.cms.db.Content,
+com.psddev.cms.db.Localization,
 com.psddev.cms.db.Managed,
 com.psddev.cms.db.Template,
 com.psddev.cms.db.ToolUi,
@@ -410,7 +411,7 @@ writer.start("div", "class", "searchForm");
                                         "type", "text",
                                         "class", "color",
                                         "name", Search.COLOR_PARAMETER,
-                                        "placeholder", "Color",
+                                        "placeholder", Localization.currentUserText(Search.class, "placeholder.color"),
                                         "value", search.getColor());
                             writer.writeEnd();
                         }
