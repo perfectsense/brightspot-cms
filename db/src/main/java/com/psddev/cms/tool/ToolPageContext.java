@@ -2376,7 +2376,7 @@ public class ToolPageContext extends WebPageContext {
             String label = otct.getLabel();
 
             writeStart("option",
-                    "selected", selectedTypes.contains(type) ? "selected" : null,
+                    "selected", selectedTypes.contains(type) && otct.getTemplate() == null ? "selected" : null,
                     "value", otct.getId());
                 writeHtml(label);
                 if (label.equals(previousLabel)) {
