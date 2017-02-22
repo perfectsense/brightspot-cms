@@ -1789,7 +1789,8 @@ public class PageFilter extends AbstractFilter {
          * @param request Can't be {@code null}.
          */
         public static boolean isPreview(HttpServletRequest request) {
-            return Boolean.TRUE.equals(request.getAttribute(PREVIEW_ATTRIBUTE));
+            return Boolean.TRUE.equals(request.getAttribute(PREVIEW_ATTRIBUTE))
+                    || getPath(request).startsWith("/_preview");
         }
 
         /** Returns the main object associated with the given {@code request}. */
