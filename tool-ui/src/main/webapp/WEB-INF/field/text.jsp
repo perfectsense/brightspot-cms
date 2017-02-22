@@ -1,5 +1,6 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.Localization,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.page.content.Edit,
@@ -79,7 +80,11 @@ if (validValues != null) {
             "type", "text",
             "class", "color",
             "name", inputName,
-            "placeholder", placeholder,
+            "placeholder", ObjectUtils.firstNonBlank(
+                    placeholder,
+                    Localization.currentUserText(
+                            "com.psddev.cms.tool.page.content.field.TextField",
+                            "placeholder.noColor")),
             "value", fieldValue);
 
 } else if (ui.isSecret()) {
