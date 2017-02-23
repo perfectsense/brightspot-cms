@@ -80,10 +80,26 @@ define([
 
                 self.tabsInit();
 
-                self.focusInit();
+                // Extract all the info about sizes from the DOM
+                // After this self.sizeInfos and self.sizeGroups should be available
+                self.sizesGetSizeInfo();
+
+                var hasSizes = Object.keys(self.sizeInfos).length > 0;
+
+                if (hasSizes) {
+                    self.focusInit();
+                }
+
                 self.editInit();
-                self.sizesInit();
-                self.textInit();
+
+                if (hasSizes) {
+                    self.sizesInit();
+                    self.textInit();
+
+                } else {
+                    self.$element.find('.imageEditor-image').hide();
+                }
+
                 self.hotspotInit();
 
                 // Process all current adjustments on the image
@@ -201,6 +217,10 @@ define([
             var self;
 
             self = this;
+
+            if (self.dom.tabs.length < 2) {
+                return;
+            }
 
             // Now add all the tabs to the main element
             $.each(self.dom.tabs, function(){
@@ -1140,10 +1160,6 @@ define([
 
             // Set up the "cover" divs that mask off the cropped areas of the image
             self.coverInit();
-
-            // Extract all the info about sizes from the DOM
-            // After this self.sizeInfos and self.sizeGroups should be available
-            self.sizesGetSizeInfo();
 
             // Create a list to hold all the size groups
             self.dom.$sizeSelectors = $('<ul/>', { 'class': 'imageEditor-sizeSelectors' });
