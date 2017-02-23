@@ -48,6 +48,15 @@ import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.StringUtils;
 
+/**
+ * @deprecated
+ *
+ * Legacy Upload implementation used when {@link com.psddev.cms.tool.CmsTool#isEnableFrontEndUploader()}.
+ * Replaced by {@link com.psddev.cms.tool.page.content.Upload}.
+ *
+ */
+
+@Deprecated
 @RoutingFilter.Path(application = "cms", value = "/content/uploadFiles")
 @SuppressWarnings("serial")
 public class UploadFiles extends PageServlet {
