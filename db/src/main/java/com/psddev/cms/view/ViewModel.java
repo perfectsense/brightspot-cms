@@ -3,7 +3,6 @@ package com.psddev.cms.view;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -279,75 +278,70 @@ public abstract class ViewModel<M> {
         // compatible concrete ViewModel class using the following rules,
         // otherwise, do a lookup of the view bindings.
         // Rules:
-        // 1. All appropriate view model classes should automatically be bound unless it implements ManualView.
-        // 2. This behavior should only trigger on classes that have no @ViewBinding annotations set on it.
-        // 3. If there are multiple valid view model classes, check their inheritance hierarchy and one that extends the rest should win. If they're not related, it's an error.
+        // 1. Do NOT include ViewModels that implement ManualView.
+        // 2. Do NOT include ViewModels whose generic type argument (Model) has
+        //    @ViewBinding annotations set DIRECTLY on it.
+        // 3. If there are multiple valid ViewModel classes, check their
+        //    inheritance hierarchy and the one that extends the rest should
+        //    win. If they're not related, it's log a warning due to ambiguity.
         if (viewClass != null && viewType == null) {
 
-            // Check the model (and its annotatable classes) to make sure they contain no ViewBindings (Rule #2)
-            boolean hasViewBindings = ViewUtils.getAnnotatableClasses(modelClass)
+            Set<Class<?>> concreteViewClasses = new HashSet<>(ClassFinder.findConcreteClasses(viewClass));
+
+            // ClassFinder only finds sub-classes, so if the current viewClass is also concrete, add it to the set.
+            if (!viewClass.isInterface() && !Modifier.isAbstract(viewClass.getModifiers())) {
+                concreteViewClasses.add(viewClass);
+            }
+
+            Set<Class<?>> concreteViewModelClasses = concreteViewClasses
                     .stream()
-                    .map(klass -> klass.getAnnotationsByType(ViewBinding.class))
-                    .map(Arrays::asList)
-                    .flatMap(Collection::stream)
-                    .findFirst()
-                    .isPresent();
+                    // It must be a sub-class of ViewModel
+                    .filter(ViewModel.class::isAssignableFrom)
+                    // It should NOT implement ManualView (Rule #1)
+                    .filter(concreteClass -> !ManualView.class.isAssignableFrom(concreteClass))
+                    // It must have the correct generic type argument for its model, and that model must not have any ViewBindings (Rule #2).
+                    .filter(concreteClass -> {
+                        Class<?> declaredModelClass = TypeDefinition.getInstance(concreteClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
+                        return declaredModelClass != null
+                                && declaredModelClass.isAssignableFrom(modelClass)
+                                && declaredModelClass.getAnnotationsByType(ViewBinding.class).length == 0;
+                    })
+                    .collect(Collectors.toSet());
 
-            if (!hasViewBindings) {
-                Set<Class<?>> concreteViewClasses = new HashSet<>(ClassFinder.findConcreteClasses(viewClass));
+            // Eliminate any super classes if there are sub-class / super-class
+            // combinations in the set since the sub-class takes precedence (Rule #3).
+            Set<Class<?>> superClassesToRemove = new HashSet<>();
 
-                // ClassFinder only finds sub-classes, so if the current viewClass is also concrete, add it to the set.
-                if (!viewClass.isInterface() && !Modifier.isAbstract(viewClass.getModifiers())) {
-                    concreteViewClasses.add(viewClass);
+            for (Class<?> concreteClass : concreteViewModelClasses) {
+
+                Set<Class<?>> superClasses = new HashSet<>();
+
+                Class<?> superClass = concreteClass.getSuperclass();
+
+                while (superClass != null) {
+                    superClasses.add(superClass);
+                    superClass = superClass.getSuperclass();
                 }
 
-                Set<Class<?>> concreteViewModelClasses = concreteViewClasses
-                        .stream()
-                        // It must be a sub-class of ViewModel
-                        .filter(ViewModel.class::isAssignableFrom)
-                        // It should NOT implement ManualView (Rule #1)
-                        .filter(concreteClass -> !ManualView.class.isAssignableFrom(concreteClass))
-                        // It must have the correct generic type argument for its model
-                        .filter(concreteClass -> {
-                            Class<?> declaredModelClass = TypeDefinition.getInstance(concreteClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
-                            return declaredModelClass != null && declaredModelClass.isAssignableFrom(modelClass);
-                        })
-                        .collect(Collectors.toSet());
+                superClassesToRemove.addAll(superClasses);
+            }
 
-                // Eliminate any super classes if there are sub-class / super-class
-                // combinations in the set since the sub-class takes precedence (Rule #3).
-                Set<Class<?>> superClassesToRemove = new HashSet<>();
+            concreteViewModelClasses.removeAll(superClassesToRemove);
 
-                for (Class<?> concreteClass : concreteViewModelClasses) {
+            // If there is exactly one concrete view model class left, then it is automatically bound.
+            if (concreteViewModelClasses.size() == 1) {
+                concreteViewModelClass = concreteViewModelClasses.iterator().next();
 
-                    Set<Class<?>> superClasses = new HashSet<>();
-
-                    Class<?> superClass = concreteClass.getSuperclass();
-
-                    while (superClass != null) {
-                        superClasses.add(superClass);
-                        superClass = superClass.getSuperclass();
-                    }
-
-                    superClassesToRemove.addAll(superClasses);
-                }
-
-                concreteViewModelClasses.removeAll(superClassesToRemove);
-
-                // If there is exactly one concrete view model class left, then it is automatically bound.
-                if (concreteViewModelClasses.size() == 1) {
-                    concreteViewModelClass = concreteViewModelClasses.iterator().next();
-
-                } else if (concreteViewModelClasses.size() > 1) {
-                    LOGGER.warn("Found [{}] conflicting view model bindings for model type [{}] and view type [{}]: [{}]",
-                            new Object[] {
-                                    concreteViewModelClasses.size(),
-                                    modelClass,
-                                    viewClass.getName(),
-                                    concreteViewModelClasses.stream().map(Class::getName).collect(Collectors.joining(", "))
-                            });
-                    return null;
-                }
+            } else if (concreteViewModelClasses.size() > 1) {
+                // More than one valid class found, log a warning and short circuit (Rule #3).
+                LOGGER.warn("Found [{}] conflicting view model bindings for model type [{}] and view type [{}]: [{}]",
+                        new Object[] {
+                                concreteViewModelClasses.size(),
+                                modelClass,
+                                viewClass.getName(),
+                                concreteViewModelClasses.stream().map(Class::getName).collect(Collectors.joining(", "))
+                        });
+                return null;
             }
         }
 
