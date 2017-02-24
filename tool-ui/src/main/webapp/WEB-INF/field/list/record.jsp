@@ -724,6 +724,8 @@ if (!isValueExternal) {
 
             for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) {
                 ObjectType type = otct.getType();
+                boolean expanded = field.as(ToolUi.class).isExpanded()
+                        || type.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
 
                 String progressFieldName = progressTypesAndFieldsMap.get(type);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(type);
@@ -732,7 +734,7 @@ if (!isValueExternal) {
 
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
-                            "class", displayGrid ? "collapsed" : null,
+                            "class", (expanded ? "expanded" : "") + (displayGrid ? " collapsed" : ""),
                             "data-sortable-item-type", type.getId(),
                             "data-type", otct.getLabel(),
                             // Add the name of the preview field so the front end knows

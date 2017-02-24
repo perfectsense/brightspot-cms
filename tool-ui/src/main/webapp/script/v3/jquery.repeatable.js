@@ -198,9 +198,15 @@ The HTML within the repeatable element must conform to these standards:
                 self.modeWeightedInit();
 
                 // For each item initialize it
-                self.dom.$list.find('> li').each(function(){
+                var $items = self.dom.$list.find('> li');
+
+                $items.each(function(){
                     self.initItem(this);
                 });
+
+                if ($items.length === 0 && self.dom.$viewSwitcher) {
+                    self.dom.$viewSwitcher.hide();
+                }
 
                 // After we're done initilizing all the items,
                 // update the carousel if ncessary
@@ -1190,6 +1196,10 @@ The HTML within the repeatable element must conform to these standards:
                 // For single input mode, don't add another item if the input is empty
                 if (self.modeIsSingle() && !self.dom.$singleInput.val()) {
                     return false;
+                }
+
+                if (self.dom.$viewSwitcher) {
+                    self.dom.$viewSwitcher.show();
                 }
 
                 // Create a copy of the template to use as the new item

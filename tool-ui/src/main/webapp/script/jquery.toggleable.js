@@ -69,6 +69,7 @@ $.plugin2('toggleable', {
             }
 
             $matching.find('.plugin-toggleable').trigger('toggle');
+            $matching.trigger('resize');
         }
     },
 
