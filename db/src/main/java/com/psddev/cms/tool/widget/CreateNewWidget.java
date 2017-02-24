@@ -26,6 +26,7 @@ import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
@@ -90,7 +91,9 @@ public class CreateNewWidget extends DefaultDashboardWidget {
                 List<String> selectedContentIds = page.params(String.class, user.getId().toString() + "/toolUserCreateNewSettings.editExistingContents");
                 if (!ObjectUtils.isBlank(selectedContentIds)) {
                     Set<Content> selectedContents = new HashSet<>(
-                            Query.from(Content.class).where("_id = ?", selectedContentIds).and(page.siteItemsPredicate()).selectAll());
+                            Query.from(Content.class).where("_id = ?", selectedContentIds)
+                                    .and(UserPermissionsProvider.allItemsPredicate(user))
+                                    .and(page.siteItemsPredicate()).selectAll());
 
                     if (!selectedContents.equals(defaultContents)) {
                         oldUserContents.removeIf(content -> page.getSite() == null || (page.getSite() != null && Site.Static.isObjectAccessible(page.getSite(), content)));
@@ -123,7 +126,8 @@ public class CreateNewWidget extends DefaultDashboardWidget {
         } else {
             for (com.psddev.cms.db.Template template : Query
                     .from(com.psddev.cms.db.Template.class)
-                    .where(page.siteItemsPredicate())
+                    .where(UserPermissionsProvider.allItemsPredicate(user))
+                    .and(page.siteItemsPredicate())
                     .sortAscending("name")
                     .selectAll()) {
 

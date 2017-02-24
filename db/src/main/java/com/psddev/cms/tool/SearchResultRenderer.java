@@ -12,6 +12,7 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 
 import com.psddev.cms.db.PageFilter;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.db.CompoundPredicate;
@@ -203,7 +204,12 @@ public class SearchResultRenderer {
                         : site != null ? site.itemsPredicate()
                         : predicate != null ? predicate
                         : null;
-                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(parent, filterPredicate);
+                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(
+                        parent,
+                        CompoundPredicate.combine(
+                                PredicateParser.AND_OPERATOR,
+                                UserPermissionsProvider.allItemsPredicate(page.getUser()),
+                                filterPredicate));
 
             } else {
                 taxonResults = Taxon.Static.getRoots((Class<Taxon>) taxonType.getObjectClass(), site, predicate);

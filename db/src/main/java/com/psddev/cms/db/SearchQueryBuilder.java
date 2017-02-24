@@ -1,5 +1,6 @@
 package com.psddev.cms.db;
 
+import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.dari.db.ComparisonPredicate;
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.db.ObjectField;
@@ -11,6 +12,7 @@ import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.StringUtils;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -220,6 +223,9 @@ public class SearchQueryBuilder extends Record {
     public Query toQuery(Site site, Object... terms) {
         List<String> queryTerms = normalizeTerms(terms);
         Query query = Query.from(Object.class);
+
+        Optional.ofNullable(PageContextFilter.Static.getRequestOrNull())
+                .ifPresent(request -> query.and(UserPermissionsProvider.allItemsPredicate(AuthenticationFilter.Static.getUser(request))));
 
         if (site != null) {
             query.and(site.itemsPredicate());

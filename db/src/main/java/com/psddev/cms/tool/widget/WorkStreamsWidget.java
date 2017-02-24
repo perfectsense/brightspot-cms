@@ -9,6 +9,7 @@ import javax.servlet.ServletException;
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.ToolRole;
 import com.psddev.cms.db.ToolUser;
+import com.psddev.cms.db.UserPermissionsProvider;
 import com.psddev.cms.db.WorkStream;
 import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
@@ -205,7 +206,9 @@ public class WorkStreamsWidget extends DefaultDashboardWidget {
 
     private PaginatedResult<WorkStream> getResults(ToolPageContext page) {
 
-        Query<WorkStream> query = Query.from(WorkStream.class).where(page.siteItemsPredicate());
+        Query<WorkStream> query = Query.from(WorkStream.class)
+                .where(UserPermissionsProvider.allItemsPredicate(page.getUser()))
+                .and(page.siteItemsPredicate());
 
         ToolEntityType entityType = page.pageParam(ToolEntityType.class, TOOL_ENTITY_TYPE_PARAMETER, ToolEntityType.ANYONE);
 
