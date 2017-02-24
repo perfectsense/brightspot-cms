@@ -54,8 +54,8 @@ import com.psddev.dari.util.TypeReference;
 /**
  * @deprecated
  *
- * Legacy StorageItemField implementation used when {@link com.psddev.cms.tool.CmsTool#isEnableFrontEndUploader()}.
- * Replaced by {@link com.psddev.cms.tool.page.content.field.FileField}.
+ * Legacy StorageItemField implementation used when {@link com.psddev.cms.tool.CmsTool#isEnableFrontEndUploader()}
+ * is {@code false}. Replaced by {@link com.psddev.cms.tool.page.content.field.FileField}.
  *
  */
 

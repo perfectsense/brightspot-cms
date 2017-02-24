@@ -51,8 +51,8 @@ import com.psddev.dari.util.StringUtils;
 /**
  * @deprecated
  *
- * Legacy Upload implementation used when {@link com.psddev.cms.tool.CmsTool#isEnableFrontEndUploader()}.
- * Replaced by {@link com.psddev.cms.tool.page.content.Upload}.
+ * Legacy Upload implementation used when {@link com.psddev.cms.tool.CmsTool#isEnableFrontEndUploader()}
+ * is {@code false}. Replaced by {@link com.psddev.cms.tool.page.content.Upload}.
  *
  */
 
