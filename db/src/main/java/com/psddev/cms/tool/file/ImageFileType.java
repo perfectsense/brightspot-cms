@@ -75,6 +75,7 @@ public class ImageFileType implements FileContentType {
         String sepiaName = inputName + ".sepia";
         String sharpenName = inputName + ".sharpen";
         String blurName = inputName + ".blur";
+        String cropName = inputName + ".crop";
 
         String cropsFieldName = fieldName + ".crops";
 
@@ -223,6 +224,13 @@ public class ImageFileType implements FileContentType {
 
                     page.writeStart("table");
                         page.writeStart("tbody");
+
+                            page.writeStart("tr");
+                                page.writeStart("td", "class", "imageEditor-crop");
+                                    page.writeTag("input", "type", "hidden", "name", page.h(cropName), "value", "");
+                                page.writeEnd();
+                            page.writeEnd();
+
                             if (usingJavaImageEditor) {
                                 page.writeStart("tr");
                                     page.writeStart("th");
