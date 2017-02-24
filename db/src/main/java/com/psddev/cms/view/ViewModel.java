@@ -337,6 +337,16 @@ public abstract class ViewModel<M> {
                 // If there is exactly one concrete view model class left, then it is automatically bound.
                 if (concreteViewModelClasses.size() == 1) {
                     concreteViewModelClass = concreteViewModelClasses.iterator().next();
+
+                } else if (concreteViewModelClasses.size() > 1) {
+                    LOGGER.warn("Found [{}] conflicting view model bindings for model type [{}] and view type [{}]: [{}]",
+                            new Object[] {
+                                    concreteViewModelClasses.size(),
+                                    modelClass,
+                                    viewClass.getName(),
+                                    concreteViewModelClasses.stream().map(Class::getName).collect(Collectors.joining(", "))
+                            });
+                    return null;
                 }
             }
         }
