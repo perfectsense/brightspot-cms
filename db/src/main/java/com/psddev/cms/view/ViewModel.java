@@ -305,7 +305,7 @@ public abstract class ViewModel<M> {
                         .stream()
                         // It must be a sub-class of ViewModel
                         .filter(ViewModel.class::isAssignableFrom)
-                        // It should implement ManualView (Rule #1)
+                        // It should NOT implement ManualView (Rule #1)
                         .filter(concreteClass -> !ManualView.class.isAssignableFrom(concreteClass))
                         // It must have the correct generic type argument for its model
                         .filter(concreteClass -> {
