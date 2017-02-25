@@ -7,14 +7,14 @@ import com.psddev.dari.db.Recordable;
  * Provides notifications via a unique delivery method, i.e. Email, SMS, etc.
  */
 @Recordable.Embedded
-public abstract class NotificationProvider extends Record {
+public abstract class NotificationSender extends Record {
 
     static final String INTERNAL_NAME = "com.psddev.cms.notification.NotificationProvider";
 
     /**
-     * Sends the given notification.
+     * Sends a notification with the given message.
      *
-     * @param notification the notification to send.
+     * @param message the notification message to send.
      */
-    public abstract void sendNotification(Notification notification);
+    public abstract void sendNotification(Message message);
 }

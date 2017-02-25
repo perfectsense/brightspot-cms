@@ -1,7 +1,7 @@
 package com.psddev.cms.db;
 
 /**
- * @deprecated Use {@link com.psddev.cms.notification.NotificationProvider} instead.
+ * @deprecated Use {@link com.psddev.cms.notification.NotificationSender} instead.
  */
 @Deprecated
 public enum NotificationMethod {
