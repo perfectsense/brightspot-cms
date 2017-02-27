@@ -10,15 +10,6 @@ import com.psddev.dari.db.Recordable;
 public interface NotificationReceiver extends Recordable {
 
     /**
-     * Gets the notification settings for this entity.
-     *
-     * @return Never {@code null}.
-     */
-    default NotificationReceiverData asNotificationReceiverData() {
-        return as(NotificationReceiverData.class);
-    }
-
-    /**
      * Sends a notification to each recipient.
      *
      * @param notificationClass The type of notification to send.
@@ -28,7 +19,7 @@ public interface NotificationReceiver extends Recordable {
      */
     static <T> void notify(Class<? extends Notification<T>> notificationClass, T context, Iterable<? extends NotificationReceiver> receivers) {
         for (NotificationReceiver receiver : receivers) {
-            receiver.asNotificationReceiverData().notify(notificationClass, context);
+            receiver.as(NotificationReceiverData.class).notify(notificationClass, context);
         }
     }
 
