@@ -52,9 +52,9 @@ import com.psddev.cms.rte.RichTextToolbar;
 import com.psddev.cms.rte.RichTextToolbarItem;
 import com.psddev.cms.tool.page.content.Edit;
 import com.psddev.cms.view.ClassResourceViewTemplateLoader;
-import com.psddev.cms.view.CmsEmbedView;
-import com.psddev.cms.view.CmsPageView;
-import com.psddev.cms.view.CmsPreviewView;
+import com.psddev.cms.view.EmbedEntryView;
+import com.psddev.cms.view.PageEntryView;
+import com.psddev.cms.view.PreviewEntryView;
 import com.psddev.cms.view.ViewModelCreator;
 import com.psddev.cms.view.ViewOutput;
 import com.psddev.cms.view.ViewRenderer;
@@ -353,8 +353,8 @@ public class ToolPageContext extends WebPageContext {
                         || ViewCreator.findCreatorClass(object, null, PageFilter.PREVIEW_VIEW_TYPE, null) != null
                         || ViewModel.findViewModelClass(PageFilter.PAGE_VIEW_TYPE, object) != null
                         || ViewModel.findViewModelClass(PageFilter.PREVIEW_VIEW_TYPE, object) != null
-                        || ViewModel.findViewModelClass(CmsPageView.class, object) != null
-                        || ViewModel.findViewModelClass(CmsPreviewView.class, object) != null) {
+                        || ViewModel.findViewModelClass(PageEntryView.class, object) != null
+                        || ViewModel.findViewModelClass(PreviewEntryView.class, object) != null) {
                     return true;
                 }
             }
@@ -381,7 +381,7 @@ public class ToolPageContext extends WebPageContext {
         return !ObjectUtils.isBlank(rendererData.getEmbedPath())
                 || ViewCreator.findCreatorClass(object, null, PageFilter.EMBED_VIEW_TYPE, null) != null
                 || ViewModel.findViewModelClass(PageFilter.EMBED_VIEW_TYPE, object) != null
-                || ViewModel.findViewModelClass(CmsEmbedView.class, object) != null;
+                || ViewModel.findViewModelClass(EmbedEntryView.class, object) != null;
     }
 
     /**

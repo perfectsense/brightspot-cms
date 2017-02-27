@@ -278,7 +278,7 @@ public abstract class ViewModel<M> {
         // compatible concrete ViewModel class using the following rules,
         // otherwise, do a lookup of the view bindings.
         // Rules:
-        // 1. Do NOT include ViewModels that implement ManualView.
+        // 1. Do NOT include ViewModels that implement UnboundView.
         // 2. Do NOT include ViewModels whose generic type argument (Model) has
         //    @ViewBinding annotations set DIRECTLY on it.
         // 3. If there are multiple valid ViewModel classes, check their
@@ -297,8 +297,8 @@ public abstract class ViewModel<M> {
                     .stream()
                     // It must be a sub-class of ViewModel
                     .filter(ViewModel.class::isAssignableFrom)
-                    // It should NOT implement ManualView (Rule #1)
-                    .filter(concreteClass -> !ManualView.class.isAssignableFrom(concreteClass))
+                    // It should NOT implement UnboundView (Rule #1)
+                    .filter(concreteClass -> !UnboundView.class.isAssignableFrom(concreteClass))
                     // It must have the correct generic type argument for its model, and that model must not have any ViewBindings (Rule #2).
                     .filter(concreteClass -> {
                         Class<?> declaredModelClass = TypeDefinition.getInstance(concreteClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);

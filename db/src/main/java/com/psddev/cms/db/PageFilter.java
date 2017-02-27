@@ -37,11 +37,11 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.RemoteWidgetFilter;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.view.AbstractViewCreator;
-import com.psddev.cms.view.CmsEmbedView;
-import com.psddev.cms.view.CmsPageView;
-import com.psddev.cms.view.CmsPreviewView;
+import com.psddev.cms.view.EmbedEntryView;
 import com.psddev.cms.view.JsonViewRenderer;
+import com.psddev.cms.view.PageEntryView;
 import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.PreviewEntryView;
 import com.psddev.cms.view.ViewBinding;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.cms.view.ViewMapping;
@@ -131,19 +131,19 @@ public class PageFilter extends AbstractFilter {
     public static final String EMBED_OBJECT_RENDERER_CONTEXT = "_embed";
 
     /**
-     * @deprecated Use {@linkplain CmsPageView} instead.
+     * @deprecated Use {@linkplain PageEntryView} instead.
      */
     @Deprecated
     public static final String PAGE_VIEW_TYPE = "cms.page";
 
     /**
-     * @deprecated Use {@linkplain CmsPreviewView} instead.
+     * @deprecated Use {@linkplain PreviewEntryView} instead.
      */
     @Deprecated
     public static final String PREVIEW_VIEW_TYPE = "cms.preview";
 
     /**
-     * @deprecated Use {@linkplain CmsEmbedView} instead.
+     * @deprecated Use {@linkplain EmbedEntryView} instead.
      */
     @Deprecated
     public static final String EMBED_VIEW_TYPE = "cms.embed";
@@ -1142,8 +1142,8 @@ public class PageFilter extends AbstractFilter {
             if (viewModelClass == null) {
 
                 if (EMBED_VIEW_TYPE.equals(viewType)) {
-                    viewModelClass = ViewModel.findViewModelClass(CmsEmbedView.class, object);
-                    viewTypes.add(CmsEmbedView.class.getName());
+                    viewModelClass = ViewModel.findViewModelClass(EmbedEntryView.class, object);
+                    viewTypes.add(EmbedEntryView.class.getName());
                 }
 
             } else {
@@ -1155,8 +1155,8 @@ public class PageFilter extends AbstractFilter {
             // Try to create a view for the PREVIEW_VIEW_TYPE...
             if (Static.isPreview(request)) {
 
-                viewModelClass = ViewModel.findViewModelClass(CmsPreviewView.class, object);
-                viewTypes.add(CmsPreviewView.class.getName());
+                viewModelClass = ViewModel.findViewModelClass(PreviewEntryView.class, object);
+                viewTypes.add(PreviewEntryView.class.getName());
 
                 if (viewModelClass == null) {
                     viewModelClass = ViewModel.findViewModelClass(PREVIEW_VIEW_TYPE, object);
@@ -1171,8 +1171,8 @@ public class PageFilter extends AbstractFilter {
             // ...but still always fallback to PAGE_VIEW_TYPE if no preview found.
             if (viewModelClass == null) {
 
-                viewModelClass = ViewModel.findViewModelClass(CmsPageView.class, object);
-                viewTypes.add(CmsPageView.class.getName());
+                viewModelClass = ViewModel.findViewModelClass(PageEntryView.class, object);
+                viewTypes.add(PageEntryView.class.getName());
 
                 if (viewModelClass == null) {
                     viewModelClass = ViewModel.findViewModelClass(PAGE_VIEW_TYPE, object);
