@@ -11,9 +11,6 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.psddev.cms.db.PageFilter;
-import com.psddev.cms.view.ViewCreator;
-import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.util.JspUtils;
 import org.joda.time.DateTime;
@@ -482,10 +479,7 @@ public class SearchResultRenderer {
                 Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
                 int previewWidth = rendererData.getEmbedPreviewWidth();
 
-                if (previewWidth > 0
-                        && (!ObjectUtils.isBlank(rendererData.getEmbedPath())
-                        || ViewCreator.findCreatorClass(item, null, PageFilter.EMBED_VIEW_TYPE, null) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, item) != null)) {
+                if (previewWidth > 0 && page.isEmbeddable(item)) {
                     permalink = JspUtils.getAbsolutePath(page.getRequest(), "/_preview", "_embed", "true", "_cms.db.previewId", itemState.getId());
                     embedWidth = previewWidth;
                 }

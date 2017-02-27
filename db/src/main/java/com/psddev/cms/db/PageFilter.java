@@ -37,8 +37,11 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.RemoteWidgetFilter;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.view.AbstractViewCreator;
+import com.psddev.cms.view.EmbedEntryView;
 import com.psddev.cms.view.JsonViewRenderer;
+import com.psddev.cms.view.PageEntryView;
 import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.PreviewEntryView;
 import com.psddev.cms.view.ViewBinding;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.cms.view.ViewMapping;
@@ -126,8 +129,23 @@ public class PageFilter extends AbstractFilter {
 
     public static final String MAIN_OBJECT_RENDERER_CONTEXT = "_main";
     public static final String EMBED_OBJECT_RENDERER_CONTEXT = "_embed";
+
+    /**
+     * @deprecated Use {@linkplain PageEntryView} instead.
+     */
+    @Deprecated
     public static final String PAGE_VIEW_TYPE = "cms.page";
+
+    /**
+     * @deprecated Use {@linkplain PreviewEntryView} instead.
+     */
+    @Deprecated
     public static final String PREVIEW_VIEW_TYPE = "cms.preview";
+
+    /**
+     * @deprecated Use {@linkplain EmbedEntryView} instead.
+     */
+    @Deprecated
     public static final String EMBED_VIEW_TYPE = "cms.embed";
 
     public static final String VIEW_TYPE_PARAMETER = "_viewType";
@@ -1115,26 +1133,35 @@ public class PageFilter extends AbstractFilter {
 
         String viewType = Static.getViewType(request);
 
+        List<String> viewTypes = new ArrayList<>();
+
         if (!ObjectUtils.isBlank(viewType)) {
-            viewModelClass = ViewModel.findViewModelClass(null, viewType, object);
+            viewModelClass = ViewModel.findViewModelClass(viewType, object);
+            viewTypes.add(viewType);
 
             if (viewModelClass == null) {
-                LOGGER.warn("Could not find view model for object of type ["
-                        + object.getClass().getName()
-                        + "] and view of type ["
-                        + viewType
-                        + "]!");
+
+                if (EMBED_VIEW_TYPE.equals(viewType)) {
+                    viewModelClass = ViewModel.findViewModelClass(EmbedEntryView.class, object);
+                    viewTypes.add(EmbedEntryView.class.getName());
+                }
+
             } else {
                 selectedViewType = viewType;
             }
 
         } else {
-            List<String> viewTypes = new ArrayList<>();
 
             // Try to create a view for the PREVIEW_VIEW_TYPE...
             if (Static.isPreview(request)) {
-                viewModelClass = ViewModel.findViewModelClass(null, PREVIEW_VIEW_TYPE, object);
-                viewTypes.add(PREVIEW_VIEW_TYPE);
+
+                viewModelClass = ViewModel.findViewModelClass(PreviewEntryView.class, object);
+                viewTypes.add(PreviewEntryView.class.getName());
+
+                if (viewModelClass == null) {
+                    viewModelClass = ViewModel.findViewModelClass(PREVIEW_VIEW_TYPE, object);
+                    viewTypes.add(PREVIEW_VIEW_TYPE);
+                }
 
                 if (viewModelClass != null) {
                     selectedViewType = PREVIEW_VIEW_TYPE;
@@ -1143,22 +1170,28 @@ public class PageFilter extends AbstractFilter {
 
             // ...but still always fallback to PAGE_VIEW_TYPE if no preview found.
             if (viewModelClass == null) {
-                viewModelClass = ViewModel.findViewModelClass(null, PAGE_VIEW_TYPE, object);
-                viewTypes.add(PAGE_VIEW_TYPE);
+
+                viewModelClass = ViewModel.findViewModelClass(PageEntryView.class, object);
+                viewTypes.add(PageEntryView.class.getName());
+
+                if (viewModelClass == null) {
+                    viewModelClass = ViewModel.findViewModelClass(PAGE_VIEW_TYPE, object);
+                    viewTypes.add(PAGE_VIEW_TYPE);
+                }
 
                 if (viewModelClass != null) {
                     selectedViewType = PAGE_VIEW_TYPE;
                 }
             }
+        }
 
-            if (viewModelClass == null) {
-                if (object.getClass().isAnnotationPresent(ViewBinding.class)) {
-                    LOGGER.warn("Could not find view model for object of type ["
-                            + object.getClass().getName()
-                            + "] and view of type ["
-                            + StringUtils.join(viewTypes, ", or ")
-                            + "]!");
-                }
+        if (viewModelClass == null) {
+            if (object.getClass().isAnnotationPresent(ViewBinding.class)) {
+                LOGGER.warn("Could not find view model for object of type ["
+                        + object.getClass().getName()
+                        + "] and view of type ["
+                        + StringUtils.join(viewTypes, ", or ")
+                        + "]!");
             }
         }
 
