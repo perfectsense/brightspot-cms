@@ -416,7 +416,7 @@ public class ToolUser extends Record implements Managed, ToolEntity {
     }
 
     /**
-     * @deprecated Use {@link com.psddev.cms.notification.NotificationReceiverData#getDeliveryPreferences()} instead.
+     * @deprecated Use {@link com.psddev.cms.notification.ReceiverData#getDeliveryOptions()} instead.
      */
     @Deprecated
     public Set<NotificationMethod> getNotifyVia() {
@@ -427,7 +427,7 @@ public class ToolUser extends Record implements Managed, ToolEntity {
     }
 
     /**
-     * @deprecated Use {@link com.psddev.cms.notification.NotificationReceiverData#setDeliveryPreferences(List)} instead.
+     * @deprecated Use {@link com.psddev.cms.notification.ReceiverData#setDeliveryOptions(List)} instead.
      */
     @Deprecated
     public void setNotifyVia(Set<NotificationMethod> notifyVia) {

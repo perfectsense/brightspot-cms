@@ -2,20 +2,21 @@ package com.psddev.cms.notification;
 
 /**
  * Custom message formatters discoverable via call to ClassFinder API from
- * within {@link Notification#getMessage(NotificationReceiver, Object)}.
+ * within {@link Notification#format(Class)}.
  *
- * @param <N> The type of notification.
- * @param <T> The type of the contextual data used to create the notification.
+ * @param <S> The type of subscription.
+ * @param <C> The type of contextual data for the subscription.
+ * @param <F> The type of message format.
  */
-public interface MessageFormatter<N extends Notification<T>, T> {
+public interface MessageFormatter<S extends Subscription<C>, C, F> {
 
     /**
      * Formats a notification.
      *
-     * @param notification The notification to format.
+     * @param subscription The subscription.
      * @param receiver The receiver of the notification.
-     * @param context The contextual data for the notification.
+     * @param context The contextual data for the subscription.
      * @return A formatted message.
      */
-    Object format(N notification, NotificationReceiver receiver, T context);
+    F format(S subscription, Receiver receiver, C context);
 }

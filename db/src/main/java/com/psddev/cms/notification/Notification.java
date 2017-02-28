@@ -1,172 +1,108 @@
 package com.psddev.cms.notification;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.psddev.cms.db.ToolUi;
-import com.psddev.dari.db.ObjectType;
-import com.psddev.dari.db.Record;
-import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.TypeDefinition;
 
 /**
- * Creates a notification to be sent.
- *
- * @param <T> The type of contextual data used to create the notification.
+ * A notification that can be sent to a recipient.
  */
-@Recordable.Embedded
-public abstract class Notification<T> extends Record {
+public class Notification<C> {
 
-    @ToolUi.NoteHtml("<span data-dynamic-html='${content.getSendersNoteHtml()}'></span>")
-    @Where("groups = " + NotificationSender.INTERNAL_NAME
-            + " && internalName != " + NotificationSender.INTERNAL_NAME)
-    @ToolUi.DropDown
-    @DisplayName("Delivery Preference")
-    private Set<ObjectType> senderTypes;
+    private Subscription<C> subscription;
+    private Receiver receiver;
+    private C context;
 
-    /**
-     * Gets the list of notification senderTypes configured to deliver
-     * this notification.
-     *
-     * @return Never {@code null}.
-     */
-    public Set<ObjectType> getSenderTypes() {
-        if (senderTypes == null) {
-            senderTypes = new LinkedHashSet<>();
-        }
-        return senderTypes;
+    private Map<Class<?>, List<Object>> formats;
+
+    public Notification(Subscription<C> subscription, Receiver receiver, C context) {
+
+        this.subscription = subscription;
+        this.receiver = receiver;
+        this.context = context;
     }
 
     /**
-     * Sets the list of notification senderTypes configured to deliver
-     * this notification.
+     * Gets the last message format added compatible with the given type.
      *
-     * @param senderTypes the list of notification senderTypes to set.
+     * @param formatType the type of message format to get.
+     * @param <F> the message format type.
+     * @return the first format or {@code null} if there are none.
      */
-    public void setSenderTypes(Set<ObjectType> senderTypes) {
-        if (senderTypes != null) {
-            // filter out un supported types
-            this.senderTypes = senderTypes.stream()
-                    .filter(type -> type.getGroups().contains(NotificationSender.INTERNAL_NAME))
-                    .filter(type -> !type.getInternalName().equals(NotificationSender.INTERNAL_NAME))
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+    public <F> F format(Class<F> formatType) {
 
-        } else {
-            this.senderTypes = null;
+        // TODO: Can make this lazier to improve performance by not executing certain formatters unless they are absolutely necessary.
+        for (Object format : getFormats().values().stream().flatMap(Collection::stream).collect(Collectors.toList())) {
+
+            // TODO: This needs to be smarter to make sure it returns the
+            // object whose type is "closest" to the requested type, not just
+            // the first one encountered.
+            if (formatType.isAssignableFrom(format.getClass())) {
+                @SuppressWarnings("unchecked")
+                F typedFormat = (F) format;
+                return typedFormat;
+            }
         }
+
+        return null;
     }
 
-    /**
-     * Creates the default message format to be sent.
-     *
-     * @param receiver The receiver of the notification.
-     * @param context The contextual data used to create the notification.
-     * @return The notification to be sent.
-     */
-    protected final Message getMessage(NotificationReceiver receiver, T context) {
+    private Map<Class<?>, List<Object>> getFormats() {
 
-        Object defaultFormat = getDefaultMessageFormat(receiver, context);
+        if (formats == null) {
+            formats = new HashMap<>();
 
-        Message message = new Message();
+            for (Class<? extends MessageFormatter> formatterClass : ClassFinder.findConcreteClasses(MessageFormatter.class)) {
 
-        if (defaultFormat != null) {
-            message.addFormat(defaultFormat);
-        }
+                TypeDefinition<? extends MessageFormatter> formatterTypeDef = TypeDefinition.getInstance(formatterClass);
 
-        for (Class<? extends MessageFormatter> formatterClass : ClassFinder.findConcreteClasses(MessageFormatter.class)) {
+                Class<?> subscriptionClass = formatterTypeDef.getInferredGenericTypeArgumentClass(MessageFormatter.class, 0);
+                Class<?> contextClass = formatterTypeDef.getInferredGenericTypeArgumentClass(MessageFormatter.class, 1);
+                Class<?> formatClass = formatterTypeDef.getInferredGenericTypeArgumentClass(MessageFormatter.class, 2);
 
-            TypeDefinition<? extends MessageFormatter> formatterTypeDef = TypeDefinition.getInstance(formatterClass);
+                if (getClass().isAssignableFrom(subscriptionClass)
+                        && context.getClass().isAssignableFrom(contextClass)) {
 
-            Class<?> notificationClass = formatterTypeDef.getInferredGenericTypeArgumentClass(MessageFormatter.class, 0);
-            Class<?> contextClass = formatterTypeDef.getInferredGenericTypeArgumentClass(MessageFormatter.class, 1);
+                    MessageFormatter<Subscription<C>, C, ?> formatter = formatterTypeDef.newInstance();
 
-            if (getClass().isAssignableFrom(notificationClass)
-                    && context.getClass().isAssignableFrom(contextClass)) {
+                    // TODO: Catch formatter errors?
+                    Object format = formatter.format(subscription, receiver, context);
 
-                MessageFormatter<Notification<T>, T> formatter = formatterTypeDef.newInstance();
+                    if (format != null) {
+                        List<Object> formatsForType = formats.get(formatClass);
 
-                Object format = formatter.format(this, receiver, context);
+                        if (formatsForType == null) {
+                            formatsForType = new ArrayList<>();
+                            formats.put(formatClass, formatsForType);
+                        }
 
-                if (format != null) {
-                    message.addFormat(format);
+                        formatsForType.add(format);
+                    }
                 }
             }
-        }
 
-        return message;
-    }
+            // Add the default string format at the end so that it can be
+            // overridden, since items earlier in the list will get checked first.
+            String defaultStringFormat = subscription.toStringFormat(receiver, context);
 
-    /**
-     * Creates the default message format to be sent.
-     *
-     * @param receiver The receiver of the notification.
-     * @param context The contextual data used to create the notification.
-     * @return The notification to be sent.
-     */
-    protected abstract Object getDefaultMessageFormat(NotificationReceiver receiver, T context);
+            if (defaultStringFormat != null) {
+                List<Object> stringFormats = formats.get(String.class);
 
-    /**
-     * Gets a user friendly label that describes the types of senders
-     * configured to deliver this notification.
-     *
-     * @return a user friendly label.
-     */
-    protected String getSenderTypesLabel() {
-        List<String> senderLabels = getSenderTypes().stream()
-                .map(ObjectType::getLabel)
-                .collect(Collectors.toList());
+                if (stringFormats == null) {
+                    stringFormats = new ArrayList<>();
+                    formats.put(String.class, stringFormats);
+                }
 
-        if (senderLabels.isEmpty()) {
-            return "";
-
-        } else {
-            String sendersLabel;
-
-            if (senderLabels.size() == 1) {
-                sendersLabel = senderLabels.get(0);
-
-            } else {
-                sendersLabel = senderLabels.subList(0, senderLabels.size() - 1).stream().collect(Collectors.joining(", "))
-                        + " and "
-                        + senderLabels.get(senderLabels.size() - 1);
+                stringFormats.add(defaultStringFormat);
             }
-
-            return sendersLabel;
         }
-    }
 
-    /**
-     * Gets the label that describes when and how this notification is delivered.
-     * Sub-classes may override this method to provide a custom message.
-     *
-     * @return The trigger label.
-     */
-    protected String getSendersLabel() {
-        return "Sends " + getSenderTypesLabel() + " notification when triggered.";
-    }
-
-    @Override
-    public String getLabel() {
-
-        String deliveryLabel = getSenderTypes().stream()
-                .map(ObjectType::getLabel)
-                .collect(Collectors.joining(", "));
-
-        if (!deliveryLabel.isEmpty()) {
-            return "[" + deliveryLabel + "]";
-
-        } else {
-            return "Disabled";
-        }
-    }
-
-    /**
-     * Not for public use.
-     */
-    public String getSendersNoteHtml() {
-        return getSendersLabel();
+        return formats;
     }
 }

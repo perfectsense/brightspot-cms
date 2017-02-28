@@ -1,9 +1,9 @@
 package com.psddev.cms.db;
 
-import com.psddev.cms.notification.NotificationReceiver;
+import com.psddev.cms.notification.Receiver;
 import com.psddev.dari.db.Recordable;
 
-public interface ToolEntity extends Global, NotificationReceiver, Recordable {
+public interface ToolEntity extends Global, Receiver, Recordable {
 
     /**
      * Returns all tool users that are represented by this entity.
