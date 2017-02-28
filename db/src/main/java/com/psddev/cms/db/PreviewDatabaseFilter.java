@@ -62,17 +62,26 @@ public class PreviewDatabaseFilter extends AbstractFilter implements AbstractFil
 
                     Database.Static.overrideDefault(pd);
 
+                    Object mainObject = PageFilter.Static.getMainObject(request);
                     State mainState = State.getInstance(PageFilter.Static.getMainObject(request));
 
                     if (mainState != null) {
-                        mainState.setDatabase(null);
-                        mainState.setResolveInvisible(true);
-                        mainState.setValues(State.getInstance(pd.applyChanges(Query
+                        Object originalObject = Query
                                 .fromAll()
                                 .where("_id = ?", mainState.getId())
                                 .resolveInvisible()
                                 .noCache()
-                                .first())).getSimpleValues());
+                                .first();
+
+                        mainState.setDatabase(null);
+                        mainState.setResolveInvisible(true);
+
+                        if (originalObject != null) {
+                            mainState.setValues(State.getInstance(pd.applyChanges(originalObject)).getSimpleValues());
+
+                        } else {
+                            mainState.setValues(State.getInstance(pd.applyChanges(mainObject)).getSimpleValues());
+                        }
                     }
 
                     chain.doFilter(request, response);
