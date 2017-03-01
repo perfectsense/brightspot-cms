@@ -80,6 +80,7 @@ public class FileField extends PageServlet {
         String sepiaName = inputName + ".sepia";
         String sharpenName = inputName + ".sharpen";
         String blurName = inputName + ".blur";
+        String initialCropName = inputName + ".crop";
 
         String focusXName = inputName + ".focusX";
         String focusYName = inputName + ".focusY";
@@ -191,6 +192,11 @@ public class FileField extends PageServlet {
             Double focusX = page.paramOrDefault(Double.class, focusXName, null);
             Double focusY = page.paramOrDefault(Double.class, focusYName, null);
 
+            Map<String, Object> initialCrop = Optional.ofNullable(page.param(String.class, initialCropName))
+                                            .filter(string -> !StringUtils.isBlank(string))
+                                            .map(cropString -> (Map<String, Object>) ObjectUtils.fromJson(cropString))
+                                            .orElse(null);
+
             edits = new HashMap<String, Object>();
 
             if (brightness != 0.0) {
@@ -220,6 +226,8 @@ public class FileField extends PageServlet {
             if (sharpen != 0) {
                 edits.put("sharpen", sharpen);
             }
+
+            edits.put("crop", initialCrop);
 
             if (!ObjectUtils.isBlank(page.params(String.class, blurName))) {
                 blurs = new ArrayList<String>();

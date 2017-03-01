@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -227,7 +228,16 @@ public class ImageFileType implements FileContentType {
 
                             page.writeStart("tr");
                                 page.writeStart("td", "class", "imageEditor-crop");
-                                    page.writeTag("input", "type", "hidden", "name", page.h(cropName), "value", "");
+
+
+                                String initialCropValue = Optional.ofNullable(edits.get(cropName))
+                                        .map(initialCrop -> ObjectUtils.to(String.class, initialCrop))
+                                        .orElse("");
+
+                                    page.writeTag("input",
+                                            "type", "hidden",
+                                            "name", page.h(cropName),
+                                            "value", initialCropValue);
                                 page.writeEnd();
                             page.writeEnd();
 
