@@ -1137,6 +1137,11 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             Integer originalHeight = null;
             Map<String, ImageCrop> crops = null;
 
+            ImageEditor realEditor = editor;
+            if (realEditor == null) {
+                realEditor = ImageEditor.Static.getDefault();
+            }
+
             if (this.state != null) { // backwards compatibility path
                 State objectState = this.state;
                 String field = this.field;
@@ -1318,10 +1323,6 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
 
                     if (edits != null) {
-                        ImageEditor realEditor = editor;
-                        if (realEditor == null) {
-                            realEditor = ImageEditor.Static.getDefault();
-                        }
 
                         //rotate first
                         Set<Map.Entry<String, Object>> entrySet = new TreeMap<String, Object>(edits).entrySet();
