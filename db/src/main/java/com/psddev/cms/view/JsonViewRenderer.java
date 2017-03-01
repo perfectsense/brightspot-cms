@@ -67,6 +67,11 @@ public class JsonViewRenderer implements ViewRenderer {
         this.disallowMixedOutput = disallowMixedOutput;
     }
 
+    @Override
+    public String getContentType() {
+        return "application/json";
+    }
+
     @Deprecated
     @Override
     public ViewOutput render(Object view) {
