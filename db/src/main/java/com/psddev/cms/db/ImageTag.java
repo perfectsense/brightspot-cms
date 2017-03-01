@@ -1331,7 +1331,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                             }
                         }
                         for (Map.Entry<String, Object> entry : entrySet) {
-                            if (!entry.getKey().equals("rotate")) {
+                            String key = entry.getKey();
+                            if (!key.equals("rotate") && !key.equals("crop")) {
                                 item = realEditor.edit(item, entry.getKey(), null, entry.getValue());
                             }
                         }
