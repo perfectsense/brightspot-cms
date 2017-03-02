@@ -227,7 +227,11 @@ public class FileField extends PageServlet {
                 edits.put("sharpen", sharpen);
             }
 
-            edits.put("crop", initialCrop);
+            if (!ObjectUtils.isBlank(initialCrop)) {
+                edits.put("crop", initialCrop);
+            } else {
+                edits.remove("crop");
+            }
 
             if (!ObjectUtils.isBlank(page.params(String.class, blurName))) {
                 blurs = new ArrayList<String>();
