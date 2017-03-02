@@ -897,6 +897,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
             StorageItem item = null;
             Map<String, ImageCrop> crops = null;
+            Integer originalWidth = null;
+            Integer originalHeight = null;
 
             if (this.state != null) {
                 State objectState = this.state;
@@ -917,6 +919,35 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                 if (item != null) {
                     crops = findImageCrops(item);
+                    originalHeight = findDimension(item, "height");
+                    originalWidth = findDimension(item, "width");
+                }
+            }
+
+            boolean hasInitialCrop = false;
+
+            if (isEdits() && item != null) {
+
+                ImageEditor realEditor = this.editor;
+                if (realEditor == null) {
+                    realEditor = ImageEditor.Static.getDefault();
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> initialCrop = (Map<String, Object>) edits.get("crop");
+                if (!ObjectUtils.isBlank(initialCrop)) {
+                    hasInitialCrop = true;
+                    Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
+
+                    cropX = (int) (((double) initialCrop.get("x")) * originalWidth);
+                    cropY = (int) (((double) initialCrop.get("y")) * originalHeight);
+                    cropWidth = (int) (((double) initialCrop.get("width")) * originalWidth);
+                    cropHeight = (int) (((double) initialCrop.get("height")) * originalHeight);
+
+                    item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
                 }
             }
 
@@ -943,8 +974,6 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                     width = width != null && width <= 0 ? null : width;
                     height = height != null && height <= 0 ? null : height;
-                    Integer originalWidth = null;
-                    Integer originalHeight = null;
                     if (standardImageSize != null) {
 
                         Integer standardWidth = standardImageSize.getWidth();
@@ -993,12 +1022,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                         }
 
                         // get a potentially smaller image from the StorageItem. This improves
-                        // resize performance on large images.
-                        StorageItem alternateItem = findStorageItemForSize(item, width, height);
-                        if (alternateItem != item) {
-                            item = alternateItem;
-                            originalHeight = findDimension(item, "height");
-                            originalWidth = findDimension(item, "width");
+                        // resize performance on large images. Skip StorageItems with initial crop.
+                        if (!hasInitialCrop) {
+                            StorageItem alternateItem = findStorageItemForSize(item, width, height);
+                            if (alternateItem != item) {
+                                item = alternateItem;
+                                originalHeight = findDimension(item, "height");
+                                originalWidth = findDimension(item, "width");
+                            }
                         }
 
                         // get the crop coordinates
@@ -1168,6 +1199,27 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 }
             }
 
+            // If initial crop is present (cms.edits.crop), modify originalHeight/originalWidth to reflect
+            boolean hasInitialCrop = false;
+            if (isEdits() && item != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> initialCrop = (Map<String, Object>) edits.get("crop");
+                if (!ObjectUtils.isBlank(initialCrop)) {
+                    hasInitialCrop = true;
+                    Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
+
+                    cropX = (int) (((double) initialCrop.get("x")) * originalWidth);
+                    cropY = (int) (((double) initialCrop.get("y")) * originalHeight);
+                    cropWidth = (int) (((double) initialCrop.get("width")) * originalWidth);
+                    cropHeight = (int) (((double) initialCrop.get("height")) * originalHeight);
+
+                    item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
+                }
+            }
+
             // null out all dimensions that are less than or equal to zero
             originalWidth = originalWidth != null && originalWidth <= 0 ? null : originalWidth;
             originalHeight = originalHeight != null && originalHeight <= 0 ? null : originalHeight;
@@ -1228,12 +1280,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     }
 
                     // get a potentially smaller image from the StorageItem. This improves
-                    // resize performance on large images.
-                    StorageItem alternateItem = findStorageItemForSize(item, width, height);
-                    if (alternateItem != item) {
-                        item = alternateItem;
-                        originalWidth = findDimension(item, "width");
-                        originalHeight = findDimension(item, "height");
+                    // resize performance on large images. Skip using alternate if intial crop is present.
+                    if (!hasInitialCrop) {
+                        StorageItem alternateItem = findStorageItemForSize(item, width, height);
+                        if (alternateItem != item) {
+                            item = alternateItem;
+                            originalWidth = findDimension(item, "width");
+                            originalHeight = findDimension(item, "height");
+                        }
                     }
 
                     // get the crop coordinates
