@@ -52,6 +52,9 @@ import com.psddev.cms.rte.RichTextToolbar;
 import com.psddev.cms.rte.RichTextToolbarItem;
 import com.psddev.cms.tool.page.content.Edit;
 import com.psddev.cms.view.ClassResourceViewTemplateLoader;
+import com.psddev.cms.view.EmbedEntryView;
+import com.psddev.cms.view.PageEntryView;
+import com.psddev.cms.view.PreviewEntryView;
 import com.psddev.cms.view.ViewModelCreator;
 import com.psddev.cms.view.ViewOutput;
 import com.psddev.cms.view.ViewRenderer;
@@ -348,14 +351,37 @@ public class ToolPageContext extends WebPageContext {
                 if ((pageViewClass != null && ViewCreator.findCreatorClass(object, pageViewClass.value(), null, null) != null)
                         || ViewCreator.findCreatorClass(object, null, PageFilter.PAGE_VIEW_TYPE, null) != null
                         || ViewCreator.findCreatorClass(object, null, PageFilter.PREVIEW_VIEW_TYPE, null) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.PAGE_VIEW_TYPE, object) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.PREVIEW_VIEW_TYPE, object) != null) {
+                        || ViewModel.findViewModelClass(PageFilter.PAGE_VIEW_TYPE, object) != null
+                        || ViewModel.findViewModelClass(PageFilter.PREVIEW_VIEW_TYPE, object) != null
+                        || ViewModel.findViewModelClass(PageEntryView.class, object) != null
+                        || ViewModel.findViewModelClass(PreviewEntryView.class, object) != null) {
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code true} is the given {@code object} is embeddable.
+     *
+     * @param object If {@code null}, always returns {@code false}.
+     */
+    public boolean isEmbeddable(Object object) {
+
+        if (object == null) {
+            return false;
+        }
+
+        State state = State.getInstance(object);
+        ObjectType type = state.getType();
+        Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
+
+        return !ObjectUtils.isBlank(rendererData.getEmbedPath())
+                || ViewCreator.findCreatorClass(object, null, PageFilter.EMBED_VIEW_TYPE, null) != null
+                || ViewModel.findViewModelClass(PageFilter.EMBED_VIEW_TYPE, object) != null
+                || ViewModel.findViewModelClass(EmbedEntryView.class, object) != null;
     }
 
     /**
@@ -3155,7 +3181,7 @@ public class ToolPageContext extends WebPageContext {
     public void writeViewHtml(Object object, String viewType) throws IOException {
         Preconditions.checkNotNull(object);
 
-        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(null, viewType, object);
+        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(viewType, object);
 
         Preconditions.checkNotNull(viewModelClass, String.format(
                         "Could not find view model for object of type [%s] and view of type [%s]",
