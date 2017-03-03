@@ -151,7 +151,6 @@ define([
             dom.$aside = $el.find('> .imageEditor-aside');
             dom.$tools = $el.find('.imageEditor-tools ul');
             dom.$edit = $el.find('.imageEditor-edit');
-
             dom.$sizes = $el.find('.imageEditor-sizes');
             dom.$sizesTable = dom.$sizes.find('table');
 
@@ -258,7 +257,7 @@ define([
             // it after adjustments are made and self.dom.$image is overwritten.
             self.dom.$originalImage = self.dom.$editImage;
 
-            $('<div/>', {
+            self.dom.$imageEditorImage = $('<div/>', {
                 'class': 'imageEditor-image',
                 'html': self.dom.$editImage
             }).appendTo(self.dom.tabs.edit);
@@ -272,6 +271,11 @@ define([
             // Reformat the controls for editing the image
 
             self.dom.$edit.find('table').hide();
+
+            // Hidden input for crop values
+            $('<div class="imageEditor-adjustment" />')
+                .append(self.dom.$edit.find('table .imageEditor-crop').children())
+                .appendTo(self.dom.$edit);
 
             $brightness = $('<div class="imageEditor-adjustment"><div class="imageEditor-adjustment-heading">Brightness <span class="imageEditor-value">0</span></div></div>').appendTo(self.dom.$edit);
             self.dom.$editBrightnessValue = $brightness.find('.imageEditor-value');
@@ -392,6 +396,9 @@ define([
                 // and the name of the input (like 'rotate' or 'flipH')
                 self.$element.trigger('imageAdjustment', [this, inputName]);
             });
+
+            // Initilize the image cropper
+            self.cropInit();
 
         },
 
@@ -1128,6 +1135,435 @@ define([
                 // TODO: change addSizeBox
                 //addSizeBox(this, attributes[0], attributes[1], attributes[2], attributes[3]);
             });
+        },
+
+        //--------------------------------------------------
+        // CROPPING THE MAIN IMAGE
+        // Show crop controls within the edit tab.
+        // When the cropped size changes, save the values in JSON in a hidden variable.
+        //--------------------------------------------------
+
+        cropInit: function() {
+            var self;
+            self = this;
+            self.cropInitCover();
+            self.cropInitSizeBox();
+        },
+
+
+        /**
+         * Create the crop cover, which makes the image darker in the area that is outside the crop region.
+         * The crop cover consists of four divs (left, top, right, bottom) that are resized based on the crop region.
+         * @return {[type]}
+         */
+        cropInitCover: function() {
+
+            var $cover;
+            var self;
+
+            self = this;
+
+            $cover = $('<div/>', {
+                'class': 'imageEditor-cover',
+                'css': {
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: 0,
+                    height: 0
+                }
+            });
+
+            self.dom.$cropCoverTop = $cover;
+            self.dom.$cropCoverLeft = $cover.clone(true);
+            self.dom.$cropCoverRight = $cover.clone(true);
+            self.dom.$cropCoverBottom = $cover.clone(true);
+            self.dom.$cropCovers = $().add(self.dom.$cropCoverTop).add(self.dom.$cropCoverLeft).add(self.dom.$cropCoverRight)
+                .add(self.dom.$cropCoverBottom).appendTo(self.dom.$imageEditorImage);
+        },
+
+
+        /**
+         * Upadte the crop cover to make the image darker in the area that is outside the crop region.
+         */
+        cropCoverUpdate: function() {
+
+            var bounds, self, imageWidth, imageHeight;
+
+            self = this;
+
+            imageWidth = self.dom.imageCloneWidth;
+            imageHeight = self.dom.imageCloneHeight;
+
+            bounds = self.cropGetValue();
+            bounds.left = bounds.x;
+            bounds.top = bounds.y;
+            bounds.right = bounds.x + bounds.width;
+            bounds.bottom = bounds.y + bounds.height;
+
+            // Convert relative values to pixels
+
+            self.dom.$cropCoverTop.css({
+                'height': bounds.top * imageHeight,
+                'width': imageWidth
+            });
+            self.dom.$cropCoverLeft.css({
+                'height': bounds.height * imageHeight,
+                'top': bounds.top * imageHeight,
+                'width': bounds.left * imageWidth
+            });
+            self.dom.$cropCoverRight.css({
+                'height': bounds.height * imageHeight,
+                'left': bounds.right * imageWidth,
+                'top': bounds.top * imageHeight,
+                'width': imageWidth - (bounds.right * imageWidth)
+            });
+            self.dom.$cropCoverBottom.css({
+                'height': imageHeight - (bounds.bottom * imageHeight),
+                'top': bounds.bottom * imageHeight,
+                'width': imageWidth
+            });
+
+        },
+
+
+        /**
+         * Create the crop size box which lets the user resize the crop area.
+         * This consists of a box with dotted lines to indicate the crop area,
+         * plus some controls for resizing the box.
+         * Also sets up events needed for resizing the box.
+         */
+        cropInitSizeBox: function() {
+
+            var self;
+            var $sizeBox;
+            var $sizeBoxTopLeft;
+            var $sizeBoxBottomRight;
+
+            self = this;
+
+            // Create the sizebox
+            $sizeBox = $('<div/>', {
+                'class': 'imageEditor-sizeBox',
+                'css': {
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    width: '100%',
+                    height: '100%'
+                }
+            }).appendTo(self.dom.$imageEditorImage);
+
+            // Save the size box along with the group info so we can access it later
+            self.$cropSizeBox = $sizeBox;
+
+            // Create the top/left sizebox handle
+            $sizeBoxTopLeft = $('<div/>', {
+                'class': 'imageEditor-resizer imageEditor-resizer-topLeft',
+            }).appendTo($sizeBox);
+
+            // Create the top/right sizebox handle
+            $sizeBoxBottomRight = $('<div/>', {
+                'class': 'imageEditor-resizer imageEditor-resizer-bottomRight',
+            }).appendTo($sizeBox);
+
+            // Set up  event handlers
+
+            // Event handler to support dragging the left/top handle
+            $sizeBoxTopLeft.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
+
+                // When user drags the top left handle,
+                // adjust the top and left position of the size box,
+                // and adjust the width and height
+                return {
+                    'left': original.left + delta.x,
+                    'top': original.top + delta.y,
+                    'width': original.width - delta.x,
+                    'height': original.height - delta.y
+                };
+            }));
+
+            // Event handler to support dragging the bottom/right handle
+            $sizeBoxBottomRight.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
+
+                // When user drags the bottom right handle, adjust the width and height of the size box
+                return {
+                    'width': original.width + delta.x,
+                    'height': original.height + delta.y
+                };
+            }));
+
+            // Event handler to support moving the size box
+            $sizeBox.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
+
+                // Set the "moving" parameter to prevent the size box from being moved
+                // outside the bounds of the image, and adjust the left and top position
+                return {
+                    'moving': true,
+                    'left': original.left + delta.x,
+                    'top': original.top + delta.y
+                };
+            }));
+
+        },
+
+
+        /**
+         * Create a mousedown handler function that lets the user drag the size box
+         * or the size box handles.
+         *
+         * @param Function filterBoundsFunction(event, original, delta)
+         * A function that will modify the bounds of the size box,
+         * and adjust it according to what is being dragged. For example,
+         * if the left/top handle is being dragged.
+         * Ths function must return a modified bounds object.
+         * Also the function can set moving:true in the bounds object if
+         * the entire size box is being moved (instead of resizing the size box).
+         */
+        cropMousedownDragHandler: function(filterBoundsFunction) {
+
+            var mousedownHandler, self, $sizeBox;
+
+            self = this;
+
+            $sizeBox = self.$cropSizeBox;
+
+            mousedownHandler = function(mousedownEvent) {
+
+                var aspectRatio, element, imageWidth, imageHeight, original, sizeBoxPosition;
+
+                // The element that was dragged
+                element = this;
+
+                sizeBoxPosition = $sizeBox.position();
+
+                original = {
+                    'left': sizeBoxPosition.left,
+                    'top': sizeBoxPosition.top,
+                    'width': $sizeBox.width(),
+                    'height': $sizeBox.height(),
+                    'pageX': mousedownEvent.pageX,
+                    'pageY': mousedownEvent.pageY
+                };
+
+                imageWidth = self.dom.imageCloneWidth;
+                imageHeight = self.dom.imageCloneHeight;
+                aspectRatio = imageWidth / imageHeight;
+
+                // On mousedown, let the user start dragging the element
+                // The .drag() function takes the following parameters:
+                // (element, event, startCallback, moveCallback, endCallback)
+                $.drag(element, mousedownEvent, function() {
+
+                    // This is the start callback for .drag()
+
+                }, function(dragEvent) {
+
+                    // This is the move callback for .drag()
+
+                    var bounds, deltaX, deltaY, overflow;
+
+                    deltaX = dragEvent.pageX - original.pageX;
+                    deltaY = dragEvent.pageY - original.pageY;
+
+                    // Use the filterBoundsFunction to adjust the value of the bounds
+                    // based on what is being dragged.
+                    bounds = filterBoundsFunction(dragEvent, original, {
+                        'x': deltaX,
+                        'y': deltaY,
+                        'constrainedX': aspectRatio ? Math.max(deltaX, deltaY * aspectRatio) : deltaX,
+                        'constrainedY': aspectRatio ? Math.max(deltaY, deltaX / aspectRatio) : deltaY
+                    });
+
+                    // Fill out the missing bounds
+                    bounds = $.extend({}, original, bounds);
+
+                    // The sizebox can be resized or moved.
+                    // The filterBoundsFunction should have told us if it is being moved.
+                    if (bounds.moving) {
+
+                        // The sizebox is being moved,
+                        // but we can't let it move outside the range of the image.
+
+                        if (bounds.left < 0) {
+                            bounds.left = 0;
+                        }
+
+                        if (bounds.top < 0) {
+                            bounds.top = 0;
+                        }
+
+                        overflow = bounds.left + bounds.width - imageWidth;
+                        if (overflow > 0) {
+                            bounds.left -= overflow;
+                        }
+
+                        overflow = bounds.top + bounds.height - imageHeight;
+                        if (overflow > 0) {
+                            bounds.top -= overflow;
+                        }
+
+                    } else {
+
+                        // We're not moving the sizebox so we must be resizing.
+                        // We still need to make sure we don't resize past the boundaries of the image.
+
+                        if (bounds.width < 10 || bounds.height < 10) {
+                            if (aspectRatio > 1.0) {
+                                bounds.width = aspectRatio * 10;
+                                bounds.height = 10;
+                            } else {
+                                bounds.width = 10;
+                                bounds.height = aspectRatio ? (10 / aspectRatio) : 10;
+                            }
+                        }
+
+                        // Check if the box extends past the left
+                        if (bounds.left < 0) {
+                            bounds.width += bounds.left;
+                            if (aspectRatio) {
+                                bounds.height = bounds.width / aspectRatio;
+                                bounds.top -= bounds.left / aspectRatio;
+                            }
+                            bounds.left = 0;
+                        }
+
+                        // Check if the box extends above the top
+                        if (bounds.top < 0) {
+                            bounds.height += bounds.top;
+                            if (aspectRatio) {
+                                bounds.width = bounds.height * aspectRatio;
+                                bounds.left -= bounds.top * aspectRatio;
+                            }
+                            bounds.top = 0;
+                        }
+
+                        // Check if the box extends past the right
+                        overflow = bounds.left + bounds.width - imageWidth;
+                        if (overflow > 0) {
+                            bounds.width -= overflow;
+                            if (aspectRatio) {
+                                bounds.height = bounds.width / aspectRatio;
+                            }
+                        }
+
+                        // Check if the box extends past the bottom
+                        overflow = bounds.top + bounds.height - imageHeight;
+                        if (overflow > 0) {
+                            bounds.height -= overflow;
+                            if (aspectRatio) {
+                                bounds.width = bounds.height * aspectRatio;
+                            }
+                        }
+                    }
+
+                    // Now that the bounds have been sanitized,
+                    // update the sizebox display
+                    self.cropSizeBoxUpdate(bounds);
+                    self.cropCoverUpdate();
+
+                    // Trigger an event to tell others the size box has changed size
+                    if (!bounds.moving) {
+                        $sizeBox.trigger('cropResize');
+                    }
+
+                }, function() {
+
+                    var sizeBoxHeight, sizeBoxPosition, sizeBoxWidth;
+
+                    // .drag() end callback
+
+                    // Set the hidden inputs to the current bounds.
+                    self.cropUpdateInput();
+
+                    // Trigger an event to tell others the size box has changed size
+                    $sizeBox.trigger('cropResize');
+                });
+
+                return false;
+            };
+
+            return mousedownHandler;
+        },
+
+
+        /**
+         * Set the position for the crop div.
+         * @param  {Object} bounds
+         * An object containing positioning information for the sizebox.
+         * @param  {Number} bounds.left Number in pixels.
+         * @param  {Number} bounds.top Number in pixels.
+         * @param  {Number} bounds.width Number in pixels.
+         * @param  {Number} bounds.height Number in pixels.
+         */
+        cropSizeBoxUpdate: function(bounds) {
+            var self;
+            self = this;
+            self.$cropSizeBox.css(bounds);
+        },
+
+
+        /**
+         * Get the values for the selected crop from the cropping div, and translate them into 0-1 numbers relative
+         * to the image.
+         *
+         * @return {Object}
+         * The crop value as a javascript object:
+         *
+         * value.x {Number}
+         * Number between zero and one representing the left position of the crop in reation to the original image.
+         *
+         * value.y {Number}
+         * Number between zero and one representing the top position of the crop in reation to the original image.
+         *
+         * value.width {Number}
+         * Number between zero and one representing the width of the cropped area in relation to the original image.
+         *
+         * value.height:{Number} Number between zero and one.
+         * Number between zero and one representing the height of the cropped area in relation to the original image.
+         */
+        cropGetValue: function() {
+
+            var imageWidth;
+            var imageHeight;
+            var self;
+            var $sizeBox;
+            var sizeBoxPosition;
+            var sizeBoxWidth;
+            var sizeBoxHeight;
+
+            self = this;
+            $sizeBox = self.$cropSizeBox;
+            sizeBoxPosition = $sizeBox.position();
+            sizeBoxWidth = $sizeBox.width();
+            sizeBoxHeight = $sizeBox.height();
+
+            imageWidth = self.dom.imageCloneWidth;
+            imageHeight = self.dom.imageCloneHeight;
+
+            return ({
+                x: sizeBoxPosition.left / imageWidth,
+                y: sizeBoxPosition.top / imageHeight,
+                width: sizeBoxWidth / imageWidth,
+                height: sizeBoxHeight / imageHeight
+            });
+        },
+
+
+        /**
+         * Update the hidden input that contains crop values to be passed to the backend.
+         * @param  {Object} [value]
+         * Javascript object that contains crop values. If not provided the values will be retrieved from the sizebox.
+         * @param  {Number} value.x Number from 0-1 relative to the ogirinal image.
+         * @param  {Number} value.y Number from 0-1 relative to the ogirinal image.
+         * @param  {Number} value.width Number from 0-1 relative to the ogirinal image.
+         * @param  {Number} value.height Number from 0-1 relative to the ogirinal image.
+         */
+        cropUpdateInput: function(value) {
+            var self;
+            self = this;
+            value = (value === undefined) ? self.cropGetValue() : value;
+            self.dom.$edit.find('input[name$="/file.crop"]').val(JSON.stringify(value));
         },
 
 
