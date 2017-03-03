@@ -798,16 +798,13 @@ public class ToolUi extends Modification<Object> {
         } else {
             field = type.getField(type.getPreviewField());
 
-            if (field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                this.bulkUploadableField = type.getFields().stream()
-                        .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                        .map(ObjectField::getInternalName)
-                        .findFirst()
-                        .orElse(null);
-
-            } else {
-                this.bulkUploadableField = field.getInternalName();
-            }
+            this.bulkUploadableField = field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())
+                    ? type.getFields().stream()
+                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                            .map(ObjectField::getInternalName)
+                            .findFirst()
+                            .orElse(null)
+                    : field.getInternalName();
         }
     }
 
