@@ -796,7 +796,13 @@ public class ToolUi extends Modification<Object> {
     }
 
     public void setBulkUploadableField(String bulkUploadableField) {
-        this.bulkUploadableField = bulkUploadableField;
+        this.bulkUploadableField = StringUtils.isBlank(bulkUploadableField)
+                ? ((ObjectType) getOriginalObject()).getFields().stream()
+                        .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                        .map(ObjectField::getInternalName)
+                        .findFirst()
+                        .orElse("")
+                : bulkUploadableField;
     }
 
     /**
@@ -1932,16 +1938,7 @@ public class ToolUi extends Modification<Object> {
         public void process(ObjectType type, BulkUploadable annotation) {
             ToolUi ui = type.as(ToolUi.class);
             ui.setBulkUploadable(annotation.value());
-
-            String field = annotation.field();
-
-            ui.setBulkUploadableField(StringUtils.isBlank(field)
-                    ? type.getFields().stream()
-                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                            .map(ObjectField::getInternalName)
-                            .findFirst()
-                            .orElse(null)
-                    : field);
+            ui.setBulkUploadableField(annotation.field());
         }
     }
 
