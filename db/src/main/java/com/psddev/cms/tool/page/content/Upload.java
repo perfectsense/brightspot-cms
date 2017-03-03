@@ -87,28 +87,32 @@ public class Upload extends PageServlet {
                             .orElse(null)
                     : type.getField(uploadableField);
 
-            if (field != null) {
-                uploadableTypes.add(type);
+            if (field == null) {
+                continue;
+            }
 
-                if (isEffectivelyEnableSmartUploader) {
-                    Set<String> contentTypes = field.getContentTypes();
+            uploadableTypes.add(type);
 
-                    if (contentTypes.isEmpty()) {
-                        continue;
-                    }
+            if (!isEffectivelyEnableSmartUploader) {
+                continue;
+            }
 
-                    // If there is any collision between mime types, skip the ambiguity.
-                    Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
-                            .filter(t -> !Collections.disjoint(t.getField().getContentTypes(), field.getContentTypes()))
-                            .collect(Collectors.toSet());
+            Set<String> contentTypes = field.getContentTypes();
 
-                    if (smartUploadableTypesToRemove.isEmpty()) {
-                        smartUploadableTypes.add(new SmartUploadableType(type, field));
+            if (contentTypes.isEmpty()) {
+                continue;
+            }
 
-                    } else {
-                        smartUploadableTypes.removeAll(smartUploadableTypesToRemove);
-                    }
-                }
+            // If there is any collision between mime types, skip the ambiguity.
+            Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
+                    .filter(t -> !Collections.disjoint(t.getField().getContentTypes(), field.getContentTypes()))
+                    .collect(Collectors.toSet());
+
+            if (smartUploadableTypesToRemove.isEmpty()) {
+                smartUploadableTypes.add(new SmartUploadableType(type, field));
+
+            } else {
+                smartUploadableTypes.removeAll(smartUploadableTypesToRemove);
             }
         }
 
