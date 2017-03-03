@@ -98,7 +98,6 @@ public class ToolUi extends Modification<Object> {
     private String storageSetting;
     private String defaultSortField;
     private Boolean unlabeled;
-    private Boolean bulkUploadable;
     private String bulkUploadableField;
 
     public boolean isBulkUpload() {
@@ -783,26 +782,29 @@ public class ToolUi extends Modification<Object> {
         this.unlabeled = unlabeled ? Boolean.TRUE : null;
     }
 
-    public boolean isBulkUploadable() {
-        return Boolean.TRUE.equals(bulkUploadable);
-    }
-
-    public void setBulkUploadable(boolean bulkUploadable) {
-        this.bulkUploadable = bulkUploadable ? Boolean.TRUE : null;
-    }
-
     public String getBulkUploadableField() {
         return bulkUploadableField;
     }
 
     public void setBulkUploadableField(String bulkUploadableField) {
-        this.bulkUploadableField = StringUtils.isBlank(bulkUploadableField)
-                ? ((ObjectType) getOriginalObject()).getFields().stream()
-                        .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                        .map(ObjectField::getInternalName)
-                        .findFirst()
-                        .orElse("")
-                : bulkUploadableField;
+        ObjectType type = (ObjectType) getOriginalObject();
+
+        // Find the first file field.
+        if (StringUtils.isBlank(bulkUploadableField)) {
+            this.bulkUploadableField = type.getFields().stream()
+                    .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                    .map(ObjectField::getInternalName)
+                    .findFirst()
+                    .orElse(null);
+
+        // Make sure the specified field is valid.
+        } else {
+            ObjectField field = type.getField(bulkUploadableField);
+
+            if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                this.bulkUploadableField = bulkUploadableField;
+            }
+        }
     }
 
     /**
@@ -1921,6 +1923,7 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target type should be an option for bulk upload.
+     * Optionally, the file field can be specified.
      */
     @Documented
     @Inherited
@@ -1928,17 +1931,14 @@ public class ToolUi extends Modification<Object> {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface BulkUploadable {
-        boolean value() default true;
-        String field() default "";
+        String value() default "";
     }
 
     private static class BulkUploadableProcessor implements ObjectType.AnnotationProcessor<BulkUploadable> {
 
         @Override
         public void process(ObjectType type, BulkUploadable annotation) {
-            ToolUi ui = type.as(ToolUi.class);
-            ui.setBulkUploadable(annotation.value());
-            ui.setBulkUploadableField(annotation.field());
+            type.as(ToolUi.class).setBulkUploadableField(annotation.value());
         }
     }
 

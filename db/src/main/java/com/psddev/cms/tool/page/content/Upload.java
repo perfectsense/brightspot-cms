@@ -76,17 +76,16 @@ public class Upload extends PageServlet {
         boolean isEffectivelyEnableSmartUploader = page.getCmsTool().isEnableSmartUploader();
 
         for (ObjectType type : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
-                .filter(type -> type.as(ToolUi.class).isBulkUploadable())
                 .filter(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)
                 .collect(Collectors.toList())) {
 
-            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
             uploadableTypes.add(type);
 
             if (!isEffectivelyEnableSmartUploader) {
                 continue;
             }
 
+            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
             Set<String> contentTypes = field.getContentTypes();
 
             if (contentTypes.isEmpty()) {
@@ -202,7 +201,6 @@ public class Upload extends PageServlet {
         page.writeStart("h1");
             page.writeHtml(page.localize(Upload.class, "title"));
         page.writeEnd();
-
 
         page.writeStart("form",
                 "method", "post",

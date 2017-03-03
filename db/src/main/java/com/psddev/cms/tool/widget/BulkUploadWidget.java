@@ -48,7 +48,6 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
             page.writeStart("div", "class", "message message-info");
 
                 if (ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
-                        .filter(type -> type.as(ToolUi.class).isBulkUploadable())
                         .noneMatch(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)) {
 
                     page.writeHtml(page.localize(BulkUploadWidget.class, "message.noTypes"));
