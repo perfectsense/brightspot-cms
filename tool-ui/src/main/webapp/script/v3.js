@@ -223,11 +223,20 @@ function() {
 
   $doc.onCreate('.searchSuggestionsForm', function() {
     var $suggestionsForm = $(this),
-        $source = $suggestionsForm.popup('source'),
-        $contentForm = $source.closest('.contentForm'),
+        $source = $suggestionsForm,
+        $contentForm,
         search;
 
-    if ($contentForm.length === 0) {
+    do {
+      $source = $source.popup('source');
+
+      if ($source !== undefined) {
+        $contentForm = $source.closest('.contentForm');
+      }
+
+    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+
+    if ($contentForm === undefined || $contentForm.length === 0) {
       return;
     }
 
