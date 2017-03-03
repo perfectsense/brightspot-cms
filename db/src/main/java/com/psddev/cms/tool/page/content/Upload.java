@@ -203,9 +203,6 @@ public class Upload extends PageServlet {
             page.writeHtml(page.localize(Upload.class, "title"));
         page.writeEnd();
 
-        if (isEffectivelyEnableSmartUploader) {
-            page.writeStart("div", "class", "message-info").writeHtml("Smart Uploader is enabled.").writeEnd(); // TODO: localize
-        }
 
         page.writeStart("form",
                 "method", "post",
