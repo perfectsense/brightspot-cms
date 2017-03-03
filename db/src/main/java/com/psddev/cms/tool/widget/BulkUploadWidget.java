@@ -14,6 +14,7 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.UploadFiles;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
+import com.psddev.dari.util.StringUtils;
 
 public class BulkUploadWidget extends DefaultDashboardWidget {
 
@@ -29,17 +30,6 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
 
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
-        boolean hasUploadable = false;
-
-        for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
-            for (ObjectField field : t.getFields()) {
-                if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                    hasUploadable = true;
-                    break;
-                }
-            }
-        }
-
         CmsTool.BulkUploadSettings settings = null;
         Site site = page.getSite();
 
@@ -59,7 +49,16 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
             page.writeEnd();
             page.writeStart("div", "class", "message message-info");
 
-                if (!hasUploadable) {
+                if (ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
+                        .filter(type -> type.as(ToolUi.class).isBulkUploadable())
+                        .noneMatch(type -> {
+                            String uploadableField = type.as(ToolUi.class).getBulkUploadableField();
+
+                            return StringUtils.isBlank(uploadableField)
+                                    ? type.getFields().stream().anyMatch(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                                    : type.getField(uploadableField) != null;
+                        })) {
+
                     page.writeHtml(page.localize(BulkUploadWidget.class, "message.noTypes"));
 
                 } else {
