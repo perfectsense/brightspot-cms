@@ -106,9 +106,14 @@ public class Upload extends PageServlet {
             }
         }
 
+        // Even if it is enabled via CmsTool settings, the Smart Uploader
+        // cannot (and will not) be used if there are is no ObjectType with
+        // content types specified. If this is the case, we will fallback to
+        // the normal Front End Uploader experience.
+        isEffectivelyEnableSmartUploader = !smartUploadableTypes.isEmpty();
+
         Database database = Database.Static.getDefault();
         DatabaseEnvironment environment = database.getEnvironment();
-        isEffectivelyEnableSmartUploader = !smartUploadableTypes.isEmpty();
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
         Exception postError = null;
 
