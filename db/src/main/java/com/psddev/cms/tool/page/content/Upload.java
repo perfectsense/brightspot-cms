@@ -2,9 +2,11 @@ package com.psddev.cms.tool.page.content;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -13,7 +15,6 @@ import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
-import com.psddev.cms.db.Content;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.UuidUtils;
@@ -69,11 +70,18 @@ public class Upload extends PageServlet {
     }
 
     private static void reallyDoService(ToolPageContext page) throws IOException, ServletException {
+        List<UUID> typeIds = page.params(UUID.class, "typeId");
+        Database database = Database.Static.getDefault();
+        DatabaseEnvironment environment = database.getEnvironment();
         Set<ObjectType> uploadableTypes = new LinkedHashSet<>();
         Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
         boolean isEffectivelyEnableSmartUploader = page.getCmsTool().isEnableSmartUploader();
 
-        for (ObjectType type : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
+        for (ObjectType type : typeIds.stream()
+                .map(environment::getTypeById)
+                .filter(Objects::nonNull)
+                .map(type -> type.as(ToolUi.class).findDisplayTypes())
+                .flatMap(Collection::stream)
                 .filter(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)
                 .collect(Collectors.toList())) {
 
@@ -109,8 +117,6 @@ public class Upload extends PageServlet {
         // the normal Front End Uploader experience.
         isEffectivelyEnableSmartUploader = !smartUploadableTypes.isEmpty();
 
-        Database database = Database.Static.getDefault();
-        DatabaseEnvironment environment = database.getEnvironment();
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
         Exception postError = null;
 
@@ -128,7 +134,7 @@ public class Upload extends PageServlet {
                 List<UUID> newObjectIds = new ArrayList<>();
 
                 if (isEffectivelyEnableSmartUploader) {
-                    for (ObjectType type : page.params(UUID.class, "typeId").stream()
+                    for (ObjectType type : typeIds.stream()
                             .map(environment::getTypeById)
                             .collect(Collectors.toList())) {
 
