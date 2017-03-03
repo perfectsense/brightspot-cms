@@ -77,20 +77,10 @@ public class Upload extends PageServlet {
 
         for (ObjectType type : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
                 .filter(type -> type.as(ToolUi.class).isBulkUploadable())
+                .filter(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)
                 .collect(Collectors.toList())) {
 
-            String uploadableField = type.as(ToolUi.class).getBulkUploadableField();
-            ObjectField field = StringUtils.isBlank(uploadableField)
-                    ? type.getFields().stream()
-                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                            .findFirst()
-                            .orElse(null)
-                    : type.getField(uploadableField);
-
-            if (field == null) {
-                continue;
-            }
-
+            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
             uploadableTypes.add(type);
 
             if (!isEffectivelyEnableSmartUploader) {

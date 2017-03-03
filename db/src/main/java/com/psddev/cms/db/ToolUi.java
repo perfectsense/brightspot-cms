@@ -1917,6 +1917,7 @@ public class ToolUi extends Modification<Object> {
      * Specifies whether the target type should be an option for bulk upload.
      */
     @Documented
+    @Inherited
     @ObjectType.AnnotationProcessorClass(BulkUploadableProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
@@ -1931,7 +1932,16 @@ public class ToolUi extends Modification<Object> {
         public void process(ObjectType type, BulkUploadable annotation) {
             ToolUi ui = type.as(ToolUi.class);
             ui.setBulkUploadable(annotation.value());
-            ui.setBulkUploadableField(annotation.field());
+
+            String field = annotation.field();
+
+            ui.setBulkUploadableField(StringUtils.isBlank(field)
+                    ? type.getFields().stream()
+                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                            .map(ObjectField::getInternalName)
+                            .findFirst()
+                            .orElse(null)
+                    : field);
         }
     }
 

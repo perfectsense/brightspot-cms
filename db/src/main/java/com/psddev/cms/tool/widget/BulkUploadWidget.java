@@ -12,9 +12,7 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.UploadFiles;
-import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
-import com.psddev.dari.util.StringUtils;
 
 public class BulkUploadWidget extends DefaultDashboardWidget {
 
@@ -51,13 +49,7 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
 
                 if (ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
                         .filter(type -> type.as(ToolUi.class).isBulkUploadable())
-                        .noneMatch(type -> {
-                            String uploadableField = type.as(ToolUi.class).getBulkUploadableField();
-
-                            return StringUtils.isBlank(uploadableField)
-                                    ? type.getFields().stream().anyMatch(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                                    : type.getField(uploadableField) != null;
-                        })) {
+                        .noneMatch(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)) {
 
                     page.writeHtml(page.localize(BulkUploadWidget.class, "message.noTypes"));
 
