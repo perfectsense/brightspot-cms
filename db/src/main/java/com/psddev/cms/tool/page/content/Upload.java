@@ -4,20 +4,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.cms.db.Content;
 import com.psddev.dari.db.ObjectMethod;
+import com.psddev.dari.db.Record;
+import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.UuidUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.google.common.base.Preconditions;
 import com.psddev.cms.db.BulkUploadDraft;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.ResizeOption;
@@ -49,7 +50,6 @@ import com.psddev.dari.util.StringUtils;
 public class Upload extends PageServlet {
 
     private static final String CONTAINER_ID_PARAMETER = "containerId";
-    private static final Logger LOGGER = LoggerFactory.getLogger(Upload.class);
 
     @Override
     protected String getPermissionId() {
@@ -71,14 +71,52 @@ public class Upload extends PageServlet {
     }
 
     private static void reallyDoService(ToolPageContext page) throws IOException, ServletException {
+        Set<ObjectType> uploadableTypes = new LinkedHashSet<>();
+        Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
+        boolean isEffectivelyEnableSmartUploader = page.getCmsTool().isEnableSmartUploader();
+
+        for (ObjectType type : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
+                .filter(type -> type.as(ToolUi.class).isBulkUploadable())
+                .collect(Collectors.toList())) {
+
+            String uploadableField = type.as(ToolUi.class).getBulkUploadableField();
+            ObjectField field = StringUtils.isBlank(uploadableField)
+                    ? type.getFields().stream()
+                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                            .findFirst()
+                            .orElse(null)
+                    : type.getField(uploadableField);
+
+            if (field != null) {
+                uploadableTypes.add(type);
+
+                if (isEffectivelyEnableSmartUploader) {
+                    Set<String> contentTypes = field.getContentTypes();
+
+                    if (contentTypes.isEmpty()) {
+                        continue;
+                    }
+
+                    // If there is any collision between mime types, skip the ambiguity.
+                    Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
+                            .filter(t -> !Collections.disjoint(t.getField().getContentTypes(), field.getContentTypes()))
+                            .collect(Collectors.toSet());
+
+                    if (smartUploadableTypesToRemove.isEmpty()) {
+                        smartUploadableTypes.add(new SmartUploadableType(type, field));
+
+                    } else {
+                        smartUploadableTypes.removeAll(smartUploadableTypesToRemove);
+                    }
+                }
+            }
+        }
+
         Database database = Database.Static.getDefault();
         DatabaseEnvironment environment = database.getEnvironment();
-        Exception postError = null;
+        isEffectivelyEnableSmartUploader = !smartUploadableTypes.isEmpty();
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
-        UUID uploadId = UuidUtils.createSequentialUuid();
-        String containerId = page.param(String.class, "containerId");
-
-        String fileParamName = "file";
+        Exception postError = null;
 
         if (page.isFormPost()) {
             database.beginWrites();
@@ -90,54 +128,22 @@ public class Upload extends PageServlet {
                     throw new IllegalStateException("Not multipart!");
                 }
 
-                Preconditions.checkNotNull(selectedType, "Param for [type] is empty.");
-
-                ObjectField previewField = Preconditions.checkNotNull(getPreviewField(selectedType), "Preview field for type [" + selectedType.getId() + "] is null.");
-
                 StringBuilder js = new StringBuilder();
-                Object common = selectedType.createObject(page.param(UUID.class, "typeForm-" + selectedType.getId()));
-                page.updateUsingParameters(common);
-
-                List<StorageItem> newStorageItems = StorageItemFilter.getParameters(page.getRequest(), fileParamName, FileField.getStorageSetting(Optional.of(previewField)));
-
                 List<UUID> newObjectIds = new ArrayList<>();
-                if (!ObjectUtils.isBlank(newStorageItems)) {
-                    for (StorageItem item : newStorageItems) {
-                        if (item == null) {
-                            continue;
-                        }
 
-                        Object object = selectedType.createObject(null);
-                        State state = State.getInstance(object);
+                if (isEffectivelyEnableSmartUploader) {
+                    for (ObjectType type : page.params(UUID.class, "typeId").stream()
+                            .map(environment::getTypeById)
+                            .collect(Collectors.toList())) {
 
-                        state.setValues(State.getInstance(common));
-
-                        Site site = page.getSite();
-
-                        if (site != null
-                                && site.getDefaultVariation() != null) {
-                            state.as(Variation.Data.class).setInitialVariation(site.getDefaultVariation());
-                        }
-
-                        state.put(previewField.getInternalName(), item);
-                        state.as(BulkUploadDraft.class).setUploadId(uploadId);
-                        state.as(BulkUploadDraft.class).setContainerId(containerId);
-                        page.publish(state);
-                        newObjectIds.add(state.getId());
-
-                        js.append("$addButton.repeatable('add', function() {");
-                        js.append("var $added = $(this);");
-                        js.append("$input = $added.find(':input.objectId').eq(0);");
-                        js.append("$input.attr('data-label', '").append(StringUtils.escapeJavaScript(state.getLabel())).append("');");
-                        js.append("$input.attr('data-label-html', '").append(StringUtils.escapeJavaScript(page.createObjectLabelHtml(state))).append("');");
-                        js.append("$input.attr('data-preview', '").append(StringUtils.escapeJavaScript(page.getPreviewThumbnailUrl(object))).append("');");
-                        js.append("$input.val('").append(StringUtils.escapeJavaScript(state.getId().toString())).append("');");
-                        js.append("$input.change();");
-                        js.append("});");
+                        createObjectFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
                     }
 
-                    database.commitWrites();
+                } else {
+                    createObjectFromUpload(page, selectedType, js, smartUploadableTypes, newObjectIds);
                 }
+
+                database.commitWrites();
 
                 if (page.getErrors().isEmpty()) {
 
@@ -189,29 +195,18 @@ public class Upload extends PageServlet {
             }
         }
 
-        Set<ObjectType> typesSet = new HashSet<ObjectType>();
-
-        for (UUID typeId : page.params(UUID.class, "typeId")) {
-            ObjectType type = environment.getTypeById(typeId);
-
-            if (type != null) {
-                for (ObjectType t : type.as(ToolUi.class).findDisplayTypes()) {
-                    for (ObjectField field : t.getFields()) {
-                        if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                            typesSet.add(t);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        List<ObjectType> types = new ArrayList<ObjectType>(typesSet);
-        Collections.sort(types, new ObjectFieldComparator("name", false));
+        List<ObjectType> types = new ArrayList<>(isEffectivelyEnableSmartUploader
+                ? smartUploadableTypes.stream().map(SmartUploadableType::getType).collect(Collectors.toList())
+                : uploadableTypes);
+        types.sort(new ObjectFieldComparator("name", false));
 
         page.writeStart("h1");
             page.writeHtml(page.localize(Upload.class, "title"));
         page.writeEnd();
+
+        if (isEffectivelyEnableSmartUploader) {
+            page.writeStart("div", "class", "message-info").writeHtml("Smart Uploader is enabled.").writeEnd(); // TODO: localize
+        }
 
         page.writeStart("form",
                 "method", "post",
@@ -221,7 +216,7 @@ public class Upload extends PageServlet {
             page.writeElement("input",
                     "type", "hidden",
                     "name", CONTAINER_ID_PARAMETER,
-                    "value", containerId);
+                    "value", page.param(String.class, "containerId"));
 
             for (ObjectType type : types) {
                 page.writeElement("input", "type", "hidden", "name", "typeId", "value", type.getId());
@@ -256,36 +251,24 @@ public class Upload extends PageServlet {
                 page.writeEnd();
             page.writeEnd();
 
-            page.writeStart("div", "class", "inputContainer");
-                page.writeStart("div", "class", "inputLabel");
-                    page.writeStart("label", "for", page.createId());
-                        page.writeHtml(page.localize(Upload.class, "label.type"));
-                    page.writeEnd();
-                page.writeEnd();
-                page.writeStart("div", "class", "inputSmall");
-                    page.writeStart("select",
-                            "class", "toggleable",
-                            "data-root", "form",
-                            "id", page.getId(),
-                            "name", "type");
-                        for (ObjectType type : types) {
-                            page.writeStart("option",
-                                    "data-hide", ".typeForm",
-                                    "data-show", ".typeForm-" + type.getId(),
-                                    "selected", type.equals(selectedType) ? "selected" : null,
-                                    "value", type.getId());
-                                page.writeHtml(type.getDisplayName());
-                            page.writeEnd();
-                        }
-                    page.writeEnd();
-                page.writeEnd();
-
-                page.writeStart("div", "class", "inputLarge");
+            if (isEffectivelyEnableSmartUploader) {
+                page.writeStart("div", "class", "objectInputs");
                     for (ObjectType type : types) {
                         String name = "typeForm-" + type.getId();
                         Object common = type.createObject(null);
 
-                        page.writeStart("div", "class", "typeForm " + name);
+                        // Still show tab if there is only one smart uploadable type.
+                        if (types.size() == 1) {
+                            page.writeStart("div", "class", "tabs-wrapper");
+                                page.writeStart("ul", "class", "tabs");
+                                    page.writeStart("li", "class", "state-selected");
+                                        page.writeStart("a", "href", "#").writeHtml(type.getDisplayName()).writeEnd();
+                                    page.writeEnd();
+                                page.writeEnd();
+                            page.writeEnd();
+                        }
+
+                        page.writeStart("div", "data-tab", type.getDisplayName());
                             page.writeElement("input",
                                     "type", "hidden",
                                     "name", name,
@@ -293,16 +276,64 @@ public class Upload extends PageServlet {
 
                             ObjectField previewField = getPreviewField(type);
 
-                            List<String> excludedFields = null;
-                            if (previewField != null) {
-                                excludedFields = Arrays.asList(previewField.getInternalName());
-                            }
-
-                            page.writeSomeFormFields(common, false, null, excludedFields);
+                            page.writeSomeFormFields(
+                                    common,
+                                    false,
+                                    null,
+                                    previewField != null ? Collections.singletonList(previewField.getInternalName()) : null);
                         page.writeEnd();
                     }
                 page.writeEnd();
-            page.writeEnd();
+
+            } else {
+                page.writeStart("div", "class", "inputContainer");
+                    page.writeStart("div", "class", "inputLabel");
+                        page.writeStart("label", "for", page.createId());
+                            page.writeHtml(page.localize(Upload.class, "label.type"));
+                        page.writeEnd();
+                    page.writeEnd();
+                    page.writeStart("div", "class", "inputSmall");
+                        page.writeStart("select",
+                                "class", "toggleable",
+                                "data-root", "form",
+                                "id", page.getId(),
+                                "name", "type");
+                            for (ObjectType type : types) {
+                                page.writeStart("option",
+                                        "data-hide", ".typeForm",
+                                        "data-show", ".typeForm-" + type.getId(),
+                                        "selected", type.equals(selectedType) ? "selected" : null,
+                                        "value", type.getId());
+                                    page.writeHtml(type.getDisplayName());
+                                page.writeEnd();
+                            }
+                        page.writeEnd();
+                    page.writeEnd();
+
+                    page.writeStart("div", "class", "inputLarge");
+                        for (ObjectType type : types) {
+                            String name = "typeForm-" + type.getId();
+                            Object common = type.createObject(null);
+
+                            page.writeStart("div", "class", "typeForm " + name);
+                                page.writeElement("input",
+                                        "type", "hidden",
+                                        "name", name,
+                                        "value", State.getInstance(common).getId());
+
+                                ObjectField previewField = getPreviewField(type);
+
+                                List<String> excludedFields = null;
+                                if (previewField != null) {
+                                    excludedFields = Arrays.asList(previewField.getInternalName());
+                                }
+
+                                page.writeSomeFormFields(common, false, null, excludedFields);
+                            page.writeEnd();
+                        }
+                    page.writeEnd();
+                page.writeEnd();
+            }
 
             page.writeStart("input", "type", "hidden", "name", "context", "value", page.param(Context.class, "context"));
 
@@ -360,8 +391,103 @@ public class Upload extends PageServlet {
         return previewField;
     }
 
+    private static void createObjectFromUpload(
+            ToolPageContext page,
+            ObjectType type,
+            StringBuilder js,
+            Set<SmartUploadableType> smartUploadableTypes,
+            List<UUID> newObjectIds) throws IOException, ServletException {
+
+        Object common = type.createObject(page.param(UUID.class, "typeForm-" + type.getId()));
+        page.updateUsingParameters(common);
+        ObjectField previewField = getPreviewField(type);
+
+        for (StorageItem file : StorageItemFilter.getParameters(
+                page.getRequest(),
+                "file",
+                FileField.getStorageSetting(Optional.of(previewField)))) {
+
+            if (file == null) {
+                continue;
+            }
+
+            if (!smartUploadableTypes.isEmpty()) {
+                String fileContentType = file.getContentType();
+
+                if (smartUploadableTypes.stream()
+                        .noneMatch(t -> t.getField().getContentTypes().stream()
+                                .anyMatch(contentType -> contentType.equals(fileContentType)
+                                        || (contentType.endsWith("/") && fileContentType.startsWith(contentType))))) {
+
+                    throw new IllegalArgumentException("Invalid content type(s)!");
+                }
+
+                if (smartUploadableTypes.stream()
+                        .noneMatch(t -> t.getType().equals(type) && t.getField().getContentTypes().stream()
+                                .anyMatch(contentType -> contentType.equals(fileContentType)
+                                        || (contentType.endsWith("/") && fileContentType.startsWith(contentType))))) {
+
+                    continue;
+                }
+            }
+
+            Object object = type.createObject(null);
+            State state = State.getInstance(object);
+            state.setValues(State.getInstance(common));
+            Site site = page.getSite();
+
+            if (site != null && site.getDefaultVariation() != null) {
+                state.as(Variation.Data.class).setInitialVariation(site.getDefaultVariation());
+            }
+
+            state.put(previewField.getInternalName(), file);
+            state.as(BulkUploadDraft.class).setUploadId(UuidUtils.createSequentialUuid());
+            state.as(BulkUploadDraft.class).setContainerId(page.param(String.class, "containerId"));
+            page.publish(state);
+            newObjectIds.add(state.getId());
+
+            js.append("$addButton.repeatable('add', function() {");
+            js.append("var $added = $(this);");
+            js.append("$input = $added.find(':input.objectId').eq(0);");
+            js.append("$input.attr('data-label', '").append(StringUtils.escapeJavaScript(state.getLabel())).append("');");
+            js.append("$input.attr('data-label-html', '").append(StringUtils.escapeJavaScript(page.createObjectLabelHtml(state))).append("');");
+            js.append("$input.attr('data-preview', '").append(StringUtils.escapeJavaScript(page.getPreviewThumbnailUrl(object))).append("');");
+            js.append("$input.val('").append(StringUtils.escapeJavaScript(state.getId().toString())).append("');");
+            js.append("$input.change();");
+            js.append("});");
+        }
+    }
+
     public enum Context {
         FIELD,
         GLOBAL
+    }
+
+    @Recordable.Abstract
+    private static class SmartUploadableType extends Record {
+
+        private ObjectType type;
+        private ObjectField field;
+
+        public SmartUploadableType(ObjectType type, ObjectField field) {
+            this.type = type;
+            this.field = field;
+        }
+
+        public ObjectType getType() {
+            return type;
+        }
+
+        public void setType(ObjectType type) {
+            this.type = type;
+        }
+
+        public ObjectField getField() {
+            return field;
+        }
+
+        public void setField(ObjectField field) {
+            this.field = field;
+        }
     }
 }
