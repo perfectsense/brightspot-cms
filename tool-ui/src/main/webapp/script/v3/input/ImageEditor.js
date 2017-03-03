@@ -1275,24 +1275,36 @@ define([
             // Event handler to support dragging the left/top handle
             $sizeBoxTopLeft.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
 
+                var x;
+                var y;
+
+                x = event.shiftKey ? delta.constrainedX : delta.x;
+                y = event.shiftKey ? delta.constrainedY : delta.y;
+
                 // When user drags the top left handle,
                 // adjust the top and left position of the size box,
                 // and adjust the width and height
                 return {
-                    'left': original.left + delta.x,
-                    'top': original.top + delta.y,
-                    'width': original.width - delta.x,
-                    'height': original.height - delta.y
+                    'left': original.left + x,
+                    'top': original.top + y,
+                    'width': original.width - x,
+                    'height': original.height - y
                 };
             }));
 
             // Event handler to support dragging the bottom/right handle
             $sizeBoxBottomRight.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
 
+                var x;
+                var y;
+
+                x = event.shiftKey ? delta.constrainedX : delta.x;
+                y = event.shiftKey ? delta.constrainedY : delta.y;
+
                 // When user drags the bottom right handle, adjust the width and height of the size box
                 return {
-                    'width': original.width + delta.x,
-                    'height': original.height + delta.y
+                    'width': original.width + x,
+                    'height': original.height + y
                 };
             }));
 
