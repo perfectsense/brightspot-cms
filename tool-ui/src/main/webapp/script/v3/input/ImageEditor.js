@@ -447,9 +447,6 @@ define([
 
             self = this;
 
-            // Reset the cropped image
-            self.cropReset();
-
             // Clear all the checkboxes and inputs for the adjustments
             self.dom.$edit.find(':input:not([type=button])').each(function() {
 
@@ -487,6 +484,9 @@ define([
 
             // Reprocess the image to remove the adjustments
             self.adjustmentProcess();
+
+            // Reset the cropped image
+            self.cropReset();
         },
 
 
@@ -1191,12 +1191,20 @@ define([
          */
         cropCoverUpdate: function() {
 
-            var bounds, self, imageWidth, imageHeight;
+            var bounds, rotation, self, imageWidth, imageHeight;
 
             self = this;
 
-            imageWidth = self.dom.imageCloneWidth;
-            imageHeight = self.dom.imageCloneHeight;
+            // Get the crop bounds for this group, based on the original image size
+            // But adjusted if we will be rotating the image
+            rotation = self.adjustmentRotateGet();
+            if (rotation === 90 || rotation === -90) {
+                imageWidth = self.dom.imageCloneHeight;
+                imageHeight = self.dom.imageCloneWidth;
+            } else {
+                imageWidth = self.dom.imageCloneWidth;
+                imageHeight = self.dom.imageCloneHeight;
+            }
 
             bounds = self.cropGetValue();
             bounds.left = bounds.x;
@@ -1345,7 +1353,7 @@ define([
 
             mousedownHandler = function(mousedownEvent) {
 
-                var aspectRatio, element, imageWidth, imageHeight, original, sizeBoxPosition;
+                var aspectRatio, element, imageWidth, imageHeight, original, rotation, sizeBoxPosition;
 
                 // The element that was dragged
                 element = this;
@@ -1361,8 +1369,15 @@ define([
                     'pageY': mousedownEvent.pageY
                 };
 
-                imageWidth = self.dom.imageCloneWidth;
-                imageHeight = self.dom.imageCloneHeight;
+                rotation = self.adjustmentRotateGet();
+                if (rotation === 90 || rotation === -90) {
+                    imageWidth = self.dom.imageCloneHeight;
+                    imageHeight = self.dom.imageCloneWidth;
+                } else {
+                    imageWidth = self.dom.imageCloneWidth;
+                    imageHeight = self.dom.imageCloneHeight;
+                }
+
                 aspectRatio = imageWidth / imageHeight;
 
                 // On mousedown, let the user start dragging the element
@@ -1541,6 +1556,7 @@ define([
 
             var imageWidth;
             var imageHeight;
+            var rotation;
             var self;
             var $sizeBox;
             var sizeBoxPosition;
@@ -1553,8 +1569,14 @@ define([
             sizeBoxWidth = $sizeBox.width();
             sizeBoxHeight = $sizeBox.height();
 
-            imageWidth = self.dom.imageCloneWidth;
-            imageHeight = self.dom.imageCloneHeight;
+            rotation = self.adjustmentRotateGet();
+            if (rotation === 90 || rotation === -90) {
+                imageWidth = self.dom.imageCloneHeight;
+                imageHeight = self.dom.imageCloneWidth;
+            } else {
+                imageWidth = self.dom.imageCloneWidth;
+                imageHeight = self.dom.imageCloneHeight;
+            }
 
             return ({
                 x: sizeBoxPosition.left / imageWidth,
