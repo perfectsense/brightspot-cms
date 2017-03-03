@@ -788,21 +788,26 @@ public class ToolUi extends Modification<Object> {
 
     public void setBulkUploadableField(String bulkUploadableField) {
         ObjectType type = (ObjectType) getOriginalObject();
-
-        // Find the first file field.
-        if (StringUtils.isBlank(bulkUploadableField)) {
-            this.bulkUploadableField = type.getFields().stream()
-                    .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
-                    .map(ObjectField::getInternalName)
-                    .findFirst()
-                    .orElse(null);
+        ObjectField field = type.getField(bulkUploadableField);
 
         // Make sure the specified field is valid.
-        } else {
-            ObjectField field = type.getField(bulkUploadableField);
+        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+            this.bulkUploadableField = bulkUploadableField;
 
-            if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                this.bulkUploadableField = bulkUploadableField;
+        // Check the preview field. If invalid, find the first file field.
+        } else {
+            String previewField = type.getPreviewField();
+            field = type.getField(previewField);
+
+            if (field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                this.bulkUploadableField = type.getFields().stream()
+                        .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                        .map(ObjectField::getInternalName)
+                        .findFirst()
+                        .orElse(null);
+
+            } else {
+                this.bulkUploadableField = previewField;
             }
         }
     }
