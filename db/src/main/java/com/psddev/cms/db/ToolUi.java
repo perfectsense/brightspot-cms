@@ -791,7 +791,7 @@ public class ToolUi extends Modification<Object> {
         ObjectField field = type.getField(bulkUploadableField);
 
         // Make sure the specified field is valid.
-        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {
             this.bulkUploadableField = bulkUploadableField;
 
         // Check the preview field. If invalid, find the first file field.
@@ -800,7 +800,7 @@ public class ToolUi extends Modification<Object> {
 
             this.bulkUploadableField = field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())
                     ? type.getFields().stream()
-                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalName()))
+                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()))
                             .map(ObjectField::getInternalName)
                             .findFirst()
                             .orElse(null)
