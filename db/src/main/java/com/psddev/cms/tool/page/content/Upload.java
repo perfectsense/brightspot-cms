@@ -75,7 +75,7 @@ public class Upload extends PageServlet {
         DatabaseEnvironment environment = database.getEnvironment();
         Set<ObjectType> uploadableTypes = new LinkedHashSet<>();
         Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
-        boolean isEffectivelyEnableSmartUploader = page.getCmsTool().isEnableSmartUploader();
+        boolean isEffectivelySmartUpload = page.getCmsTool().isEnableSmartUploader();
 
         for (ObjectType type : typeIds.stream()
                 .map(environment::getTypeById)
@@ -87,7 +87,7 @@ public class Upload extends PageServlet {
 
             uploadableTypes.add(type);
 
-            if (!isEffectivelyEnableSmartUploader) {
+            if (!isEffectivelySmartUpload) {
                 continue;
             }
 
@@ -115,7 +115,7 @@ public class Upload extends PageServlet {
         // cannot (and will not) be used if there are is no ObjectType with
         // content types specified. If this is the case, we will fallback to
         // the normal Front End Uploader experience.
-        isEffectivelyEnableSmartUploader = !smartUploadableTypes.isEmpty();
+        isEffectivelySmartUpload = !smartUploadableTypes.isEmpty();
 
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
         Exception postError = null;
@@ -133,7 +133,7 @@ public class Upload extends PageServlet {
                 StringBuilder js = new StringBuilder();
                 List<UUID> newObjectIds = new ArrayList<>();
 
-                if (isEffectivelyEnableSmartUploader) {
+                if (isEffectivelySmartUpload) {
                     for (ObjectType type : typeIds.stream()
                             .map(environment::getTypeById)
                             .collect(Collectors.toList())) {
@@ -197,7 +197,7 @@ public class Upload extends PageServlet {
             }
         }
 
-        List<ObjectType> types = new ArrayList<>(isEffectivelyEnableSmartUploader
+        List<ObjectType> types = new ArrayList<>(isEffectivelySmartUpload
                 ? smartUploadableTypes.stream().map(SmartUploadableType::getType).collect(Collectors.toList())
                 : uploadableTypes);
         types.sort(new ObjectFieldComparator("name", false));
@@ -249,7 +249,7 @@ public class Upload extends PageServlet {
                 page.writeEnd();
             page.writeEnd();
 
-            if (isEffectivelyEnableSmartUploader) {
+            if (isEffectivelySmartUpload) {
                 page.writeStart("div", "class", "objectInputs");
                     for (ObjectType type : types) {
                         Object common = type.createObject(null);
