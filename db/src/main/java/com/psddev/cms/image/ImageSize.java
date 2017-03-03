@@ -2,6 +2,7 @@ package com.psddev.cms.image;
 
 import com.google.common.base.MoreObjects;
 import com.psddev.cms.db.ImageTag;
+import com.psddev.cms.view.ViewModel;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.ThreadLocalStack;
@@ -40,7 +41,7 @@ public final class ImageSize {
      * @param field Nullable.
      * @return Nullable.
      */
-    public static String getUrl(StorageItem image, String field) {
+    public static String getUrlForField(StorageItem image, String field) {
         if (image == null) {
             return null;
         }
@@ -57,6 +58,33 @@ public final class ImageSize {
         } else {
             return image.getPublicUrl();
         }
+    }
+
+    /**
+     * Returns a URL to the given {@code image}, sized most appropriate for
+     * use in the current contexts.
+     *
+     * @param image Nullable.
+     * @return Nullable.
+     */
+    public static String getUrl(StorageItem image) {
+        if (image == null) {
+            return null;
+        }
+
+        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+            Class<?> c = ObjectUtils.getClassByName(ste.getClassName());
+
+            if (c != null && ViewModel.class.isAssignableFrom(c)) {
+                String field = ImageSizeEnhancer.toField(ste.getMethodName());
+
+                if (field != null) {
+                    return getUrlForField(image, field);
+                }
+            }
+        }
+
+        return image.getPublicUrl();
     }
 
     /**
