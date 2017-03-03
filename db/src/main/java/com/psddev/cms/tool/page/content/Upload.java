@@ -2,7 +2,6 @@ package com.psddev.cms.tool.page.content;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,7 +14,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import com.psddev.cms.db.Content;
-import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.UuidUtils;
@@ -268,13 +266,13 @@ public class Upload extends PageServlet {
                                     "name", name,
                                     "value", State.getInstance(common).getId());
 
-                            ObjectField previewField = getPreviewField(type);
+                            ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
 
                             page.writeSomeFormFields(
                                     common,
                                     false,
                                     null,
-                                    previewField != null ? Collections.singletonList(previewField.getInternalName()) : null);
+                                    uploadableField != null ? Collections.singletonList(uploadableField.getInternalName()) : null);
                         page.writeEnd();
                     }
                 page.writeEnd();
@@ -315,14 +313,13 @@ public class Upload extends PageServlet {
                                         "name", name,
                                         "value", State.getInstance(common).getId());
 
-                                ObjectField previewField = getPreviewField(type);
+                                ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
 
-                                List<String> excludedFields = null;
-                                if (previewField != null) {
-                                    excludedFields = Arrays.asList(previewField.getInternalName());
-                                }
-
-                                page.writeSomeFormFields(common, false, null, excludedFields);
+                                page.writeSomeFormFields(
+                                        common,
+                                        false,
+                                        null,
+                                        uploadableField != null ? Collections.singletonList(uploadableField.getInternalName()) : null);
                             page.writeEnd();
                         }
                     page.writeEnd();
@@ -366,25 +363,6 @@ public class Upload extends PageServlet {
         }
     }
 
-    private static ObjectField getPreviewField(ObjectType type) {
-        ObjectField previewField = type.getField(type.getPreviewField());
-
-        if (previewField instanceof ObjectMethod) {
-            previewField = null;
-        }
-
-        if (previewField == null) {
-            for (ObjectField field : type.getFields()) {
-                if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                    previewField = field;
-                    break;
-                }
-            }
-        }
-
-        return previewField;
-    }
-
     private static void createObjectFromUpload(
             ToolPageContext page,
             ObjectType type,
@@ -394,12 +372,12 @@ public class Upload extends PageServlet {
 
         Object common = type.createObject(page.param(UUID.class, "typeForm-" + type.getId()));
         page.updateUsingParameters(common);
-        ObjectField previewField = getPreviewField(type);
+        ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
 
         for (StorageItem file : StorageItemFilter.getParameters(
                 page.getRequest(),
                 "file",
-                FileField.getStorageSetting(Optional.of(previewField)))) {
+                FileField.getStorageSetting(Optional.of(uploadableField)))) {
 
             if (file == null) {
                 continue;
@@ -434,7 +412,7 @@ public class Upload extends PageServlet {
                 state.as(Variation.Data.class).setInitialVariation(site.getDefaultVariation());
             }
 
-            state.put(previewField.getInternalName(), file);
+            state.put(uploadableField.getInternalName(), file);
             state.as(BulkUploadDraft.class).setUploadId(UuidUtils.createSequentialUuid());
             state.as(BulkUploadDraft.class).setContainerId(page.param(String.class, "containerId"));
             page.publish(state);
