@@ -796,8 +796,7 @@ public class ToolUi extends Modification<Object> {
 
         // Check the preview field. If invalid, find the first file field.
         } else {
-            String previewField = type.getPreviewField();
-            field = type.getField(previewField);
+            field = type.getField(type.getPreviewField());
 
             if (field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
                 this.bulkUploadableField = type.getFields().stream()
@@ -807,7 +806,7 @@ public class ToolUi extends Modification<Object> {
                         .orElse(null);
 
             } else {
-                this.bulkUploadableField = previewField;
+                this.bulkUploadableField = field.getInternalName();
             }
         }
     }
