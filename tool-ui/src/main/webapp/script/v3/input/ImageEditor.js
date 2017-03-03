@@ -447,6 +447,9 @@ define([
 
             self = this;
 
+            // Reset the cropped image
+            self.cropReset();
+
             // Clear all the checkboxes and inputs for the adjustments
             self.dom.$edit.find(':input:not([type=button])').each(function() {
 
@@ -1566,6 +1569,22 @@ define([
             self.dom.$edit.find('input[name$="/file.crop"]').val(JSON.stringify(value));
         },
 
+
+        /**
+         * Reset the crop so it covers the entire image.
+         */
+        cropReset: function() {
+            var self;
+            self = this;
+            self.$cropSizeBox.css({
+                left: 0,
+                top: 0,
+                width: '100%',
+                height: '100%'
+            });
+            self.cropUpdateInput();
+            self.cropCoverUpdate();
+        },
 
         //--------------------------------------------------
         // SIZES
