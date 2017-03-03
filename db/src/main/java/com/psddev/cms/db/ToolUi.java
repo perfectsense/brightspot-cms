@@ -98,6 +98,8 @@ public class ToolUi extends Modification<Object> {
     private String storageSetting;
     private String defaultSortField;
     private Boolean unlabeled;
+    private Boolean bulkUploadable;
+    private String bulkUploadableField;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -779,6 +781,22 @@ public class ToolUi extends Modification<Object> {
 
     public void setUnlabeled(boolean unlabeled) {
         this.unlabeled = unlabeled ? Boolean.TRUE : null;
+    }
+
+    public boolean isBulkUploadable() {
+        return Boolean.TRUE.equals(bulkUploadable);
+    }
+
+    public void setBulkUploadable(boolean bulkUploadable) {
+        this.bulkUploadable = bulkUploadable ? Boolean.TRUE : null;
+    }
+
+    public String getBulkUploadableField() {
+        return bulkUploadableField;
+    }
+
+    public void setBulkUploadableField(String bulkUploadableField) {
+        this.bulkUploadableField = bulkUploadableField;
     }
 
     /**
@@ -1892,6 +1910,28 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, Unlabeled annotation) {
             field.as(ToolUi.class).setUnlabeled(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the target type should be an option for bulk upload.
+     */
+    @Documented
+    @ObjectType.AnnotationProcessorClass(BulkUploadableProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface BulkUploadable {
+        boolean value() default true;
+        String field() default "";
+    }
+
+    private static class BulkUploadableProcessor implements ObjectType.AnnotationProcessor<BulkUploadable> {
+
+        @Override
+        public void process(ObjectType type, BulkUploadable annotation) {
+            ToolUi ui = type.as(ToolUi.class);
+            ui.setBulkUploadable(annotation.value());
+            ui.setBulkUploadableField(annotation.field());
         }
     }
 
