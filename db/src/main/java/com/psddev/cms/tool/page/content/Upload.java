@@ -132,11 +132,11 @@ public class Upload extends PageServlet {
                             .map(environment::getTypeById)
                             .collect(Collectors.toList())) {
 
-                        createObjectFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
+                        createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
                     }
 
                 } else {
-                    createObjectFromUpload(page, selectedType, js, smartUploadableTypes, newObjectIds);
+                    createObjectsFromUpload(page, selectedType, js, smartUploadableTypes, newObjectIds);
                 }
 
                 database.commitWrites();
@@ -246,7 +246,6 @@ public class Upload extends PageServlet {
             if (isEffectivelyEnableSmartUploader) {
                 page.writeStart("div", "class", "objectInputs");
                     for (ObjectType type : types) {
-                        String name = "typeForm-" + type.getId();
                         Object common = type.createObject(null);
 
                         // Still show tab if there is only one smart uploadable type.
@@ -263,7 +262,7 @@ public class Upload extends PageServlet {
                         page.writeStart("div", "data-tab", type.getDisplayName());
                             page.writeElement("input",
                                     "type", "hidden",
-                                    "name", name,
+                                    "name", "typeForm-" + type.getId(),
                                     "value", State.getInstance(common).getId());
 
                             ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
@@ -291,11 +290,13 @@ public class Upload extends PageServlet {
                                 "id", page.getId(),
                                 "name", "type");
                             for (ObjectType type : types) {
+                                UUID typeId = type.getId();
+
                                 page.writeStart("option",
                                         "data-hide", ".typeForm",
-                                        "data-show", ".typeForm-" + type.getId(),
+                                        "data-show", ".typeForm-" + typeId,
                                         "selected", type.equals(selectedType) ? "selected" : null,
-                                        "value", type.getId());
+                                        "value", typeId);
                                     page.writeHtml(type.getDisplayName());
                                 page.writeEnd();
                             }
@@ -363,7 +364,7 @@ public class Upload extends PageServlet {
         }
     }
 
-    private static void createObjectFromUpload(
+    private static void createObjectsFromUpload(
             ToolPageContext page,
             ObjectType type,
             StringBuilder js,
