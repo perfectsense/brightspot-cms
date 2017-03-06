@@ -51,7 +51,7 @@ define([ 'jquery', 'v3/RecalculateDimensions' ], function ($, RecalculateDimensi
 
             if (containerId) {
                 tabParameter = encodeURIComponent($container.attr('data-id') + '/tab');
-                tabParameterRe = new RegExp('([?&])' + tabParameter + '=([^=]+)');
+                tabParameterRe = new RegExp('([?&])' + tabParameter + '=([^&]+)(&|$)');
             }
 
             // Create the tabs.
@@ -70,7 +70,7 @@ define([ 'jquery', 'v3/RecalculateDimensions' ], function ($, RecalculateDimensi
                                     text;
 
                             if (containerId && history && history.replaceState) {
-                                href = window.location.href.replace(tabParameterRe, '');
+                                href = window.location.href.replace(tabParameterRe, '$1').replace(/&+$/, '');
                                 text = $selected.text();
 
                                 if (text !== MAIN_TAB_NAME) {
