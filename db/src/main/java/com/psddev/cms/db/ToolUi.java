@@ -28,6 +28,7 @@ import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Reference;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.SmsProvider;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 
@@ -42,6 +43,7 @@ public class ToolUi extends Modification<Object> {
     private Boolean collectionItemToggle;
     private Boolean collectionItemWeight;
     private Boolean collectionItemWeightCalculated;
+    private Boolean collectionItemWeightColor;
     private Boolean collectionItemWeightMarker;
     private Boolean colorPicker;
     private String cssClass;
@@ -65,6 +67,7 @@ public class ToolUi extends Modification<Object> {
     private String inputProcessorApplication;
     private String inputProcessorPath;
     private String inputSearcherPath;
+    private String dynamicInputSearcherPath;
     private String storagePreviewProcessorApplication;
     private String storagePreviewProcessorPath;
     private String languageTag;
@@ -97,6 +100,7 @@ public class ToolUi extends Modification<Object> {
     private String storageSetting;
     private String defaultSortField;
     private Boolean unlabeled;
+    private Boolean testSms;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -144,6 +148,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setCollectionItemWeightCalculated(boolean collectionItemWeightCalculated) {
         this.collectionItemWeightCalculated = collectionItemWeightCalculated ? Boolean.TRUE : null;
+    }
+
+    public boolean isCollectionItemWeightColor() {
+        return Boolean.TRUE.equals(collectionItemWeightColor);
+    }
+
+    public void setCollectionItemWeightColor(boolean collectionItemWeightColor) {
+        this.collectionItemWeightColor = collectionItemWeightColor ? Boolean.TRUE : null;
     }
 
     public boolean isCollectionItemWeightMarker() {
@@ -428,6 +440,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setInputSearcherPath(String inputSearcherPath) {
         this.inputSearcherPath = inputSearcherPath;
+    }
+
+    public String getDynamicInputSearcherPath() {
+        return dynamicInputSearcherPath;
+    }
+
+    public void setDynamicInputSearcherPath(String dynamicInputSearcherPath) {
+        this.dynamicInputSearcherPath = dynamicInputSearcherPath;
     }
 
     public String getStoragePreviewProcessorPath() {
@@ -772,6 +792,29 @@ public class ToolUi extends Modification<Object> {
         this.unlabeled = unlabeled ? Boolean.TRUE : null;
     }
 
+    public boolean isTestSms() {
+        return Boolean.TRUE.equals(testSms);
+    }
+
+    public void setTestSms(boolean testSms) {
+        this.testSms = testSms ? Boolean.TRUE : null;
+    }
+
+    /**
+     * @return {@code true} if default {@link SmsProvider} exists and
+     * {@link TestSms} is singular text UI annotation, {@code false} otherwise.
+     */
+    public boolean isEffectivelyTestSms() {
+        try {
+            SmsProvider.Static.getDefault();
+
+        } catch (IllegalStateException error) {
+            return false;
+        }
+
+        return isTestSms() && !isColorPicker() && !isSecret();
+    }
+
     /**
      * Finds a list of all concrete types that can be displayed in the
      * context of this type or field.
@@ -928,6 +971,27 @@ public class ToolUi extends Modification<Object> {
         public void process(ObjectType type, ObjectField field, CollectionItemWeight annotation) {
             field.as(ToolUi.class).setCollectionItemWeight(annotation.value());
             field.as(ToolUi.class).setCollectionItemWeightCalculated(annotation.calculated());
+        }
+    }
+
+    /**
+     * Specifies a field to be used as color in the UI produced by repeatable objects with
+     * a {@link CollectionItemWeight} annotation. The field should be a {@link String} with
+     * a value of hex code of color.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(CollectionItemWeightColorProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface CollectionItemWeightColor {
+        boolean value() default true;
+    }
+
+    private static class CollectionItemWeightColorProcessor implements ObjectField.AnnotationProcessor<CollectionItemWeightColor> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, CollectionItemWeightColor annotation) {
+            field.as(ToolUi.class).setCollectionItemWeightColor(annotation.value());
         }
     }
 
@@ -1350,13 +1414,16 @@ public class ToolUi extends Modification<Object> {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface InputSearcherPath {
-        String value();
+        String value() default "";
+        String dynamicPath() default "";
     }
 
     private static class InputSearcherPathProcessor implements ObjectField.AnnotationProcessor<InputSearcherPath> {
         @Override
         public void process(ObjectType type, ObjectField field, InputSearcherPath annotation) {
-            field.as(ToolUi.class).setInputSearcherPath(annotation.value());
+            ToolUi fieldMod = field.as(ToolUi.class);
+            fieldMod.setInputSearcherPath(annotation.value());
+            fieldMod.setDynamicInputSearcherPath(annotation.dynamicPath());
         }
     }
 
@@ -2106,6 +2173,25 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, DefaultSortField annotation) {
             type.as(ToolUi.class).setDefaultSortField(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the target field should display the test sms option.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(TestSmsProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface TestSms {
+        boolean value() default true;
+    }
+
+    private static class TestSmsProcessor implements ObjectField.AnnotationProcessor<TestSms> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, TestSms annotation) {
+            field.as(ToolUi.class).setTestSms(annotation.value());
         }
     }
 

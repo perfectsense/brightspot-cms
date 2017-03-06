@@ -25,7 +25,8 @@ function($) {
           value,
           selectHref,
           aqIndex,
-          aqParam;
+          aqParam,
+          searcherPath;
 
       if (!shadow) {
         return;
@@ -82,8 +83,15 @@ function($) {
         }
       }
 
+        searcherPath = $input.attr('data-searcher-path');
+
       // update additional query parameter in select href
       selectHref = $select.attr('href');
+
+        if (searcherPath) {
+            selectHref = searcherPath + (searcherPath.indexOf('?') > -1 ? '&' : '?') + selectHref.substr(selectHref.indexOf('__'));
+        }
+
       aqIndex = selectHref.indexOf('aq');
       aqParam = 'aq=' + encodeURIComponent($input.attr('data-additional-query') || '');
 
@@ -168,7 +176,7 @@ function($) {
         'target': target + '-select',
         'click': function() { return !$(this).is('.state-disabled'); },
         'href': searcherPath +
-            (searcherPath.indexOf('?') > -1 ? '&' : '?') + 'pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
+            (searcherPath.indexOf('?') > -1 ? '&' : '?') + '__=&pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
             '&py=' + encodeURIComponent((/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '') +
             '&p=' + encodeURIComponent($input.attr('data-pathed')) +
             '&' + (typeIds ? $.map(typeIds.split(','), function(typeId) { return 'rt=' + typeId; }).join('&') : '') +

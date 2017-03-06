@@ -1282,6 +1282,9 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
             var submenus = { };
 
             $.each(RICH_TEXT_ELEMENTS, function (index, rtElement) {
+                if (self.inline && rtElement.line) {
+                    return;
+                }
 
                 // For this instance of the RTE, was there a custom list
                 // of elements that should be displayed in the toolbar?

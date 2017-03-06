@@ -8,7 +8,7 @@ define([ 'jquery', 'bsp-utils', 'sticky-kit' ], function($, bsp_utils) {
     return $element.closest('.popup').parent().is('body.rte-fullscreen');
   }
 
-  bsp_utils.onDomInsert(document, '.withLeftNav > .leftNav, .withLeftNav > .main, .contentForm-main', {
+  bsp_utils.onDomInsert(document, '.withLeftNav > .leftNav', {
     insert: function (element) {
       var $element = $(element);
 

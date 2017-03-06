@@ -2,14 +2,18 @@ package com.psddev.cms.tool.page;
 
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.dari.db.Query;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
-import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
+import com.psddev.dari.util.StorageItem;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -28,15 +32,17 @@ public class ContentMetadata extends PageServlet {
 
     @Override
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        String metadataJson = page.param(String.class, "metadata");
+        UUID id = page.param(UUID.class, "id");
+        Object object = Optional.ofNullable(Query.fromAll().where("_id = ?", id).first())
+                .orElseThrow(() -> new IllegalArgumentException(String.format("No Object found for id [%s]!", id)));
 
-        if (metadataJson == null) {
-            throw new IllegalArgumentException("No metadata found!");
-        }
+        String fieldName = page.param(String.class, "fieldName");
+        StorageItem file = (StorageItem) Optional.ofNullable(State.getInstance(object).get(fieldName))
+                .orElseThrow(() -> new IllegalArgumentException(String.format("No file found for fieldName [%s]!", fieldName)));
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = new TreeMap<>(((Map<String, Object>) ObjectUtils.fromJson(metadataJson)).entrySet()
-                .stream()
+        Map<String, Object> metadata = new TreeMap<>(file.getMetadata().entrySet().stream()
+                .filter(entry -> !entry.getKey().startsWith("cms."))
                 .collect(Collectors.toMap(entry -> {
                     String key = entry.getKey();
                     return key.substring(0, 1).toUpperCase() + key.substring(1);

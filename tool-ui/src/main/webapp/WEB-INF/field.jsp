@@ -5,6 +5,7 @@ com.psddev.cms.db.AbVariationField,
 com.psddev.cms.db.AbVariationObject,
 com.psddev.cms.db.ContentField,
 com.psddev.cms.db.ContentType,
+com.psddev.cms.db.Localization,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.db.ToolUiLayoutElement,
 com.psddev.cms.tool.CmsTool,
@@ -85,11 +86,11 @@ if (ObjectUtils.isBlank(tab)) {
 }
 
 if (localizeTab) {
-    tab = wp.localize(field, "tab." + tab);
+    tab = Localization.currentUserText(field, "tab." + tab, tab);
 }
 
 if (ObjectUtils.isBlank(label)) {
-    label = wp.localize(field, "field." + field.getInternalName());
+    label = Localization.currentUserText(field, "field." + field.getInternalName(), field.getDisplayName());
 }
 
 List<String> errors = state.getErrors(field);
@@ -104,6 +105,8 @@ if (!isHidden &&
     isHidden = true;
 }
 
+isHidden = ObjectUtils.to(boolean.class, Localization.currentUserText(field, "field." + field.getInternalName() + ".hidden", String.valueOf(isHidden)));
+
 if (!isHidden && type != null) {
     isHidden = !wp.hasPermission("type/" + field.getParentType().getId() + "/read")
             || !wp.hasPermission("type/" + field.getParentType().getId() + "/field/" + fieldName + "/read");
@@ -113,7 +116,11 @@ if (isHidden) {
     if (!isFormPost && !ObjectUtils.isBlank(errors)) {
         wp.write("<div class=\"inputContainer\">");
             wp.write("<div class=\"inputLabel\">");
-            wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", state.getType().getId(), "field", field.getInternalName()), "\">Guide</a>");
+
+            if (type != null && type.getField(fieldName) != null) {
+                wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", type.getId(), "field", fieldName), "\">Guide</a>");
+            }
+
             wp.write("<label for=\"", wp.createId(), "\">");
             wp.write(wp.h(label));
             wp.write("</label></div>");
@@ -228,7 +235,11 @@ try {
         }
 
         wp.write("<div class=\"inputLabel\">");
-        wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", state.getType().getId(), "field", field.getInternalName()), "\">Guide</a>");
+
+        if (type != null && type.getField(fieldName) != null) {
+            wp.write("<a class=\"icon icon-object-guide\" tabindex=\"-1\" target=\"guideField\" href=\"", wp.cmsUrl("/guideField", "typeId", type.getId(), "field", fieldName), "\">Guide</a>");
+        }
+
         wp.write("<label for=\"", wp.createId(), "\">");
         wp.write(wp.h(label));
         wp.write("</label></div>");

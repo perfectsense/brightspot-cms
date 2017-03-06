@@ -50,11 +50,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         $input.toggleClass('state-disabled', disable);
       });
       
-      var width = $original.outerWidth();
-      
-      if (isMultiple) {
-        width = width * 2;
-      }
+      var minWidth = $original.outerWidth();
 
       $input = $('<div/>', {
         'class': plugin.className('input'),
@@ -64,9 +60,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           'margin-left': $original.css('margin-left'),
           'margin-right': $original.css('margin-right'),
           'margin-top': $original.css('margin-top'),
+          'min-width': minWidth,
           'max-width': '100%',
           'position': 'relative',
-          'width': width
+          'width': isMultiple ? minWidth * 2 : ''
         }
       });
 
@@ -104,6 +101,14 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       function resize() {
+        if (!$input.is(':visible')) {
+          $openOriginal = null;
+          $openList = null;
+          $markerContainer.hide();
+          $listContainer.hide();
+          return;
+        }
+
         var inputOffset = $input.offset();
         var inputWidth = $input.outerWidth(true);
         var winScrollTop = $win.scrollTop();
@@ -113,9 +118,13 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $listContainer.css('min-width', inputWidth + 20);
         }
 
-        if (inputOffset.top - winScrollTop < winHeight * 0.6) {
-          var inputHeight = $input.outerHeight();
-          var markerTop = inputOffset.top + inputHeight;
+        var inputTop = inputOffset.top;
+        var inputHeight = $input.outerHeight();
+        var heightAbove = inputTop - winScrollTop;
+        var heightBelow = winHeight - (heightAbove + inputHeight);
+
+        if (heightAbove < heightBelow) {
+          var markerTop = inputTop + inputHeight;
 
           if (isFixedPosition) {
             markerTop -= $win.scrollTop();
@@ -202,6 +211,13 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         $openList = $list;
         $markerContainer.show();
         $listContainer.show();
+        $list.scrollTop(0);
+
+        var $selected = $list.find('.' + plugin.className('listItem-selected'));
+
+        if ($selected.length > 0) {
+            $list.scrollTop($selected.position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top);
+        }
       });
 
       $list.bind('dropDown-close', function() {
@@ -249,6 +265,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $list.trigger('dropDown-close');
         }
       });
+
+      // Recalculate position and size whenever viewport is affected.
+      $(window).bind('resize scroll', bsp_utils.throttle(15, resize));
 
       // Create the list based on the options in the original input.
       addItem = function($option) {
@@ -395,8 +414,9 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $search.hide();
         });
 
-        $search.hide();
         $input.append($search);
+        $input.css('min-width', $input.outerWidth());
+        $search.hide();
       }
     },
 

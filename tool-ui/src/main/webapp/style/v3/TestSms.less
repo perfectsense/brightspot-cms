@@ -1,0 +1,41 @@
+.Sms {
+  display: flex;
+
+  .inputSmall {
+    flex: auto;
+    margin-left: 5px;
+  }
+
+  ~ .inputWordCount {
+    right: 174.42px;
+  }
+
+  &-button {
+    margin-left: 5px;
+  }
+
+  &-response {
+    display: none;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 5px;
+    padding-top: 6px;
+    text-align: center;
+    width: 163.42px;
+  }
+
+  &-pending {
+    background: url(icon/ajax-loader.gif) no-repeat 50%;
+    height: 16px;
+  }
+
+  &-error {
+    color: #FF0000;
+    display: block;
+  }
+
+  &-success {
+    color: #008000;
+    display: block;
+  }
+}

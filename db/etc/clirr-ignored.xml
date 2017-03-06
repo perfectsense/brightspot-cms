@@ -69,9 +69,21 @@
     </difference>
 
     <difference>
+        <className>com/psddev/cms/view/ViewRenderer</className>
+        <differenceType>7012</differenceType>
+        <method>java.lang.String getContentType()</method>
+    </difference>
+
+    <difference>
         <className>com/psddev/cms/db/ToolUi$CollectionItemWeight</className>
         <differenceType>7012</differenceType>
         <method>boolean calculated()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$InputSearcherPath</className>
+        <differenceType>7012</differenceType>
+        <method>java.lang.String dynamicPath()</method>
     </difference>
 
     <difference>

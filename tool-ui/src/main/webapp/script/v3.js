@@ -77,6 +77,7 @@ require([
 
   'v3/Dropbox',
   'v3/EditFieldUpdate',
+  'v3/TestSms',
 
   'v3/dashboard',
   'v3/sticky',
@@ -223,11 +224,20 @@ function() {
 
   $doc.onCreate('.searchSuggestionsForm', function() {
     var $suggestionsForm = $(this),
-        $source = $suggestionsForm.popup('source'),
-        $contentForm = $source.closest('.contentForm'),
+        $source = $suggestionsForm,
+        $contentForm,
         search;
 
-    if ($contentForm.length === 0) {
+    do {
+      $source = $source.popup('source');
+
+      if ($source !== undefined) {
+        $contentForm = $source.closest('.contentForm');
+      }
+
+    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+
+    if ($contentForm === undefined || $contentForm.length === 0) {
       return;
     }
 
@@ -519,7 +529,7 @@ function() {
           $fileSelector = $(this);
           $fileSelectorSelect = $(this).find('> select[name $= "file.action"]');
           $fileSelectorLabel = $(this).find('> .dropDown-input > .dropDown-label');
-          $fileSelectorInput = $(this).find('> input[name $= "file.file"]');
+          $fileSelectorInput = $(this).find('> .fileSelectorNewUpload input[type="file"]');
           // The existing drag and drop code used a link to display the "Drop Files Here" text,
           // so we'll create a link that can be used
           $upload = $('<a>', {href: '#'}).on('click', function(){ return false; });
@@ -600,6 +610,7 @@ function() {
             // Replace the original file input with the new one
             $fileSelectorInput.replaceWith($fileInput);
             $fileSelectorInput = $fileInput;
+            $fileSelectorInput.unwrap();
 
             // Trigger a change event so the upload plugin will run and upload the image
             // We must do this after a timeout to give time for the upload plugin to initialize
@@ -1068,6 +1079,16 @@ function() {
       $('.toolSearch button').bind('click', function() {
         $('.toolSearch :text').focus();
         return false;
+      });
+
+      bsp_utils.onDomInsert(document, '.toolSearch :text', {
+        insert: function (input) {
+          var $input = $(input);
+
+          if ($input.is(':focus')) {
+            $input.focus();
+          }
+        }
       });
     }());
   });
