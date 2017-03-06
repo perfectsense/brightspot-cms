@@ -28,6 +28,7 @@ import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Reference;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.SmsProvider;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 
@@ -98,6 +99,7 @@ public class ToolUi extends Modification<Object> {
     private String storageSetting;
     private String defaultSortField;
     private Boolean unlabeled;
+    private Boolean testSms;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -779,6 +781,29 @@ public class ToolUi extends Modification<Object> {
 
     public void setUnlabeled(boolean unlabeled) {
         this.unlabeled = unlabeled ? Boolean.TRUE : null;
+    }
+
+    public boolean isTestSms() {
+        return Boolean.TRUE.equals(testSms);
+    }
+
+    public void setTestSms(boolean testSms) {
+        this.testSms = testSms ? Boolean.TRUE : null;
+    }
+
+    /**
+     * @return {@code true} if default {@link SmsProvider} exists and
+     * {@link TestSms} is singular text UI annotation, {@code false} otherwise.
+     */
+    public boolean isEffectivelyTestSms() {
+        try {
+            SmsProvider.Static.getDefault();
+
+        } catch (IllegalStateException error) {
+            return false;
+        }
+
+        return isTestSms() && !isColorPicker() && !isSecret();
     }
 
     /**
@@ -2118,6 +2143,25 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, DefaultSortField annotation) {
             type.as(ToolUi.class).setDefaultSortField(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the target field should display the test sms option.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(TestSmsProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @interface TestSms {
+        boolean value() default true;
+    }
+
+    private static class TestSmsProcessor implements ObjectField.AnnotationProcessor<TestSms> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, TestSms annotation) {
+            field.as(ToolUi.class).setTestSms(annotation.value());
         }
     }
 

@@ -77,6 +77,7 @@ require([
 
   'v3/Dropbox',
   'v3/EditFieldUpdate',
+  'v3/TestSms',
 
   'v3/dashboard',
   'v3/sticky',
