@@ -43,6 +43,7 @@ public class ToolUi extends Modification<Object> {
     private Boolean collectionItemToggle;
     private Boolean collectionItemWeight;
     private Boolean collectionItemWeightCalculated;
+    private Boolean collectionItemWeightColor;
     private Boolean collectionItemWeightMarker;
     private Boolean colorPicker;
     private String cssClass;
@@ -147,6 +148,14 @@ public class ToolUi extends Modification<Object> {
 
     public void setCollectionItemWeightCalculated(boolean collectionItemWeightCalculated) {
         this.collectionItemWeightCalculated = collectionItemWeightCalculated ? Boolean.TRUE : null;
+    }
+
+    public boolean isCollectionItemWeightColor() {
+        return Boolean.TRUE.equals(collectionItemWeightColor);
+    }
+
+    public void setCollectionItemWeightColor(boolean collectionItemWeightColor) {
+        this.collectionItemWeightColor = collectionItemWeightColor ? Boolean.TRUE : null;
     }
 
     public boolean isCollectionItemWeightMarker() {
@@ -962,6 +971,27 @@ public class ToolUi extends Modification<Object> {
         public void process(ObjectType type, ObjectField field, CollectionItemWeight annotation) {
             field.as(ToolUi.class).setCollectionItemWeight(annotation.value());
             field.as(ToolUi.class).setCollectionItemWeightCalculated(annotation.calculated());
+        }
+    }
+
+    /**
+     * Specifies a field to be used as color in the UI produced by repeatable objects with
+     * a {@link CollectionItemWeight} annotation. The field should be a {@link String} with
+     * a value of hex code of color.
+     */
+    @Documented
+    @ObjectField.AnnotationProcessorClass(CollectionItemWeightColorProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface CollectionItemWeightColor {
+        boolean value() default true;
+    }
+
+    private static class CollectionItemWeightColorProcessor implements ObjectField.AnnotationProcessor<CollectionItemWeightColor> {
+
+        @Override
+        public void process(ObjectType type, ObjectField field, CollectionItemWeightColor annotation) {
+            field.as(ToolUi.class).setCollectionItemWeightColor(annotation.value());
         }
     }
 
