@@ -77,6 +77,7 @@ require([
 
   'v3/Dropbox',
   'v3/EditFieldUpdate',
+  'v3/TestSms',
 
   'v3/dashboard',
   'v3/sticky',
@@ -223,11 +224,20 @@ function() {
 
   $doc.onCreate('.searchSuggestionsForm', function() {
     var $suggestionsForm = $(this),
-        $source = $suggestionsForm.popup('source'),
-        $contentForm = $source.closest('.contentForm'),
+        $source = $suggestionsForm,
+        $contentForm,
         search;
 
-    if ($contentForm.length === 0) {
+    do {
+      $source = $source.popup('source');
+
+      if ($source !== undefined) {
+        $contentForm = $source.closest('.contentForm');
+      }
+
+    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+
+    if ($contentForm === undefined || $contentForm.length === 0) {
       return;
     }
 
@@ -1069,6 +1079,16 @@ function() {
       $('.toolSearch button').bind('click', function() {
         $('.toolSearch :text').focus();
         return false;
+      });
+
+      bsp_utils.onDomInsert(document, '.toolSearch :text', {
+        insert: function (input) {
+          var $input = $(input);
+
+          if ($input.is(':focus')) {
+            $input.focus();
+          }
+        }
       });
     }());
   });
