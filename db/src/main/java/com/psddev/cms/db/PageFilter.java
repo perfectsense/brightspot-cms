@@ -1244,15 +1244,16 @@ public class PageFilter extends AbstractFilter {
                 jsonViewRenderer.setDisallowMixedOutput(true);
 
                 renderer = jsonViewRenderer;
-
-                response.setContentType("application/json");
-
             } else {
                 renderer = ViewRenderer.createRenderer(viewModel);
             }
 
             // 6. Render the ViewModel
             if (renderer != null) {
+                String contentType = renderer.getContentType();
+                if (contentType != null) {
+                    response.setContentType(contentType);
+                }
 
                 try {
                     ViewOutput result = renderer.render(viewModel, getViewTemplateLoader(request));
