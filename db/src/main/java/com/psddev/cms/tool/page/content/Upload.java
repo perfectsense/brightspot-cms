@@ -252,20 +252,22 @@ public class Upload extends PageServlet {
             if (isEffectivelySmartUpload) {
                 page.writeStart("div", "class", "objectInputs");
                     for (ObjectType type : types) {
-                        Object common = type.createObject(null);
+                        String displayName = type.getDisplayName();
 
                         // Still show tab if there is only one smart uploadable type.
                         if (types.size() == 1) {
                             page.writeStart("div", "class", "tabs-wrapper");
                                 page.writeStart("ul", "class", "tabs");
                                     page.writeStart("li", "class", "state-selected");
-                                        page.writeStart("a", "href", "#").writeHtml(type.getDisplayName()).writeEnd();
+                                        page.writeStart("a", "href", "#").writeHtml(displayName).writeEnd();
                                     page.writeEnd();
                                 page.writeEnd();
                             page.writeEnd();
                         }
 
-                        page.writeStart("div", "data-tab", type.getDisplayName());
+                        page.writeStart("div", "data-tab", displayName);
+                            Object common = type.createObject(null);
+
                             page.writeElement("input",
                                     "type", "hidden",
                                     "name", "typeForm-" + type.getId(),
