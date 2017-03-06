@@ -834,10 +834,10 @@ public class ToolUi extends Modification<Object> {
 
             this.bulkUploadableField = field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())
                     ? type.getFields().stream()
-                    .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()))
-                    .map(ObjectField::getInternalName)
-                    .findFirst()
-                    .orElse(null)
+                            .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()))
+                            .map(ObjectField::getInternalName)
+                            .findFirst()
+                            .orElse(null)
                     : field.getInternalName();
         }
     }
