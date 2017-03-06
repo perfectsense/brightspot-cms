@@ -1283,11 +1283,23 @@ define([
             // Event handler to support dragging the left/top handle
             $sizeBoxTopLeft.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
 
+                var aspect;
                 var x;
                 var y;
 
-                x = event.shiftKey ? delta.constrainedX : delta.x;
-                y = event.shiftKey ? delta.constrainedY : delta.y;
+                aspect = Boolean(event.shiftKey);
+
+                x = aspect ? delta.constrainedX : delta.x;
+                y = aspect ? delta.constrainedY : delta.y;
+
+                // Prevent the left handle from passing the right handle
+                // (which would end up moving the whole box down or to the right)
+                if (x > original.width) {
+                    x = original.width;
+                }
+                if (y > original.height) {
+                    y = original.height;
+                }
 
                 // When user drags the top left handle,
                 // adjust the top and left position of the size box,
@@ -1303,11 +1315,14 @@ define([
             // Event handler to support dragging the bottom/right handle
             $sizeBoxBottomRight.on('mousedown', self.cropMousedownDragHandler(function(event, original, delta) {
 
+                var aspect;
                 var x;
                 var y;
 
-                x = event.shiftKey ? delta.constrainedX : delta.x;
-                y = event.shiftKey ? delta.constrainedY : delta.y;
+                aspect = Boolean(event.shiftKey);
+
+                x = aspect ? delta.constrainedX : delta.x;
+                y = aspect ? delta.constrainedY : delta.y;
 
                 // When user drags the bottom right handle, adjust the width and height of the size box
                 return {
@@ -1363,8 +1378,8 @@ define([
                 original = {
                     'left': sizeBoxPosition.left,
                     'top': sizeBoxPosition.top,
-                    'width': $sizeBox.width(),
-                    'height': $sizeBox.height(),
+                    'width': parseInt($sizeBox.css('width'), 10), // using CSS width here to accurately get the value we previously set
+                    'height': parseInt($sizeBox.css('height'), 10),
                     'pageX': mousedownEvent.pageX,
                     'pageY': mousedownEvent.pageY
                 };
@@ -1438,52 +1453,26 @@ define([
                         // We're not moving the sizebox so we must be resizing.
                         // We still need to make sure we don't resize past the boundaries of the image.
 
-                        if (bounds.width < 10 || bounds.height < 10) {
-                            if (aspectRatio > 1.0) {
-                                bounds.width = aspectRatio * 10;
-                                bounds.height = 10;
-                            } else {
-                                bounds.width = 10;
-                                bounds.height = aspectRatio ? (10 / aspectRatio) : 10;
-                            }
-                        }
-
-                        // Check if the box extends past the left
+                        // Check if the point is being moved left
                         if (bounds.left < 0) {
                             bounds.width += bounds.left;
-                            if (aspectRatio) {
-                                bounds.height = bounds.width / aspectRatio;
-                                bounds.top -= bounds.left / aspectRatio;
-                            }
                             bounds.left = 0;
                         }
 
-                        // Check if the box extends above the top
+                        // Check if the point is being moved up
                         if (bounds.top < 0) {
                             bounds.height += bounds.top;
-                            if (aspectRatio) {
-                                bounds.width = bounds.height * aspectRatio;
-                                bounds.left -= bounds.top * aspectRatio;
-                            }
                             bounds.top = 0;
                         }
 
-                        // Check if the box extends past the right
                         overflow = bounds.left + bounds.width - imageWidth;
                         if (overflow > 0) {
                             bounds.width -= overflow;
-                            if (aspectRatio) {
-                                bounds.height = bounds.width / aspectRatio;
-                            }
                         }
 
-                        // Check if the box extends past the bottom
                         overflow = bounds.top + bounds.height - imageHeight;
                         if (overflow > 0) {
                             bounds.height -= overflow;
-                            if (aspectRatio) {
-                                bounds.width = bounds.height * aspectRatio;
-                            }
                         }
                     }
 
@@ -1498,8 +1487,6 @@ define([
                     }
 
                 }, function() {
-
-                    var sizeBoxHeight, sizeBoxPosition, sizeBoxWidth;
 
                     // .drag() end callback
 
