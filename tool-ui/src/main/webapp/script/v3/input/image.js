@@ -15,7 +15,8 @@ define([
     'pixastic/actions/invert',
     'pixastic/actions/rotate',
     'pixastic/actions/sepia',
-    'pixastic/actions/sharpen'
+    'pixastic/actions/sharpen',
+    'jquery.tabbed'
 ], function($, bsp_utils, rte2) {
 
     var imageEditorUtility;
@@ -1394,6 +1395,28 @@ define([
                     inputs[name] = $tr.find(':input[name$=".' + name + '"]');
                 });
 
+
+                // Set focus crop info (if available) to be used
+                // in #sizeBoxShow and #sizesUpdatePreview
+                var focusCrop = { };
+                var focusX = self.dom.$focusInputX.val();
+                var focusY = self.dom.$focusInputY.val();
+                if (focusX !== '' && focusY !== '') {
+
+                    var $focusImage = self.dom.$focusImage[0];
+
+                    focusCrop = self.focusGetCrop({
+                        x: focusX,
+                        y: focusY
+                    }, {
+                        width: $focusImage.width,
+                        height: $focusImage.height,
+                    }, {
+                        width: sizeWidth,
+                        height: sizeHeight
+                    })
+                }
+
                 // Save the size information so we can use it later
                 sizeInfo = self.sizeInfos[sizeName] = {
                     name: sizeName,
@@ -1402,7 +1425,8 @@ define([
                     independent: independent,
                     width: sizeWidth,
                     height: sizeHeight,
-                    aspectRatio: sizeAspectRatio
+                    aspectRatio: sizeAspectRatio,
+                    focusCrop: focusCrop
                 };
 
                 // Group the sizes according to aspect ratio
@@ -1506,6 +1530,24 @@ define([
             self = this;
 
             return self.sizeGroups[groupName].$element.hasClass('imageEditor-sizeSelected');
+        },
+
+        /**
+        * Determine if a group size has been set.
+        *
+        * @param String sizeInfo
+        *
+        * @returns Boolean
+        */
+        sizeInfoIsEmpty: function(sizeInfo) {
+            var inputs;
+
+            inputs = sizeInfo.inputs;
+
+            return (inputs.x.val() === '0.0'
+                        && inputs.y.val() === '0.0'
+                        && inputs.width.val() === '0.0'
+                        && inputs.height.val() === '0.0');
         },
 
 
@@ -1647,10 +1689,20 @@ define([
 
             self = this;
 
-            left = parseFloat(sizeInfo.inputs.x.val()) || 0.0;
-            top = parseFloat(sizeInfo.inputs.y.val()) || 0.0;
-            width = parseFloat(sizeInfo.inputs.width.val()) || 0.0;
-            height = parseFloat(sizeInfo.inputs.height.val()) || 0.0;
+            var useFocusCrop = self.sizeInfoIsEmpty(sizeInfo);
+
+            if (!useFocusCrop) {
+                left = parseFloat(sizeInfo.inputs.x.val()) || 0.0;
+                top = parseFloat(sizeInfo.inputs.y.val()) || 0.0;
+                width = parseFloat(sizeInfo.inputs.width.val()) || 0.0;
+                height = parseFloat(sizeInfo.inputs.height.val()) || 0.0;
+            } else {
+                left = parseFloat(sizeInfo.focusCrop.x) || 0.0;
+                top = parseFloat(sizeInfo.focusCrop.y) || 0.0;
+                width = parseFloat(sizeInfo.focusCrop.width) || 0.0;
+                height = parseFloat(sizeInfo.focusCrop.height) || 0.0;
+            }
+
             aspectRatio = sizeInfo.aspectRatio;
 
             // Check if cropping values have been previously set
@@ -2343,7 +2395,7 @@ define([
                     };
 
                     // Calculate the crop for this aspect ratio
-                    crop = self.focusGetCrop({
+                    sizeInfo.focusCrop = self.focusGetCrop({
                         x: focus.xPercent,
                         y: focus.yPercent
                     }, originalAspect, aspect);

@@ -397,7 +397,7 @@ public class FileField extends PageServlet {
 
                 page.writeStart("select",
                         "class", "toggleable",
-                        "data-root", ".inputSmall",
+                        "data-root", ".inputContainer",
                         "name", page.h(actionName));
 
                     if (fieldValue != null) {
@@ -409,11 +409,13 @@ public class FileField extends PageServlet {
                         page.writeEnd();
                     }
 
-                    page.writeStart("option",
-                            "data-hide", ".fileSelectorItem",
-                            "value", "none");
-                        page.writeHtml(page.localize(FileField.class, "option.none"));
-                    page.writeEnd();
+                    if (!field.isRequired()) {
+                        page.writeStart("option",
+                                "data-hide", ".fileSelectorItem",
+                                "value", "none");
+                            page.writeHtml(page.localize(FileField.class, "option.none"));
+                        page.writeEnd();
+                    }
 
                     page.writeStart("option",
                             "data-hide", ".fileSelectorItem",
@@ -440,13 +442,14 @@ public class FileField extends PageServlet {
                     }
                 page.writeEnd();
 
-                page.writeTag("input",
-                        "class", "fileSelectorItem fileSelectorNewUpload",
-                        "type", "file",
-                        page.getCmsTool().isEnableFrontEndUploader() ? "data-bsp-uploader" : "", "",
-                        "name", page.h(fileParamName),
-                        "data-input-name", inputName,
-                        "data-type-id", state.getTypeId());
+                page.writeStart("span", "class", "fileSelectorItem fileSelectorNewUpload");
+                    page.writeElement("input",
+                            "type", "file",
+                            page.getCmsTool().isEnableFrontEndUploader() ? "data-bsp-uploader" : "", "",
+                            "name", page.h(fileParamName),
+                            "data-input-name", inputName,
+                            "data-type-id", state.getTypeId());
+                page.writeEnd();
 
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUrl",
@@ -461,44 +464,35 @@ public class FileField extends PageServlet {
                 }
 
                 if (!ObjectUtils.isBlank(page.getCmsTool().getDropboxApplicationKey())) {
-                    page.writeStart("span", "class", "fileSelectorItem fileSelectorDropbox", "style", page.cssString("display", "inline-block", "vertical-align", "bottom"));
-                        page.writeTag("input",
-                                "type", "dropbox-chooser",
-                                "name", page.h(dropboxName),
-                                "data-link-type", "direct",
-                                "style", page.cssString("visibility", "hidden"));
-                    page.writeEnd();
-
-                    page.writeStart("script", "type", "text/javascript");
-                        page.writeRaw(
-                                "$('.fileSelectorDropbox input').on('DbxChooserSuccess', function(event) {\n"
-                                        + "   $(this).val(JSON.stringify(event.originalEvent.files[0]));\n"
-                                        + "});"
-                        );
+                    page.writeStart("span", "class", "fileSelectorItem fileSelectorDropbox");
+                        page.writeElement("input",
+                                "class", "DropboxChooserInput",
+                                "type", "text",
+                                "name", page.h(dropboxName));
                     page.writeEnd();
                 }
             page.writeEnd();
-
-            if (fieldValue != null) {
-
-                page.writeStart("div",
-                        "class", "fileSelectorItem fileSelectorExisting filePreview");
-
-                    if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
-
-                        ToolUi ui = field.as(ToolUi.class);
-                        String processorPath = ui.getStoragePreviewProcessorPath();
-                        if (processorPath != null) {
-                            JspUtils.include(request, page.getResponse(), page.getWriter(),
-                                    RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
-                                            + StringUtils.ensureStart(processorPath, "/"));
-                        }
-                    } else {
-                        FileContentType.writeFilePreview(page, state, fieldValue);
-                    }
-                page.writeEnd();
-            }
         page.writeEnd();
+
+        if (fieldValue != null) {
+
+            page.writeStart("div",
+                    "class", "inputLarge fileSelectorItem fileSelectorExisting filePreview");
+
+                if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
+
+                    ToolUi ui = field.as(ToolUi.class);
+                    String processorPath = ui.getStoragePreviewProcessorPath();
+                    if (processorPath != null) {
+                        JspUtils.include(request, page.getResponse(), page.getWriter(),
+                                RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
+                                        + StringUtils.ensureStart(processorPath, "/"));
+                    }
+                } else {
+                    FileContentType.writeFilePreview(page, state, fieldValue);
+                }
+            page.writeEnd();
+        }
 
         if (projectUsingBrightSpotImage) {
             page.include("/WEB-INF/field/set/hotSpot.jsp");

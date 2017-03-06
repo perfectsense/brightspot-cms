@@ -3,6 +3,8 @@ package com.psddev.cms.rte;
 import java.util.Map;
 import java.util.Objects;
 
+import com.psddev.dari.util.CompactMap;
+
 public class RichTextToolbarAction extends RichTextToolbarButton {
 
     public static final RichTextToolbarAction CLEAR = builder()
@@ -65,6 +67,38 @@ public class RichTextToolbarAction extends RichTextToolbarButton {
             .tooltip("Toggle Preview")
             .inline(true)
             .build();
+
+    public static final RichTextToolbarAction COMMENT_REMOVE = new RichTextToolbarAction() {
+        @Override
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new CompactMap<>();
+            map.putAll(RichTextToolbarAction.builder()
+                    .action("cleartext")
+                    .text("Remove Comment")
+                    .cssClass("rte2-toolbar-comment-remove")
+                    .tooltip("Remove Comment")
+                    .inline(true)
+                    .build().toMap());
+            map.put("cleartextStyle", "comment");
+            return map;
+        }
+    };
+
+    public static final RichTextToolbarAction COMMENT_COLLAPSE = new RichTextToolbarAction() {
+        @Override
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new CompactMap<>();
+            map.putAll(RichTextToolbarAction.builder()
+                    .action("collapse")
+                    .text("Toggle comment collapse")
+                    .cssClass("rte2-toolbar-comment-collapse")
+                    .tooltip("Toggle comment collapse")
+                    .inline(true)
+                    .build().toMap());
+            map.put("collapseStyle", "comment");
+            return map;
+        }
+    };
 
     public static final RichTextToolbarAction FULLSCREEN = builder()
             .action("fullscreen")

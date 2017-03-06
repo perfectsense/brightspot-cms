@@ -11,7 +11,7 @@ function($) {
             var map = L.map(locationMap, {
                     scrollWheelZoom: false
             });
-            new L.TileLayer.MapQuestOpenOSM().addTo(map);
+            new L.TileLayer.OpenStreetMap().addTo(map);
 
             var latInput = $(locationMap).find(".locationMapLatitude");
             var longInput = $(locationMap).find(".locationMapLongitude");

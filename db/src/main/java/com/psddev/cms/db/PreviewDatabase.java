@@ -39,9 +39,12 @@ public class PreviewDatabase extends ForwardingDatabase {
 
     // --- ForwardingDatabase support ---
 
-    private <T> T applyChanges(T object) {
+    public <T> T applyChanges(T object) {
         if (object != null) {
             State state = State.getInstance(object);
+
+            state.setResolveInvisible(true);
+
             Date date = getDate();
             DatabaseEnvironment environment = state.getDatabase().getEnvironment();
 
@@ -97,6 +100,8 @@ public class PreviewDatabase extends ForwardingDatabase {
 
     @Override
     public <T> List<T> readAll(Query<T> query) {
+        query.setResolveInvisible(true);
+
         List<T> all = super.readAll(query);
 
         for (T item : all) {
@@ -108,11 +113,15 @@ public class PreviewDatabase extends ForwardingDatabase {
 
     @Override
     public <T> T readFirst(Query<T> query) {
+        query.setResolveInvisible(true);
+
         return applyChanges(super.readFirst(query));
     }
 
     @Override
     public <T> Iterable<T> readIterable(Query<T> query, int fetchSize) {
+        query.setResolveInvisible(true);
+
         return new FilteringIterable<T>(super.readIterable(query, fetchSize));
     }
 
@@ -163,6 +172,8 @@ public class PreviewDatabase extends ForwardingDatabase {
 
     @Override
     public <T> PaginatedResult<T> readPartial(Query<T> query, long offset, int limit) {
+        query.setResolveInvisible(true);
+
         PaginatedResult<T> result = super.readPartial(query, offset, limit);
 
         for (T item : result.getItems()) {

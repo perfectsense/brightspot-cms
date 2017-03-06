@@ -61,6 +61,8 @@
 @import 'EditFieldUpdateViewers.less';
 @import 'ExternalPreviewFrame.less';
 @import 'InlineEditor.less';
+@import (inline) 'Spectrum.css';
+@import 'SpectrumTheme';
 @import 'OverlayProviderSelect.less';
 @import 'Tab.less';
 @import 'ToolUserAvatar.less';
@@ -72,7 +74,6 @@
 @import url('../leaflet/l.geosearch.css');
 @import url('../leaflet/L.Control.Locate.min.css');
 @import url('../nv.d3.css');
-@import url('../spectrum.css');
 
 .locationMap, .regionMap {
   min-width: 500px;
@@ -703,6 +704,7 @@
   opacity: 0.5;
   outline-style: solid;
   outline-width: 5px;
+  pointer-events: none;
   height: 20px;
   width: 20px;
   z-index: 10;
@@ -717,10 +719,10 @@
   box-sizing: content-box;
   color: fade(@color-text, 30%);
   display: none;
-  padding: 5px;
+  padding: 2px;
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 2px;
+  top: 4px;
   z-index: 1;
 
   &:hover {
@@ -735,19 +737,38 @@
   .inputContainer.fieldPreview-displaying > & {
     display: block;
     opacity: 1;
+
+    & {
+      background-color: @color-text;
+      color: white;
+      border-radius: 50%;
+
+      &:hover {
+        color: white;
+        text-shadow:none;
+      }
+    }
   }
 }
 
 .uploadableDrop {
-  background-color: fade(white, 80%);
+  background-color: fade(mix(white, @color-focus, 80%), 80%);
+  border: 3px dotted @color-text;
+  border-radius: 5px;
+  box-sizing: content-box;
+  margin: -13px 0 0 -13px;
+  padding: 10px;
   text-align: center;
-  outline: 3px dashed @color-text;
   user-select: none;
 
   .link {
+    .icon;
+    .icon-action-upload;
+
     color: @color-text;
     display: inline-block;
-    font-size: (@fontSize-default * 2);
+    font-size: (@fontSize-default * 1.5);
+    font-weight: bold;
     line-height: (@fontSize-default * 2);
     left: 0;
     margin-top: (0 - @fontSize-default);
@@ -760,20 +781,27 @@
     }
 
     &:before {
-      font-size: (@fontSize-default * 2);
-      opacity: 1;
+      font-size: (@fontSize-default * 1.5);
+      margin-right: 7px;
     }
   }
 }
 
 .uploadableFile {
-  overflow: hidden;
+  .UploadChooser:before {
+    display: none;
+  }
 
   input[type=file] {
+    bottom: -20px;
     font-size: 5000px;
-    height: 100%;
+    height: auto;
+    left: -20px;
     opacity: 0;
-    width: 100%;
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: auto;
   }
 }
 

@@ -19,6 +19,12 @@ class FieldAccessListener extends State.Listener {
 
     @Override
     public void beforeFieldGet(State state, String name) {
+        Object original = state.getOriginalObject();
+
+        if (original == null || original.getClass().getName().startsWith("com.psddev.dari.")) {
+            return;
+        }
+
         try {
             com.psddev.dari.util.LazyWriter writer = FieldAccessFilter.THREAD_DEFAULT_LAZY_WRITER.get();
 

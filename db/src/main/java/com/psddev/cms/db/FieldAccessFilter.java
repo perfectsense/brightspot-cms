@@ -64,7 +64,7 @@ public class FieldAccessFilter extends AbstractFilter {
      * @return Nonnull.
      */
     public static String createMarkerHtml(State state, String name) {
-        Map<String, Object> markerData = new CompactMap<>();
+        Map<String, String> markerData = new CompactMap<>();
         ObjectType type = state.getType();
 
         if (type != null) {
@@ -86,7 +86,7 @@ public class FieldAccessFilter extends AbstractFilter {
         markerData.put("id", state.getId().toString());
         markerData.put("name", name);
 
-        return "<!--BrightspotCmsFieldAccess " + ObjectUtils.toJson(markerData) + "-->";
+        return PageFilter.createMarkerHtml("BrightspotCmsFieldAccess", markerData);
     }
 
     /**

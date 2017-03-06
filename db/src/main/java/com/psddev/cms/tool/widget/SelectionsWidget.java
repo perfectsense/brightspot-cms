@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.ToolEntity;
 import com.psddev.cms.db.ToolRole;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.SearchResultSelection;
@@ -18,6 +19,7 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ObjectUtils;
 
+@ToolUi.DisplayName("Collections Widget")
 public class SelectionsWidget extends AbstractPaginatedResultWidget<SearchResultSelection> {
 
     private static final String TOOL_ENTITY_TYPE_PARAMETER = "toolEntityType";
@@ -147,6 +149,13 @@ public class SelectionsWidget extends AbstractPaginatedResultWidget<SearchResult
                 page.writeHtml(page.localize(SelectionsWidget.class, ImmutableMap.of("count", selection.size()), "numItems"));
             page.writeEnd();
         page.writeEnd();
+    }
+
+    // --- Record Support ---
+
+    @Override
+    public String getLabel() {
+        return getState().getType().getDisplayName();
     }
 
     private enum ToolEntityType {

@@ -11,9 +11,7 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.psddev.cms.db.PageFilter;
-import com.psddev.cms.view.ViewCreator;
-import com.psddev.cms.view.ViewModel;
+import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.util.JspUtils;
 import org.joda.time.DateTime;
 import com.psddev.cms.db.Directory;
@@ -197,19 +195,12 @@ public class SearchResultRenderer {
             if (!ObjectUtils.isBlank(taxonParentUuid)) {
 
                 Taxon parent = Query.findById(Taxon.class, taxonParentUuid);
-                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(parent, predicate);
-
-                if (site != null && !ObjectUtils.isBlank(taxonResults)) {
-
-                    Collection<Taxon> siteTaxons = new ArrayList<Taxon>();
-
-                    for (Taxon taxon : taxonResults) {
-                        if (PredicateParser.Static.evaluate(taxon, site.itemsPredicate())) {
-                            siteTaxons.add(taxon);
-                        }
-                    }
-                    taxonResults = siteTaxons;
-                }
+                Predicate filterPredicate = (site != null && predicate != null)
+                        ? CompoundPredicate.combine(PredicateParser.AND_OPERATOR, predicate, site.itemsPredicate())
+                        : site != null ? site.itemsPredicate()
+                        : predicate != null ? predicate
+                        : null;
+                taxonResults = (Collection<Taxon>) Taxon.Static.getChildren(parent, filterPredicate);
 
             } else {
                 taxonResults = Taxon.Static.getRoots((Class<Taxon>) taxonType.getObjectClass(), site, predicate);
@@ -488,10 +479,7 @@ public class SearchResultRenderer {
                 Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
                 int previewWidth = rendererData.getEmbedPreviewWidth();
 
-                if (previewWidth > 0
-                        && (!ObjectUtils.isBlank(rendererData.getEmbedPath())
-                        || ViewCreator.findCreatorClass(item, null, PageFilter.EMBED_VIEW_TYPE, null) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.EMBED_VIEW_TYPE, item) != null)) {
+                if (previewWidth > 0 && page.isEmbeddable(item)) {
                     permalink = JspUtils.getAbsolutePath(page.getRequest(), "/_preview", "_embed", "true", "_cms.db.previewId", itemState.getId());
                     embedWidth = previewWidth;
                 }

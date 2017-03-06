@@ -51,9 +51,10 @@ define([ 'jquery', 'bsp-utils', 'diff', 'v3/RecalculateDimensions' ], function($
       });
 
       var equalizeHeights = $.throttle(100, function() {
-        $container.find('.contentDiffLeft .inputContainer').each(function() {
+        var $contentDiffRightContainers = $container.find('.contentDiffRight .inputContainer');
+        $container.find('.contentDiffLeft .inputContainer').not('.contentDiffSame').each(function() {
           var $leftInput = $(this);
-          var $rightInput = $container.find('.contentDiffRight .inputContainer[data-name="' + $leftInput.attr('data-name') + '"]');
+          var $rightInput = $contentDiffRightContainers.filter('[data-name="' + $leftInput.attr('data-name') + '"]');
           var $bothInputs = $leftInput.add($rightInput);
 
           $bothInputs.css('height', '');

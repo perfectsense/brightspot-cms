@@ -173,6 +173,7 @@ if (!paths.isEmpty()) {
         for (Directory.Path path : paths) {
             Site pathSite = path.getSite();
             String pathPath = path.getPath();
+            String pathDisplay = ObjectUtils.firstNonNull(Directory.extractExternalUrl(pathPath), pathPath);
             String href = pathSite != null ? pathSite.getPrimaryUrl() + pathPath : pathPath;
 
             while (href.endsWith("*")) {
@@ -186,7 +187,7 @@ if (!paths.isEmpty()) {
                 wp.writeStart("li", "class", "widget-urlsItem");
                     wp.writeStart("div", "class", "widget-urlsItemLabel");
                         wp.writeStart("a", "href", href, "target", "_blank");
-                            wp.writeHtml(pathPath);
+                            wp.writeHtml(pathDisplay);
                         wp.writeEnd();
                     wp.writeEnd();
 
@@ -215,7 +216,7 @@ if (!paths.isEmpty()) {
 
                 wp.writeStart("div", "class", "widget-urlsItemLabel");
                     wp.writeStart("a", "href", href, "target", "_blank");
-                        wp.writeHtml(pathPath);
+                        wp.writeHtml(pathDisplay);
                     wp.writeEnd();
 
                     wp.writeStart("label",

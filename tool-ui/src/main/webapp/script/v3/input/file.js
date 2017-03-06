@@ -4,6 +4,38 @@ define([
     'bsp-uploader' ],
 function ($, bsp_utils, uploader) {
 
+  bsp_utils.onDomInsert(document, 'input[type="file"]', {
+    insert: function (input) {
+      var $input = $(input);
+
+      $input.wrap(function () {
+        return $('<label/>', {
+          'class': 'UploadChooser',
+          'data-placeholder': $(this).attr('placeholder')
+        });
+      });
+
+      $input.on('change', function (event) {
+        var $label = $(event.target).closest('label');
+        var files = event.target.files;
+
+        if (files) {
+          var length = files.length;
+
+          if (length === 1) {
+            $label.attr('data-value', files[0].name);
+
+          } else if (length > 1) {
+            $label.attr('data-value', length + ' files');
+
+          } else {
+            $label.removeAttr('data-value');
+          }
+        }
+      });
+    }
+  });
+
   function before() {
     var plugin = this;
     var $input = plugin.el;
@@ -28,11 +60,26 @@ function ($, bsp_utils, uploader) {
     }
   }
 
+  function findInputWrapper ($input) {
+    var $small = $input.closest('.inputSmall');
+    var $wrapper = $small.next('.inputLarge');
+
+    if ($wrapper.length === 0) {
+      $wrapper = $('<div/>', {
+        'class': 'inputLarge'
+      });
+
+      $small.after($wrapper);
+    }
+
+    return $wrapper;
+  }
+
   function beforeEach(request, file, i) {
     var plugin = this;
     var $input = plugin.el;
     var file = plugin.files[i];
-    var $inputWrapper = $input.closest('.inputSmall');
+    var $inputWrapper = findInputWrapper($input);
 
     $inputWrapper.append(_createProgressHtml());
     var $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
@@ -48,8 +95,7 @@ function ($, bsp_utils, uploader) {
   function progress(event, i) {
     var plugin = this;
 
-    var prog =  plugin.el
-      .closest('.inputSmall')
+    var prog = findInputWrapper(plugin.el)
       .find('[data-progress]')
       .eq(i);
 
@@ -66,7 +112,7 @@ function ($, bsp_utils, uploader) {
   function afterEach(request, file, i) {
     var plugin = this;
     var $input = plugin.el;
-    var $inputWrapper = $input.closest('.inputSmall');
+    var $inputWrapper = findInputWrapper($input);
 
     if (request.status == 200) {
       $inputWrapper
@@ -95,7 +141,7 @@ function ($, bsp_utils, uploader) {
     var $input, $inputWrapper, inputName, params, $uploadPreview, response;
 
     $input = plugin.el;
-    $inputWrapper = $input.closest('.inputSmall');
+    $inputWrapper = findInputWrapper($input);
     $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
     response = request.responseText;
 
@@ -126,8 +172,11 @@ function ($, bsp_utils, uploader) {
         $uploadPreview.detach();
         var $response = $(htmlResponse);
 
-        $inputWrapper.replaceWith($response);
+        $inputWrapper.after($response);
+        $inputWrapper.prev('.inputSmall').remove();
+        $inputWrapper.remove();
         $response.find('.fileSelectorItem:not(.fileSelectorExisting)').hide();
+        $response.trigger('create');
 
         //// prevents image pop-in
         //var img = $inputWrapper.find('.imageEditor-image').find('img').first();
@@ -193,7 +242,7 @@ function ($, bsp_utils, uploader) {
     var $input, $inputWrapper, inputName, params, $uploadPreview, response;
 
     $input = plugin.el;
-    $inputWrapper = $input.closest('.inputSmall');
+    $inputWrapper = findInputWrapper($input);
     $uploadPreview = $inputWrapper.find('.upload-preview').eq(i);
     $uploadPreview.addClass('error');
   }

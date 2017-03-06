@@ -45,7 +45,7 @@ wp.writeStart("div", "class", "widget");
                     "href", wp.cmsUrl("/toolUserTfa"),
                     "target", "toolUserTfa");
                 wp.writeHtml(user.isTfaEnabled() ? "Disable" : "Enable");
-                wp.writeHtml(" Two Factor Authentication");
+                wp.writeHtml(" Two-Factor Authentication");
             wp.writeEnd();
         wp.writeEnd();
     wp.writeEnd();

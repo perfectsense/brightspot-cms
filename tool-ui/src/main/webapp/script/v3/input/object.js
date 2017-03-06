@@ -20,11 +20,13 @@ function($) {
           labelHtml,
           dynamicPlaceholderText,
           dynamicFieldName,
+          isReadOnly,
           placeholder,
           value,
           selectHref,
           aqIndex,
-          aqParam;
+          aqParam,
+          searcherPath;
 
       if (!shadow) {
         return;
@@ -61,12 +63,14 @@ function($) {
           placeholder = $input.attr('placeholder');
 
           if (dynamicPlaceholderText) {
-            $select.html($('<span/>', {
-              'type': 'text',
-              'class': 'objectId-placeholder',
-              'data-dynamic-text': dynamicPlaceholderText,
-              'data-dynamic-field-name': dynamicFieldName
-            }));
+            if ($select.find('> .objectId-placeholder').length === 0) {
+              $select.html($('<span/>', {
+                'type': 'text',
+                'class': 'objectId-placeholder',
+                'data-dynamic-text': dynamicPlaceholderText,
+                'data-dynamic-field-name': dynamicFieldName
+              }));
+            }
           } else if (placeholder) {
             $select.html($('<span/>', {
               'class': 'objectId-placeholder',
@@ -79,8 +83,15 @@ function($) {
         }
       }
 
+        searcherPath = $input.attr('data-searcher-path');
+
       // update additional query parameter in select href
       selectHref = $select.attr('href');
+
+        if (searcherPath) {
+            selectHref = searcherPath + (searcherPath.indexOf('?') > -1 ? '&' : '?') + selectHref.substr(selectHref.indexOf('__'));
+        }
+
       aqIndex = selectHref.indexOf('aq');
       aqParam = 'aq=' + encodeURIComponent($input.attr('data-additional-query') || '');
 
@@ -165,7 +176,7 @@ function($) {
         'target': target + '-select',
         'click': function() { return !$(this).is('.state-disabled'); },
         'href': searcherPath +
-            (searcherPath.indexOf('?') > -1 ? '&' : '?') + 'pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
+            (searcherPath.indexOf('?') > -1 ? '&' : '?') + '__=&pt=' + encodeURIComponent((/id=([^&]+)/.exec(formAction) || [ ])[1] || '') +
             '&py=' + encodeURIComponent((/typeId=([^&]+)/.exec(formAction) || [ ])[1] || '') +
             '&p=' + encodeURIComponent($input.attr('data-pathed')) +
             '&' + (typeIds ? $.map(typeIds.split(','), function(typeId) { return 'rt=' + typeId; }).join('&') : '') +
@@ -173,10 +184,13 @@ function($) {
             '&sg=' + encodeURIComponent($input.attr('data-suggestions') || '')
       });
 
+      var isReadOnly = $input.data('read-only');
+
       $edit = $('<a/>', {
         'class': 'objectId-edit',
+        'data-read-only': isReadOnly,
         'target': target + '-edit',
-        'text': 'Edit'
+        'text': !isReadOnly ? 'Edit' : 'View'
       });
 
       $clear = $('<a/>', {

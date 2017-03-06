@@ -17,6 +17,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.util.UuidUtils;
 import org.apache.commons.fileupload.FileItem;
 import org.slf4j.Logger;
@@ -403,28 +404,30 @@ public class UploadFiles extends PageServlet {
                         }
                     page.writeEnd();
                 page.writeEnd();
-            page.writeEnd();
 
-            for (ObjectType type : types) {
-                String name = "typeForm-" + type.getId();
-                Object common = type.createObject(null);
+                page.writeStart("div", "class", "inputLarge");
+                    for (ObjectType type : types) {
+                        String name = "typeForm-" + type.getId();
+                        Object common = type.createObject(null);
 
-                page.writeStart("div", "class", "typeForm " + name);
-                    page.writeElement("input",
-                            "type", "hidden",
-                            "name", name,
-                            "value", State.getInstance(common).getId());
+                        page.writeStart("div", "class", "typeForm " + name);
+                            page.writeElement("input",
+                                    "type", "hidden",
+                                    "name", name,
+                                    "value", State.getInstance(common).getId());
 
-                    ObjectField previewField = getPreviewField(type);
+                            ObjectField previewField = getPreviewField(type);
 
-                    List<String> excludedFields = null;
-                    if (previewField != null) {
-                        excludedFields = Arrays.asList(previewField.getInternalName());
+                            List<String> excludedFields = null;
+                            if (previewField != null) {
+                                excludedFields = Arrays.asList(previewField.getInternalName());
+                            }
+
+                            page.writeSomeFormFields(common, false, null, excludedFields);
+                        page.writeEnd();
                     }
-
-                    page.writeSomeFormFields(common, false, null, excludedFields);
                 page.writeEnd();
-            }
+            page.writeEnd();
 
             page.writeStart("input", "type", "hidden", "name", "context", "value", page.param(Context.class, "context"));
 
@@ -462,6 +465,10 @@ public class UploadFiles extends PageServlet {
 
     private static ObjectField getPreviewField(ObjectType type) {
         ObjectField previewField = type.getField(type.getPreviewField());
+
+        if (previewField instanceof ObjectMethod) {
+            previewField = null;
+        }
 
         if (previewField == null) {
             for (ObjectField field : type.getFields()) {

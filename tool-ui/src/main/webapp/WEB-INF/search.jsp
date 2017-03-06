@@ -1,6 +1,8 @@
 <%@ page session="false" import="
 
 com.psddev.cms.db.Content,
+com.psddev.cms.db.Localization,
+com.psddev.cms.db.Managed,
 com.psddev.cms.db.Template,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.db.ToolUser,
@@ -409,6 +411,7 @@ writer.start("div", "class", "searchForm");
                                         "type", "text",
                                         "class", "color",
                                         "name", Search.COLOR_PARAMETER,
+                                        "placeholder", Localization.currentUserText(Search.class, "placeholder.color"),
                                         "value", search.getColor());
                             writer.writeEnd();
                         }
@@ -640,7 +643,9 @@ writer.start("div", "class", "searchForm");
         writer.end();
 
         if (!ObjectUtils.isBlank(newJsp)
-                && (!singleType || !selectedType.as(ToolUi.class).isReadOnly())) {
+                && !(singleType
+                && (selectedType.getGroups().contains(Managed.class.getName())
+                || selectedType.as(ToolUi.class).isReadOnly()))) {
             writer.start("div", "class", "searchCreate");
                 writer.start("h2").html(wp.localize(Search.class, "label.create")).end();
 
