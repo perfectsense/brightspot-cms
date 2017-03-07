@@ -187,25 +187,38 @@ public class ImageFileType implements FileContentType {
 
                         if (!coreMetadata.isEmpty()) {
                             page.writeStart("li");
-                                page.writeStart("form",
-                                        "id", "contentMetadata",
-                                        "method", "post",
-                                        "action", page.cmsUrl(ContentMetadata.PATH),
-                                        "target", "contentMetadata",
-                                        "style", page.cssString("margin", 0));
 
-                                    page.writeElement("input",
-                                            "type", "hidden",
-                                            "name", "metadata",
-                                            "value", ObjectUtils.toJson(coreMetadata));
+                                // If object is new, send post metadata.
+                                if (state.isNew()) {
+                                    page.writeStart("form",
+                                            "id", "contentMetadata",
+                                            "method", "post",
+                                            "action", page.cmsUrl(ContentMetadata.PATH),
+                                            "target", "contentMetadata",
+                                            "style", page.cssString("margin", 0));
 
-                                    page.writeStart("a",
-                                            "class", "action-image-viewMetadata",
-                                            "onclick", "$('#contentMetadata').submit();");
-                                        page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                                        page.writeElement("input",
+                                                "type", "hidden",
+                                                "name", "metadata",
+                                                "value", ObjectUtils.toJson(coreMetadata));
+
+                                        page.writeStart("a",
+                                                "class", "action-image-viewMetadata",
+                                                "onclick", "$('#contentMetadata').submit();");
+                                            page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                                        page.writeEnd();
+
                                     page.writeEnd();
 
-                                page.writeEnd();
+                                } else {
+                                    page.writeStart("a",
+                                            "class", "action-image-viewMetadata",
+                                            "href", page.cmsUrl(ContentMetadata.PATH, "id", state.getId(), "fieldName", fieldName),
+                                            "target", "contentMetadata");
+                                        page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                                    page.writeEnd();
+                                }
+
                             page.writeEnd();
                         }
 
