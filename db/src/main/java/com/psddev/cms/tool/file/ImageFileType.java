@@ -188,7 +188,7 @@ public class ImageFileType implements FileContentType {
                         if (!coreMetadata.isEmpty()) {
                             page.writeStart("li");
 
-                                // If object is new, send post metadata.
+                                // If object is new, post metadata.
                                 if (state.isNew()) {
                                     page.writeStart("form",
                                             "id", "contentMetadata",
