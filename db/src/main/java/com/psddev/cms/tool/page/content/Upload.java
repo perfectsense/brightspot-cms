@@ -141,18 +141,13 @@ public class Upload extends PageServlet {
                 List<UUID> newObjectIds = new ArrayList<>();
 
                 if (isEffectivelySmartUpload) {
-                    boolean uploadError = false;
-
-                    for (ObjectType type : typeIds.stream().map(environment::getTypeById).collect(Collectors.toList())) {
-                        if (uploadError) {
-                            break;
+                    try {
+                        for (ObjectType type : typeIds.stream().map(environment::getTypeById).collect(Collectors.toList())) {
+                            createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
                         }
 
-                        uploadError = !createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
-                    }
-
-                    if (uploadError) {
-                        page.getErrors().add(new IllegalArgumentException("Invalid mime type(s)!"));
+                    } catch (IllegalArgumentException uploadError) {
+                        page.getErrors().add(uploadError);
                     }
 
                 } else {
@@ -386,7 +381,7 @@ public class Upload extends PageServlet {
         }
     }
 
-    private static boolean createObjectsFromUpload(
+    private static void createObjectsFromUpload(
             ToolPageContext page,
             ObjectType type,
             StringBuilder js,
@@ -410,7 +405,7 @@ public class Upload extends PageServlet {
                 String fileMimeType = file.getContentType();
 
                 if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> field.hasMimeType(fileMimeType))) {
-                    return false;
+                    throw new IllegalArgumentException("Invalid mime type(s)!");
                 }
 
                 if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
@@ -456,8 +451,6 @@ public class Upload extends PageServlet {
             js.append("$input.change();");
             js.append("});");
         }
-
-        return true;
     }
 
     public enum Context {
