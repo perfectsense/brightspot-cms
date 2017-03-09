@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
+import com.psddev.dari.util.SparseSet;
 import com.psddev.dari.util.UuidUtils;
 import com.psddev.cms.db.BulkUploadDraft;
 import com.psddev.cms.db.ImageTag;
@@ -404,16 +405,21 @@ public class Upload extends PageServlet {
             if (smartUploadableTypes != null) {
                 String fileMimeType = file.getContentType();
 
-                if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> field.hasMimeType(fileMimeType))) {
+                if (smartUploadableTypes.stream()
+                        .map(SmartUploadableType::getField)
+                        .noneMatch(field -> hasMimeType(field.getMimeTypes(), fileMimeType))) {
+
                     throw new IllegalArgumentException("Invalid mime type(s)!");
                 }
 
-                if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
+                if (smartUploadableTypes.stream()
+                        .noneMatch(t -> t.getType().equals(type) && hasMimeType(t.getField().getMimeTypes(), fileMimeType))) {
+
                     continue;
                 }
 
                 Set<SmartUploadableType> compatibleTypes = smartUploadableTypes.stream()
-                        .filter(t -> t.getField().hasMimeType(fileMimeType))
+                        .filter(t -> hasMimeType(t.getField().getMimeTypes(), fileMimeType))
                         .collect(Collectors.toSet());
 
                 // File should be mapped to field with most specific mime type.
@@ -451,6 +457,10 @@ public class Upload extends PageServlet {
             js.append("$input.change();");
             js.append("});");
         }
+    }
+
+    private static boolean hasMimeType(String mimeTypes, String mimeType) {
+        return new SparseSet(StringUtils.isBlank(mimeTypes) ? "+/" : mimeTypes).contains(mimeType);
     }
 
     public enum Context {
