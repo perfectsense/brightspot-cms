@@ -2,6 +2,7 @@ package com.psddev.cms.tool.page.content;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -92,15 +93,21 @@ public class Upload extends PageServlet {
             }
 
             ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
-            Set<String> contentTypes = field.getContentTypes();
+            List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
+                    .filter(s -> s.startsWith("+"))
+                    .collect(Collectors.toList());
 
-            if (contentTypes.isEmpty()) {
+            if (mimeTypes.isEmpty()) {
                 continue;
             }
 
             // If there is any collision between mime types, skip the ambiguity.
             Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
-                    .filter(t -> !Collections.disjoint(t.getField().getContentTypes(), field.getContentTypes()))
+                    .filter(t -> !Collections.disjoint(
+                            Arrays.stream(t.getField().getMimeTypes().split(" "))
+                                    .filter(s -> s.startsWith("+"))
+                                    .collect(Collectors.toList()),
+                            mimeTypes))
                     .collect(Collectors.toSet());
 
             if (smartUploadableTypesToRemove.isEmpty()) {
@@ -142,7 +149,7 @@ public class Upload extends PageServlet {
                     }
 
                 } else {
-                    createObjectsFromUpload(page, selectedType, js, smartUploadableTypes, newObjectIds);
+                    createObjectsFromUpload(page, selectedType, js, null, newObjectIds);
                 }
 
                 database.commitWrites();
@@ -392,21 +399,18 @@ public class Upload extends PageServlet {
                 continue;
             }
 
-            if (!smartUploadableTypes.isEmpty()) {
-                String fileContentType = file.getContentType();
+            if (smartUploadableTypes != null) {
+                String fileMimeType = file.getContentType();
 
                 if (smartUploadableTypes.stream()
-                        .noneMatch(t -> t.getField().getContentTypes().stream()
-                                .anyMatch(contentType -> contentType.equals(fileContentType)
-                                        || (contentType.endsWith("/") && fileContentType.startsWith(contentType))))) {
+                        .map(SmartUploadableType::getField)
+                        .noneMatch(field -> field.hasMimeType(fileMimeType))) {
 
                     throw new IllegalArgumentException("Invalid content type(s)!");
                 }
 
                 if (smartUploadableTypes.stream()
-                        .noneMatch(t -> t.getType().equals(type) && t.getField().getContentTypes().stream()
-                                .anyMatch(contentType -> contentType.equals(fileContentType)
-                                        || (contentType.endsWith("/") && fileContentType.startsWith(contentType))))) {
+                        .noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
 
                     continue;
                 }
