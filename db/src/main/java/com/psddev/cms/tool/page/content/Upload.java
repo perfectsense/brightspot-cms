@@ -141,11 +141,18 @@ public class Upload extends PageServlet {
                 List<UUID> newObjectIds = new ArrayList<>();
 
                 if (isEffectivelySmartUpload) {
-                    for (ObjectType type : typeIds.stream()
-                            .map(environment::getTypeById)
-                            .collect(Collectors.toList())) {
+                    boolean uploadError = false;
 
-                        createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
+                    for (ObjectType type : typeIds.stream().map(environment::getTypeById).collect(Collectors.toList())) {
+                        if (uploadError) {
+                            break;
+                        }
+
+                        uploadError = !createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
+                    }
+
+                    if (uploadError) {
+                        page.getErrors().add(new IllegalArgumentException("Invalid mime type(s)!"));
                     }
 
                 } else {
@@ -379,7 +386,7 @@ public class Upload extends PageServlet {
         }
     }
 
-    private static void createObjectsFromUpload(
+    private static boolean createObjectsFromUpload(
             ToolPageContext page,
             ObjectType type,
             StringBuilder js,
@@ -403,7 +410,7 @@ public class Upload extends PageServlet {
                 String fileMimeType = file.getContentType();
 
                 if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> field.hasMimeType(fileMimeType))) {
-                    throw new IllegalArgumentException("Invalid content type(s)!");
+                    return false;
                 }
 
                 if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
@@ -449,6 +456,8 @@ public class Upload extends PageServlet {
             js.append("$input.change();");
             js.append("});");
         }
+
+        return true;
     }
 
     public enum Context {
