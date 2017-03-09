@@ -105,7 +105,7 @@ public class Upload extends PageServlet {
             Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
                     .filter(t -> !Collections.disjoint(
                             Arrays.stream(t.getField().getMimeTypes().split(" "))
-                                    .filter(s -> s.startsWith("+"))
+                                    .filter(mt -> mt.startsWith("+"))
                                     .collect(Collectors.toList()),
                             mimeTypes))
                     .collect(Collectors.toSet());
@@ -402,15 +402,23 @@ public class Upload extends PageServlet {
             if (smartUploadableTypes != null) {
                 String fileMimeType = file.getContentType();
 
-                if (smartUploadableTypes.stream()
-                        .map(SmartUploadableType::getField)
-                        .noneMatch(field -> field.hasMimeType(fileMimeType))) {
-
+                if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> field.hasMimeType(fileMimeType))) {
                     throw new IllegalArgumentException("Invalid content type(s)!");
                 }
 
-                if (smartUploadableTypes.stream()
-                        .noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
+                if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && t.getField().hasMimeType(fileMimeType))) {
+                    continue;
+                }
+
+                Set<SmartUploadableType> compatibleTypes = smartUploadableTypes.stream()
+                        .filter(t -> t.getField().hasMimeType(fileMimeType))
+                        .collect(Collectors.toSet());
+
+                // File should be mapped to field with most specific mime type.
+                if (compatibleTypes.size() > 1 && compatibleTypes.stream()
+                        .filter(t -> t.getType().equals(type))
+                        .map(SmartUploadableType::getField)
+                        .anyMatch(f -> Arrays.stream(f.getMimeTypes().split(" ")).anyMatch(mt -> mt.startsWith("+") && mt.endsWith("/")))) {
 
                     continue;
                 }
