@@ -405,21 +405,16 @@ public class Upload extends PageServlet {
             if (smartUploadableTypes != null) {
                 String fileMimeType = file.getContentType();
 
-                if (smartUploadableTypes.stream()
-                        .map(SmartUploadableType::getField)
-                        .noneMatch(field -> hasMimeType(field.getMimeTypes(), fileMimeType))) {
-
+                if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> hasMimeType(field, fileMimeType))) {
                     throw new IllegalArgumentException("Invalid mime type(s)!");
                 }
 
-                if (smartUploadableTypes.stream()
-                        .noneMatch(t -> t.getType().equals(type) && hasMimeType(t.getField().getMimeTypes(), fileMimeType))) {
-
+                if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && hasMimeType(t.getField(), fileMimeType))) {
                     continue;
                 }
 
                 Set<SmartUploadableType> compatibleTypes = smartUploadableTypes.stream()
-                        .filter(t -> hasMimeType(t.getField().getMimeTypes(), fileMimeType))
+                        .filter(t -> hasMimeType(t.getField(), fileMimeType))
                         .collect(Collectors.toSet());
 
                 // File should be mapped to field with most specific mime type.
@@ -459,7 +454,8 @@ public class Upload extends PageServlet {
         }
     }
 
-    private static boolean hasMimeType(String mimeTypes, String mimeType) {
+    private static boolean hasMimeType(ObjectField field, String mimeType) {
+        String mimeTypes = field.getMimeTypes();
         return new SparseSet(StringUtils.isBlank(mimeTypes) ? "+/" : mimeTypes).contains(mimeType);
     }
 
