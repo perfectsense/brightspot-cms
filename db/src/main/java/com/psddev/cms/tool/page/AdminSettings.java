@@ -115,8 +115,6 @@ public class AdminSettings extends PageServlet {
     }
 
     private void writeWebResourceOverridesListHtml(ToolPageContext page, Object selected) throws IOException, ServletException {
-
-
         page.writeStart("h2");
             page.writeHtml(page.localize("com.psddev.cms.tool.page.admin.Settings", "subtitle.webResourceOverrides"));
         page.writeEnd();
