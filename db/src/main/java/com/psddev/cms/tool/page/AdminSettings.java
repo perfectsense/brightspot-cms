@@ -79,7 +79,9 @@ public class AdminSettings extends PageServlet {
         page.writeEnd();
 
         page.writeStart("ul", "class", "links");
-            writeListItemsHtml(page, Query.from(Application.class).sortAscending("name").selectAll(), selected);
+            writeListItemsHtml(page,
+                    Query.from(Application.class).where("name != missing").sortAscending("name").selectAll(),
+                    selected);
         page.writeEnd();
     }
 
