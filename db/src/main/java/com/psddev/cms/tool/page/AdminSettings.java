@@ -6,6 +6,7 @@ import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.db.WebResourceOverride;
 import com.psddev.dari.util.RoutingFilter;
@@ -72,98 +73,52 @@ public class AdminSettings extends PageServlet {
         page.writeEnd();
     }
 
-    private void writeApplicationsListHtml(ToolPageContext page, Object selected) throws IOException{
+    private void writeApplicationsListHtml(ToolPageContext page, Object selected) throws IOException, ServletException {
         page.writeStart("h2");
             page.writeHtml(page.localize("com.psddev.cms.tool.page.admin.Settings", "subtitle.applications"));
         page.writeEnd();
 
         page.writeStart("ul", "class", "links");
-            for (Object app : Query.from(Application.class).sortAscending("name").select()) {
-                page.writeStart("li", "class", app.equals(selected) ? "selected" : "");
-                    page.writeStart("a", "href", page.objectUrl(null, app));
-                        page.writeObjectLabel(app);
-                    page.writeEnd();
-                page.writeEnd();
-            }
+            writeListItemsHtml(page, Query.from(Application.class).sortAscending("name").selectAll(), selected);
         page.writeEnd();
     }
 
     private void writeImageSizesListHtml(ToolPageContext page, Object selected) throws IOException, ServletException {
 
-        State selectedState = State.getInstance(selected);
-        List<StandardImageSize> standardImageSizes = Query.from(StandardImageSize.class).sortAscending("displayName").select();
-
         page.writeStart("h2");
             page.writeHtml(page.localize("com.psddev.cms.tool.page.admin.Settings", "subtitle.imageSizes"));
         page.writeEnd();
 
-        page.writeStart("ul", "class", "links");
-
-            page.writeStart("li", "class", "new" + (selected instanceof StandardImageSize && selectedState.isNew() ? " selected" : ""));
-                page.writeStart("a", "href", page.typeUrl(null, StandardImageSize.class));
-                    page.writeHtml(page.localize(StandardImageSize.class, "action.newType"));
-                page.writeEnd();
-            page.writeEnd();
-
-            for (StandardImageSize size : standardImageSizes) {
-                page.writeStart("li", "class", size.equals(selected) ? "selected" : "");
-                    page.writeStart("a", "href", page.objectUrl(null, size));
-                        page.writeObjectLabel(size);
-                    page.writeEnd();
-                page.writeEnd();
-            }
-        page.writeEnd();
+        writeListHtml(page,
+                StandardImageSize.class,
+                Query.from(StandardImageSize.class).sortAscending("displayName"),
+                selected);
     }
 
     private void writeReferentialTextMarkersListHtml(ToolPageContext page, Object selected) throws IOException, ServletException {
-
-        State selectedState = State.getInstance(selected);
 
         page.writeStart("h2");
             page.writeHtml(page.localize("com.psddev.cms.tool.page.admin.Settings", "subtitle.refTextMarkers"));
         page.writeEnd();
 
-        page.writeStart("ul", "class", "links");
-
-            page.writeStart("li", "class", "new" + (selected instanceof ReferentialTextMarker && selectedState.isNew() ? " selected" : ""));
-                page.writeStart("a", "href", page.typeUrl(null, ReferentialTextMarker.class));
-                    page.writeHtml(page.localize(ReferentialTextMarker.class, "action.newType"));
-                page.writeEnd();
-            page.writeEnd();
-
-            for (ReferentialTextMarker marker : Query.from(ReferentialTextMarker.class).sortAscending("displayName").select()) {
-                page.writeStart("li", "class", marker.equals(selected) ? "selected" : "");
-                    page.writeStart("a", "href", page.objectUrl(null, marker));
-                        page.writeObjectLabel(marker);
-                    page.writeEnd();
-                page.writeEnd();
-            }
-        page.writeEnd();
+        writeListHtml(page,
+                ReferentialTextMarker.class,
+                Query.from(ReferentialTextMarker.class).sortAscending("displayName"),
+                selected);
     }
 
     private void writeWebResourceOverridesListHtml(ToolPageContext page, Object selected) throws IOException, ServletException {
 
-        State selectedState = State.getInstance(selected);
 
         page.writeStart("h2");
             page.writeHtml(page.localize("com.psddev.cms.tool.page.admin.Settings", "subtitle.webResourceOverrides"));
         page.writeEnd();
 
         page.writeStart("ul", "class", "links");
-
-            page.writeStart("li", "class", "new" + (selected instanceof WebResourceOverride && selectedState.isNew() ? " selected" : ""));
-                page.writeStart("a", "href", page.typeUrl(null, WebResourceOverride.class));
-                    page.writeHtml(page.localize(WebResourceOverride.class, "action.newType"));
-                page.writeEnd();
-            page.writeEnd();
-
-            for (WebResourceOverride override : Query.from(WebResourceOverride.class).sortAscending("path").selectAll()) {
-                page.writeStart("li", "class", override.equals(selected) ? "selected" : "");
-                    page.writeStart("a", "href", page.objectUrl(null, override));
-                        page.writeObjectLabel(override);
-                    page.writeEnd();
-                page.writeEnd();
-            }
+            writeListHtml(page,
+                    WebResourceOverride.class,
+                    Query.from(WebResourceOverride.class).sortAscending("path"),
+                    selected);
         page.writeEnd();
     }
 
@@ -175,5 +130,31 @@ public class AdminSettings extends PageServlet {
                 }
             page.writeEnd();
         page.writeEnd();
+    }
+
+    private void writeListHtml(ToolPageContext page, Class<? extends Recordable> recordableClass, Query query, Object selected) throws IOException, ServletException {
+
+        State selectedState = State.getInstance(selected);
+
+        page.writeStart("ul", "class", "links");
+
+            page.writeStart("li", "class", "new" + (recordableClass.isInstance(selected) && selectedState.isNew() ? " selected" : ""));
+                page.writeStart("a", "href", page.typeUrl(null, recordableClass));
+                    page.writeHtml(page.localize(recordableClass, "action.newType"));
+                page.writeEnd();
+            page.writeEnd();
+
+            writeListItemsHtml(page, query.selectAll(), selected);
+        page.writeEnd();
+    }
+
+    private void writeListItemsHtml(ToolPageContext page, List<?> items, Object selected) throws IOException, ServletException {
+        for (Object object : items) {
+            page.writeStart("li", "class", object.equals(selected) ? "selected" : "");
+                page.writeStart("a", "href", page.objectUrl(null, object));
+                    page.writeObjectLabel(object);
+                page.writeEnd();
+            page.writeEnd();
+        }
     }
 }
