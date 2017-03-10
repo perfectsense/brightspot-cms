@@ -2,6 +2,7 @@ package com.psddev.cms.tool.page;
 
 import com.psddev.cms.db.ReferentialTextMarker;
 import com.psddev.cms.db.StandardImageSize;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Application;
@@ -14,6 +15,7 @@ import com.psddev.dari.util.RoutingFilter;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RoutingFilter.Path(application = "cms", value = "admin/settings.jsp")
 public class AdminSettings extends PageServlet {
@@ -80,7 +82,10 @@ public class AdminSettings extends PageServlet {
 
         page.writeStart("ul", "class", "links");
             writeListItemsHtml(page,
-                    Query.from(Application.class).where("name != missing").sortAscending("name").selectAll(),
+                    Query.from(Application.class).where("name != missing").sortAscending("name").selectAll()
+                            .stream()
+                            .filter(app -> !app.getState().getType().as(ToolUi.class).isHidden())
+                            .collect(Collectors.toList()),
                     selected);
         page.writeEnd();
     }
