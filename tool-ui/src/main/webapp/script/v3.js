@@ -206,6 +206,11 @@ function() {
     $select.parent().find('> h2, > ul').toggle($select.find(':selected').val() === 'some');
   });
 
+  $doc.on('change', '.widget-urlsItemRemove input[type="checkbox"]', function () {
+    var $input = $(this);
+    $input.closest('.widget-urlsItem').toggleClass('toBeRemoved', $input.is(':checked'));
+  });
+
   bsp_utils.onDomInsert(document, '.inputContainer .permissions select', {
     afterInsert: function (selects) {
       var $hide = $();
