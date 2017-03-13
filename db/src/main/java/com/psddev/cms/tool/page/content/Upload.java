@@ -11,11 +11,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import com.psddev.cms.tool.CmsTool;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.SparseSet;
@@ -72,58 +74,35 @@ public class Upload extends PageServlet {
     }
 
     private static void reallyDoService(ToolPageContext page) throws IOException, ServletException {
-        List<UUID> typeIds = page.params(UUID.class, "typeId");
         Database database = Database.Static.getDefault();
         DatabaseEnvironment environment = database.getEnvironment();
         Set<ObjectType> uploadableTypes = new LinkedHashSet<>();
         Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
-        boolean isEffectivelySmartUpload = page.getCmsTool().isEnableSmartUploader();
+        CmsTool cms = page.getCmsTool();
+        boolean isEffectivelySmartUpload = !cms.isUseOldUploader() && cms.isEnableSmartUploader();
 
-        for (ObjectType type : typeIds.stream()
-                .map(environment::getTypeById)
-                .filter(Objects::nonNull)
-                .map(type -> type.as(ToolUi.class).findDisplayTypes())
-                .flatMap(Collection::stream)
-                .filter(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)
-                .collect(Collectors.toList())) {
+        if (isEffectivelySmartUpload) {
+            smartUploadableTypes = getSmartUploadableTypes(page);
 
-            uploadableTypes.add(type);
-
-            if (!isEffectivelySmartUpload) {
-                continue;
-            }
-
-            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
-            List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
-                    .filter(s -> s.startsWith("+"))
-                    .collect(Collectors.toList());
-
-            if (mimeTypes.isEmpty()) {
-                continue;
-            }
-
-            // If there is any collision between mime types, skip the ambiguity.
-            Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
-                    .filter(t -> !Collections.disjoint(
-                            Arrays.stream(t.getField().getMimeTypes().split(" "))
-                                    .filter(mt -> mt.startsWith("+"))
-                                    .collect(Collectors.toList()),
-                            mimeTypes))
-                    .collect(Collectors.toSet());
-
-            if (smartUploadableTypesToRemove.isEmpty()) {
-                smartUploadableTypes.add(new SmartUploadableType(type, field));
-
-            } else {
-                smartUploadableTypes.removeAll(smartUploadableTypesToRemove);
-            }
+            // Even if it is enabled via CmsTool settings, the Smart Uploader
+            // cannot (and will not) be used if there are is no ObjectType with
+            // content types specified. If this is the case, we will fallback to
+            // the normal Front End Uploader experience.
+            isEffectivelySmartUpload = !smartUploadableTypes.isEmpty();
         }
 
-        // Even if it is enabled via CmsTool settings, the Smart Uploader
-        // cannot (and will not) be used if there are is no ObjectType with
-        // content types specified. If this is the case, we will fallback to
-        // the normal Front End Uploader experience.
-        isEffectivelySmartUpload = !smartUploadableTypes.isEmpty();
+        if (cms.isUseOldUploader()){
+            uploadableTypes = getUploadableTypes(
+                    page,
+                    type -> type.getFields().stream().anyMatch(field -> ObjectField.FILE_TYPE.equals(field.getInternalType()))
+            );
+
+        } else {
+            uploadableTypes = getUploadableTypes(
+                    page,
+                    type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null
+            );
+        }
 
         ObjectType selectedType = environment.getTypeById(page.param(UUID.class, "type"));
         Exception postError = null;
@@ -143,7 +122,10 @@ public class Upload extends PageServlet {
 
                 if (isEffectivelySmartUpload) {
                     try {
-                        for (ObjectType type : typeIds.stream().map(environment::getTypeById).collect(Collectors.toList())) {
+                        for (ObjectType type : page.params(UUID.class, "typeId").stream()
+                                .map(environment::getTypeById)
+                                .collect(Collectors.toList())) {
+
                             createObjectsFromUpload(page, type, js, smartUploadableTypes, newObjectIds);
                         }
 
@@ -354,6 +336,63 @@ public class Upload extends PageServlet {
             page.writeEnd();
 
         page.writeEnd();
+    }
+
+    // Returns type-field mapping of types that are explicitly set to be
+    // uploadable ONLY if the corresponding file field has mime types
+    // specified.
+    private static Set<SmartUploadableType> getSmartUploadableTypes(ToolPageContext page) {
+        Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
+
+        for (ObjectType type : page.params(UUID.class, "typeId").stream()
+                .map(id -> Database.Static.getDefault().getEnvironment().getTypeById(id))
+                .filter(Objects::nonNull)
+                .map(type -> type.as(ToolUi.class).findDisplayTypes())
+                .flatMap(Collection::stream)
+                .filter(type -> {
+                    ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+                    return field != null && field.getMimeTypes() != null;
+                })
+                .collect(Collectors.toList())) {
+
+            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+            List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
+                    .filter(s -> s.startsWith("+"))
+                    .collect(Collectors.toList());
+
+            if (mimeTypes.isEmpty()) {
+                continue;
+            }
+
+            // If there is any collision between mime types, skip the ambiguity.
+            Set<SmartUploadableType> smartUploadableTypesToRemove = smartUploadableTypes.stream()
+                    .filter(t -> !Collections.disjoint(
+                            Arrays.stream(t.getField().getMimeTypes().split(" "))
+                                    .filter(mt -> mt.startsWith("+"))
+                                    .collect(Collectors.toList()),
+                            mimeTypes))
+                    .collect(Collectors.toSet());
+
+            if (smartUploadableTypesToRemove.isEmpty()) {
+                smartUploadableTypes.add(new SmartUploadableType(type, field));
+
+            } else {
+                smartUploadableTypes.removeAll(smartUploadableTypesToRemove);
+            }
+        }
+
+        return smartUploadableTypes;
+    }
+
+    // Return uploadable types based on a predicate.
+    private static Set<ObjectType> getUploadableTypes(ToolPageContext page, Predicate<ObjectType> typePredicate) {
+        return page.params(UUID.class, "typeId").stream()
+                .map(id -> Database.Static.getDefault().getEnvironment().getTypeById(id))
+                .filter(Objects::nonNull)
+                .map(type -> type.as(ToolUi.class).findDisplayTypes())
+                .flatMap(Collection::stream)
+                .filter(typePredicate)
+                .collect(Collectors.toSet());
     }
 
     private static void writeFilePreview(ToolPageContext page) throws IOException, ServletException {

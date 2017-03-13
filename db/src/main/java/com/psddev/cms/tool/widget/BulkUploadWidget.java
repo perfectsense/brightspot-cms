@@ -12,6 +12,8 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.UploadFiles;
+import com.psddev.dari.db.Application;
+import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 
 public class BulkUploadWidget extends DefaultDashboardWidget {
@@ -28,6 +30,25 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
 
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
+        boolean hasUploadable = false;
+
+        // Check for any content type with a file field.
+        if (Application.Static.getInstance(CmsTool.class).isUseOldUploader()) {
+            for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
+                for (ObjectField field : t.getFields()) {
+                    if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                        hasUploadable = true;
+                        break;
+                    }
+                }
+            }
+
+        // Check for explicit usage of @ToolUi.BulkUploadable.
+        } else {
+            hasUploadable = ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
+                    .anyMatch(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null);
+        }
+
         CmsTool.BulkUploadSettings settings = null;
         Site site = page.getSite();
 
@@ -47,9 +68,7 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
             page.writeEnd();
             page.writeStart("div", "class", "message message-info");
 
-                if (ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
-                        .noneMatch(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null)) {
-
+                if (!hasUploadable) {
                     page.writeHtml(page.localize(BulkUploadWidget.class, "message.noTypes"));
 
                 } else {

@@ -222,6 +222,10 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Debug")
     private boolean useOldTaxonomyChildrenDetection;
 
+    @ToolUi.Note("Check this to enable bulk uploading of any content type with a file field.")
+    @ToolUi.Tab("Debug")
+    private boolean useOldUploader = true;
+
     @Embedded
     public static class CommonTime extends Record {
 
@@ -936,6 +940,14 @@ public class CmsTool extends Tool {
 
     public void setUseOldTaxonomyChildrenDetection(boolean useOldTaxonomyChildrenDetection) {
         this.useOldTaxonomyChildrenDetection = useOldTaxonomyChildrenDetection;
+    }
+
+    public boolean isUseOldUploader() {
+        return useOldUploader;
+    }
+
+    public void setUseOldUploader(boolean useOldUploader) {
+        this.useOldUploader = useOldUploader;
     }
 
     public String createManualContentLockingNoteText() {
