@@ -47,7 +47,20 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
         // Check for explicit usage of @ToolUi.BulkUploadable.
         } else {
             hasUploadable = ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
-                    .anyMatch(type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null);
+                    .filter(type -> type.as(ToolUi.class).isBulkUploadable())
+                    .anyMatch(type -> {
+                        ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+
+                        // Make sure the specified field is valid.
+                        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {
+                            return true;
+                        }
+
+                        // Check the preview field. If invalid, find the first file field.
+                        field = type.getField(type.getPreviewField());
+                        return !(field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalType()))
+                                || type.getFields().stream().anyMatch(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()));
+                    });
         }
 
         CmsTool.BulkUploadSettings settings = null;

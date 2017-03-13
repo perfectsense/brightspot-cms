@@ -101,7 +101,7 @@ public class Upload extends PageServlet {
         } else {
             uploadableTypes = getUploadableTypes(
                     page,
-                    type -> type.getField(type.as(ToolUi.class).getBulkUploadableField()) != null
+                    type -> getEffectiveBulkUploadableField(type) != null
             );
         }
 
@@ -266,7 +266,7 @@ public class Upload extends PageServlet {
                                     "name", "typeForm-" + type.getId(),
                                     "value", State.getInstance(common).getId());
 
-                            ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+                            ObjectField uploadableField = getEffectiveBulkUploadableField(type);
 
                             page.writeSomeFormFields(
                                     common,
@@ -315,7 +315,7 @@ public class Upload extends PageServlet {
                                         "name", name,
                                         "value", State.getInstance(common).getId());
 
-                                ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+                                ObjectField uploadableField = getEffectiveBulkUploadableField(type);
 
                                 page.writeSomeFormFields(
                                         common,
@@ -351,12 +351,12 @@ public class Upload extends PageServlet {
                 .map(type -> type.as(ToolUi.class).findDisplayTypes())
                 .flatMap(Collection::stream)
                 .filter(type -> {
-                    ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+                    ObjectField field = getEffectiveBulkUploadableField(type);
                     return field != null && field.getMimeTypes() != null;
                 })
                 .collect(Collectors.toList())) {
 
-            ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+            ObjectField field = getEffectiveBulkUploadableField(type);
             List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
                     .filter(s -> s.startsWith("+"))
                     .collect(Collectors.toList());
@@ -431,7 +431,7 @@ public class Upload extends PageServlet {
 
         Object common = type.createObject(page.param(UUID.class, "typeForm-" + type.getId()));
         page.updateUsingParameters(common);
-        ObjectField uploadableField = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+        ObjectField uploadableField = getEffectiveBulkUploadableField(type);
 
         for (StorageItem file : StorageItemFilter.getParameters(
                 page.getRequest(),
@@ -497,6 +497,31 @@ public class Upload extends PageServlet {
     private static boolean hasMimeType(ObjectField field, String mimeType) {
         String mimeTypes = field.getMimeTypes();
         return new SparseSet(StringUtils.isBlank(mimeTypes) ? "+/" : mimeTypes).contains(mimeType);
+    }
+
+    private static ObjectField getEffectiveBulkUploadableField(ObjectType type) {
+        ToolUi ui = type.as(ToolUi.class);
+
+        if (!ui.isBulkUploadable()) {
+            return null;
+        }
+
+        ObjectField field = type.getField(ui.getBulkUploadableField());
+
+        // Make sure the specified field is valid.
+        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {
+            return field;
+        }
+
+        // Check the preview field. If invalid, find the first file field.
+        field = type.getField(type.getPreviewField());
+
+        return field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalItemType())
+                ? type.getFields().stream()
+                        .filter(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()))
+                        .findFirst()
+                        .orElse(null)
+                : field;
     }
 
     public enum Context {
