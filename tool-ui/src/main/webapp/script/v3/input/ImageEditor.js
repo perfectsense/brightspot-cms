@@ -483,10 +483,12 @@ define([
             self.$element.find(".imageEditor-blurOverlay").remove();
 
             // Reprocess the image to remove the adjustments
-            self.adjustmentProcess();
-
-            // Reset the cropped image
-            self.cropReset();
+            self.adjustmentProcess().done(function(){
+                // Seems to require a timeout to behave correctly
+                setTimeout(function(){
+                    self.cropReset();
+                }, 100);
+            });
         },
 
 
@@ -619,9 +621,9 @@ define([
          * Returns a promise that can be used to run additional code
          * after all the processing is done.
          */
-        adjustmentProcess: function() {
+        adjustmentProcess: function(cropOriginalImage) {
 
-            var operations, operationsJson, promise, self;
+            var crop, operations, operationsJson, promise, self;
 
             self = this;
 
@@ -645,6 +647,10 @@ define([
 
                 // Now perform the operations and return a promise that can
                 // be used to run more code after the operations have completed
+                if (!cropOriginalImage) {
+                    crop = operations.crop1;
+                    delete operations.crop1;
+                }
                 promise = self.adjustmentProcessExecuteAll(operations);
 
                 // When all the adjustments are done replace the original image with the adjusted image
@@ -662,11 +668,24 @@ define([
                     // Save the adjusted image for later comparison
                     self.dom.$editImage = $( self.dom.processedImage );
 
-                    // Trigger an event so other code can tell when the image changed
-                    self.$element.trigger('imageUpdated', [self.dom.$editImage]);
+                    // Did we previously remove the crop operation for the original image?
+                    // If so do the crop now for the image that we send to other tabs like focus/sizes/hotspot.
+                    if (crop) {
+                        promise = self.adjustmentProcessExecuteAll(
+                            {'crop': crop},
+                            $(self.cloneCanvas(self.dom.processedImage)).get(0)
+                        );
+                    }
+
+                    // Trigger an event so other code (focus/sizes/hotspot) can tell when the image changed
+                    promise.done(function(){
+                        self.$element.trigger('imageUpdated', [ $(self.dom.processedImage) ]);
+                    });
 
                 });
 
+                // Return the promise so other code can run after the operations have been completed
+                return promise;
             }
 
             // No operations have to be performed, so just return
@@ -679,10 +698,16 @@ define([
          * After the operations object has been set up, this function executes all the image adjustments.
          * It does each operation sequentially.
          *
+         * @param {Object} operations
+         * List of operations to perform.
+         *
+         * @param {DOM_IMAGE} [image]
+         * An image to start from. If not specified start from the original image.
+         *
          * @returns Promise
          * Returns a promise that can be used to run additional code after the processing has completed.
          */
-        adjustmentProcessExecuteAll: function(operations) {
+        adjustmentProcessExecuteAll: function(operations, image) {
 
             var promise, self;
 
@@ -693,7 +718,7 @@ define([
             promise = $.Deferred().resolve().promise();
 
             // Create the processed image - start from a copy of the original image
-            self.dom.processedImage = self.dom.$imageClone.clone().get(0);
+            self.dom.processedImage = image || self.dom.$imageClone.clone().get(0);
 
             // Loop through each of the operations and perform them sequentially
             $.each(operations, function(name, value) {
@@ -749,6 +774,22 @@ define([
             self = this;
 
             deferred = $.Deferred();
+
+            // Special case: wince we have two separate crop operations (one for the image, another for each size)
+            // we couldn't call each one 'crop' because each operation name can be specified only once in the object.
+            // So we named the first one 'crop1' to perform a crop operation.
+            if (operationName === 'crop1') {
+                operationName = 'crop';
+            }
+
+            if (operationName === 'crop') {
+                // The crop parameters might be x,y,width,height
+                // But Pixastic expects left,top,width,height
+                if (operationValue.x !== undefined) {
+                    operationValue.left = operationValue.x;
+                    operationValue.top = operationValue.y;
+                }
+            }
 
             // Run the Pixastic process to create a new image, then mark the deferred as resolved when it completes
             Pixastic.process(self.dom.processedImage, operationName, operationValue, function(newImage) {
@@ -806,12 +847,22 @@ define([
          */
         adjustmentGetOperations: function() {
 
+            var bounds;
             var self;
 
             self = this;
 
             // Create a list of operations
             self.operations = {};
+
+            // First determine if the image has been cropped
+            bounds = self.cropGetInput();
+            if (bounds.width) {
+                // Special case: since each operation name must be unique in the object,
+                // and we have two different crop operations to perform, name this one
+                // crop1 so it does not interfere with the other crop operation.
+                self.operations.crop1 = bounds;
+            }
 
             // Loop through all the inputs in the edit section
             // and add operations for each one
@@ -1524,6 +1575,10 @@ define([
          * Get the values for the selected crop from the cropping div, and translate them into 0-1 numbers relative
          * to the image.
          *
+         * @param {Boolean} [relative=true]
+         * By default this is true and returns values between zero and one, relative to the original image.
+         * If you set this to false, then returns absolute numbers to crop the original image.
+         *
          * @return {Object}
          * The crop value as a javascript object:
          *
@@ -1539,8 +1594,9 @@ define([
          * value.height:{Number} Number between zero and one.
          * Number between zero and one representing the height of the cropped area in relation to the original image.
          */
-        cropGetValue: function() {
+        cropGetValue: function(relative) {
 
+            var bounds;
             var imageWidth;
             var imageHeight;
             var rotation;
@@ -1565,12 +1621,20 @@ define([
                 imageHeight = self.dom.imageCloneHeight;
             }
 
-            return ({
-                x: sizeBoxPosition.left / imageWidth,
-                y: sizeBoxPosition.top / imageHeight,
-                width: sizeBoxWidth / imageWidth,
-                height: sizeBoxHeight / imageHeight
-            });
+            bounds = {
+                x: sizeBoxPosition.left,
+                y: sizeBoxPosition.top,
+                width: sizeBoxWidth,
+                height: sizeBoxHeight
+            };
+
+            if (relative !== false) {
+                bounds.x = bounds.x / imageWidth;
+                bounds.y = bounds.y / imageHeight;
+                bounds.width = bounds.width / imageWidth;
+                bounds.height = bounds.height / imageHeight;
+            }
+            return bounds;
         },
 
 
@@ -1587,9 +1651,39 @@ define([
             var self;
             self = this;
             value = (value === undefined) ? self.cropGetValue() : value;
-            self.dom.$edit.find('input[name$="/file.crop"]').val(JSON.stringify(value));
+            self.dom.$edit.find('input[name$="/file.crop"]').val(JSON.stringify(value)).trigger('change');
         },
 
+
+        cropGetInput: function() {
+            var imageHeight;
+            var imageWidth;
+            var rotation;
+            var self;
+            var value;
+            self = this;
+            value = self.dom.$edit.find('input[name$="/file.crop"]').val();
+
+            rotation = self.adjustmentRotateGet();
+            if (rotation === 90 || rotation === -90) {
+                imageWidth = self.dom.imageCloneHeight;
+                imageHeight = self.dom.imageCloneWidth;
+            } else {
+                imageWidth = self.dom.imageCloneWidth;
+                imageHeight = self.dom.imageCloneHeight;
+            }
+
+            if (value) {
+                value = JSON.parse(value);
+            }
+            if (value) {
+                value.x *= imageWidth;
+                value.y *= imageHeight;
+                value.width *= imageWidth;
+                value.height *= imageHeight;
+            }
+            return value || {};
+        },
 
         /**
          * Reset the crop so it covers the entire image.
@@ -1726,7 +1820,7 @@ define([
 
             // If the image is rotated, clear all the crops because the aspect ratio will be incorrect
             self.$element.on('imageAdjustment', function(event, image, adjustment){
-                if (adjustment === 'rotate') {
+                if (adjustment === 'rotate' || adjustment === 'crop') {
                     self.sizesResetAll();
                 }
             });
@@ -1894,7 +1988,8 @@ define([
                 var focusY = self.dom.$focusInputY.val();
                 if (focusX !== '' && focusY !== '') {
 
-                    var $focusImage = self.dom.$focusImage[0];
+                    // Focus image has not been created yet so use the original image
+                    var $focusImage = self.dom.$imageClone;
 
                     focusCrop = self.focusGetCrop({
                         x: focusX,
@@ -2123,17 +2218,21 @@ define([
                 // Find the element wrapping the preview image
                 $imageWrapper = groupInfo.$element.find('.imageEditor-sizePreview');
 
-                // Get the crop bounds for this group, based on the original image size
-                // But adjusted if we will be rotating the image
-                rotation = self.adjustmentRotateGet();
-                if (rotation === 90 || rotation === -90) {
-                    width = self.dom.imageCloneHeight;
-                    height = self.dom.imageCloneWidth;
-                } else {
-                    width = self.dom.imageCloneWidth;
-                    height = self.dom.imageCloneHeight;
-                }
+                // Get the width of the image shown in the sizes tab.
+                // Note this image has already been rotated/cropped based on the image edit settings
+                width = self.dom.$image.width();
+                height = self.dom.$image.height();
 
+                // rotation = self.adjustmentRotateGet();
+                // if (rotation === 90 || rotation === -90) {
+                //     width = self.dom.imageCloneHeight;
+                //     height = self.dom.imageCloneWidth;
+                // } else {
+                //     width = self.dom.imageCloneWidth;
+                //     height = self.dom.imageCloneHeight;
+                // }
+
+                // Get the current crop bounds for this group
                 bounds = self.sizesGetSizeBounds(width, height, sizeInfoFirst);
 
                 // Crop the image based on the current crop dimension,
@@ -2142,7 +2241,7 @@ define([
                 // Get the current image adjustments (rotation, etc.) so we can also use that when cropping
                 operations = self.adjustmentGetOperations();
 
-                // Add a crop operation
+                // Add a crop operation to be performed after the other edit operations
                 operations.crop = bounds;
 
                 // Perform all the operations and the crop
