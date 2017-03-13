@@ -14,6 +14,7 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.UploadFiles;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.ObjectType;
 
 public class BulkUploadWidget extends DefaultDashboardWidget {
@@ -36,7 +37,7 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
         if (Application.Static.getInstance(CmsTool.class).isUseOldUploader()) {
             for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
                 for (ObjectField field : t.getFields()) {
-                    if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                    if (!(field instanceof ObjectMethod) && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
                         hasUploadable = true;
                         break;
                     }

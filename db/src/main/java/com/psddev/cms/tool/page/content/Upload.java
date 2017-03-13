@@ -18,6 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import com.psddev.cms.tool.CmsTool;
+import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.util.SparseSet;
@@ -94,7 +95,7 @@ public class Upload extends PageServlet {
         if (cms.isUseOldUploader()){
             uploadableTypes = getUploadableTypes(
                     page,
-                    type -> type.getFields().stream().anyMatch(field -> ObjectField.FILE_TYPE.equals(field.getInternalType()))
+                    type -> type.getFields().stream().anyMatch(field -> !(field instanceof ObjectMethod) && ObjectField.FILE_TYPE.equals(field.getInternalType()))
             );
 
         } else {
