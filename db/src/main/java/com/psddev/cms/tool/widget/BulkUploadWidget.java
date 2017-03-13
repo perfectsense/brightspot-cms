@@ -47,9 +47,9 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
         // Check for explicit usage of @ToolUi.BulkUploadable.
         } else {
             hasUploadable = ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
-                    .filter(type -> type.as(ToolUi.class).isBulkUploadable())
+                    .filter(type -> type.as(ToolUi.class).isRestrictedUpload())
                     .anyMatch(type -> {
-                        ObjectField field = type.getField(type.as(ToolUi.class).getBulkUploadableField());
+                        ObjectField field = type.getField(type.as(ToolUi.class).getRestrictedUploadField());
 
                         // Make sure the specified field is valid.
                         if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {

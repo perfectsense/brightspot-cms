@@ -101,8 +101,8 @@ public class ToolUi extends Modification<Object> {
     private String defaultSortField;
     private Boolean unlabeled;
     private Boolean testSms;
-    private Boolean bulkUploadable;
-    private String bulkUploadableField;
+    private Boolean restrictedUpload;
+    private String restrictedUploadField;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -817,20 +817,20 @@ public class ToolUi extends Modification<Object> {
         return isTestSms() && !isColorPicker() && !isSecret();
     }
 
-    public boolean isBulkUploadable() {
-        return Boolean.TRUE.equals(bulkUploadable);
+    public boolean isRestrictedUpload() {
+        return Boolean.TRUE.equals(restrictedUpload);
     }
 
-    public void setBulkUploadable(boolean bulkUploadable) {
-        this.bulkUploadable = bulkUploadable ? Boolean.TRUE : null;
+    public void setRestrictedUpload(boolean restrictedUpload) {
+        this.restrictedUpload = restrictedUpload ? Boolean.TRUE : null;
     }
 
-    public String getBulkUploadableField() {
-        return bulkUploadableField;
+    public String getRestrictedUploadField() {
+        return restrictedUploadField;
     }
 
-    public void setBulkUploadableField(String bulkUploadableField) {
-        this.bulkUploadableField = bulkUploadableField;
+    public void setRestrictedUploadField(String restrictedUploadField) {
+        this.restrictedUploadField = restrictedUploadField;
     }
 
     /**
@@ -1969,26 +1969,26 @@ public class ToolUi extends Modification<Object> {
     }
 
     /**
-     * Specifies whether the target type should be an option for bulk upload.
-     * Optionally, the file field can be specified.
+     * Specifies whether the target type should be an option for restricted
+     * bulk upload. Optionally, the file field can be specified.
      */
     @Documented
     @Inherited
-    @ObjectType.AnnotationProcessorClass(BulkUploadableProcessor.class)
+    @ObjectType.AnnotationProcessorClass(RestrictedUploadProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface BulkUploadable {
+    public @interface RestrictedUpload {
         boolean value() default true;
         String field() default "";
     }
 
-    private static class BulkUploadableProcessor implements ObjectType.AnnotationProcessor<BulkUploadable> {
+    private static class RestrictedUploadProcessor implements ObjectType.AnnotationProcessor<RestrictedUpload> {
 
         @Override
-        public void process(ObjectType type, BulkUploadable annotation) {
+        public void process(ObjectType type, RestrictedUpload annotation) {
             ToolUi ui = type.as(ToolUi.class);
-            ui.setBulkUploadable(annotation.value());
-            ui.setBulkUploadableField(annotation.field());
+            ui.setRestrictedUpload(annotation.value());
+            ui.setRestrictedUploadField(annotation.field());
         }
     }
 

@@ -101,7 +101,7 @@ public class Upload extends PageServlet {
         } else {
             uploadableTypes = getUploadableTypes(
                     page,
-                    type -> getEffectiveBulkUploadableField(type) != null
+                    type -> getEffectiveRestrictedUploadField(type) != null
             );
         }
 
@@ -266,7 +266,7 @@ public class Upload extends PageServlet {
                                     "name", "typeForm-" + type.getId(),
                                     "value", State.getInstance(common).getId());
 
-                            ObjectField uploadableField = getEffectiveBulkUploadableField(type);
+                            ObjectField uploadableField = getEffectiveRestrictedUploadField(type);
 
                             page.writeSomeFormFields(
                                     common,
@@ -315,7 +315,7 @@ public class Upload extends PageServlet {
                                         "name", name,
                                         "value", State.getInstance(common).getId());
 
-                                ObjectField uploadableField = getEffectiveBulkUploadableField(type);
+                                ObjectField uploadableField = getEffectiveRestrictedUploadField(type);
 
                                 page.writeSomeFormFields(
                                         common,
@@ -351,12 +351,12 @@ public class Upload extends PageServlet {
                 .map(type -> type.as(ToolUi.class).findDisplayTypes())
                 .flatMap(Collection::stream)
                 .filter(type -> {
-                    ObjectField field = getEffectiveBulkUploadableField(type);
+                    ObjectField field = getEffectiveRestrictedUploadField(type);
                     return field != null && field.getMimeTypes() != null;
                 })
                 .collect(Collectors.toList())) {
 
-            ObjectField field = getEffectiveBulkUploadableField(type);
+            ObjectField field = getEffectiveRestrictedUploadField(type);
             List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
                     .filter(s -> s.startsWith("+"))
                     .collect(Collectors.toList());
@@ -431,7 +431,7 @@ public class Upload extends PageServlet {
 
         Object common = type.createObject(page.param(UUID.class, "typeForm-" + type.getId()));
         page.updateUsingParameters(common);
-        ObjectField uploadableField = getEffectiveBulkUploadableField(type);
+        ObjectField uploadableField = getEffectiveRestrictedUploadField(type);
 
         for (StorageItem file : StorageItemFilter.getParameters(
                 page.getRequest(),
@@ -499,14 +499,14 @@ public class Upload extends PageServlet {
         return new SparseSet(StringUtils.isBlank(mimeTypes) ? "+/" : mimeTypes).contains(mimeType);
     }
 
-    private static ObjectField getEffectiveBulkUploadableField(ObjectType type) {
+    private static ObjectField getEffectiveRestrictedUploadField(ObjectType type) {
         ToolUi ui = type.as(ToolUi.class);
 
-        if (!ui.isBulkUploadable()) {
+        if (!ui.isRestrictedUpload()) {
             return null;
         }
 
-        ObjectField field = type.getField(ui.getBulkUploadableField());
+        ObjectField field = type.getField(ui.getRestrictedUploadField());
 
         // Make sure the specified field is valid.
         if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {
