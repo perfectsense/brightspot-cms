@@ -97,6 +97,7 @@ public class ToolUser extends Record implements Managed, ToolEntity {
     @ToolUi.Hidden
     private UUID currentPreviewId;
 
+    @ToolUi.TestSms
     private String phoneNumber;
 
     @Deprecated

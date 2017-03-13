@@ -3165,8 +3165,9 @@ define([
             lineMax = editor.lineCount() - 1;
             lineNumber = self.enhancementGetLineNumber(mark);
 
-            // Get array of enhancements on the current line
-            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark) );
+            // Get array of enhancements on the current line.
+            // But only the block enhancements
+            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark), false );
 
             // If there are multiple enhancements on this line, determine if we need to keep the enhancement
             // on this line (and rearrange the order of enhancements) or move to another line
@@ -3481,10 +3482,13 @@ define([
 
         /**
          * Returns an array of the enhancements on a line.
-         * @param  {[type]} lineNumber [description]
+         * @param {Number} lineNumber
+         * @param {Boolean} [inline=true]
+         * Should inline (align left or right) enhancements be included?
+         * Defaults to true, explicitly set this to false to exclude those enhancements.
          * @return {Array}
          */
-        enhancementGetFromLine: function(lineNumber) {
+        enhancementGetFromLine: function(lineNumber, inline) {
             var editor;
             var lineHandle;
             var self;
@@ -3509,15 +3513,17 @@ define([
             }
 
             // Get all the enhancements that are align left and right
-            $.each(self.enhancementCache, function(i, mark) {
+            if (inline !== false) {
+                $.each(self.enhancementCache, function(i, mark) {
 
-                // Make sure this is not a block enhancement
-                if (mark && mark.options && mark.options.block === false) {
-                    if (self.enhancementGetLineNumber(mark) === lineNumber) {
-                        list.push(mark);
+                    // Make sure this is not a block enhancement
+                    if (mark && mark.options && mark.options.block === false) {
+                        if (self.enhancementGetLineNumber(mark) === lineNumber) {
+                            list.push(mark);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             return list;
         },
@@ -7749,7 +7755,8 @@ define([
                         if ((elementName === 'table') || ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement'))) {
 
                             // End the last line if necessary
-                            if (val[ val.length - 1] !== '\n') {
+                            // (and avoid adding a newline if this is the first line in the editor)
+                            if (val.length && val[ val.length - 1] !== '\n') {
                                 val += '\n';
                                 from.line++;
                                 from.ch = 0;
@@ -7936,7 +7943,11 @@ define([
             processNode(el);
 
             // Replace multiple newlines at the end with single newline
-            val = val.replace(/[\n\r]+$/, '\n');
+            // unless the last line contains an enhancement
+            var enhancementLast = enhancements[ enhancements.length - 1 ];
+            if (!(enhancementLast && enhancementLast.line >= val.split('\n').length - 1)) {
+                val = val.replace(/[\n\r]+$/, '\n');
+            }
 
             if (range) {
 
