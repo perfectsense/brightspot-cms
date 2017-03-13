@@ -13,7 +13,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import com.psddev.dari.db.Application;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 
@@ -135,7 +134,7 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean enableFrontEndUploader;
 
-    @ToolUi.NoteHtml("<span data-dynamic-text='${content.getEnableSmartUploaderNoteHtml()}'></span>")
+    @ToolUi.Note("Enables the uploading of multiple file types at once.")
     @ToolUi.Tab("UI")
     private boolean enableSmartUploader;
 
@@ -939,12 +938,6 @@ public class CmsTool extends Tool {
         this.useOldTaxonomyChildrenDetection = useOldTaxonomyChildrenDetection;
     }
 
-    /** Not for public use. */
-    public String getEnableSmartUploaderNoteHtml() {
-        String note = "Enables the uploading of multiple file types at once.";
-        return isEnableFrontEndUploader() ? note : note + " Front End Uploader is disabled, so this setting has no effect.";
-    }
-
     public String createManualContentLockingNoteText() {
         return isDisableContentLocking()
                 ? "Content locking is completely disabled, so this setting has no effect."
@@ -1137,7 +1130,6 @@ public class CmsTool extends Tool {
     @Embedded
     public static class BulkUploadSettings extends Record {
 
-        @ToolUi.NoteHtml("<span data-dynamic-text='${content.getDefaultTypeNoteHtml()}'></span>")
         private ObjectType defaultType;
 
         public ObjectType getDefaultType() {
@@ -1146,13 +1138,6 @@ public class CmsTool extends Tool {
 
         public void setDefaultType(ObjectType defaultType) {
             this.defaultType = defaultType;
-        }
-
-        /** Not for public use. */
-        public String getDefaultTypeNoteHtml() {
-            return Application.Static.getInstance(CmsTool.class).isEnableSmartUploader()
-                    ? "Smart Uploader is enabled, so this setting has no effect."
-                    : null;
         }
     }
 
