@@ -437,10 +437,14 @@ public class Upload extends PageServlet {
         page.updateUsingParameters(common);
         ObjectField uploadableField = getEffectiveRestrictedUploadField(type);
 
+        if (uploadableField == null) {
+            return;
+        }
+
         for (StorageItem file : StorageItemFilter.getParameters(
                 page.getRequest(),
                 "file",
-                FileField.getStorageSetting(Optional.ofNullable(uploadableField)))) {
+                FileField.getStorageSetting(Optional.of(uploadableField)))) {
 
             if (file == null) {
                 continue;
@@ -448,18 +452,28 @@ public class Upload extends PageServlet {
 
             if (smartUploadableTypes != null) {
                 String fileMimeType = file.getContentType();
+                boolean validMimeType = false;
+                boolean hasType = false;
+                Set<SmartUploadableType> compatibleTypes = new LinkedHashSet<>();
 
-                if (smartUploadableTypes.stream().map(SmartUploadableType::getField).noneMatch(field -> hasMimeType(field, fileMimeType))) {
+                for (SmartUploadableType smartUploadableType : smartUploadableTypes) {
+                    if (hasMimeType(smartUploadableType.getField(), fileMimeType)) {
+                        validMimeType = true;
+                        compatibleTypes.add(smartUploadableType);
+
+                        if (smartUploadableType.getType().equals(type)) {
+                            hasType = true;
+                        }
+                    }
+                }
+
+                if (!validMimeType) {
                     throw new IllegalArgumentException("Invalid mime type(s)!");
                 }
 
-                if (smartUploadableTypes.stream().noneMatch(t -> t.getType().equals(type) && hasMimeType(t.getField(), fileMimeType))) {
+                if (!hasType) {
                     continue;
                 }
-
-                Set<SmartUploadableType> compatibleTypes = smartUploadableTypes.stream()
-                        .filter(t -> hasMimeType(t.getField(), fileMimeType))
-                        .collect(Collectors.toSet());
 
                 // File should be mapped to field with most specific mime type.
                 if (compatibleTypes.size() > 1 && compatibleTypes.stream()
