@@ -2,7 +2,9 @@ package com.psddev.cms.view;
 
 /**
  * A view that delegates its rendering logic to another.
+ * @deprecated Use {@link WrappedModel} instead.
  */
+@Deprecated
 @ViewInterface
 @ViewRendererClass(DelegateViewRenderer.class)
 public interface DelegateView<V> {

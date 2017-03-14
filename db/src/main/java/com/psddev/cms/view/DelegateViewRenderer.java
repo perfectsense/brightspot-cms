@@ -3,7 +3,9 @@ package com.psddev.cms.view;
 /**
  * A renderer for {@link DelegateView delegate views} that forwards the
  * rendering logic to another view.
+ * @deprecated Use {@link WrappedModel} instead.
  */
+@Deprecated
 public final class DelegateViewRenderer implements ViewRenderer {
 
     private static final String DELEGATE_VIEW_KEY = "delegate";
