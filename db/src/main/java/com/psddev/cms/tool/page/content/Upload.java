@@ -357,6 +357,11 @@ public class Upload extends PageServlet {
                 .collect(Collectors.toList())) {
 
             ObjectField field = getEffectiveRestrictedUploadField(type);
+
+            if (field == null) {
+                continue;
+            }
+
             List<String> mimeTypes = Arrays.stream(field.getMimeTypes().split(" "))
                     .filter(s -> s.startsWith("+"))
                     .collect(Collectors.toList());
@@ -435,7 +440,7 @@ public class Upload extends PageServlet {
         for (StorageItem file : StorageItemFilter.getParameters(
                 page.getRequest(),
                 "file",
-                FileField.getStorageSetting(Optional.of(uploadableField)))) {
+                FileField.getStorageSetting(Optional.ofNullable(uploadableField)))) {
 
             if (file == null) {
                 continue;
