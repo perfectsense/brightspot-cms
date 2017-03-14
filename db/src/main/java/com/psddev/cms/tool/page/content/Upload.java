@@ -328,7 +328,7 @@ public class Upload extends PageServlet {
                 page.writeEnd();
             }
 
-            page.writeStart("input", "type", "hidden", "name", "context", "value", page.param(Context.class, "context"));
+            page.writeElement("input", "type", "hidden", "name", "context", "value", page.param(Context.class, "context"));
 
             page.writeStart("div", "class", "buttons");
                 page.writeStart("button", "name", "action-upload");
@@ -385,7 +385,6 @@ public class Upload extends PageServlet {
         return smartUploadableTypes;
     }
 
-    // Return uploadable types based on a predicate.
     private static Set<ObjectType> getUploadableTypes(ToolPageContext page, Predicate<ObjectType> typePredicate) {
         return page.params(UUID.class, "typeId").stream()
                 .map(id -> Database.Static.getDefault().getEnvironment().getTypeById(id))
