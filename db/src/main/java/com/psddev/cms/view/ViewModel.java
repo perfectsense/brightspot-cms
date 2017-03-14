@@ -96,16 +96,17 @@ public abstract class ViewModel<M> {
      *
      * @param viewClass the type of view to create.
      * @param model the model used to create the view.
-     * @param <T> the model type.
      * @param <V> the view type.
      * @return a newly created view.
      */
-    protected final <T, V> V createView(Class<V> viewClass, T model) {
+    protected final <V> V createView(Class<V> viewClass, Object model) {
 
-        Class<? extends ViewModel<? super T>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
+        model = unwrapModel(model, new HashSet<>());
+
+        Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
         if (viewModelClass != null) {
 
-            ViewModel<? super T> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
+            ViewModel<? super Object> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
 
             if (viewModel != null && viewClass.isAssignableFrom(viewModel.getClass())) {
 
@@ -125,18 +126,28 @@ public abstract class ViewModel<M> {
      *
      * @param viewType the view type key bound to the view and model.
      * @param model the model used to create the view.
-     * @param <T> the model type.
      * @return a newly created view.
      */
-    protected final <T> Object createView(String viewType, T model) {
+    protected final Object createView(String viewType, Object model) {
 
-        Class<? extends ViewModel<? super T>> viewModelClass = findViewModelClassHelper(null, viewType, model, true);
+        model = unwrapModel(model, new HashSet<>());
+
+        Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(null, viewType, model, true);
         if (viewModelClass != null) {
 
             return viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
         }
 
         return null;
+    }
+
+    // Recursively unwraps a ModelWrapper while detecting cyclic references.
+    private Object unwrapModel(Object model, Set<Object> unwrapped) {
+        if (model instanceof ModelWrapper && unwrapped.add(model)) {
+            return unwrapModel(((ModelWrapper) model).unwrap(), unwrapped);
+        } else {
+            return model;
+        }
     }
 
     /**
