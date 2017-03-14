@@ -559,6 +559,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 if (!isValueExternal) {
     Set<ObjectType> bulkUploadTypes = new HashSet<ObjectType>();
     Map<ObjectType, String> weightedTypesAndFieldsMap = new CompactMap<ObjectType, String>();
+    Map<ObjectType, String> weightedColorTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, Double> weightedTypesAndTotalsMap = new CompactMap<ObjectType, Double>();
     Map<ObjectType, String> toggleTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, String> progressTypesAndFieldsMap = new CompactMap<ObjectType, String>();
@@ -578,6 +579,9 @@ if (!isValueExternal) {
                 if (ui.isCollectionItemWeightCalculated()) {
                     calculatedWeightsFieldCount ++;
                 }
+            }
+            if (ui.isCollectionItemWeightColor()) {
+                weightedColorTypesAndFieldsMap.put(t, f.getInternalName());
             }
             if (ui.isCollectionItemWeightMarker()) {
                 weightMarkersTypesAndFieldsMap.put(t, f.getInternalName());
@@ -657,6 +661,7 @@ if (!isValueExternal) {
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
                 String weightFieldName = weightedTypesAndFieldsMap.get(itemType);
+                String weightColorFieldName = weightedColorTypesAndFieldsMap.get(itemType);
                 String weightMarkersFieldName = weightMarkersTypesAndFieldsMap.get(itemType);
 
                 Double weight = !StringUtils.isBlank(weightFieldName) ? ObjectUtils.to(double.class, itemState.get(weightFieldName)) : null;
@@ -677,10 +682,12 @@ if (!isValueExternal) {
                         // Add additional data attributes for customizing embedded item display
                         "data-toggle-field", !StringUtils.isBlank(toggleFieldName) ? toggleFieldName : null,
                         "data-weight-field", !StringUtils.isBlank(weightFieldName) ? weightFieldName : null,
+                        "data-weight-color-field", !StringUtils.isBlank(weightColorFieldName) ? weightColorFieldName : null,
                         "data-weight-markers-field", !StringUtils.isBlank(weightMarkersFieldName) ? weightMarkersFieldName : null,
                         "data-progress-field-value", !StringUtils.isBlank(progressFieldName) ? ObjectUtils.to(int.class, ObjectUtils.to(double.class, itemState.get(progressFieldName)) * 100) : null,
                         "data-toggle-field-value", !StringUtils.isBlank(toggleFieldName) ? ObjectUtils.to(boolean.class, itemState.get(toggleFieldName)) : null,
                         "data-weight-field-value", weight != null ? (total != null ? weight / total : weight) : null,
+                        "data-weight-color-field-value", !StringUtils.isBlank(weightColorFieldName) ? ObjectUtils.to(String.class, itemState.get(weightColorFieldName)) : null,
                         "data-weight-markers-field-value", !StringUtils.isBlank(weightMarkersFieldName) ? ObjectUtils.to(new TypeReference<List<Double>>() {}, itemState.get(weightMarkersFieldName)) : null
                 );
 
@@ -701,7 +708,8 @@ if (!isValueExternal) {
 
                     if (!expanded && !itemState.hasAnyErrors()
                             && StringUtils.isBlank(toggleFieldName)
-                            && StringUtils.isBlank(weightFieldName)) {
+                            && StringUtils.isBlank(weightFieldName)
+                            && StringUtils.isBlank(weightColorFieldName)) {
                         wp.writeElement("input",
                                 "type", "hidden",
                                 "name", dataName,
@@ -724,15 +732,18 @@ if (!isValueExternal) {
 
             for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) {
                 ObjectType type = otct.getType();
+                boolean expanded = field.as(ToolUi.class).isExpanded()
+                        || type.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
 
                 String progressFieldName = progressTypesAndFieldsMap.get(type);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(type);
                 String weightFieldName = weightedTypesAndFieldsMap.get(type);
+                String weightColorFieldName = weightedColorTypesAndFieldsMap.get(type);
                 String weightMarkersFieldName = weightMarkersTypesAndFieldsMap.get(type);
 
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
-                            "class", displayGrid ? "collapsed" : null,
+                            "class", (expanded ? "expanded" : "") + (displayGrid ? " collapsed" : ""),
                             "data-sortable-item-type", type.getId(),
                             "data-type", otct.getLabel(),
                             // Add the name of the preview field so the front end knows
@@ -740,10 +751,12 @@ if (!isValueExternal) {
                             "data-preview-field", type.getPreviewField(),
                             "data-toggle-field", !StringUtils.isBlank(toggleFieldName) ? toggleFieldName : null,
                             "data-weight-field", !StringUtils.isBlank(weightFieldName) ? weightFieldName : null,
+                            "data-weight-color-field", !StringUtils.isBlank(weightColorFieldName) ? weightColorFieldName : null,
                             "data-weight-markers-field", !StringUtils.isBlank(weightMarkersFieldName) ? weightMarkersFieldName : null,
                             "data-progress-field-value", !StringUtils.isBlank(progressFieldName) ? 0.0 : null,
                             "data-toggle-field-value", !StringUtils.isBlank(toggleFieldName) ? true : null,
-                            "data-weight-field-value", !StringUtils.isBlank(weightFieldName) ? "" : null
+                            "data-weight-field-value", !StringUtils.isBlank(weightFieldName) ? "" : null,
+                            "data-weight-color-field-value", !StringUtils.isBlank(weightColorFieldName) ? "" : null
                     );
                         wp.writeStart("a",
                                 "href", wp.cmsUrl("/content/repeatableObject.jsp",

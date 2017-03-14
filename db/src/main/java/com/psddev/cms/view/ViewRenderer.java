@@ -43,6 +43,15 @@ public interface ViewRenderer {
     }
 
     /**
+     * Gets the content type produced by this view renderer.
+     *
+     * @return the content type.
+     */
+    default String getContentType() {
+        return "text/html";
+    }
+
+    /**
      * Creates an appropriate ViewRenderer based on the specified view.
      *
      * @param view the view from which to create a view renderer.
@@ -120,6 +129,11 @@ public interface ViewRenderer {
                 // wrap the view renderer so that it always converts the view to a ViewMap
                 // before delegating to the actual renderer if it's not already a map.
                 return new ViewRenderer() {
+
+                    @Override
+                    public String getContentType() {
+                        return renderer.getContentType();
+                    }
 
                     @Deprecated
                     @Override

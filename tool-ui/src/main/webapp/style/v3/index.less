@@ -61,8 +61,11 @@
 @import 'EditFieldUpdateViewers.less';
 @import 'ExternalPreviewFrame.less';
 @import 'InlineEditor.less';
+@import (inline) 'Spectrum.css';
+@import 'SpectrumTheme';
 @import 'OverlayProviderSelect.less';
 @import 'Tab.less';
+@import 'TestSms.less';
 @import 'ToolUserAvatar.less';
 
 // From Bower.
@@ -72,7 +75,6 @@
 @import url('../leaflet/l.geosearch.css');
 @import url('../leaflet/L.Control.Locate.min.css');
 @import url('../nv.d3.css');
-@import url('../spectrum.css');
 
 .locationMap, .regionMap {
   min-width: 500px;
@@ -751,15 +753,23 @@
 }
 
 .uploadableDrop {
-  background-color: fade(white, 80%);
+  background-color: fade(mix(white, @color-focus, 80%), 80%);
+  border: 3px dotted @color-text;
+  border-radius: 5px;
+  box-sizing: content-box;
+  margin: -13px 0 0 -13px;
+  padding: 10px;
   text-align: center;
-  outline: 3px dashed @color-text;
   user-select: none;
 
   .link {
+    .icon;
+    .icon-action-upload;
+
     color: @color-text;
     display: inline-block;
-    font-size: (@fontSize-default * 2);
+    font-size: (@fontSize-default * 1.5);
+    font-weight: bold;
     line-height: (@fontSize-default * 2);
     left: 0;
     margin-top: (0 - @fontSize-default);
@@ -772,20 +782,27 @@
     }
 
     &:before {
-      font-size: (@fontSize-default * 2);
-      opacity: 1;
+      font-size: (@fontSize-default * 1.5);
+      margin-right: 7px;
     }
   }
 }
 
 .uploadableFile {
-  overflow: hidden;
+  .UploadChooser:before {
+    display: none;
+  }
 
   input[type=file] {
+    bottom: -20px;
     font-size: 5000px;
-    height: 100%;
+    height: auto;
+    left: -20px;
     opacity: 0;
-    width: 100%;
+    position: absolute;
+    right: -20px;
+    top: -20px;
+    width: auto;
   }
 }
 

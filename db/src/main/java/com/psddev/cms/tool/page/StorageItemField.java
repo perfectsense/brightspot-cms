@@ -510,7 +510,7 @@ public class StorageItemField extends PageServlet {
 
                 page.writeStart("select",
                         "class", "toggleable",
-                        "data-root", ".inputSmall",
+                        "data-root", ".inputContainer",
                         "name", page.h(actionName));
 
                     if (fieldValue != null) {
@@ -522,11 +522,13 @@ public class StorageItemField extends PageServlet {
                         page.writeEnd();
                     }
 
-                    page.writeStart("option",
-                            "data-hide", ".fileSelectorItem",
-                            "value", "none");
-                        page.writeHtml(page.localize(StorageItemField.class, "option.none"));
-                    page.writeEnd();
+                    if (!field.isRequired()) {
+                        page.writeStart("option",
+                                "data-hide", ".fileSelectorItem",
+                                "value", "none");
+                            page.writeHtml(page.localize(StorageItemField.class, "option.none"));
+                        page.writeEnd();
+                    }
 
                     page.writeStart("option",
                             "data-hide", ".fileSelectorItem",
@@ -553,11 +555,12 @@ public class StorageItemField extends PageServlet {
                     }
                 page.writeEnd();
 
-                page.writeTag("input",
-                        "class", "fileSelectorItem fileSelectorNewUpload",
-                        "type", "file",
-                        "name", page.h(fileName),
-                        "data-input-name", inputName);
+                page.writeStart("span", "class", "fileSelectorItem fileSelectorNewUpload");
+                    page.writeElement("input",
+                            "type", "file",
+                            "name", page.h(fileName),
+                            "data-input-name", inputName);
+                page.writeEnd();
 
                 page.writeTag("input",
                         "class", "fileSelectorItem fileSelectorNewUrl",
@@ -573,28 +576,28 @@ public class StorageItemField extends PageServlet {
                     page.writeEnd();
                 }
             page.writeEnd();
-
-            if (fieldValue != null) {
-                String contentType = fieldValue.getContentType();
-
-                page.writeStart("div",
-                        "class", "fileSelectorItem fileSelectorExisting filePreview");
-
-                    if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
-
-                        ToolUi ui = field.as(ToolUi.class);
-                        String processorPath = ui.getStoragePreviewProcessorPath();
-                        if (processorPath != null) {
-                            JspUtils.include(request, page.getResponse(), page.getWriter(),
-                                    RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
-                                            + StringUtils.ensureStart(processorPath, "/"));
-                        }
-                    } else {
-                        FileContentType.writeFilePreview(page, state, fieldValue);
-                    }
-                page.writeEnd();
-            }
         page.writeEnd();
+
+        if (fieldValue != null) {
+            String contentType = fieldValue.getContentType();
+
+            page.writeStart("div",
+                    "class", "inputLarge fileSelectorItem fileSelectorExisting filePreview");
+
+                if (field.as(ToolUi.class).getStoragePreviewProcessorApplication() != null) {
+
+                    ToolUi ui = field.as(ToolUi.class);
+                    String processorPath = ui.getStoragePreviewProcessorPath();
+                    if (processorPath != null) {
+                        JspUtils.include(request, page.getResponse(), page.getWriter(),
+                                RoutingFilter.Static.getApplicationPath(ui.getStoragePreviewProcessorApplication())
+                                        + StringUtils.ensureStart(processorPath, "/"));
+                    }
+                } else {
+                    FileContentType.writeFilePreview(page, state, fieldValue);
+                }
+            page.writeEnd();
+        }
 
         if (projectUsingBrightSpotImage) {
             page.include("set/hotSpot.jsp");

@@ -2,10 +2,11 @@ package com.psddev.cms.db;
 
 import java.util.List;
 
+import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Record;
 
 @Record.BootstrapPackages("Sites")
-public class SiteCategory extends Record {
+public class SiteCategory extends Record implements Global, Managed {
 
     @Required
     @Indexed(unique = true)
@@ -32,5 +33,10 @@ public class SiteCategory extends Record {
 
     public String getPermissionId() {
         return "siteCategory/" + getId();
+    }
+
+    @Override
+    public String createManagedEditUrl(ToolPageContext page) {
+        return page.cmsUrl("/admin/sites.jsp", "id", getId());
     }
 }

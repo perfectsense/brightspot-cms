@@ -118,9 +118,13 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           $listContainer.css('min-width', inputWidth + 20);
         }
 
-        if (inputOffset.top - winScrollTop < winHeight * 0.6) {
-          var inputHeight = $input.outerHeight();
-          var markerTop = inputOffset.top + inputHeight;
+        var inputTop = inputOffset.top;
+        var inputHeight = $input.outerHeight();
+        var heightAbove = inputTop - winScrollTop;
+        var heightBelow = winHeight - (heightAbove + inputHeight);
+
+        if (heightAbove < heightBelow) {
+          var markerTop = inputTop + inputHeight;
 
           if (isFixedPosition) {
             markerTop -= $win.scrollTop();

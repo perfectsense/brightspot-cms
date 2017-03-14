@@ -1,3 +1,32 @@
+.UploadChooser {
+  display: inline-flex;
+  vertical-align: middle;
+
+  input[type='file'] {
+    height: 0.1px;
+    opacity: 0.01;
+    overflow: hidden;
+    position: absolute;
+    width: 0.1px;
+    z-index: -1;
+  }
+
+  &:before {
+    .button;
+    content: 'Choose';
+  }
+
+  &[data-placeholder]:before {
+    content: attr(data-placeholder);
+  }
+
+  &[data-value]:after {
+    content: attr(data-value);
+    line-height: 30px;
+    margin-left: 5px;
+  }
+}
+
 .absolute-center {
   position: absolute;
   top: 50%;

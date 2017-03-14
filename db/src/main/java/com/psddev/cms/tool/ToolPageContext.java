@@ -1,78 +1,25 @@
 package com.psddev.cms.tool;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.PageContext;
-
-import com.google.common.base.Preconditions;
-import com.psddev.cms.db.ContentTemplate;
-import com.psddev.cms.db.ContentTemplateMappings;
-import com.psddev.cms.db.ElFunctionUtils;
-import com.psddev.cms.db.Localization;
-import com.psddev.cms.db.LocalizationContext;
-import com.psddev.cms.db.Overlay;
-import com.psddev.cms.db.OverlayProvider;
-import com.psddev.cms.db.WorkInProgress;
-import com.psddev.cms.rte.RichTextToolbar;
-import com.psddev.cms.rte.RichTextToolbarItem;
-import com.psddev.cms.tool.page.content.Edit;
-import com.psddev.cms.view.ClassResourceViewTemplateLoader;
-import com.psddev.cms.view.ViewModelCreator;
-import com.psddev.cms.view.ViewOutput;
-import com.psddev.cms.view.ViewRenderer;
-import com.psddev.cms.view.ViewResponse;
-import com.psddev.cms.view.servlet.ServletViewModelCreator;
-import com.psddev.dari.db.Modification;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ContentField;
+import com.psddev.cms.db.ContentTemplate;
+import com.psddev.cms.db.ContentTemplateMappings;
 import com.psddev.cms.db.ContentType;
 import com.psddev.cms.db.Draft;
+import com.psddev.cms.db.ElFunctionUtils;
 import com.psddev.cms.db.History;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.LayoutTag;
+import com.psddev.cms.db.Localization;
+import com.psddev.cms.db.LocalizationContext;
+import com.psddev.cms.db.Overlay;
+import com.psddev.cms.db.OverlayProvider;
 import com.psddev.cms.db.Page;
 import com.psddev.cms.db.PageFilter;
 import com.psddev.cms.db.Renderer;
@@ -88,19 +35,33 @@ import com.psddev.cms.db.ToolUiLayoutElement;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.Trash;
 import com.psddev.cms.db.Variation;
+import com.psddev.cms.db.WorkInProgress;
 import com.psddev.cms.db.WorkStream;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowLog;
 import com.psddev.cms.db.WorkflowState;
 import com.psddev.cms.db.WorkflowTransition;
+import com.psddev.cms.rte.RichTextToolbar;
+import com.psddev.cms.rte.RichTextToolbarItem;
 import com.psddev.cms.tool.file.SvgFileType;
+import com.psddev.cms.tool.page.content.Edit;
 import com.psddev.cms.tool.page.content.PublishModification;
+import com.psddev.cms.view.ClassResourceViewTemplateLoader;
+import com.psddev.cms.view.EmbedEntryView;
+import com.psddev.cms.view.PageEntryView;
 import com.psddev.cms.view.PageViewClass;
+import com.psddev.cms.view.PreviewEntryView;
 import com.psddev.cms.view.ViewCreator;
 import com.psddev.cms.view.ViewModel;
+import com.psddev.cms.view.ViewModelCreator;
+import com.psddev.cms.view.ViewOutput;
+import com.psddev.cms.view.ViewRenderer;
+import com.psddev.cms.view.ViewResponse;
+import com.psddev.cms.view.servlet.ServletViewModelCreator;
 import com.psddev.dari.db.Application;
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.db.Database;
+import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectFieldComparator;
 import com.psddev.dari.db.ObjectIndex;
@@ -132,6 +93,46 @@ import com.psddev.dari.util.TypeDefinition;
 import com.psddev.dari.util.TypeReference;
 import com.psddev.dari.util.Utf8Filter;
 import com.psddev.dari.util.WebPageContext;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.PageContext;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * {@link WebPageContext} with extra methods that work well with
@@ -348,14 +349,37 @@ public class ToolPageContext extends WebPageContext {
                 if ((pageViewClass != null && ViewCreator.findCreatorClass(object, pageViewClass.value(), null, null) != null)
                         || ViewCreator.findCreatorClass(object, null, PageFilter.PAGE_VIEW_TYPE, null) != null
                         || ViewCreator.findCreatorClass(object, null, PageFilter.PREVIEW_VIEW_TYPE, null) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.PAGE_VIEW_TYPE, object) != null
-                        || ViewModel.findViewModelClass(null, PageFilter.PREVIEW_VIEW_TYPE, object) != null) {
+                        || ViewModel.findViewModelClass(PageFilter.PAGE_VIEW_TYPE, object) != null
+                        || ViewModel.findViewModelClass(PageFilter.PREVIEW_VIEW_TYPE, object) != null
+                        || ViewModel.findViewModelClass(PageEntryView.class, object) != null
+                        || ViewModel.findViewModelClass(PreviewEntryView.class, object) != null) {
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code true} is the given {@code object} is embeddable.
+     *
+     * @param object If {@code null}, always returns {@code false}.
+     */
+    public boolean isEmbeddable(Object object) {
+
+        if (object == null) {
+            return false;
+        }
+
+        State state = State.getInstance(object);
+        ObjectType type = state.getType();
+        Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
+
+        return !ObjectUtils.isBlank(rendererData.getEmbedPath())
+                || ViewCreator.findCreatorClass(object, null, PageFilter.EMBED_VIEW_TYPE, null) != null
+                || ViewModel.findViewModelClass(PageFilter.EMBED_VIEW_TYPE, object) != null
+                || ViewModel.findViewModelClass(EmbedEntryView.class, object) != null;
     }
 
     /**
@@ -2376,7 +2400,7 @@ public class ToolPageContext extends WebPageContext {
             String label = otct.getLabel();
 
             writeStart("option",
-                    "selected", selectedTypes.contains(type) ? "selected" : null,
+                    "selected", selectedTypes.contains(type) && otct.getTemplate() == null ? "selected" : null,
                     "value", otct.getId());
                 writeHtml(label);
                 if (label.equals(previousLabel)) {
@@ -2950,6 +2974,7 @@ public class ToolPageContext extends WebPageContext {
 
                         return ui.isCollectionItemToggle()
                                 || ui.isCollectionItemWeight()
+                                || ui.isCollectionItemWeightColor()
                                 || ui.isCollectionItemWeightMarker()
                                 || ui.isCollectionItemProgress();
                     });
@@ -3155,7 +3180,7 @@ public class ToolPageContext extends WebPageContext {
     public void writeViewHtml(Object object, String viewType) throws IOException {
         Preconditions.checkNotNull(object);
 
-        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(null, viewType, object);
+        Class<? extends ViewModel> viewModelClass = ViewModel.findViewModelClass(viewType, object);
 
         Preconditions.checkNotNull(viewModelClass, String.format(
                         "Could not find view model for object of type [%s] and view of type [%s]",
