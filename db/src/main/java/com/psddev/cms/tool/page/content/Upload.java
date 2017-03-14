@@ -77,7 +77,7 @@ public class Upload extends PageServlet {
     private static void reallyDoService(ToolPageContext page) throws IOException, ServletException {
         Database database = Database.Static.getDefault();
         DatabaseEnvironment environment = database.getEnvironment();
-        Set<ObjectType> uploadableTypes = new LinkedHashSet<>();
+        Set<ObjectType> uploadableTypes;
         Set<SmartUploadableType> smartUploadableTypes = new LinkedHashSet<>();
         CmsTool cms = page.getCmsTool();
         boolean isEffectivelySmartUpload = !cms.isUseOldUploader() && cms.isEnableSmartUploader();
@@ -92,7 +92,7 @@ public class Upload extends PageServlet {
             isEffectivelySmartUpload = !smartUploadableTypes.isEmpty();
         }
 
-        if (cms.isUseOldUploader()){
+        if (cms.isUseOldUploader()) {
             uploadableTypes = getUploadableTypes(
                     page,
                     type -> type.getFields().stream().anyMatch(field -> !(field instanceof ObjectMethod) && ObjectField.FILE_TYPE.equals(field.getInternalType()))
