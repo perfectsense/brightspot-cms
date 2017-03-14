@@ -141,10 +141,10 @@ public abstract class ViewModel<M> {
         return null;
     }
 
-    // Recursively unwraps a WrappedModel while detecting cyclic references.
+    // Recursively unwraps a ModelWrapper while detecting cyclic references.
     private Object unwrapModel(Object model, Set<Object> unwrapped) {
-        if (model instanceof WrappedModel && unwrapped.add(model)) {
-            return unwrapModel(((WrappedModel) model).unwrap(), unwrapped);
+        if (model instanceof ModelWrapper && unwrapped.add(model)) {
+            return unwrapModel(((ModelWrapper) model).unwrap(), unwrapped);
         } else {
             return model;
         }

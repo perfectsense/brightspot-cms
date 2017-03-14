@@ -10,7 +10,7 @@ package com.psddev.cms.view;
  * their invocations of {@code createView} when dealing with models that merely
  * delegate to others.
  */
-public interface WrappedModel {
+public interface ModelWrapper {
 
     /**
      * @return The object being wrapped.

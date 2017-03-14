@@ -2,7 +2,7 @@ package com.psddev.cms.view;
 
 /**
  * A view that delegates its rendering logic to another.
- * @deprecated Use {@link WrappedModel} instead.
+ * @deprecated Use {@link ModelWrapper} instead.
  */
 @Deprecated
 @ViewInterface
