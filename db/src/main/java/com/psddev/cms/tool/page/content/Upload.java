@@ -457,6 +457,7 @@ public class Upload extends PageServlet {
                 Set<SmartUploadableType> compatibleTypes = new LinkedHashSet<>();
 
                 for (SmartUploadableType smartUploadableType : smartUploadableTypes) {
+
                     if (hasMimeType(smartUploadableType.getField(), fileMimeType)) {
                         validMimeType = true;
                         compatibleTypes.add(smartUploadableType);
