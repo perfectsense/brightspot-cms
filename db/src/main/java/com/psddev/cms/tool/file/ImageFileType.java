@@ -223,7 +223,7 @@ public class ImageFileType implements FileContentType {
                             page.writeStart("tr");
                                 page.writeStart("td", "class", "imageEditor-crop");
 
-                                String initialCropValue = Optional.ofNullable(edits.get(cropName))
+                                String initialCropValue = Optional.ofNullable(edits.get("crop"))
                                         .map(initialCrop -> ObjectUtils.to(String.class, initialCrop))
                                         .orElse("");
 
