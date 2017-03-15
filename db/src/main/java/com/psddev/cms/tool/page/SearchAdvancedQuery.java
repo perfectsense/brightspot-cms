@@ -63,7 +63,7 @@ public class SearchAdvancedQuery extends PageServlet {
         Collections.sort(paramNames);
 
         page.writeHeader();
-            page.writeStart("div", "class", "widget widget-searchAdvancedQuery");
+            page.writeStart("div", "class", "widget WidgetSearchAdvancedQuery");
                 page.writeStart("h1", "class", "icon icon-wrench");
                     page.writeHtml(page.localize(SearchAdvancedQuery.class, "title"));
                 page.writeEnd();
