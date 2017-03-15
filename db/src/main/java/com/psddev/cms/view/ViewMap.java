@@ -1,10 +1,12 @@
 package com.psddev.cms.view;
 
+import com.psddev.cms.image.ImageSize;
 import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.Once;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StringUtils;
 
+import com.psddev.dari.util.ThreadLocalStack;
 import com.psddev.dari.util.TypeDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,7 +156,21 @@ class ViewMap implements Map<String, Object> {
                 Supplier<Object> supplier = unresolved.remove(key);
 
                 if (supplier != null) {
-                    Object value = convertValue((String) key, supplier.get());
+                    ThreadLocalStack<String> fieldStack = ImageSize.getFieldStack();
+                    String keyString = (String) key;
+                    Object value;
+
+                    fieldStack.push(keyString);
+
+                    try {
+                        value = supplier.get();
+
+                    } finally {
+                        fieldStack.pop();
+                    }
+
+                    value = convertValue(keyString, value);
+
                     if (value != null) {
                         resolved.put((String) key, value);
                     }
