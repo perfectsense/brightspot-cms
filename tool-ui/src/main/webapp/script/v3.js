@@ -236,13 +236,13 @@ function() {
     do {
       $source = $source.popup('source');
 
-      if ($source !== undefined) {
+      if ($source) {
         $contentForm = $source.closest('.contentForm');
       }
 
-    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+    } while ($contentForm.length === 0 && $source && $source.length > 0);
 
-    if ($contentForm === undefined || $contentForm.length === 0) {
+    if (!$contentForm || $contentForm.length === 0) {
       return;
     }
 
