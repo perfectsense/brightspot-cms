@@ -22,6 +22,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
 
     _initVisible: function ($original) {
       var plugin = this,
+          opened = false,
           isFixedPosition = $original.isFixedPosition(),
           isMultiple = $original.is('[multiple]'),
           isSearchable = $original.is('[data-searchable="true"]'),
@@ -101,6 +102,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       function resize() {
+        if (!opened) {
+          return;
+        }
+
         if (!$input.is(':visible')) {
           $openOriginal = null;
           $openList = null;
@@ -286,6 +291,8 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       $list.bind('dropDown-open', function() {
+        opened = true;
+
         resize();
 
         $input.addClass(plugin.className('list-open'));
@@ -318,6 +325,8 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       $list.bind('dropDown-close', function() {
+        opened = false;
+
         $input.removeClass(plugin.className('list-open'));
 
         $openOriginal = null;
@@ -364,7 +373,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       // Recalculate position and size whenever viewport is affected.
-      $(window).bind('resize scroll', bsp_utils.throttle(15, resize));
+      $(window).bind('resize', bsp_utils.throttle(15, resize));
 
       // Create the list based on the options in the original input.
       addItem = function($option) {
