@@ -168,7 +168,9 @@ public class SearchAdvancedQuery extends PageServlet {
 
                 page.writeRaw("var $advancedQueryContainer = $edit.closest('.searchFilter-advancedQuery');");
                 page.writeRaw("var $queryStringInput = $advancedQueryContainer.find('input[type=\"hidden\"]');");
-                page.writeRaw("$queryStringInput.val('" + StringUtils.escapeJavaScript(advancedQueryEditUrl.substring(advancedQueryEditUrl.indexOf("?"))) + "');");
+
+                int queryParamsIndex = advancedQueryEditUrl.indexOf("?");
+                page.writeRaw("$queryStringInput.val('" + StringUtils.escapeJavaScript((queryParamsIndex > -1 ? advancedQueryEditUrl.substring(queryParamsIndex) : "")) + "');");
 
                 if (page.param(String.class, "action-search") != null) {
                     page.writeRaw("var $input = $advancedQueryContainer.find('input[type=\"text\"]');");
