@@ -354,6 +354,10 @@ public class Search extends Record {
         this.fieldFilters = fieldFilters;
     }
 
+    /**
+     * Returns the sort value with the operator suffix appended (if it exists).
+     * Eg. <code>title/sa</code>.
+     */
     public String getFullyQualifiedSort() {
         return fullyQualifiedSort;
     }
