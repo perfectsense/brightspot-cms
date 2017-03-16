@@ -206,6 +206,11 @@ function() {
     $select.parent().find('> h2, > ul').toggle($select.find(':selected').val() === 'some');
   });
 
+  $doc.on('change', '.widget-urlsItemRemove input[type="checkbox"]', function () {
+    var $input = $(this);
+    $input.closest('.widget-urlsItem').toggleClass('toBeRemoved', $input.is(':checked'));
+  });
+
   bsp_utils.onDomInsert(document, '.inputContainer .permissions select', {
     afterInsert: function (selects) {
       var $hide = $();
@@ -231,13 +236,13 @@ function() {
     do {
       $source = $source.popup('source');
 
-      if ($source !== undefined) {
+      if ($source) {
         $contentForm = $source.closest('.contentForm');
       }
 
-    } while ($contentForm.size() === 0 && $source !== undefined && $source.size() > 0);
+    } while ($contentForm.length === 0 && $source && $source.length > 0);
 
-    if ($contentForm === undefined || $contentForm.length === 0) {
+    if (!$contentForm || $contentForm.length === 0) {
       return;
     }
 

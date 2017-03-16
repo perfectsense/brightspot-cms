@@ -84,9 +84,10 @@ String access = siteData.isGlobal() ? "all" :
         "some";
 
 %>
+<div class="ContentEditSites-owner">
 <label for="<%= wp.createId() %>">
     <% wp.writeHtml(wp.localize("com.psddev.cms.tool.widget.Sites", "label.owner")); %>
-</label><br>
+</label>
 
 <% if (owner != null && !wp.hasPermission(owner.getPermissionId())) {%>
     <div><%= wp.getObjectLabel(owner) %></div>
@@ -101,10 +102,12 @@ String access = siteData.isGlobal() ? "all" :
     <% } %>
 </select>
 <% } %>
+</div>
 
+<div class="ContentEditSites-access">
 <label for="<%= wp.createId() %>">
     <% wp.writeHtml(wp.localize("com.psddev.cms.tool.widget.Sites", "label.access")); %>
-</label><br>
+</label>
 <select class="toggleable" id="<%= wp.getId() %>" name="<%= accessName %>" style="width: 100%;">
     <option<%= "no".equals(access) ? " selected" : "" %> data-hide="#<%= sitesContainerId %>" value="no">
         <% wp.writeHtml(wp.localize("com.psddev.cms.tool.widget.Sites", "option.none")); %>
@@ -129,3 +132,4 @@ String access = siteData.isGlobal() ? "all" :
         <% } %>
     <% } %>
 </ul>
+</div>
