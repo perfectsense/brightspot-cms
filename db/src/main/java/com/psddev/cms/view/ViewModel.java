@@ -3,8 +3,10 @@ package com.psddev.cms.view;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -91,6 +94,50 @@ public abstract class ViewModel<M> {
     }
 
     /**
+     * Returns a collection of views of type {@code viewClass} that are bound to
+     * the given {@code object}. If the object is itself a collection, then each
+     * item is evaluated and the returned collection of views will have at most
+     * the same number of items, otherwise the single object will be evaluated
+     * and the returned collection will have at most one item.
+     *
+     * @param viewClass the type of views to create.
+     * @param object the object used to create the views.
+     * @param <V> the view type.
+     * @return Never {@code null}.
+     */
+    protected final <V> Iterable<V> view(Class<V> viewClass, Object object) {
+
+        Iterable<?> models;
+
+        if (object instanceof Iterable) {
+            models = (Iterable<?>) object;
+
+        } else {
+            models = Collections.singleton(object);
+        }
+
+        return StreamSupport.stream(models.spliterator(), false)
+                .map(model -> unwrapModel(model, new HashSet<>()))
+                .map(model -> {
+                    Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
+                    if (viewModelClass != null) {
+
+                        ViewModel<? super Object> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
+
+                        if (viewModel != null && viewClass.isAssignableFrom(viewModel.getClass())) {
+
+                            @SuppressWarnings("unchecked")
+                            V view = (V) viewModel;
+                            return view;
+                        }
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Creates a view of type {@code viewClass} that is bound to the given
      * {@code model}.
      *
@@ -100,24 +147,8 @@ public abstract class ViewModel<M> {
      * @return a newly created view.
      */
     protected final <V> V createView(Class<V> viewClass, Object model) {
-
-        model = unwrapModel(model, new HashSet<>());
-
-        Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
-        if (viewModelClass != null) {
-
-            ViewModel<? super Object> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
-
-            if (viewModel != null && viewClass.isAssignableFrom(viewModel.getClass())) {
-
-                @SuppressWarnings("unchecked")
-                V view = (V) viewModel;
-
-                return view;
-            }
-        }
-
-        return null;
+        Iterator<V> views = view(viewClass, model).iterator();
+        return views.hasNext() ? views.next() : null;
     }
 
     /**
