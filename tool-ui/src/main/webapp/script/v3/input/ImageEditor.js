@@ -1234,6 +1234,13 @@ define([
             self.dom.$cropCoverBottom = $cover.clone(true);
             self.dom.$cropCovers = $().add(self.dom.$cropCoverTop).add(self.dom.$cropCoverLeft).add(self.dom.$cropCoverRight)
                 .add(self.dom.$cropCoverBottom).appendTo(self.dom.$imageEditorImage);
+
+            // The cover update doesn't seem to work when divs are hidden,
+            // so update the cover when the tab is shown.
+            self.dom.tabs.edit.on('tabbedShow', function(){
+                self.cropCoverUpdate();
+            });
+
         },
 
 
@@ -1394,6 +1401,27 @@ define([
                 };
             }));
 
+            // Set the initial value for the sizebox based on the input
+            self.cropSetSizeBox();
+        },
+
+
+        /**
+         * Set the sizebox based on the values in the crop input.
+         */
+        cropSetSizeBox: function() {
+            var bounds;
+            var self;
+            self = this;
+            bounds = self.cropGetInput();
+            if (bounds && bounds.width) {
+                bounds.left = bounds.x;
+                bounds.top = bounds.y;
+                delete bounds.x;
+                delete bounds.y;
+                self.$cropSizeBox.css(bounds);
+                self.cropCoverUpdate();
+            }
         },
 
 
@@ -1674,7 +1702,11 @@ define([
             }
 
             if (value) {
-                value = JSON.parse(value);
+                try {
+                    value = JSON.parse(value);
+                } catch(e) {
+                    // In case JSON value is malformed
+                }
             }
             if (value) {
                 value.x *= imageWidth;
