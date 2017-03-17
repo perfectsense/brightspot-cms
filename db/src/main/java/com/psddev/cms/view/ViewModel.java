@@ -91,6 +91,16 @@ public abstract class ViewModel<M> {
     }
 
     /**
+     * Called during creation of this view model. The method can be overridden to
+     * prevent the view model from being created by returning null.
+     *
+     * @return the current view model or null
+     */
+    protected ViewModel<M> returnConditionalView() {
+        return this;
+    }
+
+    /**
      * Creates a view of type {@code viewClass} that is bound to the given
      * {@code model}.
      *
@@ -174,6 +184,10 @@ public abstract class ViewModel<M> {
                 }
 
                 viewModel.onCreate(viewResponse);
+
+                if (viewModel.returnConditionalView() == null) {
+                    return null;
+                }
 
                 return viewModel;
             }
