@@ -21,7 +21,7 @@ public class ServletViewTemplateLoader extends UrlViewTemplateLoader {
 
     private static final String TEMPLATE_NOT_FOUND_MESSAGE_FORMAT = "Could not find template at path [%s]!";
 
-    private static LoadingCache<ServletContext, ServletViewTemplateLoader> INSTANCES = CacheBuilder
+    private static final LoadingCache<ServletContext, ServletViewTemplateLoader> INSTANCES = CacheBuilder
             .newBuilder()
             .weakKeys()
             .build(new CacheLoader<ServletContext, ServletViewTemplateLoader>() {
