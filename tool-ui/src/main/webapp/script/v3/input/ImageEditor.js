@@ -1676,10 +1676,17 @@ define([
          * @param  {Number} value.height Number from 0-1 relative to the ogirinal image.
          */
         cropUpdateInput: function(value) {
+            var $input;
             var self;
             self = this;
-            value = (value === undefined) ? self.cropGetValue() : value;
-            self.dom.$edit.find('input[name$="/file.crop"]').val(JSON.stringify(value)).trigger('change');
+            $input = self.dom.$edit.find('input[name$="/file.crop"]');
+            if (value === undefined) {
+                value = self.cropGetValue();
+            }
+            if (value !== '') {
+                value = JSON.stringify(value);
+            }
+            $input.val(value).trigger('change');
         },
 
 
@@ -1729,7 +1736,7 @@ define([
                 width: '100%',
                 height: '100%'
             });
-            self.cropUpdateInput();
+            self.cropUpdateInput('');
             self.cropCoverUpdate();
         },
 
