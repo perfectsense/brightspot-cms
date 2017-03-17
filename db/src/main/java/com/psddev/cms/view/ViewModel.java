@@ -94,11 +94,11 @@ public abstract class ViewModel<M> {
     }
 
     /**
-     * Returns a collection of views of type {@code viewClass} that are bound to
-     * the given {@code object}. If the object is itself a collection, then each
-     * item is evaluated and the returned collection of views will have at most
+     * Returns a iterable of views of type {@code viewClass} that are bound to
+     * the given {@code object}. If the object is itself an iterable, then each
+     * item is evaluated and the returned iterable of views will have at most
      * the same number of items, otherwise the single object will be evaluated
-     * and the returned collection will have at most one item.
+     * and the returned iterable will have at most one item.
      *
      * @param viewClass the type of views to create.
      * @param object the object used to create the views.
