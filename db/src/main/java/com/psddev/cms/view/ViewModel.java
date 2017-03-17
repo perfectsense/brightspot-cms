@@ -105,7 +105,7 @@ public abstract class ViewModel<M> {
      * @param <V> the view type.
      * @return Never {@code null}.
      */
-    protected final <V> Iterable<V> view(Class<V> viewClass, Object object) {
+    protected final <V> Iterable<V> createViews(Class<V> viewClass, Object object) {
 
         Iterable<?> models;
 
@@ -147,7 +147,7 @@ public abstract class ViewModel<M> {
      * @return a newly created view.
      */
     protected final <V> V createView(Class<V> viewClass, Object model) {
-        Iterator<V> views = view(viewClass, model).iterator();
+        Iterator<V> views = createViews(viewClass, model).iterator();
         return views.hasNext() ? views.next() : null;
     }
 
