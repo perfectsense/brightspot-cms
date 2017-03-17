@@ -4549,6 +4549,10 @@ public class ToolPageContext extends WebPageContext {
 
         /** Returns a label for the given {@code object}. */
         public static String getObjectLabel(Object object) {
+            if (object instanceof ObjectType) {
+                return Localization.currentUserText(object, "displayName");
+            }
+
             State state = State.getInstance(object);
             String label = null;
 
