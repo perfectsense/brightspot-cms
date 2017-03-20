@@ -219,7 +219,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
             $listContainer.css('height', listContainerHeight);
 
             $list.css({
-              'bottom': $list.outerHeight() > listContainerHeight ? '' : 'auto',
+              'bottom': $list.outerHeight() > listContainerHeight ? '' : '10px',
               'top': ''
             });
 
