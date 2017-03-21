@@ -198,6 +198,8 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                                                                                     internalItemType = (Class<?>) upperBound;
                                                                                 }
                                                                             }
+                                                                        } else if (typeArgument instanceof Class) {
+                                                                            internalItemType = (Class<?>) typeArgument;
                                                                         }
                                                                     }
                                                                 }
