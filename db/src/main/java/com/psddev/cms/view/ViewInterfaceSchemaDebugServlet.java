@@ -7,7 +7,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -175,7 +174,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                                                             String internalTypeLabel = "";
                                                             String internalItemTypeLabel;
 
-                                                            if (Collection.class.equals(internalType)) {
+                                                            if (Iterable.class.isAssignableFrom(internalType)) {
                                                                 Type genericType = field.getGenericReturnType();
 
                                                                 if (genericType instanceof ParameterizedType) {
