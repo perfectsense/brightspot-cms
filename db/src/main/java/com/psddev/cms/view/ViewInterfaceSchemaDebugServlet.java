@@ -26,7 +26,6 @@ import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.DebugFilter;
 import com.psddev.dari.util.DebugServlet;
 import com.psddev.dari.util.ObjectUtils;
-import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 
 @SuppressWarnings("serial")
@@ -77,7 +76,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                             writeStart("option",
                                     "selected", selectedTypes.contains(t) ? "selected" : null,
                                     "value", t.getObjectClass().getName()); {
-                                writeHtml(StringUtils.removeEnd(t.getObjectClass().getSimpleName(), "View"));
+                                writeHtml(t.getObjectClass().getSimpleName());
                                 writeHtml(" (").writeHtml(t.getObjectClass().getName()).writeHtml(")");
                             }
                             writeEnd();
@@ -141,7 +140,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
 
                                 writeStart("div").writeEnd();
                                 writeStart("div", "class", "type", "id", "type-" + t.getObjectClass().getName().replace('.', '_')); {
-                                    writeStart("h2").writeHtml(StringUtils.removeEnd(t.getObjectClass().getSimpleName(), "View")).writeEnd();
+                                    writeStart("h2").writeHtml(t.getObjectClass().getSimpleName()).writeEnd();
                                     writeStart("dl"); {
 
                                         for (Map.Entry<String, List<Method>> entry : fieldsByClass.entrySet()) {
@@ -264,7 +263,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                                                                                                 "typeId", itemType.getObjectClass().getName(),
                                                                                                 "nf", page.param(Boolean.class, "nf"),
                                                                                                 "d", page.param(Integer.class, "d"))); {
-                                                                                    writeHtml(StringUtils.removeEnd(itemType.getObjectClass().getSimpleName(), "View"));
+                                                                                    writeHtml(itemType.getObjectClass().getSimpleName());
                                                                                 }
                                                                                 writeEnd();
                                                                             }
