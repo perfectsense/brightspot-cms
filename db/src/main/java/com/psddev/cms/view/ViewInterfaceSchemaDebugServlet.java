@@ -104,7 +104,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                     write(".type h2 { white-space: nowrap; }");
                     write(".type dt { margin-bottom: 5px; }");
                     write(".type dd:last-child table { margin-bottom: 0; }");
-                    write(".type .reference { color: white; white-space: nowrap; }");
+                    write(".type .reference { color: white; white-space: nowrap; display: inline-block; padding: 0 4px; margin: 1px 0 }");
                 }
                 writeEnd();
 
@@ -270,6 +270,7 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                                                                                     writeHtml(itemType.getObjectClass().getSimpleName());
                                                                                 }
                                                                                 writeEnd();
+                                                                                writeTag("br");
                                                                             }
                                                                         }
                                                                     }
