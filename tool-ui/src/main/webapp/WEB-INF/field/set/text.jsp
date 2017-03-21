@@ -1,5 +1,6 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectField,
@@ -60,6 +61,18 @@ if ((Boolean) request.getAttribute("isFormPost")) {
     return;
 }
 
+ToolUi ui = field.as(ToolUi.class);
+String placeholder = ui.getPlaceholder();
+String dynamicPlaceholder = ui.getPlaceholderDynamicText();
+
+if (field.isRequired()) {
+    if (ObjectUtils.isBlank(placeholder)) {
+        placeholder = "(Required)";
+
+    } else {
+        placeholder += " (Required)";
+    }
+}
 
 // --- Presentation ---
 
@@ -83,7 +96,14 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
 <% } else { %>
     <div class="inputSmall">
-        <select multiple name="<%= wp.h(textName) %>">
+        <%
+            wp.writeStart("select",
+                    "multiple", "multiple",
+                    "placeholder", placeholder,
+                    "data-dynamic-placeholder", dynamicPlaceholder,
+                    "data-dynamic-field-name", field.getInternalName(),
+                    "name", textName);
+        %>
             <% for (ObjectField.Value value : validValues) { %>
                 <%
                 boolean containsValue = false;
@@ -108,6 +128,8 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                 %>
                 <option<%= containsValue ? " selected" : "" %> value="<%= wp.h(value.getValue()) %>"><%= wp.h(value.getLabel()) %></option>
             <% } %>
-        </select>
+        <%
+            wp.writeEnd();
+        %>
     </div>
 <% } %>
