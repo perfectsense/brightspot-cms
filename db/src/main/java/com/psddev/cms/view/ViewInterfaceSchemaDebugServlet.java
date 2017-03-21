@@ -247,7 +247,10 @@ public class ViewInterfaceSchemaDebugServlet extends DebugServlet {
                                                                 writeStart("td"); {
                                                                     if ("view".equals(internalItemTypeLabel)) {
 
-                                                                        List<TypeDefinition<?>> itemTypes = ClassFinder.findClasses(internalItemType).stream()
+                                                                        Set<Class<?>> itemTypeClasses = new HashSet<>(ClassFinder.findClasses(internalItemType));
+                                                                        itemTypeClasses.add(internalItemType);
+
+                                                                        List<TypeDefinition<?>> itemTypes = itemTypeClasses.stream()
                                                                                 .filter(c -> c.isAnnotationPresent(ViewInterface.class))
                                                                                 .map(TypeDefinition::getInstance)
                                                                                 .collect(Collectors.toList());
