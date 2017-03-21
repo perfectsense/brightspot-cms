@@ -1,5 +1,13 @@
 package com.psddev.cms.notification;
 
+import com.psddev.dari.db.Query;
+
+/**
+ * Publishes a notification to registered subscribers.
+ *
+ * @param <S> The subscription type.
+ * @param <C> The contextual data for the subscription.
+ */
 public abstract class Publisher<S extends Subscription<C>, C> {
 
     protected C context;
@@ -19,11 +27,16 @@ public abstract class Publisher<S extends Subscription<C>, C> {
     protected abstract Class<S> getSubscriptionType();
 
     /**
-     * Gets the receivers to be notified when the subscription is published.
+     * Gets the potential receivers to be notified when the subscription is
+     * published. The default implementation queries for all Receiver instances
+     * in the database. Sub-classes may override this method to provide a
+     * narrower set of receivers that can receive the notification.
      *
      * @return The receivers that should be notified.
      */
-    protected abstract Iterable<? extends Receiver> getReceivers();
+    protected Iterable<? extends Receiver> getReceivers() {
+        return Query.from(Receiver.class).iterable(0);
+    }
 
     /**
      * Publishes the subscription with the given {@code context} by notifying
