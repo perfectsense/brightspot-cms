@@ -1,6 +1,17 @@
 package com.psddev.cms.notification;
 
-public abstract class NotificationPublisher<S extends Subscription<C>, C> {
+public abstract class Publisher<S extends Subscription<C>, C> {
+
+    protected C context;
+
+    /**
+     * Creates a new Publisher instance for the given {@code context}.
+     *
+     * @param context Contextual data for the subscription notification.
+     */
+    public Publisher(C context) {
+        this.context = context;
+    }
 
     /**
      * @return The type of subscription that gets published.
@@ -8,43 +19,37 @@ public abstract class NotificationPublisher<S extends Subscription<C>, C> {
     protected abstract Class<S> getSubscriptionType();
 
     /**
-     * Gets the receivers to be notified when the subscription is published
-     * based on the given {@code context}.
+     * Gets the receivers to be notified when the subscription is published.
      *
-     * @param context Contextual data for the subscription notification.
      * @return The receivers that should be notified.
      */
-    protected abstract Iterable<? extends Receiver> getReceivers(C context);
+    protected abstract Iterable<? extends Receiver> getReceivers();
 
     /**
      * Publishes the subscription with the given {@code context} by notifying
-     * all registered receivers as determined by {@link #getReceivers(Object)}.
+     * all registered receivers as determined by {@link #getReceivers()}.
      * This method blocks until all of the notifications are sent.
-     *
-     * @param context Contextual data for the notification.
      */
-    public final void publishNotification(C context) {
+    public final void publishNotification() {
 
-        for (Receiver receiver : getReceivers(context)) {
+        for (Receiver receiver : getReceivers()) {
             receiver.as(ReceiverData.class).notify(getSubscriptionType(), context);
         }
     }
 
     /**
      * Publishes the subscription with the given {@code context} by notifying
-     * all registered receivers as determined by {@link #getReceivers(Object)}.
+     * all registered receivers as determined by {@link #getReceivers()}.
      * The notifications are sent asynchronously and this method will return
      * immediately.
-     *
-     * @param context Contextual data for the notification.
      */
-    public final void publishNotificationEventually(C context) {
+    public final void publishNotificationEventually() {
 
         // TODO: Use AsyncQueue for high volume scenarios rather than spawning a new Thread each time.
         Thread sendNotification = new Thread() {
             @Override
             public void run() {
-                publishNotification(context);
+                publishNotification();
             }
         };
         sendNotification.start();
