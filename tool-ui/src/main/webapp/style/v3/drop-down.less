@@ -5,27 +5,66 @@
     height: 10px;
     left: 1px;
     position: absolute;
-    right: 6px;
+    right: 1px;
     z-index: 1;
   }
 
   &:before {
     background: linear-gradient(to bottom, white 0, transparent 100%);
-    top: 0;
+    border-radius: 2px 2px 0 0;
+    top: 1px;
   }
 
   &:after {
     background: linear-gradient(to top, white 0, transparent 100%);
-    bottom: 2px;
+    border-radius: 0 0 2px 2px;
+    bottom: 1px;
   }
 
-  &.dropDown-input-bottom {
+  &[data-attachment='top'] {
     &:before {
-      top: 2px;
+      top: 11px;
     }
 
     &:after {
+      border-radius: 0;
       bottom: 0;
+    }
+  }
+
+  &[data-attachment='bottom'] {
+    &:before {
+      border-radius: 0;
+      top: 0;
+    }
+
+    &:after {
+      bottom: 11px;
+    }
+  }
+
+  &[data-attachment='left'],
+  &[data-attachment='right'] {
+    &:before {
+      top: 11px;
+    }
+
+    &:after {
+      bottom: 11px;
+    }
+  }
+
+  &[data-attachment='left'] {
+    &:before,
+    &:after {
+      right: 0;
+    }
+  }
+
+  &[data-attachment='right'] {
+    &:before,
+    &:after {
+      left: 0;
     }
   }
 }
@@ -38,12 +77,22 @@
   white-space: nowrap;
 
   &.dropDown-list-open {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
     border-color: @color-focus;
 
-    &.dropDown-input-bottom {
+    &[data-attachment='top'] {
       border-radius: 0 0 2px 2px;
+    }
+
+    &[data-attachment='bottom'] {
+      border-radius: 2px 2px 0 0;
+    }
+
+    &[data-attachment='left'] {
+      border-radius: 0 2px 2px 0;
+    }
+
+    &[data-attachment='right'] {
+      border-radius: 2px 0 0 2px;
     }
   }
 
@@ -83,34 +132,66 @@ input[type="text"].dropDown-search {
   &:before {
     background-color: white;
     content: '';
-    height: 3px;
-    left: 1px;
     position: absolute;
-    right: 1px;
-    top: -3px;
 
-    .dropDown-input-bottom & {
+    [data-attachment='top'] &,
+    [data-attachment='bottom'] & {
+      left: 1px;
+      height: 1px;
+      right: 1px;
+    }
+
+    [data-attachment='bottom'] & {
       top: -1px;
+    }
+
+    [data-attachment='left'] &,
+    [data-attachment='right'] & {
+      bottom: 1px;
+      top: 1px;
+      width: 1px;
+    }
+
+    [data-attachment='right'] & {
+      left: -1px;
     }
   }
 }
 
 .dropDown-list {
   background-color: white;
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
   border: @input-borderWidth solid @color-focus;
+  bottom: 10px;
+  left: 0;
   list-style-type: none;
-  margin: 0 5px 0 0;
-  max-height: 300px;
+  min-width: 100%;
   overflow: auto;
   padding: 10px 0 10px 0;
-  position: relative;
-  top: -1px;
+  position: absolute;
+  top: 10px;
 
-  .dropDown-input-bottom & {
+  [data-attachment='top'] & {
     border-radius: 2px 2px 0 0;
-    top: 1px;
+    bottom: -1px;
+  }
+
+  [data-attachment='bottom'] & {
+    border-radius: 0 0 2px 2px;
+    top: -1px;
+  }
+
+  [data-attachment='left'] &,
+  [data-attachment='right'] & {
+    border-radius: 2px;
+  }
+
+  [data-attachment='left'] & {
+    right: -1px;
+  }
+
+  [data-attachment='right'] & {
+    left: -1px;
+    right: 0;
   }
 }
 
@@ -128,6 +209,7 @@ input[type="text"].dropDown-search {
   cursor: pointer;
   line-height: @input-height;
   min-height: @input-height;
+  overflow: hidden;
   padding: 0px 15px 0px 25px;
   position: relative;
   white-space: nowrap;

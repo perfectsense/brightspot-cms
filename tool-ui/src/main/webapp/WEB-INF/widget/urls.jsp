@@ -165,7 +165,9 @@ if (!paths.isEmpty() &&
                                 "name", removeName + "." + index,
                                 "value", "true");
 
-                        wp.writeHtml(" Remove");
+                        wp.writeStart("span", "class", "widget-urlsItemRemoveText");
+                        wp.writeHtml("Remove");
+                        wp.writeEnd();
                     wp.writeEnd();
                 wp.writeEnd();
 

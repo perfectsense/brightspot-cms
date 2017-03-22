@@ -1,5 +1,8 @@
 package com.psddev.cms.tool.page;
 
+import com.google.common.collect.ImmutableMap;
+import com.psddev.cms.db.Localization;
+import com.psddev.cms.db.LocalizationContext;
 import com.psddev.cms.db.Schedule;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.tool.PageServlet;
@@ -11,6 +14,7 @@ import org.joda.time.DateTime;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @RoutingFilter.Path(application = "cms", value = "/scheduleEventsList")
@@ -48,29 +52,71 @@ public class ScheduleEventsList extends PageServlet {
         }
 
         page.writeStart("div", "class", "widget");
+        {
             page.writeStart("h1", "class", "icon icon-object-schedule");
-                page.writeHtml(page.localize(ScheduleEventsList.class, "title"));
+            page.writeHtml(
+                    Localization.currentUserText(
+                            new LocalizationContext(
+                                    ScheduleEventsList.class,
+                                    ImmutableMap.of(
+                                            "date",
+                                            Localization.currentUserDate(begin.getMillis(), Localization.DATE_ONLY_SKELETON))),
+                            "title"));
             page.writeEnd();
 
-            page.writeStart("ul");
-                for (Schedule schedule : schedules) {
-                    List<Object> drafts = Query.fromAll().where("com.psddev.cms.db.Draft/schedule = ?", schedule).selectAll();
+            page.writeStart("table", "class", "links table-striped");
+            {
+                page.writeStart("thead");
+                {
+                    page.writeStart("tr");
+                    {
+                        page.writeStart("th");
+                        page.writeHtml("Content");
+                        page.writeEnd();
 
-                    if (drafts.isEmpty()) {
-                        continue;
-                    }
-
-                    for (Object draft : drafts) {
-                        page.writeStart("li");
-                            page.writeStart("a",
-                                    "href", page.objectUrl("/content/edit.jsp", draft),
-                                    "target", "_top");
-                                page.writeObjectLabel(draft);
-                            page.writeEnd();
+                        page.writeStart("th");
+                        page.writeHtml("Time");
                         page.writeEnd();
                     }
+                    page.writeEnd();
                 }
+                page.writeEnd();
+
+                page.writeStart("tbody");
+                {
+                    for (Schedule schedule : schedules) {
+                        List<Object> drafts = Query.fromAll().where("com.psddev.cms.db.Draft/schedule = ?", schedule).selectAll();
+
+                        if (drafts.isEmpty()) {
+                            continue;
+                        }
+
+                        Date triggerDate = schedule.getTriggerDate();
+
+                        for (Object draft : drafts) {
+                            page.writeStart("tr");
+                            {
+                                page.writeStart("td");
+                                page.writeStart("a",
+                                        "href", page.objectUrl("/content/edit.jsp", draft),
+                                        "target", "_top");
+                                page.writeObjectLabel(draft);
+                                page.writeEnd();
+
+                                page.writeStart("td");
+                                page.writeHtml(triggerDate != null
+                                        ? Localization.currentUserDate(triggerDate.getTime(), Localization.TIME_ONLY_SKELETON)
+                                        : Localization.currentUserText(ScheduleEventsList.class, Localization.NOT_AVAILABLE_KEY));
+                                page.writeEnd();
+                            }
+                            page.writeEnd();
+                        }
+                    }
+                }
+                page.writeEnd();
+            }
             page.writeEnd();
+        }
         page.writeEnd();
     }
 }

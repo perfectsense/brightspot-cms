@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -182,17 +183,44 @@ public class ImageFileType implements FileContentType {
                             page.writeEnd();
                         page.writeEnd();
 
-                        if (fieldValueMetadata.entrySet().stream().filter(entry -> !entry.getKey().startsWith("cms.")).count() > 0) {
-                            page.writeStart("li"); {
-                                page.writeStart("a",
-                                        "class", "action-image-viewMetadata",
-                                        "href", page.cmsUrl(ContentMetadata.PATH, "id", state.getId(), "fieldName", fieldName),
-                                        "target", "contentMetadata"); {
+                        Map<String, Object> coreMetadata = fieldValueMetadata.entrySet().stream()
+                                .filter(entry -> !entry.getKey().startsWith("cms."))
+                                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                                    page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                        if (!coreMetadata.isEmpty()) {
+                            page.writeStart("li");
+
+                                // If object is new, post metadata.
+                                if (state.isNew()) {
+                                    page.writeStart("form",
+                                            "id", "contentMetadata",
+                                            "method", "post",
+                                            "action", page.cmsUrl(ContentMetadata.PATH),
+                                            "target", "contentMetadata",
+                                            "style", page.cssString("margin", 0));
+
+                                        page.writeElement("input",
+                                                "type", "hidden",
+                                                "name", "metadata",
+                                                "value", ObjectUtils.toJson(coreMetadata));
+
+                                        page.writeStart("a",
+                                                "class", "action-image-viewMetadata",
+                                                "onclick", "$('#contentMetadata').submit();");
+                                            page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                                        page.writeEnd();
+
+                                    page.writeEnd();
+
+                                } else {
+                                    page.writeStart("a",
+                                            "class", "action-image-viewMetadata",
+                                            "href", page.cmsUrl(ContentMetadata.PATH, "id", state.getId(), "fieldName", fieldName),
+                                            "target", "contentMetadata");
+                                        page.writeHtml(page.localize(ImageFileType.class, "action.viewMetadata"));
+                                    page.writeEnd();
                                 }
-                                page.writeEnd();
-                            }
+
                             page.writeEnd();
                         }
 
