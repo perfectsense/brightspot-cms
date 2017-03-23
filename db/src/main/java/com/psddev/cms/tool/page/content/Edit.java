@@ -7,13 +7,24 @@ import com.psddev.cms.db.OverlayProvider;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.WorkInProgress;
+import com.psddev.cms.tool.CmsTool;
+import com.psddev.cms.tool.ContentEditWidget;
+import com.psddev.cms.tool.ContentEditWidgetDisplay;
+import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.Tool;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.Widget;
 import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
+import com.psddev.dari.util.ClassFinder;
+import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.TypeDefinition;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -238,5 +249,105 @@ public class Edit {
 
     private static boolean wipCheckCollection(Set<String> differenceIds, Collection<Object> collection) {
         return collection.stream().anyMatch(v -> wipCheckObject(differenceIds, v));
+    }
+
+    /**
+     * @param page Nonnull.
+     * @param content Nonnull.
+     * @param section Nonnull.
+     */
+    public static void writeWidgets(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+        String legacyPosition = section.getLegacyPosition();
+
+        if (legacyPosition != null) {
+            page.writeStart("div", "class", "contentWidgets contentWidgets-" + legacyPosition);
+            writeLegacyWidgets(page, content, legacyPosition);
+        }
+
+        CmsTool cms = page.getCmsTool();
+        List<ContentEditWidget> widgets = cms.getContentEditWidgets();
+
+        ClassFinder.findConcreteClasses(ContentEditWidget.class)
+                .stream()
+                .filter(c -> widgets.stream().noneMatch(c::isInstance))
+                .map(c -> TypeDefinition.getInstance(c).newInstance())
+                .forEach(widgets::add);
+
+        for (ContentEditWidget widget : widgets) {
+            ContentEditSection widgetSection = widget.getSectionOverride();
+
+            if (widgetSection == null) {
+                widgetSection = widget.getSection(page, content);
+            }
+
+            if (section.equals(widgetSection)
+                    && widget.shouldDisplay(page, content)) {
+
+                section.displayBefore(page, content, widget);
+                widget.display(page, content, section);
+                section.displayAfter(page);
+            }
+        }
+
+        if (legacyPosition != null) {
+            page.writeEnd();
+        }
+    }
+
+    private static void writeLegacyWidgets(ToolPageContext page, Object content, String position) throws IOException {
+        List<Widget> widgets = Tool.Static.getWidgets(position).stream().findFirst().orElse(null);
+
+        if (ObjectUtils.isBlank(widgets)) {
+            return;
+        }
+
+        State state = State.getInstance(content);
+        ObjectType type = state.getType();
+
+        for (Widget widget : widgets) {
+            String internalName = widget.getInternalName();
+
+            if (content instanceof ContentEditWidgetDisplay) {
+                if (!((ContentEditWidgetDisplay) content).shouldDisplayContentEditWidget(internalName)) {
+                    continue;
+                }
+
+            } else if ((type == null
+                    || !type.as(ToolUi.class).isPublishable())
+                    && !widget.shouldDisplayInNonPublishable()) {
+
+                continue;
+            }
+
+            if (!page.hasPermission(widget.getPermissionId())) {
+                continue;
+            }
+
+            page.writeElement("input",
+                    "type", "hidden",
+                    "name", state.getId() + "/_widget",
+                    "value", internalName);
+
+            String displayHtml;
+
+            try {
+                displayHtml = widget.createDisplayHtml(page, content);
+
+            } catch (Exception error) {
+                StringWriter errorString = new StringWriter();
+                HtmlWriter errorHtml = new HtmlWriter(errorString);
+
+                errorHtml.putAllStandardDefaults();
+                errorHtml.writeStart("pre", "class", "message message-error");
+                errorHtml.writeObject(error);
+                errorHtml.writeEnd();
+
+                displayHtml = errorString.toString();
+            }
+
+            if (!ObjectUtils.isBlank(displayHtml)) {
+                page.write(displayHtml);
+            }
+        }
     }
 }

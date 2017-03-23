@@ -218,6 +218,9 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Debug")
     private boolean useOldTaxonomyChildrenDetection;
 
+    @ToolUi.Tab("UI")
+    private List<ContentEditWidget> contentEditWidgets;
+
     @Embedded
     public static class CommonTime extends Record {
 
@@ -924,6 +927,17 @@ public class CmsTool extends Tool {
 
     public void setUseOldTaxonomyChildrenDetection(boolean useOldTaxonomyChildrenDetection) {
         this.useOldTaxonomyChildrenDetection = useOldTaxonomyChildrenDetection;
+    }
+
+    public List<ContentEditWidget> getContentEditWidgets() {
+        if (contentEditWidgets == null) {
+            contentEditWidgets = new ArrayList<>();
+        }
+        return contentEditWidgets;
+    }
+
+    public void setContentEditWidgets(List<ContentEditWidget> contentEditWidgets) {
+        this.contentEditWidgets = contentEditWidgets;
     }
 
     public String createManualContentLockingNoteText() {

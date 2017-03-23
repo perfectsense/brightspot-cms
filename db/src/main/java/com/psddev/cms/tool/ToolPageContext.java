@@ -2828,13 +2828,14 @@ public class ToolPageContext extends WebPageContext {
      * Writes some form fields for the given {@code object}.
      *
      * @param object Can't be {@code null}.
-     * @param includeGlobals {@true} to include global fields.
+     * @param includeGlobals {@code true} to include global fields.
      * @param includeFields {@code null} to include all fields.
      * @param excludeFields {@code null} to exclude no fields.
      */
     public void writeSomeFormFields(
             Object object,
             boolean includeGlobals,
+            boolean displayTabContentEditWidgets,
             Collection<String> includeFields,
             Collection<String> excludeFields)
             throws IOException, ServletException {
@@ -3050,6 +3051,10 @@ public class ToolPageContext extends WebPageContext {
                             writeEnd();
                         }
                     }
+
+                    if (displayTabContentEditWidgets) {
+                        Edit.writeWidgets(this, object, ContentEditSection.TAB);
+                    }
                 }
             writeEnd();
 
@@ -3058,6 +3063,24 @@ public class ToolPageContext extends WebPageContext {
                 request.setAttribute("containerObject", null);
             }
         }
+    }
+
+    /**
+     * Writes some form fields for the given {@code object}.
+     *
+     * @param object Can't be {@code null}.
+     * @param includeGlobals {@code true} to include global fields.
+     * @param includeFields {@code null} to include all fields.
+     * @param excludeFields {@code null} to exclude no fields.
+     */
+    public void writeSomeFormFields(
+            Object object,
+            boolean includeGlobals,
+            Collection<String> includeFields,
+            Collection<String> excludeFields)
+            throws IOException, ServletException {
+
+        writeSomeFormFields(object, includeGlobals, false, includeFields, excludeFields);
     }
 
     private static Stream<ObjectField> toFields(Map<String, ObjectField> fieldByName, Collection<String> fieldNames) {
