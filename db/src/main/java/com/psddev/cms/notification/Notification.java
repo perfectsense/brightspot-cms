@@ -77,14 +77,7 @@ public class Notification<C> {
                     Object format = formatter.format(subscription, receiver, context);
 
                     if (format != null) {
-                        List<Object> formatsForType = formats.get(formatClass);
-
-                        if (formatsForType == null) {
-                            formatsForType = new ArrayList<>();
-                            formats.put(formatClass, formatsForType);
-                        }
-
-                        formatsForType.add(format);
+                        formats.computeIfAbsent(formatClass, k -> new ArrayList<>()).add(format);
                     }
                 }
             }
@@ -94,14 +87,7 @@ public class Notification<C> {
             String defaultStringFormat = subscription.toStringFormat(receiver, context);
 
             if (defaultStringFormat != null) {
-                List<Object> stringFormats = formats.get(String.class);
-
-                if (stringFormats == null) {
-                    stringFormats = new ArrayList<>();
-                    formats.put(String.class, stringFormats);
-                }
-
-                stringFormats.add(defaultStringFormat);
+                formats.computeIfAbsent(String.class, k -> new ArrayList<>()).add(defaultStringFormat);
             }
         }
 
