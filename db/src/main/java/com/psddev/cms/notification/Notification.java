@@ -12,6 +12,8 @@ import com.psddev.dari.util.TypeDefinition;
 
 /**
  * A notification that can be sent to a recipient.
+ *
+ * @param <C> The context or "payload" of the notification.
  */
 public class Notification<C> {
 
