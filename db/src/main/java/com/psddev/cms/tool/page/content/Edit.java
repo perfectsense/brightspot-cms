@@ -1,5 +1,6 @@
 package com.psddev.cms.tool.page.content;
 
+import com.google.common.base.Throwables;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Overlay;
@@ -11,8 +12,10 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.ContentEditWidget;
 import com.psddev.cms.tool.ContentEditWidgetDisplay;
 import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetFilter;
 import com.psddev.cms.tool.Tool;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.UpdatingContentEditWidget;
 import com.psddev.cms.tool.Widget;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
@@ -283,9 +286,12 @@ public class Edit {
             if (section.equals(widgetSection)
                     && widget.shouldDisplay(page, content)) {
 
-                section.displayBefore(page, content, widget);
-                widget.display(page, content, section);
-                section.displayAfter(page);
+                if (widget instanceof UpdatingContentEditWidget) {
+                    writeWidgetOrError(page, content, section, widget);
+
+                } else {
+                    ContentEditWidgetFilter.writeFrame(page, content, section, widget);
+                }
             }
         }
 
@@ -334,20 +340,49 @@ public class Edit {
                 displayHtml = widget.createDisplayHtml(page, content);
 
             } catch (Exception error) {
-                StringWriter errorString = new StringWriter();
-                HtmlWriter errorHtml = new HtmlWriter(errorString);
-
-                errorHtml.putAllStandardDefaults();
-                errorHtml.writeStart("pre", "class", "message message-error");
-                errorHtml.writeObject(error);
-                errorHtml.writeEnd();
-
-                displayHtml = errorString.toString();
+                displayHtml = createErrorHtml(error);
             }
 
             if (!ObjectUtils.isBlank(displayHtml)) {
                 page.write(displayHtml);
             }
         }
+    }
+
+    public static void writeWidgetOrError(ToolPageContext page, Object content, ContentEditSection section, ContentEditWidget widget) throws IOException {
+        String widgetHtml;
+
+        try {
+            ToolPageContext pageCopy = new ToolPageContext(page.getServletContext(), page.getRequest(), page.getResponse());
+            StringWriter widgetHtmlWriter = new StringWriter();
+
+            pageCopy.setDelegate(widgetHtmlWriter);
+            widget.display(pageCopy, content, section);
+
+            widgetHtml = widgetHtmlWriter.toString();
+
+        } catch (Exception error) {
+            Throwables.propagateIfInstanceOf(error, IOException.class);
+
+            widgetHtml = createErrorHtml(error);
+        }
+
+        if (!ObjectUtils.isBlank(widgetHtml)) {
+            section.displayBefore(page, content, widget);
+            page.write(widgetHtml);
+            section.displayAfter(page);
+        }
+    }
+
+    private static String createErrorHtml(Throwable error) throws IOException {
+        StringWriter errorString = new StringWriter();
+        HtmlWriter errorHtml = new HtmlWriter(errorString);
+
+        errorHtml.putAllStandardDefaults();
+        errorHtml.writeStart("pre", "class", "message message-error");
+        errorHtml.writeObject(error);
+        errorHtml.writeEnd();
+
+        return errorString.toString();
     }
 }

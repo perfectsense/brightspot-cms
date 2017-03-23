@@ -29,9 +29,6 @@ public abstract class ContentEditWidget extends Record {
 
     public abstract void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException;
 
-    public void update(ToolPageContext page, Object content) {
-    }
-
     @Override
     public String getLabel() {
         return StringUtils.toLabel(getClass().getSimpleName());
