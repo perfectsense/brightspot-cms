@@ -942,10 +942,10 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     hasInitialCrop = true;
                     Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
 
-                    cropX = (int) (((double) initialCrop.get("x")) * originalWidth);
-                    cropY = (int) (((double) initialCrop.get("y")) * originalHeight);
-                    cropWidth = (int) (((double) initialCrop.get("width")) * originalWidth);
-                    cropHeight = (int) (((double) initialCrop.get("height")) * originalHeight);
+                    cropX = (int) ((ObjectUtils.to(double.class, initialCrop.get("x"))) * originalWidth);
+                    cropY = (int) ((ObjectUtils.to(double.class, initialCrop.get("y"))) * originalHeight);
+                    cropWidth = (int) ((ObjectUtils.to(double.class, initialCrop.get("width"))) * originalWidth);
+                    cropHeight = (int) ((ObjectUtils.to(double.class, initialCrop.get("height"))) * originalHeight);
 
                     item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
                 }
@@ -1211,10 +1211,10 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     hasInitialCrop = true;
                     Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
 
-                    cropX = (int) (((double) initialCrop.get("x")) * originalWidth);
-                    cropY = (int) (((double) initialCrop.get("y")) * originalHeight);
-                    cropWidth = (int) (((double) initialCrop.get("width")) * originalWidth);
-                    cropHeight = (int) (((double) initialCrop.get("height")) * originalHeight);
+                    cropX = (int) ((ObjectUtils.to(double.class, initialCrop.get("x"))) * originalWidth);
+                    cropY = (int) ((ObjectUtils.to(double.class, initialCrop.get("y"))) * originalHeight);
+                    cropWidth = (int) ((ObjectUtils.to(double.class, initialCrop.get("width"))) * originalWidth);
+                    cropHeight = (int) ((ObjectUtils.to(double.class, initialCrop.get("height"))) * originalHeight);
 
                     item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
                 }
