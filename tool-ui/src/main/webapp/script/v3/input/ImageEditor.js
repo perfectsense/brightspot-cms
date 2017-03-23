@@ -720,6 +720,17 @@ define([
             // Create the processed image - start from a copy of the original image
             self.dom.processedImage = image || self.dom.$imageClone.clone().get(0);
 
+            // If there are no operations then just pretend to crop the image so we get a canvas back
+            // (this is to prevent the page from jumping around and reloading the image)
+            if ($.isEmptyObject(operations)) {
+                operations.crop = {
+                    x: 0,
+                    y: 0,
+                    width: self.dom.imageCloneWidth,
+                    height: self.dom.imageCloneHeight
+                };
+            }
+
             // Loop through each of the operations and perform them sequentially
             $.each(operations, function(name, value) {
 
