@@ -17,6 +17,11 @@ import java.util.UUID;
 public class SitesWidget extends UpdatingContentEditWidget {
 
     @Override
+    public boolean shouldDisplay(ToolPageContext page, Object content) {
+        return true;
+    }
+
+    @Override
     public ContentEditSection getSection(ToolPageContext page, Object content) {
         return ContentEditSection.RIGHT;
     }

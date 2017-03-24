@@ -19,6 +19,11 @@ import java.util.UUID;
 public class ReferencesWidget extends ContentEditWidget {
 
     @Override
+    public boolean shouldDisplay(ToolPageContext page, Object content) {
+        return true;
+    }
+
+    @Override
     public ContentEditSection getSection(ToolPageContext page, Object content) {
         return ContentEditSection.RIGHT;
     }

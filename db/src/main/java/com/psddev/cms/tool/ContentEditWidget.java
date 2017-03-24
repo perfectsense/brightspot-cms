@@ -1,7 +1,10 @@
 package com.psddev.cms.tool;
 
+import com.psddev.cms.db.ToolUi;
+import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.StringUtils;
 
 import java.io.IOException;
@@ -20,7 +23,8 @@ public abstract class ContentEditWidget extends Record {
     }
 
     public boolean shouldDisplay(ToolPageContext page, Object content) {
-        return true;
+        ObjectType type = State.getInstance(content).getType();
+        return type != null && type.as(ToolUi.class).isPublishable();
     }
 
     public abstract ContentEditSection getSection(ToolPageContext page, Object content);
