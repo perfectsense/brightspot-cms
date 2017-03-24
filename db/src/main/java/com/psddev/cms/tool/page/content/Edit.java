@@ -279,7 +279,7 @@ public class Edit {
             writeLegacyWidgets(page, content, legacyPosition);
         }
 
-        List<ContentEditWidget> widgets = getWidgets();
+        List<ContentEditWidget> widgets = getWidgets(content);
 
         widgets.sort(Comparator
                 .comparing((Function<ContentEditWidget, Double>) w -> w.getPosition(page, content, section))
@@ -358,7 +358,7 @@ public class Edit {
         }
     }
 
-    private static List<ContentEditWidget> getWidgets() {
+    private static List<ContentEditWidget> getWidgets(Object content) {
         List<ContentEditWidget> widgets = new ArrayList<>();
         CmsTool cms = Query.from(CmsTool.class).first();
 
@@ -378,6 +378,10 @@ public class Edit {
                 .sorted(Comparator.comparing(Class::getName))
                 .map(c -> TypeDefinition.getInstance(c).newInstance())
                 .forEach(widgets::add);
+
+        if (content instanceof ContentEditWidgetDisplay) {
+            widgets.removeIf(w -> !((ContentEditWidgetDisplay) content).shouldDisplayContentEditWidget(w.getClass().getName()));
+        }
 
         return widgets;
     }
@@ -465,7 +469,7 @@ public class Edit {
             ((Page) content).setLayout(layout);
         }
 
-        List<ContentEditWidget> widgets = getWidgets();
+        List<ContentEditWidget> widgets = getWidgets(content);
         DependencyResolver<UpdatingContentEditWidget> updatingWidgets = new DependencyResolver<>();
 
         for (ContentEditWidget widget : widgets) {
