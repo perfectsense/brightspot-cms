@@ -24,6 +24,11 @@ public class ReferencesWidget extends ContentEditWidget {
     }
 
     @Override
+    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+        return 10.0;
+    }
+
+    @Override
     public String getHeading(ToolPageContext page, Object content) {
         return Localization.currentUserText(ReferencesWidget.class, "title");
     }

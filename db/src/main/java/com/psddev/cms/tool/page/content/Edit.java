@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Edit {
@@ -277,7 +278,13 @@ public class Edit {
             writeLegacyWidgets(page, content, legacyPosition);
         }
 
-        for (ContentEditWidget widget : getWidgets()) {
+        List<ContentEditWidget> widgets = getWidgets();
+
+        widgets.sort(Comparator
+                .comparing((Function<ContentEditWidget, Double>) w -> w.getPosition(page, content, section))
+                .thenComparing(w -> w.getClass().getName()));
+
+        for (ContentEditWidget widget : widgets) {
             ContentEditSection widgetSection = widget.getSectionOverride();
 
             if (widgetSection == null) {

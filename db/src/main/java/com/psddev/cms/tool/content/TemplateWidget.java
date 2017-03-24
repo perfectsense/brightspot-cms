@@ -24,6 +24,11 @@ public class TemplateWidget extends UpdatingContentEditWidget {
     }
 
     @Override
+    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+        return -10.0;
+    }
+
+    @Override
     public String getHeading(ToolPageContext page, Object content) {
         return "Template";
     }

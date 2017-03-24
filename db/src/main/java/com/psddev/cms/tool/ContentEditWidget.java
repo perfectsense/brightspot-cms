@@ -25,6 +25,10 @@ public abstract class ContentEditWidget extends Record {
 
     public abstract ContentEditSection getSection(ToolPageContext page, Object content);
 
+    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+        return 0.0;
+    }
+
     public abstract String getHeading(ToolPageContext page, Object content);
 
     public abstract void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException;

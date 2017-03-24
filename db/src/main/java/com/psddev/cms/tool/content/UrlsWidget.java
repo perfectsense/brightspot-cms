@@ -35,6 +35,11 @@ public class UrlsWidget extends UpdatingContentEditWidget {
     }
 
     @Override
+    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+        return -30.0;
+    }
+
+    @Override
     public String getHeading(ToolPageContext page, Object content) {
         return Localization.currentUserText(getClass(), "title");
     }

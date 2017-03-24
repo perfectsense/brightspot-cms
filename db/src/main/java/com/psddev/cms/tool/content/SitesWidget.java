@@ -22,6 +22,11 @@ public class SitesWidget extends UpdatingContentEditWidget {
     }
 
     @Override
+    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+        return -20.0;
+    }
+
+    @Override
     public String getHeading(ToolPageContext page, Object content) {
         return Localization.currentUserText(getClass(), "title");
     }
