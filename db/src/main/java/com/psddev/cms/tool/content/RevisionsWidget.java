@@ -1,4 +1,4 @@
-package com.psddev.cms.tool.widget;
+package com.psddev.cms.tool.content;
 
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContentRevisions extends ContentEditWidget {
+public class RevisionsWidget extends ContentEditWidget {
 
     @Override
     public ContentEditSection getSection(ToolPageContext page, Object content) {
@@ -31,7 +31,7 @@ public class ContentRevisions extends ContentEditWidget {
 
     @Override
     public String getHeading(ToolPageContext page, Object content) {
-        return Localization.currentUserText(ContentRevisions.class, "title");
+        return Localization.currentUserText(RevisionsWidget.class, "title");
     }
 
     @Override
@@ -118,14 +118,14 @@ public class ContentRevisions extends ContentEditWidget {
                 page.writeStart("a", "href", page.originalUrl(null, content));
                     page.writeHtml(ObjectUtils.firstNonNull(
                             originalState.getVisibilityLabel(),
-                            page.localize(ContentRevisions.class, "action.viewLive")));
+                            page.localize(RevisionsWidget.class, "action.viewLive")));
                 page.writeEnd();
             page.writeEnd();
         page.writeEnd();
 
         if (!scheduled.isEmpty()) {
             page.writeStart("h2");
-                page.writeHtml(page.localize(ContentRevisions.class, "subtitle.scheduled"));
+                page.writeHtml(page.localize(RevisionsWidget.class, "subtitle.scheduled"));
             page.writeEnd();
 
             page.writeStart("ul", "class", "links pageThumbnails");
@@ -192,7 +192,7 @@ public class ContentRevisions extends ContentEditWidget {
 
         if (!namedHistories.isEmpty()) {
             page.writeStart("h2");
-                page.writeHtml(page.localize(ContentRevisions.class, "subtitle.namedPast"));
+                page.writeHtml(page.localize(RevisionsWidget.class, "subtitle.namedPast"));
             page.writeEnd();
 
             page.writeStart("ul", "class", "links pageThumbnails");
@@ -221,7 +221,7 @@ public class ContentRevisions extends ContentEditWidget {
                                     Search.SELECTED_TYPE_PARAMETER, ObjectType.getInstance(History.class).getId(),
                                     Search.ADVANCED_QUERY_PARAMETER, "objectId = " + state.getId()));
                         page.writeHtml(page.localize(
-                                ContentRevisions.class,
+                                RevisionsWidget.class,
                                 ImmutableMap.of("count", historiesResult.getCount()),
                                 "action.viewAll"));
                     page.writeEnd();

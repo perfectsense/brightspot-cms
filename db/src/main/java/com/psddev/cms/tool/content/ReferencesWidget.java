@@ -1,4 +1,4 @@
-package com.psddev.cms.tool.widget;
+package com.psddev.cms.tool.content;
 
 import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
@@ -16,7 +16,7 @@ import com.psddev.dari.util.PaginatedResult;
 import java.io.IOException;
 import java.util.UUID;
 
-public class ContentReferences extends ContentEditWidget {
+public class ReferencesWidget extends ContentEditWidget {
 
     @Override
     public ContentEditSection getSection(ToolPageContext page, Object content) {
@@ -25,7 +25,7 @@ public class ContentReferences extends ContentEditWidget {
 
     @Override
     public String getHeading(ToolPageContext page, Object content) {
-        return Localization.currentUserText(ContentReferences.class, "title");
+        return Localization.currentUserText(ReferencesWidget.class, "title");
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ContentReferences extends ContentEditWidget {
                         "href", page.cmsUrl("/searchAdvancedFull",
                                 Search.ADVANCED_QUERY_PARAMETER, query.getPredicate().toString()));
                     page.writeHtml(page.localize(
-                            ContentReferences.class,
+                            ReferencesWidget.class,
                             ImmutableMap.of("count", result.getCount()),
                             "action.viewAll"));
                 page.writeEnd();
@@ -61,7 +61,7 @@ public class ContentReferences extends ContentEditWidget {
 
             page.writeStart("h2");
                 page.writeHtml(page.localize(
-                        ContentReferences.class,
+                        ReferencesWidget.class,
                         ImmutableMap.of("count", result.getItems().size()),
                         "subtitle.mostRecent"));
             page.writeEnd();

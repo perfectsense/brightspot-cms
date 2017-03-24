@@ -4,13 +4,14 @@ import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.ContentEditSection;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Widget;
+import com.psddev.cms.tool.content.RevisionsWidget;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
 /**
- * @deprecated Use {@link com.psddev.cms.tool.widget.ContentRevisions} instead.
+ * @deprecated Use {@link RevisionsWidget} instead.
  */
 @Deprecated
 public class ContentRevisions extends Widget {
@@ -33,7 +34,7 @@ public class ContentRevisions extends Widget {
 
         try {
             page.setDelegate(newDelegate);
-            new com.psddev.cms.tool.widget.ContentRevisions().display(page, object, ContentEditSection.RIGHT);
+            new RevisionsWidget().display(page, object, ContentEditSection.RIGHT);
             return newDelegate.toString();
 
         } finally {

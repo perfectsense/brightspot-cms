@@ -3,6 +3,7 @@ package com.psddev.cms.tool.page;
 import com.psddev.cms.tool.ContentEditSection;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.content.ReferencesWidget;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.util.RoutingFilter;
 
@@ -11,7 +12,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * @deprecated Use {@link com.psddev.cms.tool.widget.ContentReferences} instead.
+ * @deprecated Use {@link ReferencesWidget} instead.
  */
 @Deprecated
 @RoutingFilter.Path(application = "cms", value = "/content/references")
@@ -31,7 +32,7 @@ public class ContentReferences extends PageServlet {
                 .first();
 
         if (content != null) {
-            new com.psddev.cms.tool.widget.ContentReferences().display(page, content, ContentEditSection.RIGHT);
+            new ReferencesWidget().display(page, content, ContentEditSection.RIGHT);
         }
     }
 }
