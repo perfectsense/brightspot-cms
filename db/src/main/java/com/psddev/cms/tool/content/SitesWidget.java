@@ -101,7 +101,7 @@ public class SitesWidget extends UpdatingContentEditWidget {
         page.writeStart("div", "class", "ContentEditSites-owner");
         {
             page.writeStart("label", "for", page.createId());
-            page.writeHtml(page.localize("com.psddev.cms.tool.widget.Sites", "label.owner"));
+            page.writeHtml(page.localize(getClass(), "label.owner"));
             page.writeEnd();
 
             if (owner != null && !page.hasPermission(owner.getPermissionId())) {
@@ -143,7 +143,7 @@ public class SitesWidget extends UpdatingContentEditWidget {
         page.writeStart("div", "class", "ContentEditSites-access");
         {
             page.writeStart("label", "for", page.createId());
-            page.writeHtml(page.localize("com.psddev.cms.tool.widget.Sites", "label.access"));
+            page.writeHtml(page.localize(getClass(), "label.access"));
             page.writeEnd();
 
             page.writeStart("select", "class", "toggleable", "id", page.getId(), "name", accessName, "style", "width: 100%;");
@@ -152,21 +152,21 @@ public class SitesWidget extends UpdatingContentEditWidget {
                         "selected", "no".equals(access) ? "selected" : null,
                         "data-hide", "#" + sitesContainerId,
                         "value", "no");
-                page.writeHtml(page.localize("com.psddev.cms.tool.widget.Sites", "option.none"));
+                page.writeHtml(page.localize(getClass(), "option.none"));
                 page.writeEnd();
 
                 page.writeStart("option",
                         "selected", "all".equals(access) ? "selected" : null,
                         "data-hide", "#" + sitesContainerId,
                         "value", "all");
-                page.writeHtml(page.localize("com.psddev.cms.tool.widget.Sites", "option.all"));
+                page.writeHtml(page.localize(getClass(), "option.all"));
                 page.writeEnd();
 
                 page.writeStart("option",
                         "selected", "some".equals(access) ? "selected" : null,
                         "data-show", "#" + sitesContainerId,
                         "value", "some");
-                page.writeHtml(page.localize("com.psddev.cms.tool.widget.Sites", "option.some"));
+                page.writeHtml(page.localize(getClass(), "option.some"));
                 page.writeEnd();
             }
             page.writeEnd();
