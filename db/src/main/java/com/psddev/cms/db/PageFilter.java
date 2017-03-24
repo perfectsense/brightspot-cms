@@ -294,7 +294,7 @@ public class PageFilter extends AbstractFilter {
         ViewTemplateLoader loader = (ViewTemplateLoader) request.getAttribute(VIEW_TEMPLATE_LOADER_ATTRIBUTE);
 
         if (loader == null) {
-            loader = new ServletViewTemplateLoader(request.getServletContext());
+            loader = ServletViewTemplateLoader.getInstance(request.getServletContext());
             setViewTemplateLoader(request, loader);
         }
 
