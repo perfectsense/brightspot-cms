@@ -31,7 +31,7 @@ public class SeoWidget extends UpdatingContentEditWidget {
 
     @Override
     public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.BOTTOM;
+        return ContentEditSection.TAB;
     }
 
     @Override
