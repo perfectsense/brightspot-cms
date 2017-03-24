@@ -136,23 +136,15 @@ public final class Seo {
     @Modification.FieldInternalNamePrefix("cms.seo.")
     public static final class ObjectModification extends Modification<Object> {
 
-        @ToolUi.Hidden(false)
         @ToolUi.Placeholder(dynamicText = "${content.seo.findTitlePlaceholder()}", editable = true)
-        @ToolUi.Tab("SEO")
         private String title;
 
-        @ToolUi.Hidden(false)
         @ToolUi.Placeholder(dynamicText = "${content.seo.findDescriptionPlaceholder()}", editable = true)
-        @ToolUi.Tab("SEO")
         private String description;
 
-        @ToolUi.Hidden(false)
-        @ToolUi.Tab("SEO")
         private Set<String> keywords;
 
-        @ToolUi.Hidden(false)
         @ToolUi.NoteHtml("See <a href=\"https://developers.google.com/webmasters/control-crawl-index/docs/robots_meta_tag\" target=\"_blank\">robots meta tag documentation</a> for more information.")
-        @ToolUi.Tab("SEO")
         private Set<RobotsValue> robots;
 
         public String getTitle() {
