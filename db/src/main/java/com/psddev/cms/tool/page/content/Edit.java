@@ -37,6 +37,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -358,10 +359,18 @@ public class Edit {
     }
 
     private static List<ContentEditWidget> getWidgets() {
+        List<ContentEditWidget> widgets = new ArrayList<>();
         CmsTool cms = Query.from(CmsTool.class).first();
-        List<ContentEditWidget> widgets = cms != null
-                ? cms.getContentEditWidgets()
-                : new ArrayList<>();
+
+        if (cms != null) {
+            List<ContentEditWidget> cmsWidgets = cms.getContentEditWidgets();
+
+            if (cmsWidgets != null) {
+                cmsWidgets.stream()
+                        .filter(Objects::nonNull)
+                        .forEach(widgets::add);
+            }
+        }
 
         ClassFinder.findConcreteClasses(ContentEditWidget.class)
                 .stream()
