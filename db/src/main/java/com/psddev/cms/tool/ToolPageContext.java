@@ -3390,39 +3390,12 @@ public class ToolPageContext extends WebPageContext {
      * Updates the given {@code object} using all widgets with the data from
      * the current request.
      *
-     * @param object Can't be {@code null}.
+     * @param object Nonnull.
+     * @deprecated Use {@link Edit#updateUsingWidgets(ToolPageContext, Object)} instead.
      */
     @SuppressWarnings("deprecation")
     public void updateUsingAllWidgets(Object object) throws Exception {
-        ErrorUtils.errorIfNull(object, "object");
-
-        State state = State.getInstance(object);
-        List<String> requestWidgets = params(String.class, state.getId() + "/_widget");
-
-        if (requestWidgets.isEmpty()) {
-            return;
-        }
-
-        DependencyResolver<Widget> widgets = new DependencyResolver<Widget>();
-
-        for (Widget widget : Tool.Static.getPluginsByClass(Widget.class)) {
-            widgets.addRequired(widget, widget.getUpdateDependencies());
-        }
-
-        for (Widget widget : widgets.resolve()) {
-            for (String requestWidget : requestWidgets) {
-                if (widget.getInternalName().equals(requestWidget)) {
-                    widget.update(this, object);
-                    break;
-                }
-            }
-        }
-
-        Page.Layout layout = (Page.Layout) getRequest().getAttribute("layoutHack");
-
-        if (layout != null) {
-            ((Page) object).setLayout(layout);
-        }
+        Edit.updateUsingWidgets(this, object);
     }
 
     private void redirectOnWorkflow(String url, Object... parameters) throws IOException {
@@ -3654,7 +3627,7 @@ public class ToolPageContext extends WebPageContext {
 
         try {
             updateUsingParameters(object);
-            updateUsingAllWidgets(object);
+            Edit.updateUsingWidgets(this, object);
 
             if (state.isNew()
                     && site != null
@@ -3744,7 +3717,7 @@ public class ToolPageContext extends WebPageContext {
 
         try {
             updateUsingParameters(object);
-            updateUsingAllWidgets(object);
+            Edit.updateUsingWidgets(this, object);
 
             if (state.isNew()
                     && site != null
@@ -3840,7 +3813,7 @@ public class ToolPageContext extends WebPageContext {
 
                 getRequest().setAttribute("original", object);
                 includeFromCms("/WEB-INF/objectPost.jsp", "object", object, "original", object);
-                updateUsingAllWidgets(object);
+                Edit.updateUsingWidgets(this, object);
 
                 if (variationId != null
                         && variationId.equals(state.as(Variation.Data.class).getInitialVariation())) {
@@ -3857,7 +3830,7 @@ public class ToolPageContext extends WebPageContext {
 
                 getRequest().setAttribute("original", original);
                 includeFromCms("/WEB-INF/objectPost.jsp", "object", object, "original", original);
-                updateUsingAllWidgets(object);
+                Edit.updateUsingWidgets(this, object);
 
                 Map<String, Object> newStateValues = state.getSimpleValues();
                 Set<String> stateKeys = new LinkedHashSet<String>();
@@ -4171,7 +4144,7 @@ public class ToolPageContext extends WebPageContext {
             state.beginWrites();
 
             updateUsingParameters(object);
-            updateUsingAllWidgets(object);
+            Edit.updateUsingWidgets(this, object);
 
             State oldState = State.getInstance(Query
                     .fromAll()
@@ -4243,7 +4216,7 @@ public class ToolPageContext extends WebPageContext {
                     WorkflowLog log = new WorkflowLog();
 
                     updateUsingParameters(object);
-                    updateUsingAllWidgets(object);
+                    Edit.updateUsingWidgets(this, object);
                     contentData.setDraft(false);
                     log.getState().setId(param(UUID.class, "workflowLogId"));
                     updateUsingParameters(log);

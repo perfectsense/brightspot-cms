@@ -1,10 +1,12 @@
 package com.psddev.cms.tool.page.content;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Overlay;
 import com.psddev.cms.db.OverlayProvider;
+import com.psddev.cms.db.Page;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.WorkInProgress;
@@ -22,6 +24,7 @@ import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.ClassFinder;
+import com.psddev.dari.util.DependencyResolver;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.TypeDefinition;
@@ -29,6 +32,7 @@ import com.psddev.dari.util.TypeDefinition;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -260,6 +264,10 @@ public class Edit {
      * @param section Nonnull.
      */
     public static void writeWidgets(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+        Preconditions.checkNotNull(page);
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(section);
+
         String legacyPosition = section.getLegacyPosition();
 
         if (legacyPosition != null) {
@@ -273,6 +281,7 @@ public class Edit {
         ClassFinder.findConcreteClasses(ContentEditWidget.class)
                 .stream()
                 .filter(c -> widgets.stream().noneMatch(c::isInstance))
+                .sorted(Comparator.comparing(Class::getName))
                 .map(c -> TypeDefinition.getInstance(c).newInstance())
                 .forEach(widgets::add);
 
@@ -384,5 +393,57 @@ public class Edit {
         errorHtml.writeEnd();
 
         return errorString.toString();
+    }
+
+    /**
+     * @param page Nonnull.
+     * @param content Nonnull.
+     */
+    @SuppressWarnings("deprecation")
+    public static void updateUsingWidgets(ToolPageContext page, Object content) throws Exception {
+        Preconditions.checkNotNull(page);
+        Preconditions.checkNotNull(content);
+
+        State state = State.getInstance(content);
+        List<String> requestWidgets = page.params(String.class, state.getId() + "/_widget");
+
+        if (!requestWidgets.isEmpty()) {
+            DependencyResolver<Widget> widgets = new DependencyResolver<>();
+
+            for (Widget widget : Tool.Static.getPluginsByClass(Widget.class)) {
+                widgets.addRequired(widget, widget.getUpdateDependencies());
+            }
+
+            for (Widget widget : widgets.resolve()) {
+                for (String requestWidget : requestWidgets) {
+                    if (widget.getInternalName().equals(requestWidget)) {
+                        widget.update(page, content);
+                        break;
+                    }
+                }
+            }
+        }
+
+        Page.Layout layout = (Page.Layout) page.getRequest().getAttribute("layoutHack");
+
+        if (layout != null) {
+            ((Page) content).setLayout(layout);
+        }
+
+        CmsTool cms = page.getCmsTool();
+        List<ContentEditWidget> widgets = cms.getContentEditWidgets();
+
+        ClassFinder.findConcreteClasses(ContentEditWidget.class)
+                .stream()
+                .filter(c -> widgets.stream().noneMatch(c::isInstance))
+                .sorted(Comparator.comparing(Class::getName))
+                .map(c -> TypeDefinition.getInstance(c).newInstance())
+                .forEach(widgets::add);
+
+        for (ContentEditWidget widget : widgets) {
+            if (widget instanceof UpdatingContentEditWidget) {
+                ((UpdatingContentEditWidget) widget).displayOrUpdate(page, content, null);
+            }
+        }
     }
 }
