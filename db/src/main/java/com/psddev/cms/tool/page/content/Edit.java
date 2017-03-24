@@ -31,6 +31,7 @@ import com.psddev.dari.util.TypeDefinition;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class Edit {
 
@@ -275,17 +277,7 @@ public class Edit {
             writeLegacyWidgets(page, content, legacyPosition);
         }
 
-        CmsTool cms = page.getCmsTool();
-        List<ContentEditWidget> widgets = cms.getContentEditWidgets();
-
-        ClassFinder.findConcreteClasses(ContentEditWidget.class)
-                .stream()
-                .filter(c -> widgets.stream().noneMatch(c::isInstance))
-                .sorted(Comparator.comparing(Class::getName))
-                .map(c -> TypeDefinition.getInstance(c).newInstance())
-                .forEach(widgets::add);
-
-        for (ContentEditWidget widget : widgets) {
+        for (ContentEditWidget widget : getWidgets()) {
             ContentEditSection widgetSection = widget.getSectionOverride();
 
             if (widgetSection == null) {
@@ -358,7 +350,34 @@ public class Edit {
         }
     }
 
+    private static List<ContentEditWidget> getWidgets() {
+        CmsTool cms = Query.from(CmsTool.class).first();
+        List<ContentEditWidget> widgets = cms != null
+                ? cms.getContentEditWidgets()
+                : new ArrayList<>();
+
+        ClassFinder.findConcreteClasses(ContentEditWidget.class)
+                .stream()
+                .filter(c -> widgets.stream().noneMatch(c::isInstance))
+                .sorted(Comparator.comparing(Class::getName))
+                .map(c -> TypeDefinition.getInstance(c).newInstance())
+                .forEach(widgets::add);
+
+        return widgets;
+    }
+
+    /**
+     * @param page Nonnull.
+     * @param content Nonnull.
+     * @param section Nonnull.
+     * @param widget Nonnull.
+     */
     public static void writeWidgetOrError(ToolPageContext page, Object content, ContentEditSection section, ContentEditWidget widget) throws IOException {
+        Preconditions.checkNotNull(page);
+        Preconditions.checkNotNull(content);
+        Preconditions.checkNotNull(section);
+        Preconditions.checkNotNull(widget);
+
         String widgetHtml;
 
         try {
@@ -430,20 +449,30 @@ public class Edit {
             ((Page) content).setLayout(layout);
         }
 
-        CmsTool cms = page.getCmsTool();
-        List<ContentEditWidget> widgets = cms.getContentEditWidgets();
-
-        ClassFinder.findConcreteClasses(ContentEditWidget.class)
-                .stream()
-                .filter(c -> widgets.stream().noneMatch(c::isInstance))
-                .sorted(Comparator.comparing(Class::getName))
-                .map(c -> TypeDefinition.getInstance(c).newInstance())
-                .forEach(widgets::add);
+        List<ContentEditWidget> widgets = getWidgets();
+        DependencyResolver<UpdatingContentEditWidget> updatingWidgets = new DependencyResolver<>();
 
         for (ContentEditWidget widget : widgets) {
             if (widget instanceof UpdatingContentEditWidget) {
-                ((UpdatingContentEditWidget) widget).displayOrUpdate(page, content, null);
+                UpdatingContentEditWidget updatingWidget = (UpdatingContentEditWidget) widget;
+                Collection<Class<? extends UpdatingContentEditWidget>> dependencies = updatingWidget.getUpdateDependencies();
+
+                if (dependencies != null) {
+                    updatingWidgets.addRequired(
+                            updatingWidget,
+                            widgets.stream()
+                                    .filter(w -> dependencies.stream().anyMatch(c -> c.isInstance(w)))
+                                    .map(w -> (UpdatingContentEditWidget) w)
+                                    .collect(Collectors.toList()));
+
+                } else {
+                    updatingWidgets.addRequired(updatingWidget);
+                }
             }
+        }
+
+        for (UpdatingContentEditWidget widget : updatingWidgets.resolve()) {
+            widget.displayOrUpdate(page, content, null);
         }
     }
 }
