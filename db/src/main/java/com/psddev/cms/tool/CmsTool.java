@@ -1019,12 +1019,6 @@ public class CmsTool extends Tool {
         plugins.add(createArea2("Variations & Profiles", "adminVariations", "admin/adminVariations", "/admin/variations.jsp"));
         plugins.add(createArea2("Workflows", "adminWorkflows", "admin/adminWorkflows", "/admin/workflows.jsp"));
 
-        // Content right widgets.
-        double rightColumn = 0.0;
-        double rightRow = 0.0;
-
-        plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-
         return plugins;
     }
 
