@@ -1199,11 +1199,15 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 }
             }
 
+            @SuppressWarnings("unchecked")
+            Map<String, Object> edits = item != null ? (Map<String, Object>) item.getMetadata().get("cms.edits") : null;
+            if (edits == null) {
+                edits = new HashMap<>();
+            }
+
             // If initial crop is present (cms.edits.crop), modify originalHeight/originalWidth to reflect
             boolean hasInitialCrop = false;
             if (isEdits() && item != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> initialCrop = (Map<String, Object>) edits.get("crop");
@@ -1373,11 +1377,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 }
 
                 if (isEdits()) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
-
                     if (edits != null) {
-
                         //rotate first
                         Set<Map.Entry<String, Object>> entrySet = new TreeMap<String, Object>(edits).entrySet();
                         for (Map.Entry<String, Object> entry : entrySet) {
