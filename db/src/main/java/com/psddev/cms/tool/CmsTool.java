@@ -1022,19 +1022,9 @@ public class CmsTool extends Tool {
         // Content right widgets.
         double rightColumn = 0.0;
         double rightRow = 0.0;
-        JspWidget template, urls;
 
-        if (isAlwaysGeneratePermalinks()) {
-            plugins.add(urls = createJspWidget("URLs", "urls", "/WEB-INF/widget/urls.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-
-        } else {
-            plugins.add(urls = createJspWidget("URLs", "urls", "/WEB-INF/widget/urlsNew.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-        }
-
-        plugins.add(template = createJspWidget("Template", "template", "/WEB-INF/widget/template.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
+        plugins.add(createJspWidget("Template", "template", "/WEB-INF/widget/template.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
         plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
-
-        urls.getUpdateDependencies().add(template);
 
         return plugins;
     }
