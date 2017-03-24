@@ -1023,7 +1023,6 @@ public class CmsTool extends Tool {
         double rightColumn = 0.0;
         double rightRow = 0.0;
 
-        plugins.add(createJspWidget("Template", "template", "/WEB-INF/widget/template.jsp", CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
         plugins.add(createJspWidget("Sites", "sites", "/WEB-INF/widget/sites.jsp", true, CONTENT_RIGHT_WIDGET_POSITION, rightColumn, rightRow ++));
 
         return plugins;

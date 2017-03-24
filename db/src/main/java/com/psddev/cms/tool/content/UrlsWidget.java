@@ -16,6 +16,8 @@ import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.ObjectUtils;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,6 +37,12 @@ public class UrlsWidget extends UpdatingContentEditWidget {
     @Override
     public String getHeading(ToolPageContext page, Object content) {
         return Localization.currentUserText(getClass(), "title");
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public Collection<Class<? extends UpdatingContentEditWidget>> getUpdateDependencies() {
+        return Collections.singleton(TemplateWidget.class);
     }
 
     @Override
