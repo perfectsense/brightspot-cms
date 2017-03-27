@@ -366,6 +366,7 @@ define([
             self.clipboardInit();
             self.spellcheckInit();
             self.modeInit();
+            self.initPreviewResizer();
 
             var $wrapper = $(self.codeMirror.getWrapperElement());
             var wrapperWidth = $wrapper.width();
@@ -2930,6 +2931,58 @@ define([
             lineNumber = range.from.line;
 
             return self.blockSetPreview(styleKey, lineNumber, previewHTML, mark.attributes);
+        },
+
+
+        /**
+         * Work around a problem in CodeMirror: whenever refresh() is called, CodeMirror recreates the DOM.
+         * This causes weird scrolling problems in cases where the preview contains an iframe, because the iframe
+         * reloads whenever it is removed and added back to the DOM.
+         * To mitigate this problem, we will query the height of the preview and set that as a minimum height,
+         * so even if the iframe contents shrink and grow, the scrolling of the overall document should not change.
+         */
+        initPreviewResizer: function() {
+
+            var self;
+            var $wrapper;
+
+            self = this;
+            $wrapper = $(self.codeMirror.getWrapperElement());
+
+            $wrapper.on('resize', '.rte2-block-preview > iframe', function(event) {
+                var $div;
+                var divHeight;
+                var $iframe;
+                var iframeHeight;
+
+                $iframe = $(event.target);
+                // Get the height from the CSS style, not by calculating the height.
+                iframeHeight = parseInt($iframe.prop('style').height, 10);
+
+                $div = $iframe.closest('.rte2-block-preview');
+                divHeight = parseInt($div.prop('style').height, 10);
+
+                // If height is not explicitly set we won't do anything.
+                if (!iframeHeight) {
+                    return;
+                }
+
+                if (!divHeight || iframeHeight > divHeight) {
+                    $div.css({
+                        'height': iframeHeight,
+                        'overflow': 'auto'
+                    });
+                } else if (iframeHeight === divHeight) {
+                    // Heights are equal so do nothing
+                } else if (iframeHeight < divHeight) {
+                    // Height is shrinking so do nothing
+                    // Note we could shrink the preview block, but in some cases like twitter the preview loads
+                    // and is very small, then it grows, then it shrinks again.
+                    // This leads to the page scroll position jumping all over the place,
+                    // so instead we will just set the preview block to the tallest height
+                    // we have seen and leave it at that.
+                }
+            });
         },
 
 

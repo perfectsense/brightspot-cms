@@ -11,7 +11,7 @@ function($) {
             var map = L.map(regionMap, {
                     scrollWheelZoom: false
             });
-            new L.TileLayer.MapQuestOpenOSM().addTo(map);
+            new L.TileLayer.OpenStreetMap().addTo(map);
 
             var zoomInput = $(regionMap).find(".regionMapZoom");
             var centerInput = $(regionMap).find(".regionMapCenter");
