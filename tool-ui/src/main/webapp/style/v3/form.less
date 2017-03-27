@@ -33,6 +33,13 @@
   transition: background-color @time-fast;
   vertical-align: middle;
 
+  &[disabled],
+  &.state-disabled {
+    color: @color-placeholder;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
   &:hover {
     background-color: @color-heading;
     text-decoration: none;
