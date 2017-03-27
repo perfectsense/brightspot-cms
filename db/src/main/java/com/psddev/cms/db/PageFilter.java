@@ -126,7 +126,7 @@ public class PageFilter extends AbstractFilter {
     public static final String SITE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".siteChecked";
     public static final String SUBSTITUTIONS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".substitutions";
     public static final String VIEW_TYPE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".viewType";
-    public static final String ENTRY_VIEW_CLASS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".entryViewClass";
+    private static final String ENTRY_VIEW_CLASS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".entryViewClass";
 
     public static final String MAIN_OBJECT_RENDERER_CONTEXT = "_main";
     public static final String EMBED_OBJECT_RENDERER_CONTEXT = "_embed";
