@@ -3492,6 +3492,17 @@ public class ToolPageContext extends WebPageContext {
                         .where("objectId = ?", state.getId())
                         .deleteAll();
 
+                if (param(boolean.class, "_frame")) {
+                    writeStart("div", "id", createId());
+                    writeEnd();
+                    writeStart("script", "type", "text/javascript");
+                        writeRaw("$('#").writeRaw(getId()).writeRaw("').popup('close');");
+                        writeRaw("$('.search-reset').click();");
+                    writeEnd();
+
+                    return true;
+                }
+
                 getResponse().sendRedirect(cmsUrl("/"));
             }
 
