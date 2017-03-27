@@ -113,8 +113,11 @@ public abstract class ViewModel<M> {
         if (object instanceof Iterable) {
             models = (Iterable<?>) object;
 
-        } else {
+        } else if (object != null) {
             models = Collections.singleton(object);
+
+        } else {
+            models = Collections.emptyList();
         }
 
         return StreamSupport.stream(models.spliterator(), false)
