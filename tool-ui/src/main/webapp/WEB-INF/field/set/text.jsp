@@ -2,6 +2,7 @@
 
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.content.field.TextField,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.State,
@@ -57,7 +58,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         }
     }
 
-    state.putValue(fieldName, fieldValue);
+    TextField.put(state, field, fieldValue);
     return;
 }
 
