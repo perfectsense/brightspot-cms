@@ -607,9 +607,19 @@ writer.start("div", "class", "searchForm");
                             "placeholder", wp.localize(Search.class, "label.advancedQuery"),
                             "value", search.getAdvancedQuery());
 
+                    String advancedQueryEditParameters = search.getAdvancedQueryEditStringParameters();
+
+                    writer.writeElement("input",
+                            "type", "hidden",
+                            "name", Search.ADVANCED_QUERY_EDIT_STRING_PARAMETER,
+                            "value", advancedQueryEditParameters);
+
                     writer.writeStart("a",
                             "class", "icon icon-action-edit icon-only",
-                            "href", wp.cmsUrl("/searchAdvancedQuery"),
+                            "href", wp.cmsUrl("/searchAdvancedQuery"
+                                    + (!StringUtils.isBlank(advancedQueryEditParameters)
+                                        ? StringUtils.ensureStart("?", advancedQueryEditParameters)
+                                        : "")),
                             "target", "searchAdvancedQuery");
                         writer.writeHtml("Edit");
                     writer.writeEnd();
