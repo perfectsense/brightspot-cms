@@ -17,7 +17,8 @@ import com.psddev.dari.util.StringUtils;
  *
  * @deprecated No replacement.
  *
- * */
+ */
+@Deprecated
 public class Profile extends Record {
 
     @Indexed(unique = true)
