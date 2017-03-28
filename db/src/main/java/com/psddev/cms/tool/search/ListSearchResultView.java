@@ -478,14 +478,13 @@ public class ListSearchResultView extends AbstractSearchResultView {
                         if (user != null) {
                             ObjectType selectedType = search.getSelectedType();
                             List<String> fieldNames = user.getSearchResultFieldsByTypeId().get(selectedType != null ? selectedType.getId().toString() : "");
-                            ObjectType itemType = itemState.getType();
 
                             if (fieldNames == null) {
                                 for (Class<? extends SearchResultField> c : ClassFinder.Static.findClasses(SearchResultField.class)) {
                                     if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
                                         SearchResultField field = TypeDefinition.getInstance(c).newInstance();
 
-                                        if (field.isDefault(itemType) && !ObjectUtils.equals(sortField, field)) {
+                                        if (field.isDefault(selectedType) && !ObjectUtils.equals(sortField, field)) {
                                             field.writeTableDataCellHtml(page, item);
                                         }
                                     }

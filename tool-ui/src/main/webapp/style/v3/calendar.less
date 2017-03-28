@@ -130,20 +130,25 @@
 .calendar {
   &.calendar-week {
     .calendarRow {
-      @padding-cell: 5px;
-      @width-day: 38px;
+      @padding-cell: 10px;
+      @width-day: 45px;
 
+      margin: 0 -10px;
       overflow: hidden;
+      padding: 0 10px;
 
       &:not(:first-child) {
-        border-top: 1px solid @color-heading;
+        border-top: 1px dotted @color-separator;
         margin-top: @padding-cell;
         padding-top: @padding-cell;
       }
 
       .calendarDay {
+        background: @color-heading;
+        border-radius: 2px;
         float: left;
         margin-right: @padding-cell;
+        padding: 5px 0;
         text-align: center;
         width: @width-day;
 
@@ -156,42 +161,47 @@
         }
 
         .calendarDayOfWeek {
-          .small;
-
           display: block;
+          font-size: (@fontSize-default * 0.8);
+          line-height: (@lineHeight-default * 0.8);
           text-transform: uppercase;
         }
 
         .calendarDayOfMonth {
-          font-size: (@width-day * 0.6);
-          line-height: (@width-day * 0.6);
+          display: block;
+          font-size: (@fontSize-default * 1.2);
+          line-height: (@lineHeight-default * 1.2);
         }
       }
 
       .calendarCell {
         margin-left: (@width-day + @padding-cell);
+
+        table {
+          margin-bottom: 0;
+        }
       }
     }
   }
   &.calendar-month {
-    overflow: hidden;
+    border-collapse: collapse;
+    display: table;
+    min-width: 420px;
+    width: 100%;
+
     .calendarRow {
-      @width-day: 14.28%;
-      clear:both;
+      display: table-row;
 
       .calendarDay {
-        float: left;
-        width: @width-day;
-        height: 100px;
-        border-radius: 1px;
-        border-left: 1px solid @color-border;
-        border-top: 1px solid @color-border;
-        box-sizing: border-box;
-        padding: 8px;
+        border: 1px solid @color-border;
+        display: table-cell;
         position: relative;
 
-        &:last-child {
-          border-right: 1px solid @color-border;
+        &:before {
+          content: '';
+          display: block;
+          padding-bottom: 100%;
+          width: 100%;
         }
 
         &.other-month {
@@ -199,51 +209,26 @@
         }
       }
 
-      &:first-child {
-        .calendarDay {
-          border-top: 1px solid @color-border;
-          &:first-child {
-            border-radius: 2px 0 0 0;
-          }
-          &:last-child {
-            border-radius: 0 2px 0 0;
-          }
-        }
-      }
-
-      &:last-child {
-        .calendarDay {
-          border-bottom: 1px solid @color-border;
-          border-top: 0px;
-          &:first-child {
-            border-radius: 0 0 0 2px;
-          }
-          &:last-child {
-            border-radius: 0 0 2px 0;
-          }
-        }
-      }
-
-      &:nth-last-child(2) {
-        .calendarDay {
-          border-bottom: 1px solid @color-border;
-        }
-      }
-
       .calendarDayOfWeek {
-        float: left;
-        opacity: 0.28;
+        left: 5px;
+        position: absolute;
+        top: 5px;
       }
 
       .calendarDayOfMonth {
-        float: right;
+        position: absolute;
+        right: 5px;
+        top: 5px;
       }
 
       .calendarDay-today {
         .calendarDayOfMonth {
-          color: white;
-          background: black;
-          padding: 0 1px;
+          .background-flat(@color-text);
+          border-bottom-left-radius: 2px;
+          padding: 5px;
+          right: -1px;
+          top: -1px;
+          z-index: 1;
         }
       }
 
@@ -253,35 +238,20 @@
         }
       }
 
-      .calendarEventsContainer {
-        clear:both;
-        padding: 0 8px 8px 8px;
-      }
-
       .calendarEvents {
-        bottom: 4px;
-        border-radius: 50%;
         background: @color-focus;
+        border-radius: 50%;
+        bottom: 5px;
         color: white;
+        left: 15px;
+        padding-top: ~'calc(50% - 24px)';
+        position: absolute;
+        top: 25px;
+        right: 15px;
         text-align: center;
-        width: 100%;
-        padding-top: 100%;
 
-        .count, .label {
-          position: absolute;
-        }
-
-        .count {
-          left: 50%;
-          transform: translate(-50%, 0);
-          top: 40px;
-          font-size: 24px;
-        }
-
-        .label {
-          left: 50%;
-          transform: translate(-50%, 0);
-          bottom:16px;
+        &:hover {
+          text-decoration: none;
         }
       }
     }

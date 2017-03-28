@@ -1,34 +1,46 @@
-.scheduledEvents-modes {
-  &:extend(.button-group all);
-
-  position: absolute;
-  top: -7px;
-  right: 0;
+.widget-scheduledEvents h1 form {
+  display: inline;
+  margin: 0;
 }
 
 .scheduledEvents-controls {
-  padding-bottom:14px;
-  position:relative;
+  .piped;
+  line-height: 36px;
+  margin: 0;
+  position: absolute;
+  right: 20px;
+  top: 0;
+}
 
-  .piped {
-    margin-bottom: 0px;
-  }
+.scheduledEvents-date {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
 
-  .pagination {
-    position: absolute;
-    right: 0;
-    top: 6px;
+.scheduledEvents-dateDisplay {
+  float: left;
+  margin: 0;
+
+  form {
+    display: inline-block;
+    margin: 0;
+    vertical-align: bottom;
+
+    .dropDown-input,
+    select {
+      display: block;
+    }
   }
 }
 
 .scheduledEvents-dateRange {
-  font-size: 120%;
-  padding-top: 14px;
+  display: inline-block;
+  line-height: 30px;
+  margin-left: 10px;
+  vertical-align: bottom;
 }
 
-.scheduledEvents-separator {
-  margin: 0 -20px 0 -20px;
-  border: none;
-  height: 1px;
-  background: @color-separator;
+.scheduledEvents-datePagination {
+  float: right;
+  margin: 0;
 }
