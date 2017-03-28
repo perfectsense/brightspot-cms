@@ -94,7 +94,7 @@ The custom creation of content types using Java classes means each instance of B
 
 **How do I start using it?**
 
-The Brightspot stack consists of proven open-source software: Java, MySQL, Solr and Apache httpd. There is nothing proprietary about the technology being used. Brightspot is open-source and freely available for use under the `GNU GENERAL PUBLIC LICENSE V2`.
+The Brightspot stack consists of proven open-source software: Java, MySQL, Solr and Apache httpd. There is nothing proprietary about the technology being used.
 
 Java developers can get started with Brightspot development quickly and easily. Brightspot applications are built with standard Java development techniques.
 
