@@ -623,12 +623,15 @@ define([
          */
         adjustmentProcess: function(cropOriginalImage) {
 
-            var crop, operations, operationsJson, promise, self;
+            var crop, operations, operationsCopy, operationsJson, promise, self;
 
             self = this;
 
             // Get the list of operations that should be performed
             operations = self.adjustmentGetOperations();
+
+            // Copy the operations in case we need to remove cropping
+            operationsCopy = $.extend({}, operations);
 
             // Now turn the operations object into a JSON string so we
             // can compare it to previous operations that have already
@@ -645,12 +648,15 @@ define([
                 // Create hidden inputs to save all the adjustment values
                 self.adjustmentSetInputs();
 
-                // Now perform the operations and return a promise that can
-                // be used to run more code after the operations have completed
+                // Do not crop the image at first because we need to continue using the uncropped
+                // image on the edit tab
                 if (!cropOriginalImage) {
                     crop = operations.crop1;
                     delete operations.crop1;
                 }
+
+                // Now perform the operations and return a promise that can
+                // be used to run more code after the operations have completed
                 promise = self.adjustmentProcessExecuteAll(operations);
 
                 // When all the adjustments are done replace the original image with the adjusted image
@@ -662,19 +668,17 @@ define([
                         self.dom.$editImage.remove();
                     }
 
-                    // Add the adjusted image to the dom
-                    self.dom.$originalImage.hide().before( self.dom.processedImage );
-
                     // Save the adjusted image for later comparison
-                    self.dom.$editImage = $( self.dom.processedImage );
+                    self.dom.$editImage = $( self.cloneCanvas(self.dom.processedImage) );
+
+                    // Add the adjusted image to the dom
+                    self.dom.$originalImage.hide().before( self.dom.$editImage );
 
                     // Did we previously remove the crop operation for the original image?
-                    // If so do the crop now for the image that we send to other tabs like focus/sizes/hotspot.
+                    // If so, run all the adjustments again including the crop this time
+                    // to create the image that we send to other tabs like focus/sizes/hotspot.
                     if (crop) {
-                        promise = self.adjustmentProcessExecuteAll(
-                            {'crop': crop},
-                            $(self.cloneCanvas(self.dom.processedImage)).get(0)
-                        );
+                        promise = self.adjustmentProcessExecuteAll(operationsCopy);
                     }
 
                     // Trigger an event so other code (focus/sizes/hotspot) can tell when the image changed
@@ -723,11 +727,13 @@ define([
             // If there are no operations then just pretend to crop the image so we get a canvas back
             // (this is to prevent the page from jumping around and reloading the image)
             if ($.isEmptyObject(operations)) {
-                operations.crop = {
-                    x: 0,
-                    y: 0,
-                    width: self.dom.imageCloneWidth,
-                    height: self.dom.imageCloneHeight
+                operations = {
+                    crop: {
+                        x: 0,
+                        y: 0,
+                        width: self.dom.imageCloneWidth,
+                        height: self.dom.imageCloneHeight
+                    }
                 };
             }
 
@@ -867,7 +873,8 @@ define([
             self.operations = {};
 
             // First determine if the image has been cropped
-            bounds = self.cropGetInput();
+            // and get the value in pixels based on the size of the original image
+            bounds = self.cropGetInput(true);
             if (bounds.width) {
                 // Special case: since each operation name must be unique in the object,
                 // and we have two different crop operations to perform, name this one
@@ -1264,44 +1271,32 @@ define([
 
             self = this;
 
-            // Get the crop bounds for this group, based on the original image size
-            // But adjusted if we will be rotating the image
-            rotation = self.adjustmentRotateGet();
-            if (rotation === 90 || rotation === -90) {
-                imageWidth = self.dom.imageCloneHeight;
-                imageHeight = self.dom.imageCloneWidth;
-            } else {
-                imageWidth = self.dom.imageCloneWidth;
-                imageHeight = self.dom.imageCloneHeight;
-            }
-
             bounds = self.cropGetValue();
             bounds.left = bounds.x;
             bounds.top = bounds.y;
             bounds.right = bounds.x + bounds.width;
             bounds.bottom = bounds.y + bounds.height;
 
-            // Convert relative values to pixels
-
             self.dom.$cropCoverTop.css({
-                'height': bounds.top * imageHeight,
-                'width': imageWidth
+                'top': 0,
+                'left': bounds.left * 100 + '%',
+                'height': bounds.top * 100 + '%',
+                'width': bounds.width * 100 + '%'
             });
             self.dom.$cropCoverLeft.css({
-                'height': bounds.height * imageHeight,
-                'top': bounds.top * imageHeight,
-                'width': bounds.left * imageWidth
+                'height': '100%',
+                'width': bounds.left * 100 + '%'
             });
             self.dom.$cropCoverRight.css({
-                'height': bounds.height * imageHeight,
-                'left': bounds.right * imageWidth,
-                'top': bounds.top * imageHeight,
-                'width': imageWidth - (bounds.right * imageWidth)
+                'height': '100%',
+                'left': bounds.right * 100 + '%',
+                'width': 100 - (bounds.right * 100) + '%'
             });
             self.dom.$cropCoverBottom.css({
-                'height': imageHeight - (bounds.bottom * imageHeight),
-                'top': bounds.bottom * imageHeight,
-                'width': imageWidth
+                'top': bounds.bottom * 100 + '%',
+                'left': bounds.left * 100 + '%',
+                'height': 100 - (bounds.bottom * 100) + '%',
+                'width': bounds.width * 100 + '%'
             });
 
         },
@@ -1430,6 +1425,11 @@ define([
                 bounds.top = bounds.y;
                 delete bounds.x;
                 delete bounds.y;
+
+                bounds.left = bounds.left * 100 + '%';
+                bounds.top = bounds.top * 100 + '%';
+                bounds.width = bounds.width * 100 + '%';
+                bounds.height = bounds.height * 100 + '%';
                 self.$cropSizeBox.css(bounds);
                 self.cropCoverUpdate();
             }
@@ -1482,6 +1482,9 @@ define([
                     imageWidth = self.dom.imageCloneWidth;
                     imageHeight = self.dom.imageCloneHeight;
                 }
+
+                imageWidth = $sizeBox.parent().width();
+                imageHeight = $sizeBox.parent().height();
 
                 aspectRatio = imageWidth / imageHeight;
 
@@ -1566,6 +1569,12 @@ define([
                         }
                     }
 
+                    // Convert the bounds to percentage values
+                    bounds.left = bounds.left / imageWidth * 100 + '%';
+                    bounds.width = bounds.width / imageWidth * 100 + '%';
+                    bounds.top = bounds.top / imageHeight * 100 + '%';
+                    bounds.height = bounds.height / imageHeight * 100 + '%';
+
                     // Now that the bounds have been sanitized,
                     // update the sizebox display
                     self.cropSizeBoxUpdate(bounds);
@@ -1638,7 +1647,6 @@ define([
             var bounds;
             var imageWidth;
             var imageHeight;
-            var rotation;
             var self;
             var $sizeBox;
             var sizeBoxPosition;
@@ -1651,14 +1659,8 @@ define([
             sizeBoxWidth = $sizeBox.width();
             sizeBoxHeight = $sizeBox.height();
 
-            rotation = self.adjustmentRotateGet();
-            if (rotation === 90 || rotation === -90) {
-                imageWidth = self.dom.imageCloneHeight;
-                imageHeight = self.dom.imageCloneWidth;
-            } else {
-                imageWidth = self.dom.imageCloneWidth;
-                imageHeight = self.dom.imageCloneHeight;
-            }
+            imageWidth = $sizeBox.parent().width();
+            imageHeight = $sizeBox.parent().height();
 
             bounds = {
                 x: sizeBoxPosition.left,
@@ -1701,23 +1703,23 @@ define([
         },
 
 
-        cropGetInput: function() {
-            var imageHeight;
+        /**
+         * Get the crop value.
+         * @param  {Boolean} [pixels]
+         * Set to true if you want the values in pixels instead of relative.
+         * For example, a relative value would be between 0 and 1 (inclusive),
+         * while a pixel value would be based on the dimensions of the original image.
+         * @return {Object} bounds
+         * Bounds object includes x,y,width,height values.
+         */
+        cropGetInput: function(pixels) {
             var imageWidth;
-            var rotation;
+            var imageHeight;
+            var rotated;
             var self;
             var value;
             self = this;
             value = self.dom.$edit.find('input[name$="/file.crop"]').val();
-
-            rotation = self.adjustmentRotateGet();
-            if (rotation === 90 || rotation === -90) {
-                imageWidth = self.dom.imageCloneHeight;
-                imageHeight = self.dom.imageCloneWidth;
-            } else {
-                imageWidth = self.dom.imageCloneWidth;
-                imageHeight = self.dom.imageCloneHeight;
-            }
 
             if (value) {
                 try {
@@ -1726,11 +1728,16 @@ define([
                     // In case JSON value is malformed
                 }
             }
-            if (value) {
-                value.x *= imageWidth;
-                value.y *= imageHeight;
-                value.width *= imageWidth;
-                value.height *= imageHeight;
+
+            value = value || {};
+            if (pixels && value.width) {
+                rotated = Boolean(self.adjustmentRotateGet() !== 0);
+                imageWidth = rotated ? self.dom.imageCloneHeight : self.dom.imageCloneWidth;
+                imageHeight = rotated ? self.dom.imageCloneWidth : self.dom.imageCloneHeight;
+                value.x = value.x * imageWidth;
+                value.y = value.y * imageHeight;
+                value.width = value.width * imageWidth;
+                value.height = value.height * imageHeight;
             }
             return value || {};
         },
