@@ -119,7 +119,9 @@ public class PageFilter extends AbstractFilter {
     public static final String PAGE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".page";
     public static final String PAGE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".pageChecked";
     public static final String PARENT_SECTIONS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".parentSections";
+    @Deprecated
     public static final String PROFILE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".profile";
+    @Deprecated
     public static final String PROFILE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".profileChecked";
     public static final String RENDERED_OBJECTS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".renderedObjects";
     public static final String SITE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".site";
