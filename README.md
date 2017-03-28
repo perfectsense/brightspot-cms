@@ -98,7 +98,7 @@ The Brightspot stack consists of proven open-source software: Java, MySQL, Solr 
 
 Java developers can get started with Brightspot development quickly and easily. Brightspot applications are built with standard Java development techniques.
 
-Start using Brightspot by first [installing the platform](http://documentation.brightspot.com/docs/3.2/getting-started/installation).
+Start using Brightspot by first [installing the platform](http://docs.brightspot.com/cms/developers-guide/installation/quick.html).
 
 License
 =======
