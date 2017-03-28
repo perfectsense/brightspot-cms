@@ -2119,7 +2119,8 @@ public class PageFilter extends AbstractFilter {
             request.setAttribute("template", page);
         }
 
-        /** Returns the profile used to process the given {@code request}. */
+        /** @deprecated No replacement. */
+        @Deprecated
         public static Profile getProfile(HttpServletRequest request) {
             if (Boolean.TRUE.equals(request.getAttribute(PROFILE_CHECKED_ATTRIBUTE))) {
                 return (Profile) request.getAttribute(PROFILE_ATTRIBUTE);
@@ -2134,7 +2135,8 @@ public class PageFilter extends AbstractFilter {
             return profile;
         }
 
-        /** Sets the profile used to process the given {@code request}. */
+        /** @deprecated No replacement. */
+        @Deprecated
         public static void setProfile(HttpServletRequest request, Profile profile) {
             request.setAttribute(PROFILE_CHECKED_ATTRIBUTE, Boolean.TRUE);
             request.setAttribute(PROFILE_ATTRIBUTE, profile);
