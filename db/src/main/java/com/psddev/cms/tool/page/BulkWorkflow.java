@@ -444,7 +444,7 @@ public class BulkWorkflow extends PageServlet {
         private boolean hasAnyTransitions = false;
 
         public Context(PageContext pageContext) {
-            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null, null);
+            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), pageContext.getOut(), null, null);
         }
 
         public Context(ToolPageContext page) {
