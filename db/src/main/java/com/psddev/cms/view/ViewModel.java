@@ -3,16 +3,20 @@ package com.psddev.cms.view;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -91,6 +95,53 @@ public abstract class ViewModel<M> {
     }
 
     /**
+     * Returns a iterable of views of type {@code viewClass} that are bound to
+     * the given {@code object}. If the object is itself an iterable, then each
+     * item is evaluated and the returned iterable of views will have at most
+     * the same number of items, otherwise the single object will be evaluated
+     * and the returned iterable will have at most one item.
+     *
+     * @param viewClass the type of views to create.
+     * @param object the object used to create the views.
+     * @param <V> the view type.
+     * @return Never {@code null}.
+     */
+    protected final <V> Iterable<V> createViews(Class<V> viewClass, Object object) {
+
+        Iterable<?> models;
+
+        if (object instanceof Iterable) {
+            models = (Iterable<?>) object;
+
+        } else if (object != null) {
+            models = Collections.singleton(object);
+
+        } else {
+            models = Collections.emptyList();
+        }
+
+        return StreamSupport.stream(models.spliterator(), false)
+                .map(model -> unwrapModel(model, new HashSet<>()))
+                .map(model -> {
+                    Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
+                    if (viewModelClass != null) {
+
+                        ViewModel<? super Object> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
+
+                        if (viewModel != null && viewClass.isAssignableFrom(viewModel.getClass())) {
+
+                            @SuppressWarnings("unchecked")
+                            V view = (V) viewModel;
+                            return view;
+                        }
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Creates a view of type {@code viewClass} that is bound to the given
      * {@code model}.
      *
@@ -100,24 +151,8 @@ public abstract class ViewModel<M> {
      * @return a newly created view.
      */
     protected final <V> V createView(Class<V> viewClass, Object model) {
-
-        model = unwrapModel(model, new HashSet<>());
-
-        Class<? extends ViewModel<? super Object>> viewModelClass = findViewModelClassHelper(viewClass, null, model, true);
-        if (viewModelClass != null) {
-
-            ViewModel<? super Object> viewModel = viewModelCreator.createViewModel(viewModelClass, model, viewResponse);
-
-            if (viewModel != null && viewClass.isAssignableFrom(viewModel.getClass())) {
-
-                @SuppressWarnings("unchecked")
-                V view = (V) viewModel;
-
-                return view;
-            }
-        }
-
-        return null;
+        Iterator<V> views = createViews(viewClass, model).iterator();
+        return views.hasNext() ? views.next() : null;
     }
 
     /**
@@ -310,7 +345,16 @@ public abstract class ViewModel<M> {
         //    @ViewBinding annotations set DIRECTLY on it.
         // 3. If there are multiple valid ViewModel classes, check their
         //    inheritance hierarchy and the one that extends the rest should
-        //    win. If they're not related, it's log a warning due to ambiguity.
+        //    win. If they're not related, move to step 4.
+        // 4. If there are multiple valid ViewModel classes with differing
+        //    inheritance hierarchies then choose the one whose generic type
+        //    argument (the model) is "closest" to the model class argument
+        //    passed to this method, where "closest" is defined by the sorting
+        //    the model class hierarchy using the C3 linearization algorithm
+        //    (https://en.wikipedia.org/wiki/C3_linearization) and finding the
+        //    one earliest in the list that matches. If there is still no
+        //    winner OR the class hierarchy cannot be linearized a warning
+        //    will be logged due to an ambiguous result.
         if (viewClass != null && viewType == null) {
 
             Set<Class<?>> concreteViewClasses = new HashSet<>(ClassFinder.findConcreteClasses(viewClass));
@@ -360,6 +404,46 @@ public abstract class ViewModel<M> {
                 concreteViewModelClass = concreteViewModelClasses.iterator().next();
 
             } else if (concreteViewModelClasses.size() > 1) {
+
+                // If there is still more than 1, calculate the C3 linearization
+                // of the model class hierarchy and choose the ViewModel(s) whose
+                // generic type argument appears first in the list (Rule #4).
+
+                // Collect the view model classes based on their generic model class.
+                Map<Class<?>, Set<Class<?>>> modelToViewModels = new HashMap<>();
+
+                for (Class<?> viewModelClass : concreteViewModelClasses) {
+
+                    Class<?> genericModelClass = TypeDefinition.getInstance(viewModelClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
+
+                    if (genericModelClass != null) {
+                        modelToViewModels.computeIfAbsent(genericModelClass, k -> new HashSet<>()).add(viewModelClass);
+                    }
+                }
+
+                // Loop through the C3 linearized modelClass hierarchy and find
+                // the first view model(s) that match
+                try {
+                    for (Class<?> next : c3LinearizeClass(modelClass)) {
+                        Set<Class<?>> viewModelClasses = modelToViewModels.get(next);
+
+                        if (viewModelClasses != null) {
+
+                            if (viewModelClasses.size() == 1) {
+                                concreteViewModelClass = viewModelClasses.iterator().next();
+                            }
+
+                            concreteViewModelClasses = viewModelClasses;
+                            break;
+                        }
+                    }
+
+                } catch (RuntimeException e) {
+                    LOGGER.warn("Could not linearize the class hierarchy for model type [{}] to disambiguate view model bindings.");
+                }
+            }
+
+            if (concreteViewModelClasses.size() > 1) {
                 // More than one valid class found, log a warning and short circuit (Rule #3).
                 LOGGER.warn("Found [{}] conflicting view model bindings for model type [{}] and view type [{}]: [{}]",
                         new Object[] {
@@ -453,6 +537,97 @@ public abstract class ViewModel<M> {
         }
 
         return null;
+    }
+
+    // https://en.wikipedia.org/wiki/C3_linearization
+    private static List<Class<?>> c3LinearizeClass(Class<?> source) {
+        return c3Linearize(source, child -> {
+
+            List<Class<?>> parents = new ArrayList<>();
+
+            // super class first...
+            Class<?> superClass = child.getSuperclass();
+            if (superClass != null && superClass != Object.class) {
+                parents.add(superClass);
+            }
+
+            // interfaces second...
+            parents.addAll(Arrays.asList(child.getInterfaces()));
+
+            // and Object last for all top level classes and interfaces.
+            // This is to ensure Object always ends up last.
+            if (child != Object.class && (superClass == null || superClass == Object.class)) {
+                parents.add(Object.class);
+            }
+
+            return parents;
+
+        }, new HashSet<>());
+    }
+
+    private static <T> List<T> c3Linearize(T source, Function<T, List<T>> parentsFunction, Set<T> visited) {
+
+        // Guard against stack overflow.
+        if (!visited.add(source)) {
+            throw new IllegalStateException("Cyclic hierarchy detected.");
+        }
+
+        // Store the linearization result.
+        List<T> result = new ArrayList<>();
+
+        // The source is always first.
+        result.add(source);
+
+        // Collect the source's direct parents.
+        List<T> sourceParents = new ArrayList<>(parentsFunction.apply(source));
+
+        if (!sourceParents.isEmpty()) {
+
+            // Linearize each parent and add the result to merge list.
+            List<List<T>> toMerge = sourceParents.stream()
+                    .map(parent -> c3Linearize(parent, parentsFunction, new HashSet<>(visited)))
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            // Add the source parents as the last item in the merge list.
+            toMerge.add(sourceParents);
+
+            // Merge and add to result.
+            result.addAll(c3merge(toMerge));
+        }
+
+        return result;
+    }
+
+    private static <T> List<T> c3merge(List<List<T>> lists) {
+
+        List<T> merged = new ArrayList<>();
+
+        // while the lists are not empty
+        while (lists.stream().map(List::size).mapToInt(i -> i).sum() > 0) {
+
+            // grab the first item from each list
+            List<T> candidates = new ArrayList<>(lists.stream()
+                    .filter(list -> !list.isEmpty())
+                    .map(list -> list.get(0))
+                    .collect(Collectors.toCollection(LinkedHashSet::new)));
+
+            // find the first candidate that is not present in the tail of any of the lists
+            T candidate = candidates.stream()
+                    .filter(c -> lists.stream()
+                            .allMatch(list -> list.size() <= 1 || !list.subList(1, list.size()).contains(c)))
+                    .findFirst().orElse(null);
+
+            if (candidate != null) {
+                // remove the candidate from each list and add it the merge list.
+                lists.forEach(list -> list.remove(candidate));
+                merged.add(candidate);
+
+            } else {
+                throw new IllegalStateException("Cyclic hierarchy detected.");
+            }
+        }
+
+        return merged;
     }
 
     /**

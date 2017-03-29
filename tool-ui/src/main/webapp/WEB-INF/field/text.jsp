@@ -5,6 +5,7 @@ com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.page.content.Edit,
 com.psddev.cms.tool.page.TestSms,
+com.psddev.cms.tool.page.content.field.TextField,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.Reference,
@@ -52,7 +53,7 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         }
     }
 
-    state.put(fieldName, newValue);
+    TextField.put(state, field, newValue);
     return;
 }
 
