@@ -13,6 +13,8 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.cms.db.Profile;
+import com.psddev.cms.db.Variation;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeFieldType;
 
@@ -1003,7 +1005,10 @@ public class CmsTool extends Tool {
         plugins.add(createArea2("Settings", "adminSettings", "admin/adminSettings", "/admin/settings.jsp"));
         plugins.add(createArea2("Sites", "adminSites", "admin/adminSites", "/admin/sites.jsp"));
         plugins.add(createArea2("Users & Roles", "adminUsers", "admin/adminUsers", "/admin/users.jsp"));
-        plugins.add(createArea2("Variations & Profiles", "adminVariations", "admin/adminVariations", "/admin/variations.jsp"));
+
+        if (Query.from(Variation.class).hasMoreThan(0) || Query.from(Profile.class).hasMoreThan(0)) {
+            plugins.add(createArea2("Variations & Profiles", "adminVariations", "admin/adminVariations", "/admin/variations.jsp"));
+        }
         plugins.add(createArea2("Workflows", "adminWorkflows", "admin/adminWorkflows", "/admin/workflows.jsp"));
 
         // Content right widgets.
