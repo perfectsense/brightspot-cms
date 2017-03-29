@@ -1419,7 +1419,7 @@ define([
             var bounds;
             var self;
             self = this;
-            bounds = self.cropGetInput();
+            bounds = self.cropDoAdjustments();
             if (bounds && bounds.width) {
                 bounds.left = bounds.x;
                 bounds.top = bounds.y;
@@ -1694,8 +1694,12 @@ define([
             self = this;
             $input = self.dom.$edit.find('input[name$="/file.crop"]');
             if (value === undefined) {
-                value = self.cropGetValue();
+                // Get the crop value from the display,
+                // then remove any adjustments such as rotation so the
+                // crop value applies to the original image before any rotation.
+                value = self.cropRemoveAdjustments();
             }
+
             if (value !== '') {
                 value = JSON.stringify(value);
             }
@@ -1715,7 +1719,6 @@ define([
         cropGetInput: function(pixels) {
             var imageWidth;
             var imageHeight;
-            var rotated;
             var self;
             var value;
             self = this;
@@ -1731,9 +1734,8 @@ define([
 
             value = value || {};
             if (pixels && value.width) {
-                rotated = Boolean(self.adjustmentRotateGet() !== 0);
-                imageWidth = rotated ? self.dom.imageCloneHeight : self.dom.imageCloneWidth;
-                imageHeight = rotated ? self.dom.imageCloneWidth : self.dom.imageCloneHeight;
+                imageWidth = self.dom.imageCloneWidth;
+                imageHeight = self.dom.imageCloneHeight;
                 value.x = value.x * imageWidth;
                 value.y = value.y * imageHeight;
                 value.width = value.width * imageWidth;
@@ -1741,6 +1743,153 @@ define([
             }
             return value || {};
         },
+
+
+        /**
+         * Given a crop value that represents the cropped region for the original image,
+         * this function adjusts the value so it can be applied to the image if the image
+         * has been rotated or flipped. For example, if the image has been rotated then
+         * the width and the height of the crop might need to be reversed.
+         * @param  {Object} [bounds=current crop from the input]
+         * The bounds of the crop.
+         * @param  {Number} bounds.x Number from 0 to 1.
+         * @param  {Number} bounds.y Number from 0 to 1.
+         * @param  {Number} bounds.width Number from 0 to 1.
+         * @param  {Number} bounds.height Number from 0 to 1.
+         * @return {Object} The adjusted bounds of the crop.
+         */
+        cropDoAdjustments: function(bounds) {
+
+            var self;
+            self = this;
+            bounds = bounds || self.cropGetInput();
+
+            // Make sure crop is actually set
+            if (bounds.width) {
+
+                // Determine if the image is rotated - if so we must adjust the crop values
+                rotation = self.adjustmentRotateGet();
+
+                switch (rotation) {
+
+                    case -90:
+                    case 270:
+
+                        // Adjust the crop for -90 rotation (rotating to the left)
+                        bounds = {
+                            width: bounds.height,
+                            height: bounds.width,
+                            x: bounds.y,
+                            y: 1 - bounds.x - bounds.width
+                        };
+
+                        break;
+
+                    case 90:
+                    case -270:
+
+                        // Adjust the crop for 90 rotation (rotating to the right)
+                        bounds = {
+                            width: bounds.height,
+                            height: bounds.width,
+                            x: 1 - bounds.y - bounds.height,
+                            y: bounds.x
+                        };
+
+                        break;
+
+                    case 180:
+                    case -180:
+
+                        // Adjust the crop for 180 rotation
+
+                        bounds = {
+                            width: bounds.width,
+                            height: bounds.height,
+                            x: 1 - bounds.x - bounds.width,
+                            y: 1 - bounds.y - bounds.height
+                        };
+
+                        break;
+                }
+            }
+            return bounds;
+        },
+
+
+        /**
+         * Given a crop value that represents the cropped region for the image on the screen,
+         * this function adjusts the value to remove the rotation or flip, so the crop will then
+         * represent the crop that would be applied to the original image.
+         * For example, if the image has been rotated then the width and the height of the crop
+         * might need to be reversed.
+         * @param  {Object} [bounds=current crop from the screen]
+         * The bounds of the crop.
+         * @param  {Number} bounds.x Number from 0 to 1.
+         * @param  {Number} bounds.y Number from 0 to 1.
+         * @param  {Number} bounds.width Number from 0 to 1.
+         * @param  {Number} bounds.height Number from 0 to 1.
+         * @return {Object} The bounds of the crop for the image that is not rotated or flipped.
+         */
+        cropRemoveAdjustments: function(bounds) {
+
+            var rotation;
+            var self;
+            self = this;
+            bounds = bounds || self.cropGetValue();
+
+            // Make sure crop is actually set
+            if (bounds.width) {
+
+                // Determine if the image is rotated - if so we must adjust the crop values
+                rotation = self.adjustmentRotateGet();
+
+                switch (rotation) {
+
+                    case 90:
+                    case -270:
+
+                        // Adjust the crop for -90 rotation (rotating to the left)
+                        bounds = {
+                            width: bounds.height,
+                            height: bounds.width,
+                            x: bounds.y,
+                            y: 1 - bounds.y - bounds.width
+                        };
+
+                        break;
+
+                    case -90:
+                    case 270:
+
+                        // Adjust the crop for 90 rotation (rotating to the right)
+                        bounds = {
+                            width: bounds.height,
+                            height: bounds.width,
+                            x: 1 - bounds.y - bounds.height,
+                            y: bounds.x
+                        };
+
+                        break;
+
+                    case 180:
+                    case -180:
+
+                        // Adjust the crop for 180 rotation
+
+                        bounds = {
+                            width: bounds.width,
+                            height: bounds.height,
+                            x: 1 - bounds.x - bounds.width,
+                            y: 1 - bounds.y - bounds.height
+                        };
+
+                        break;
+                }
+            }
+            return bounds;
+        },
+
 
         /**
          * Reset the crop so it covers the entire image.
