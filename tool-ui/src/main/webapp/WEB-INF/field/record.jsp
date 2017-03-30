@@ -5,6 +5,7 @@ com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.Metric,
+com.psddev.dari.db.Modification,
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectFieldComparator,
 com.psddev.dari.db.Recordable,
@@ -43,6 +44,7 @@ ObjectType fieldValueType = null;
 List<ObjectType> validTypes = field.as(ToolUi.class).findDisplayTypes().stream()
         .filter(type -> Recordable.class.isAssignableFrom(type.getObjectClass()))
         .filter(type -> !(Metric.class.isAssignableFrom(type.getObjectClass()))
+                && !(Modification.class.isAssignableFrom(type.getObjectClass()))
                 && !(ObjectField.class.isAssignableFrom(type.getObjectClass())))
         .collect(Collectors.toList());
 
