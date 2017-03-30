@@ -18,6 +18,7 @@ com.psddev.dari.util.StorageItem,
 
 java.util.ArrayList,
 java.util.Collections,
+java.util.Comparator,
 java.util.Date,
 java.util.List,
 java.util.HashMap,
@@ -201,7 +202,7 @@ if (isEmbedded) {
             }
         }
 
-        Collections.sort(validObjects, new ObjectFieldComparator("_type/_label", false));
+        validObjects.sort(Comparator.comparing(wp::getTypeLabel));
 
         String validObjectClass = wp.createId();
         Map<UUID, String> showClasses = new HashMap<UUID, String>();
@@ -214,7 +215,10 @@ if (isEmbedded) {
             wp.write("</option>");
         }
 
-        for (Object validObject : validObjects) {
+        int validObjectsSize = validObjects.size();
+
+        for (int i = 0; i < validObjectsSize; ++ i) {
+            Object validObject = validObjects.get(i);
             State validState = State.getInstance(validObject);
             String showClass = wp.createId();
             showClasses.put(validState.getId(), showClass);
@@ -223,7 +227,18 @@ if (isEmbedded) {
                 wp.write(" selected");
             }
             wp.write(">");
-            wp.write(wp.objectLabel(validState.getType()));
+
+            String typeLabel = wp.getTypeLabel(validObject);
+
+            wp.writeHtml(typeLabel);
+
+            if ((i > 0 && typeLabel.equals(wp.getTypeLabel(validObjects.get(i - 1))))
+                    || (i < validObjectsSize - 1 && typeLabel.equals(wp.getTypeLabel(validObjects.get(i + 1))))) {
+                wp.writeHtml(" (");
+                wp.writeHtml(validState.getType().getInternalName());
+                wp.writeHtml(")");
+            }
+
             wp.write("</option>");
         }
         wp.write("</select>");
