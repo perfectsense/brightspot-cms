@@ -1134,7 +1134,7 @@ define([
         adjustmentFlipHSet: function(flag) {
             var self;
             self = this;
-            self.dom.$edit.find(":input[name$='.flipH']").prop('checked', flag);
+            self.dom.$edit.find(":input[name$='.flipH']").prop('checked', flag).trigger('change');
         },
 
 
@@ -1171,7 +1171,7 @@ define([
         adjustmentFlipVSet: function(flag) {
             var self;
             self = this;
-            self.dom.$edit.find(":input[name$='.flipV']").prop('checked', flag);
+            self.dom.$edit.find(":input[name$='.flipV']").prop('checked', flag).trigger('change');
         },
 
 
@@ -1409,6 +1409,20 @@ define([
 
             // Set the initial value for the sizebox based on the input
             self.cropSetSizeBox();
+
+            // If the image is adjusted (like if it is rotated or flipped)
+            // then update the position of the sizebox.
+            // If the image is updated then update the hotspot image
+            self.$element.on('imageAdjustment', function(event, image, adjustment) {
+
+                switch (adjustment) {
+                    case 'rotate':
+                    case 'flipH':
+                    case 'flipV':
+                        self.cropSetSizeBox();
+                        break;
+                }
+            });
         },
 
 
@@ -1760,9 +1774,12 @@ define([
          */
         cropDoAdjustments: function(bounds) {
 
+            var flipH;
+            var flipV;
+            var rotation;
             var self;
             self = this;
-            bounds = bounds || self.cropGetInput();
+            bounds = $.extend({}, bounds || self.cropGetInput());
 
             // Make sure crop is actually set
             if (bounds.width) {
@@ -1812,6 +1829,28 @@ define([
 
                         break;
                 }
+
+                flipV = self.adjustmentFlipVGet();
+                flipH = self.adjustmentFlipHGet();
+
+                if (flipH) {
+
+                    if (rotation === 90 || rotation === -90) {
+                        bounds.y = 1 - bounds.y - bounds.height;
+                    } else {
+                        bounds.x = 1 - bounds.x - bounds.width;
+                    }
+                }
+
+                if (flipV) {
+
+                    if (rotation === 90 || rotation === -90) {
+                        bounds.x = 1 - bounds.x - bounds.width;
+                    } else {
+                        bounds.y = 1 - bounds.y - bounds.height;
+                    }
+                }
+
             }
             return bounds;
         },
