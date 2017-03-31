@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.util.JspUtils;
-import com.psddev.dari.util.TypeDefinition;
 import org.joda.time.DateTime;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Renderer;
@@ -226,18 +225,11 @@ public class SearchResultRenderer {
         }
 
         if (!resultsDisplayed) {
-            for (QueryRestriction restriction : StreamSupport.stream(QueryRestriction.classIterable().spliterator(), false)
-                    .map(clazz -> TypeDefinition.getInstance(clazz).newInstance())
-                    .filter(QueryRestriction::displayInRenderer)
+            for (Class<? extends QueryRestriction> clazz : StreamSupport.stream(QueryRestriction.classIterable().spliterator(), false)
+                    .filter(SearchResultRendererDisplayable.class::isAssignableFrom)
                     .collect(Collectors.toList())) {
 
-                page.writeStart("form",
-                        "class", "queryRestrictions",
-                        "data-bsp-autosubmit", "",
-                        "method", "post",
-                        "action", page.url("", Search.OFFSET_PARAMETER, null));
-                    restriction.writeHtml(page);
-                page.writeEnd();
+                page.writeQueryRestrictionForm(clazz);
             }
 
             if (search.findSorts().size() > 1) {

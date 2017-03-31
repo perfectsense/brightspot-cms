@@ -8,14 +8,6 @@ import java.io.IOException;
 
 public interface QueryRestriction {
 
-    /**
-     * @return {@code true} if this restriction should be displayed in the
-     * search result renderer, {@code false} otherwise.
-     */
-    default boolean displayInRenderer() {
-        return false;
-    }
-
     public static Iterable<Class<? extends QueryRestriction>> classIterable() {
         return ClassFinder.Static.findClasses(QueryRestriction.class);
     }
