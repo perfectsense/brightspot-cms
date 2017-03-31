@@ -1493,7 +1493,6 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Remove the attribute and data so we don't fetch again
                     $input.removeAttr('data-form-fields-url');
-                    $input.val('');
 
                     // Fetch the content
                     // Override the promise we created by that returned by the ajax call,
@@ -1509,6 +1508,7 @@ The HTML within the repeatable element must conform to these standards:
                         var content = typeof(response) === 'string' ? response : response.responseText;
 
                         // When ajax completes add the content to the page
+                        $input.val('');
                         $(content).appendTo($location);
 
                         // If the item has already been removed, mark the new content to be removed as well

@@ -2,6 +2,8 @@
 
 com.psddev.cms.db.BulkUploadDraft,
 com.psddev.cms.db.Content,
+com.psddev.cms.db.ContentTemplate,
+com.psddev.cms.db.ContentTemplateSource,
 com.psddev.cms.db.Renderer,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ObjectTypeOrContentTemplate,
@@ -67,6 +69,7 @@ Collections.sort(validTypes, new ObjectFieldComparator("_label", false));
 final String inputName = (String) request.getAttribute("inputName");
 final String idName = inputName + ".id";
 final String typeIdName = inputName + ".typeId";
+final String templateIdName = inputName + ".templateId";
 final String publishDateName = inputName + ".publishDate";
 final String dataName = inputName + ".data";
 String layoutsName = inputName + ".layouts";
@@ -83,10 +86,11 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
         UUID[] ids = wp.uuidParams(idName);
         UUID[] typeIds = wp.uuidParams(typeIdName);
+        UUID[] templateIds = wp.uuidParams(templateIdName);
         Date[] publishDates = wp.dateParams(publishDateName);
         List<String> datas = wp.params(String.class, dataName);
 
-        for (int i = 0, s = Math.min(Math.min(ids.length, typeIds.length), publishDates.length); i < s; ++ i) {
+        for (int i = 0, s = Math.min(Math.min(Math.min(ids.length, typeIds.length), templateIds.length), publishDates.length); i < s; ++ i) {
             Object item = existing.get(ids[i]);
             State itemState = State.getInstance(item);
 
@@ -99,6 +103,15 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                 itemState = State.getInstance(item);
                 itemState.setResolveInvisible(true);
                 itemState.setId(ids[i]);
+            }
+
+            UUID templateId = templateIds[i];
+
+            if (templateId != null) {
+                itemState.as(ContentTemplateSource.class).setSource(Query
+                        .from(ContentTemplate.class)
+                        .where("_id = ?", templateId)
+                        .first());
             }
 
             String data = i < datas.size() ? datas.get(i) : null;
@@ -338,6 +351,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 
                                                             for (Object validObject : validObjects) {
                                                                 State validState = State.getInstance(validObject);
+                                                                ContentTemplate validObjectTemplate = validState.as(ContentTemplateSource.class).getSource();
                                                                 Date validObjectPublishDate = validState.as(Content.ObjectModification.class).getPublishDate();
 
                                                                 wp.writeStart("div",
@@ -346,6 +360,11 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                             "name", typeIdName,
                                                                             "type", "hidden",
                                                                             "value", validState.getTypeId());
+
+                                                                    wp.writeElement("input",
+                                                                            "name", templateIdName,
+                                                                            "type", "hidden",
+                                                                            "value", validObjectTemplate != null ? validObjectTemplate.getId() : null);
 
                                                                     wp.writeElement("input",
                                                                             "name", publishDateName,
@@ -500,6 +519,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 
                                                         for (Object validObject : validObjects) {
                                                             State validState = State.getInstance(validObject);
+                                                            ContentTemplate validObjectTemplate = validState.as(ContentTemplateSource.class).getSource();
                                                             Date validObjectPublishDate = validState.as(Content.ObjectModification.class).getPublishDate();
 
                                                             wp.writeStart("div",
@@ -508,6 +528,11 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                         "name", typeIdName,
                                                                         "type", "hidden",
                                                                         "value", validState.getTypeId());
+
+                                                                wp.writeElement("input",
+                                                                        "name", templateIdName,
+                                                                        "type", "hidden",
+                                                                        "value", validObjectTemplate != null ? validObjectTemplate.getId() : null);
 
                                                                 wp.writeElement("input",
                                                                         "name", publishDateName,
@@ -652,6 +677,7 @@ if (!isValueExternal) {
             for (Object item : fieldValue) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
+                ContentTemplate itemTemplate = itemState.as(ContentTemplateSource.class).getSource();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
                 boolean itemExpanded = field.as(ToolUi.class).isExpanded() || Edit.isWorkInProgressRestored(wp, item);
@@ -700,6 +726,11 @@ if (!isValueExternal) {
                             "type", "hidden",
                             "name", typeIdName,
                             "value", itemType.getId());
+
+                    wp.writeElement("input",
+                            "type", "hidden",
+                            "name", templateIdName,
+                            "value", itemTemplate != null ? itemTemplate.getId() : null);
 
                     wp.writeElement("input",
                             "type", "hidden",
