@@ -8,6 +8,7 @@ import com.psddev.dari.db.State;
 
 import java.util.Map;
 
+@Recordable.BootstrapPackages("Content Templates")
 public class ContentTemplate extends Record {
 
     @Indexed(unique = true)

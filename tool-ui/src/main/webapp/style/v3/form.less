@@ -33,6 +33,13 @@
   transition: background-color @time-fast;
   vertical-align: middle;
 
+  &[disabled],
+  &.state-disabled {
+    color: @color-placeholder;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
   &:hover {
     background-color: @color-heading;
     text-decoration: none;
@@ -621,7 +628,8 @@
   }
 }
 
-.objectInputs {
+.inputLarge > .objectInputs,
+.inputLarge > .toggleable-form > .objectInputs {
   margin-bottom: -10px;
 }
 
@@ -678,7 +686,7 @@
   -moz-appearance: none;
   -webkit-appearance: none;
   background-image: url(icon/angle-down.svg);
-  background-position: right 9px top 7px;
+  background-position: right 9px center;
   background-repeat: no-repeat;
   background-size: auto 14px;
   cursor: pointer;

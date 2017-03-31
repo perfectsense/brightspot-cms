@@ -57,6 +57,7 @@
 @import 'work-streams.less';
 @import 'workflow.less';
 
+@import 'ContentEditSites.less';
 @import 'DashboardTabSelect.less';
 @import 'EditFieldUpdateViewers.less';
 @import 'ExternalPreviewFrame.less';
@@ -67,6 +68,7 @@
 @import 'Tab.less';
 @import 'TestSms.less';
 @import 'ToolUserAvatar.less';
+@import 'WidgetSearchAdvancedQuery.less';
 
 // From Bower.
 @import url('../handsontable.full.css');
@@ -311,21 +313,12 @@
     margin-bottom: 10px;
   }
 
-  li {
-    border-bottom: 1px solid @color-placeholder;
-    padding-bottom: 10px;
-  }
-
-  select {
-    width: 45%;
-  }
-
   .repeatableLabel {
     display: none;
   }
 
   .addButtonContainer {
-    margin-top: -5px;
+    margin-top: 5px;
   }
 }
 
@@ -338,6 +331,10 @@
 
   label {
     display: block;
+
+    input {
+      vertical-align: bottom;
+    }
   }
 
   ul {
@@ -352,18 +349,44 @@
 }
 
 .widget-urlsItem {
-  margin-bottom: 10px;
+  border-bottom: 1px dotted @color-separator !important;
+  border-radius: 2px;
+  padding: 0 10px 10px 10px;
+  margin: 0 -10px 10px -10px;
+  overflow: hidden;
   position: relative;
+
+  select,
+  .dropDown-input {
+    float: left;
+    width: ~'calc(50% - 3px)';
+  }
+
+  .widget-urlsItemLabel + select,
+  .widget-urlsItemLabel + select + .dropDown-input {
+    margin-right: 5px;
+  }
 
   .removeButton {
     .icon-only;
 
     position: absolute;
-    right: 4px !important;
-    top: 3px !important;
+    right: 5px !important;
+    top: -1px !important;
 
     &:hover {
       background: transparent !important;
+    }
+  }
+
+  &.toBeRemoved {
+    .widget-urlsItemLabel {
+      text-decoration: line-through;
+
+      &,
+      & a {
+        color: @color-remove;
+      }
     }
   }
 }
@@ -372,14 +395,39 @@
   display: block;
   margin-bottom: 5px;
 
+  a {
+    display: inline-block;
+    margin-right: 25px;
+    min-width: 50%;
+  }
+
   textarea& {
-    min-height: 42px;
-    padding-right: 20px;
+    margin-right: 20px;
+    width: ~'calc(100% - 25px)';
   }
 }
 
 .widget-urlsItemRemove {
-  white-space: nowrap;
+  cursor: pointer;
+  position: absolute;
+  right: 5px;
+  top: -1px;
+
+  input[type='checkbox'] {
+    visibility: hidden;
+
+    + .widget-urlsItemRemoveText {
+      .icon;
+      .icon-action-remove;
+      .icon-only;
+      color: @color-remove;
+    }
+
+    &:checked + .widget-urlsItemRemoveText {
+      .icon-action-add;
+      color: @color-link-dark;
+    }
+  }
 }
 
 .widget-preview {
@@ -822,48 +870,6 @@ form[data-type='com.psddev.cms.db.ContentType'] {
 
 .inputContainer[data-field='dari.singleton.key'] {
   display: none !important;
-}
-
-.widget-searchAdvancedQuery {
-  .dropDown-input,
-  .objectId-select {
-    max-width: 15%;
-    width: 15%;
-  }
-
-  .repeatableObjectId {
-    .objectId-select {
-      max-width: 40%;
-      width: 40%;
-    }
-
-    .addButtonContainer {
-      margin-left: 23px;
-      margin-top: 0;
-    }
-  }
-
-  .objectId-edit,
-  .objectId-clear {
-    display: none !important;
-  }
-
-  form {
-    position: relative;
-  }
-
-  ul {
-    margin-bottom: 0;
-  }
-
-  li {
-    margin-top: 5px;
-    position: relative;
-  }
-
-  button.icon-action-add {
-    margin-left: @gap-medium;
-  }
 }
 
 .contentForm-main > .widget > h1 {

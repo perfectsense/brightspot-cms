@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -443,22 +444,23 @@ public class BulkWorkflow extends PageServlet {
         private boolean hasAnyTransitions = false;
 
         public Context(PageContext pageContext) {
-            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), null, null);
+            this(pageContext.getServletContext(), (HttpServletRequest) pageContext.getRequest(), (HttpServletResponse) pageContext.getResponse(), pageContext.getOut(), null, null);
         }
 
         public Context(ToolPageContext page) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), null, null);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), null, null);
         }
 
         public Context(ToolPageContext page, SearchResultSelection selection, Search search) {
 
-            this(page.getServletContext(), page.getRequest(), page.getResponse(), selection, search);
+            this(page.getServletContext(), page.getRequest(), page.getResponse(), page.getDelegate(), selection, search);
         }
 
-        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, SearchResultSelection selection, Search search) {
+        public Context(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response, Writer delegate, SearchResultSelection selection, Search search) {
 
             super(servletContext, request, response);
+            setDelegate(delegate);
 
             String selectionId = param(String.class, SELECTION_ID_PARAMETER);
 

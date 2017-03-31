@@ -74,71 +74,82 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
 
             page.writeEnd();
 
-            page.writeStart("div", "class", "scheduledEvents-controls");
-                page.writeStart("ul", "class", "piped");
-                    page.writeStart("li");
-                        page.writeStart("a",
-                                "class", "icon icon-action-create",
-                                "href", page.cmsUrl("/scheduleEdit"),
-                                "target", "scheduleEdit");
-                            page.writeHtml(page.localize(ScheduledEventsWidget.class, "action.new"));
-                        page.writeEnd();
-                    page.writeEnd();
-
-                    page.writeStart("li");
-                        page.writeStart("a",
-                                "class", "icon icon-action-search",
-                                "href", page.cmsUrl("/scheduleList"),
-                                "target", "scheduleList");
-                            page.writeHtml(page.localize(ScheduledEventsWidget.class, "action.viewAll"));
-                        page.writeEnd();
+            page.writeStart("ul", "class", "scheduledEvents-controls");
+                page.writeStart("li");
+                    page.writeStart("a",
+                            "class", "icon icon-action-create",
+                            "href", page.cmsUrl("/scheduleEdit"),
+                            "target", "scheduleEdit");
+                        page.writeHtml(page.localize(ScheduledEventsWidget.class, "action.new"));
                     page.writeEnd();
                 page.writeEnd();
 
-                page.writeStart("ul", "class", "scheduledEvents-modes");
-                    for (Mode m : Mode.values()) {
-                        page.writeStart("li", "class", (m.equals(mode) ? "selected" : ""));
-                            page.writeStart("a",
-                                    "href", page.url("", "mode", m.name()));
-                                page.writeHtml(page.localize(ScheduledEventsWidget.class, m.resourceKey));
-                            page.writeEnd();
-                        page.writeEnd();
-                    }
+                page.writeStart("li");
+                    page.writeStart("a",
+                            "class", "icon icon-action-search",
+                            "href", page.cmsUrl("/scheduleList"),
+                            "target", "scheduleList");
+                        page.writeHtml(page.localize(ScheduledEventsWidget.class, "action.viewAll"));
+                    page.writeEnd();
                 page.writeEnd();
             page.writeEnd();
 
-            page.writeTag("hr", "class", "scheduledEvents-separator");
-
             String beginMonth = begin.monthOfYear().getAsText();
+            int beginDay = begin.dayOfMonth().get();
             int beginYear = begin.year().get();
-            String endMonth = end.monthOfYear().getAsText();
-            int endYear = end.year().get();
+            DateTime displayEnd = end.minusDays(1);
+            String displayEndMonth = displayEnd.monthOfYear().getAsText();
+            int displayEndDay = displayEnd.dayOfMonth().get();
+            int displayEndYear = displayEnd.year().get();
 
             //TODO: LOCALIZE
-            page.writeStart("div", "class", "scheduledEvents-controls");
-                page.writeStart("div", "class", "scheduledEvents-dateRange");
+            page.writeStart("div", "class", "scheduledEvents-date");
+                page.writeStart("div", "class", "scheduledEvents-dateDisplay");
+                    page.writeStart("form",
+                            "class", "autoSubmit",
+                            "method", "get",
+                            "action", page.url(null));
+
+                    page.writeStart("select", "name", "mode");
+
+                    for (Mode m : Mode.values()) {
+                        page.writeStart("option",
+                                "selected", m.equals(mode) ? "selected" : null,
+                                "value", m.name());
+                        page.writeHtml(page.localize(ScheduledEventsWidget.class, m.resourceKey));
+                        page.writeEnd();
+                    }
+
+                    page.writeEnd();
+                    page.writeEnd();
+
+                    page.writeStart("div", "class", "scheduledEvents-dateRange");
                     page.writeHtml(beginMonth);
                     page.writeHtml(" ");
-                    page.writeHtml(begin.dayOfMonth().get());
+                    page.writeHtml(beginDay);
 
-                    if (beginYear != endYear) {
+                    if (beginYear != displayEndYear) {
                         page.writeHtml(", ");
                         page.writeHtml(beginYear);
                     }
 
-                    page.writeHtml(" - ");
+                    if (beginDay != displayEndDay) {
+                        page.writeHtml(" - ");
 
-                    if (!endMonth.equals(beginMonth)) {
-                        page.writeHtml(endMonth);
-                        page.writeHtml(" ");
+                        if (!displayEndMonth.equals(beginMonth)) {
+                            page.writeHtml(displayEndMonth);
+                            page.writeHtml(" ");
+                        }
+
+                        page.writeHtml(displayEndDay);
                     }
 
-                    page.writeHtml(end.dayOfMonth().get());
                     page.writeHtml(", ");
-                    page.writeHtml(endYear);
+                    page.writeHtml(displayEndYear);
+                    page.writeEnd();
                 page.writeEnd();
 
-                page.writeStart("ul", "class", "pagination");
+                page.writeStart("ul", "class", "pagination scheduledEvents-datePagination");
 
                     DateTime previous = mode.getPrevious(date);
                     DateTime today = new DateTime(null, page.getUserDateTimeZone()).toDateMidnight().toDateTime();
@@ -299,29 +310,19 @@ public class ScheduledEventsWidget extends DefaultDashboardWidget {
                     page.writeStart("span", "class", "calendarDayOfMonth").writeHtml(date.dayOfMonth().get()).writeEnd();
 
                     if (!ObjectUtils.isBlank(schedules)) {
+                        long count = schedules.stream()
+                                .mapToLong(schedule -> Query
+                                        .fromAll()
+                                        .where("com.psddev.cms.db.Draft/schedule = ?", schedule)
+                                        .count())
+                                .sum();
 
-                        for (Schedule schedule : schedules) {
-                            List<Object> drafts = Query.fromAll().where("com.psddev.cms.db.Draft/schedule = ?", schedule).selectAll();
-
-                            if (drafts.isEmpty()) {
-                                continue;
-                            }
-
-                            int draftCount = drafts.size();
-
-                            page.writeStart("div", "class", "calendarEventsContainer");
-                                page.writeStart("a",
-                                        "href", page.cmsUrl("/scheduleEventsList", "date", date.toDate().getTime()),
-                                        "target", "scheduleEventsList");
-                                    page.writeStart("div", "class", "calendarEvents");
-                                        page.writeStart("div", "class", "count");
-                                            page.writeHtml(draftCount);
-                                        page.writeEnd();
-                                        page.writeStart("div", "class", "label");
-                                            page.writeHtml("Event" + (draftCount > 1 ? "s" : ""));
-                                        page.writeEnd();
-                                    page.writeEnd();
-                                page.writeEnd();
+                        if (count > 0) {
+                            page.writeStart("a",
+                                    "class", "calendarEvents",
+                                    "href", page.cmsUrl("/scheduleEventsList", "date", date.toDate().getTime()),
+                                    "target", "scheduleEventsList");
+                                page.writeHtml(count);
                             page.writeEnd();
                         }
                     }

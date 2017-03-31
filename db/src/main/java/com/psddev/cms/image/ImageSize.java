@@ -16,6 +16,7 @@ import java.util.List;
 public final class ImageSize {
 
     private static final ThreadLocalStack<ImageSizeProvider> PROVIDER = new ThreadLocalStack<>();
+    private static final ThreadLocalStack<String> FIELD = new ThreadLocalStack<>();
     private static final ThreadLocal<List<String>> CONTEXTS = ThreadLocal.withInitial(ArrayList::new);
 
     private final int width;
@@ -72,19 +73,25 @@ public final class ImageSize {
             return null;
         }
 
-        for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
-            Class<?> c = ObjectUtils.getClassByName(ste.getClassName());
+        String field = FIELD.get();
 
-            if (c != null && ViewModel.class.isAssignableFrom(c)) {
-                String field = ImageSizeEnhancer.toField(ste.getMethodName());
+        if (field == null) {
+            for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+                Class<?> c = ObjectUtils.getClassByName(ste.getClassName());
 
-                if (field != null) {
-                    return getUrlForField(image, field);
+                if (c != null && ViewModel.class.isAssignableFrom(c)) {
+                    field = ImageSizeEnhancer.toField(ste.getMethodName());
+
+                    if (field != null) {
+                        break;
+                    }
                 }
             }
         }
 
-        return image.getPublicUrl();
+        return field != null
+                ? getUrlForField(image, field)
+                : image.getPublicUrl();
     }
 
     /**
@@ -94,6 +101,15 @@ public final class ImageSize {
      */
     public static ThreadLocalStack<ImageSizeProvider> getProviderStack() {
         return PROVIDER;
+    }
+
+    /**
+     * Returns the stack that points to the current field.
+     *
+     * @return Nonnull.
+     */
+    public static ThreadLocalStack<String> getFieldStack() {
+        return FIELD;
     }
 
     /**

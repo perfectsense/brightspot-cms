@@ -564,7 +564,7 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-html': '${content.state.getType().label}: ${toolPageContext.createObjectLabelHtml(content)}'
+                    'data-dynamic-html': '${toolPageContext.getObjectLabel(content.state.getType())}: ${toolPageContext.createObjectLabelHtml(content)}'
                     
                 }).on('click', function() {
                     self.itemToggle($item);

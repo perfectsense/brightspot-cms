@@ -5,6 +5,7 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
+import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.RoutingFilter;
 import com.psddev.dari.util.StorageItem;
 
@@ -31,17 +32,27 @@ public class ContentMetadata extends PageServlet {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected void doService(ToolPageContext page) throws IOException, ServletException {
-        UUID id = page.param(UUID.class, "id");
-        Object object = Optional.ofNullable(Query.fromAll().where("_id = ?", id).first())
-                .orElseThrow(() -> new IllegalArgumentException(String.format("No Object found for id [%s]!", id)));
+        Map<String, Object> metadata;
 
-        String fieldName = page.param(String.class, "fieldName");
-        StorageItem file = (StorageItem) Optional.ofNullable(State.getInstance(object).get(fieldName))
-                .orElseThrow(() -> new IllegalArgumentException(String.format("No file found for fieldName [%s]!", fieldName)));
+        if (page.isFormPost()) {
+            metadata = Optional.ofNullable((Map<String, Object>) ObjectUtils.fromJson(page.param(String.class, "metadata")))
+                    .orElseThrow(() -> new IllegalArgumentException("No metadata found!"));
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> metadata = new TreeMap<>(file.getMetadata().entrySet().stream()
+        } else {
+            UUID id = page.param(UUID.class, "id");
+            Object object = Optional.ofNullable(Query.fromAll().where("_id = ?", id).first())
+                 .orElseThrow(() -> new IllegalArgumentException(String.format("No Object found for id [%s]!", id)));
+
+            String fieldName = page.param(String.class, "fieldName");
+            StorageItem file = (StorageItem) Optional.ofNullable(State.getInstance(object).get(fieldName))
+                    .orElseThrow(() -> new IllegalArgumentException(String.format("No file found for fieldName [%s]!", fieldName)));
+
+            metadata = file.getMetadata();
+        }
+
+        metadata = new TreeMap<>(metadata.entrySet().stream()
                 .filter(entry -> !entry.getKey().startsWith("cms."))
                 .collect(Collectors.toMap(entry -> {
                     String key = entry.getKey();
