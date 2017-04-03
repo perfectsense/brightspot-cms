@@ -5,12 +5,14 @@ import java.util.Map;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.util.CompactMap;
 
+@Deprecated
 @AbVariationObject.FieldInternalNamePrefix("cms.ab.")
 public class AbVariationObject extends Modification<Object> {
 
     @ToolUi.Hidden
     private Map<String, AbVariationField> fields;
 
+    @Deprecated
     public Map<String, AbVariationField> getFields() {
         if (fields == null) {
             fields = new CompactMap<String, AbVariationField>();

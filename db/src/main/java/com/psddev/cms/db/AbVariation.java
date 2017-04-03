@@ -4,6 +4,7 @@ import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.MetricInterval;
 import com.psddev.dari.db.Record;
 
+@Deprecated
 @AbVariation.Embedded
 public class AbVariation extends Record {
 
