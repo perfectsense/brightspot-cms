@@ -5,8 +5,11 @@ import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
+import com.psddev.dari.db.StateSerializer;
+import com.psddev.dari.util.ObjectUtils;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Recordable.BootstrapPackages("Content Templates")
 public class ContentTemplate extends Record {
@@ -33,6 +36,31 @@ public class ContentTemplate extends Record {
 
     public void setTemplate(Recordable template) {
         this.template = template;
+    }
+
+    public Recordable createObject() {
+        Recordable object = getTemplate();
+        State state = State.getInstance(object);
+        Map<String, Object> values = state.getSimpleValues();
+
+        removeIds(values);
+        state.setValues(values);
+
+        return object;
+    }
+
+    private void removeIds(Object value) {
+        if (value instanceof Iterable) {
+            for (Object item : (Iterable<?>) value) {
+                removeIds(item);
+            }
+
+        } else if (value instanceof Map) {
+            Map<?, ?> valueMap = (Map<?, ?>) value;
+
+            valueMap.remove(StateSerializer.ID_KEY);
+            valueMap.values().forEach(this::removeIds);
+        }
     }
 
     @Indexed

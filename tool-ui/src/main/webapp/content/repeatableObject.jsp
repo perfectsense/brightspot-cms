@@ -28,7 +28,7 @@ ContentTemplate template = Query.from(ContentTemplate.class)
 
 if (template != null) {
     type = template.getTemplateType();
-    object = template.getTemplate();
+    object = template.createObject();
 
 } else {
     type = ObjectType.getInstance(typeId);

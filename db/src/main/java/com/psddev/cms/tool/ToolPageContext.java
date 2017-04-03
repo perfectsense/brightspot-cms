@@ -889,7 +889,7 @@ public class ToolPageContext extends WebPageContext {
                         }
 
                         if (contentTemplate != null) {
-                            object = contentTemplate.getTemplate();
+                            object = contentTemplate.createObject();
                             State.getInstance(object).setId(param(UUID.class, "id"));
 
                         } else {
