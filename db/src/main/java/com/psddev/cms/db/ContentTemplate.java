@@ -6,10 +6,8 @@ import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 import com.psddev.dari.db.StateSerializer;
-import com.psddev.dari.util.ObjectUtils;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Recordable.BootstrapPackages("Content Templates")
 public class ContentTemplate extends Record {
