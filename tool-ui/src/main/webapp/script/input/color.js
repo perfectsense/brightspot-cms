@@ -97,4 +97,17 @@ function($, bsp_utils) {
             $input.next('.sp-replacer').find('.sp-preview').attr('data-placeholder', $input.attr('placeholder'));
         }
     });
+
+    $(window).on('resize', function (event) {
+        $(event.target).find('input[type="text"].color').each(function () {
+            var $input = $(this);
+
+            if ($input.prop('disabled')) {
+                $input.spectrum('disable');
+
+            } else {
+                $input.spectrum('enable');
+            }
+        });
+    });
 });
