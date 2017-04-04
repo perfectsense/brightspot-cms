@@ -14,6 +14,7 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.PaginatedResult;
 
+/** @deprecated No replacement. */
 @Deprecated
 public class AbDatabase extends ForwardingDatabase {
 
