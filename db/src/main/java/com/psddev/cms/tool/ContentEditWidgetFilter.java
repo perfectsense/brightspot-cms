@@ -51,11 +51,20 @@ public class ContentEditWidgetFilter extends AbstractFilter implements AbstractF
         }
 
         ToolPageContext page = new ToolPageContext(getServletContext(), request, response);
-        Class<?> widgetClass = ObjectUtils.getClassByName(page.param(String.class, WIDGET_PARAMETER));
 
+        Object content = Query
+                .fromAll()
+                .where("_id = ?", page.param(UUID.class, CONTENT_PARAMETER))
+                .first();
+
+        if (content == null) {
+            return;
+        }
+
+        Class<?> widgetClass = ObjectUtils.getClassByName(page.param(String.class, WIDGET_PARAMETER));
         Edit.writeWidgetOrError(
                 page,
-                Query.fromAll().where("_id = ?", page.param(UUID.class, CONTENT_PARAMETER)).first(),
+                content,
                 ContentEditSection.valueOf(page.param(String.class, SECTION_PARAMETER)),
                 (ContentEditWidget) TypeDefinition.getInstance(widgetClass).newInstance());
     }
