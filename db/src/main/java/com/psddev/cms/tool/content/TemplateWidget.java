@@ -1,7 +1,7 @@
 package com.psddev.cms.tool.content;
 
 import com.psddev.cms.db.Template;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.UpdatingContentEditWidget;
 import com.psddev.dari.db.Database;
@@ -19,12 +19,12 @@ import java.util.UUID;
 public class TemplateWidget extends UpdatingContentEditWidget {
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.RIGHT;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.RIGHT;
     }
 
     @Override
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return -10.0;
     }
 
@@ -34,7 +34,7 @@ public class TemplateWidget extends UpdatingContentEditWidget {
     }
 
     @Override
-    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         Object original = page.getRequest().getAttribute("original");
 
         if (original == null) {
@@ -52,7 +52,7 @@ public class TemplateWidget extends UpdatingContentEditWidget {
         String namePrefix = objectId + "/template/";
         String defaultName = objectId + "default";
 
-        if (section == null) {
+        if (placement == null) {
             objectTemplateMod.setDefault(Database.Static.findById(objectState.getDatabase(), Template.class, page.param(UUID.class, defaultName)));
             return;
         }

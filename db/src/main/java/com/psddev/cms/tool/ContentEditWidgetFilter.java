@@ -22,15 +22,15 @@ public class ContentEditWidgetFilter extends AbstractFilter implements AbstractF
     private static final String PATH = "/_content-edit-widget";
     private static final String WIDGET_PARAMETER = "widget";
     private static final String CONTENT_PARAMETER = "content";
-    private static final String SECTION_PARAMETER = "section";
+    private static final String PLACEMENT_PARAMETER = "placement";
 
-    public static void writeFrame(ToolPageContext page, Object content, ContentEditSection section, ContentEditWidget widget) throws IOException {
+    public static void writeFrame(ToolPageContext page, Object content, ContentEditWidgetPlacement placement, ContentEditWidget widget) throws IOException {
         page.writeStart("div", "class", "frame");
         page.writeStart("a", "href", new UrlBuilder(page.getRequest())
                 .absolutePath(PATH)
                 .parameter(WIDGET_PARAMETER, widget.getClass().getName())
                 .parameter(CONTENT_PARAMETER, State.getInstance(content).getId())
-                .parameter(SECTION_PARAMETER, section.name())
+                .parameter(PLACEMENT_PARAMETER, placement.name())
                 .toString());
         page.writeEnd();
         page.writeEnd();
@@ -65,7 +65,7 @@ public class ContentEditWidgetFilter extends AbstractFilter implements AbstractF
         Edit.writeWidgetOrError(
                 page,
                 content,
-                ContentEditSection.valueOf(page.param(String.class, SECTION_PARAMETER)),
+                ContentEditWidgetPlacement.valueOf(page.param(String.class, PLACEMENT_PARAMETER)),
                 (ContentEditWidget) TypeDefinition.getInstance(widgetClass).newInstance());
     }
 }

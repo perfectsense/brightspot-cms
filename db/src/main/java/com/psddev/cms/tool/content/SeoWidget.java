@@ -4,7 +4,7 @@ import com.google.common.base.Throwables;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Page;
 import com.psddev.cms.db.Template;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.UpdatingContentEditWidget;
 import com.psddev.dari.db.DatabaseEnvironment;
@@ -30,8 +30,8 @@ public class SeoWidget extends UpdatingContentEditWidget {
     }
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.TAB;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.TAB;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class SeoWidget extends UpdatingContentEditWidget {
 
     @Override
     @SuppressWarnings("deprecation")
-    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         State state = State.getInstance(content);
         DatabaseEnvironment environment = state.getDatabase().getEnvironment();
         ObjectField[] seoFields = {
@@ -50,7 +50,7 @@ public class SeoWidget extends UpdatingContentEditWidget {
                 environment.getField("cms.seo.keywords"),
                 environment.getField("cms.seo.robots") };
 
-        if (section == null) {
+        if (placement == null) {
             try {
                 for (ObjectField seoField : seoFields) {
                     page.processField(content, seoField);

@@ -15,12 +15,12 @@ public abstract class UpdatingContentEditWidget extends ContentEditWidget {
     /**
      * @param page Nonnull.
      * @param content Nonnull.
-     * @param section {@code null} on update.
+     * @param placement {@code null} on update.
      */
-    public abstract void displayOrUpdate(ToolPageContext page, Object content, ContentEditSection section) throws IOException;
+    public abstract void displayOrUpdate(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException;
 
     @Override
-    public final void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
-        displayOrUpdate(page, content, section);
+    public final void display(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
+        displayOrUpdate(page, content, placement);
     }
 }

@@ -5,7 +5,7 @@ import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Draft;
 import com.psddev.cms.db.Localization;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ContentEditWidget;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
@@ -24,12 +24,12 @@ public class ReferencesWidget extends ContentEditWidget {
     }
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.RIGHT;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.RIGHT;
     }
 
     @Override
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return 10.0;
     }
 
@@ -39,7 +39,7 @@ public class ReferencesWidget extends ContentEditWidget {
     }
 
     @Override
-    public void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void display(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         UUID contentId = State.getInstance(content).getId();
         Query<Object> query = Query
                 .fromGroup(Content.SEARCHABLE_GROUP)

@@ -1,6 +1,6 @@
 package com.psddev.cms.tool.page;
 
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.content.ReferencesWidget;
@@ -32,7 +32,7 @@ public class ContentReferences extends PageServlet {
                 .first();
 
         if (content != null) {
-            new ReferencesWidget().display(page, content, ContentEditSection.RIGHT);
+            new ReferencesWidget().display(page, content, ContentEditWidgetPlacement.RIGHT);
         }
     }
 }

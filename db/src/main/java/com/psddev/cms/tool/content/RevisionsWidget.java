@@ -8,7 +8,7 @@ import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Schedule;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.ContentEditWidget;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.ObjectType;
@@ -30,12 +30,12 @@ public class RevisionsWidget extends ContentEditWidget {
     }
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.RIGHT;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.RIGHT;
     }
 
     @Override
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return 20.0;
     }
 
@@ -45,7 +45,7 @@ public class RevisionsWidget extends ContentEditWidget {
     }
 
     @Override
-    public void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void display(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         State state = State.getInstance(content);
 
         if (state.isNew()) {

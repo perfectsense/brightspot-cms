@@ -3,7 +3,7 @@ package com.psddev.cms.tool.content;
 import com.psddev.cms.db.Global;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Site;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.UpdatingContentEditWidget;
 import com.psddev.dari.db.Query;
@@ -22,12 +22,12 @@ public class SitesWidget extends UpdatingContentEditWidget {
     }
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.RIGHT;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.RIGHT;
     }
 
     @Override
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return -20.0;
     }
 
@@ -37,7 +37,7 @@ public class SitesWidget extends UpdatingContentEditWidget {
     }
 
     @Override
-    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         List<Site> allSites = Site.Static.findAll();
 
         if (allSites.isEmpty()) {
@@ -65,7 +65,7 @@ public class SitesWidget extends UpdatingContentEditWidget {
         Site owner = siteData.getOwner();
         Set<Site> consumers = siteData.getConsumers();
 
-        if (section == null) {
+        if (placement == null) {
             if (owner == null || page.hasPermission(owner.getPermissionId())) {
                 owner = Query.from(Site.class).where("_id = ?", page.param(UUID.class, ownerName)).first();
                 siteData.setOwner(owner);

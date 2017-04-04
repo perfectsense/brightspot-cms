@@ -4,7 +4,7 @@ import com.psddev.cms.db.Localization;
 
 import java.io.IOException;
 
-public enum ContentEditSection {
+public enum ContentEditWidgetPlacement {
 
     TOP(null),
 
@@ -29,7 +29,7 @@ public enum ContentEditSection {
 
     private final String legacyPosition;
 
-    ContentEditSection(String legacyPosition) {
+    ContentEditWidgetPlacement(String legacyPosition) {
         this.legacyPosition = legacyPosition;
     }
 
@@ -50,6 +50,6 @@ public enum ContentEditSection {
 
     @Override
     public String toString() {
-        return Localization.currentUserText(ContentEditSection.class, name());
+        return Localization.currentUserText(ContentEditWidgetPlacement.class, name());
     }
 }

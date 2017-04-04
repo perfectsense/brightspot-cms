@@ -28,7 +28,7 @@ com.psddev.cms.db.WorkflowState,
 com.psddev.cms.db.WorkflowTransition,
 com.psddev.cms.db.WorkStream,
 com.psddev.cms.tool.CmsTool,
-com.psddev.cms.tool.ContentEditSection,
+com.psddev.cms.tool.ContentEditWidgetPlacement,
 com.psddev.cms.tool.SearchCarouselDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.page.content.Edit,
@@ -343,7 +343,7 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
         <input type="hidden" name="<%= editingState.getId() %>/oldValues" value="<%= wp.h(ObjectUtils.toJson(editingOldValues)) %>">
 
         <div class="contentForm-main">
-            <% Edit.writeWidgets(wp, editing, ContentEditSection.TOP); %>
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.TOP); %>
 
             <div class="widget widget-content">
                 <h1 class="breadcrumbs"><%
@@ -574,7 +574,7 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
                 %>
             </div>
 
-            <% Edit.writeWidgets(wp, editing, ContentEditSection.BOTTOM); %>
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.BOTTOM); %>
         </div>
 
         <div class="contentForm-aside">
@@ -1249,7 +1249,7 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
                 %>
             </div>
 
-            <% Edit.writeWidgets(wp, editing, ContentEditSection.RIGHT); %>
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.RIGHT); %>
         </div>
     </form>
 </div>

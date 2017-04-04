@@ -7,7 +7,7 @@ import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.tool.CmsTool;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.UpdatingContentEditWidget;
 import com.psddev.dari.db.Query;
@@ -30,12 +30,12 @@ import java.util.stream.Stream;
 public class UrlsWidget extends UpdatingContentEditWidget {
 
     @Override
-    public ContentEditSection getSection(ToolPageContext page, Object content) {
-        return ContentEditSection.RIGHT;
+    public ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content) {
+        return ContentEditWidgetPlacement.RIGHT;
     }
 
     @Override
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return -30.0;
     }
 
@@ -51,7 +51,7 @@ public class UrlsWidget extends UpdatingContentEditWidget {
     }
 
     @Override
-    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public void displayOrUpdate(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         Object original = page.getRequest().getAttribute("original");
 
         if (original == null) {
@@ -94,7 +94,7 @@ public class UrlsWidget extends UpdatingContentEditWidget {
         CmsTool cms = page.getCmsTool();
 
         if (cms.isAlwaysGeneratePermalinks()) {
-            if (section == null) {
+            if (placement == null) {
                 dirData.setPathsMode(page.param(boolean.class, automaticName) ? null : Directory.PathsMode.MANUAL);
                 dirData.clearPaths();
 
@@ -145,7 +145,7 @@ public class UrlsWidget extends UpdatingContentEditWidget {
                     || state.as(Content.ObjectModification.class).isDraft()
                     || state.as(Workflow.Data.class).getCurrentState() != null;
 
-            if (section == null) {
+            if (placement == null) {
                 dirData.setPathsMode(page.param(boolean.class, automaticName) ? null : Directory.PathsMode.MANUAL);
 
                 Set<Directory.Path> viewOnlyPaths = !ObjectUtils.isBlank(dirData.getPaths())

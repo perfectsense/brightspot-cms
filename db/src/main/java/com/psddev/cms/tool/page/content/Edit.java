@@ -13,7 +13,7 @@ import com.psddev.cms.db.WorkInProgress;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.cms.tool.ContentEditWidget;
 import com.psddev.cms.tool.ContentEditWidgetDisplay;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ContentEditWidgetFilter;
 import com.psddev.cms.tool.Tool;
 import com.psddev.cms.tool.ToolPageContext;
@@ -265,14 +265,14 @@ public class Edit {
     /**
      * @param page Nonnull.
      * @param content Nonnull.
-     * @param section Nonnull.
+     * @param placement Nonnull.
      */
-    public static void writeWidgets(ToolPageContext page, Object content, ContentEditSection section) throws IOException {
+    public static void writeWidgets(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException {
         Preconditions.checkNotNull(page);
         Preconditions.checkNotNull(content);
-        Preconditions.checkNotNull(section);
+        Preconditions.checkNotNull(placement);
 
-        String legacyPosition = section.getLegacyPosition();
+        String legacyPosition = placement.getLegacyPosition();
 
         if (legacyPosition != null) {
             page.writeStart("div", "class", "contentWidgets contentWidgets-" + legacyPosition);
@@ -282,24 +282,24 @@ public class Edit {
         List<ContentEditWidget> widgets = getWidgets(content);
 
         widgets.sort(Comparator
-                .comparing((Function<ContentEditWidget, Double>) w -> w.getPosition(page, content, section))
+                .comparing((Function<ContentEditWidget, Double>) w -> w.getPosition(page, content, placement))
                 .thenComparing(w -> w.getClass().getName()));
 
         for (ContentEditWidget widget : widgets) {
-            ContentEditSection widgetSection = widget.getSectionOverride();
+            ContentEditWidgetPlacement widgetPlacement = widget.getPlacementOverride();
 
-            if (widgetSection == null) {
-                widgetSection = widget.getSection(page, content);
+            if (widgetPlacement == null) {
+                widgetPlacement = widget.getPlacement(page, content);
             }
 
-            if (section.equals(widgetSection)
+            if (placement.equals(widgetPlacement)
                     && widget.shouldDisplay(page, content)) {
 
                 if (widget instanceof UpdatingContentEditWidget) {
-                    writeWidgetOrError(page, content, section, widget);
+                    writeWidgetOrError(page, content, placement, widget);
 
                 } else {
-                    ContentEditWidgetFilter.writeFrame(page, content, section, widget);
+                    ContentEditWidgetFilter.writeFrame(page, content, placement, widget);
                 }
             }
         }
@@ -389,13 +389,13 @@ public class Edit {
     /**
      * @param page Nonnull.
      * @param content Nonnull.
-     * @param section Nonnull.
+     * @param placement Nonnull.
      * @param widget Nonnull.
      */
-    public static void writeWidgetOrError(ToolPageContext page, Object content, ContentEditSection section, ContentEditWidget widget) throws IOException {
+    public static void writeWidgetOrError(ToolPageContext page, Object content, ContentEditWidgetPlacement placement, ContentEditWidget widget) throws IOException {
         Preconditions.checkNotNull(page);
         Preconditions.checkNotNull(content);
-        Preconditions.checkNotNull(section);
+        Preconditions.checkNotNull(placement);
         Preconditions.checkNotNull(widget);
 
         String widgetHtml;
@@ -405,7 +405,7 @@ public class Edit {
             StringWriter widgetHtmlWriter = new StringWriter();
 
             pageCopy.setDelegate(widgetHtmlWriter);
-            widget.display(pageCopy, content, section);
+            widget.display(pageCopy, content, placement);
 
             widgetHtml = widgetHtmlWriter.toString();
 
@@ -416,9 +416,9 @@ public class Edit {
         }
 
         if (!ObjectUtils.isBlank(widgetHtml)) {
-            section.displayBefore(page, content, widget);
+            placement.displayBefore(page, content, widget);
             page.write(widgetHtml);
-            section.displayAfter(page);
+            placement.displayAfter(page);
         }
     }
 

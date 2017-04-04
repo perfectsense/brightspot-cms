@@ -3053,7 +3053,7 @@ public class ToolPageContext extends WebPageContext {
                     }
 
                     if (displayTabContentEditWidgets) {
-                        Edit.writeWidgets(this, object, ContentEditSection.TAB);
+                        Edit.writeWidgets(this, object, ContentEditWidgetPlacement.TAB);
                     }
                 }
             writeEnd();

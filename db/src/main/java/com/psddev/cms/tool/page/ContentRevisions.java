@@ -1,7 +1,7 @@
 package com.psddev.cms.tool.page;
 
 import com.psddev.cms.tool.CmsTool;
-import com.psddev.cms.tool.ContentEditSection;
+import com.psddev.cms.tool.ContentEditWidgetPlacement;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.Widget;
 import com.psddev.cms.tool.content.RevisionsWidget;
@@ -34,7 +34,7 @@ public class ContentRevisions extends Widget {
 
         try {
             page.setDelegate(newDelegate);
-            new RevisionsWidget().display(page, object, ContentEditSection.RIGHT);
+            new RevisionsWidget().display(page, object, ContentEditWidgetPlacement.RIGHT);
             return newDelegate.toString();
 
         } finally {

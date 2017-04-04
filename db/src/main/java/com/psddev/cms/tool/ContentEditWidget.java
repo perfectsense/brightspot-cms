@@ -12,14 +12,14 @@ import java.io.IOException;
 @Recordable.Embedded
 public abstract class ContentEditWidget extends Record {
 
-    private ContentEditSection sectionOverride;
+    private ContentEditWidgetPlacement placementOverride;
 
-    public ContentEditSection getSectionOverride() {
-        return sectionOverride;
+    public ContentEditWidgetPlacement getPlacementOverride() {
+        return placementOverride;
     }
 
-    public void setSectionOverride(ContentEditSection sectionOverride) {
-        this.sectionOverride = sectionOverride;
+    public void setPlacementOverride(ContentEditWidgetPlacement placementOverride) {
+        this.placementOverride = placementOverride;
     }
 
     public boolean shouldDisplay(ToolPageContext page, Object content) {
@@ -27,15 +27,15 @@ public abstract class ContentEditWidget extends Record {
         return type != null && type.as(ToolUi.class).isPublishable();
     }
 
-    public abstract ContentEditSection getSection(ToolPageContext page, Object content);
+    public abstract ContentEditWidgetPlacement getPlacement(ToolPageContext page, Object content);
 
-    public double getPosition(ToolPageContext page, Object content, ContentEditSection section) {
+    public double getPosition(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) {
         return 0.0;
     }
 
     public abstract String getHeading(ToolPageContext page, Object content);
 
-    public abstract void display(ToolPageContext page, Object content, ContentEditSection section) throws IOException;
+    public abstract void display(ToolPageContext page, Object content, ContentEditWidgetPlacement placement) throws IOException;
 
     @Override
     public String getLabel() {
