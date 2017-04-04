@@ -12,7 +12,9 @@ import com.psddev.cms.tool.Dashboard;
 import com.psddev.cms.tool.DefaultDashboardWidget;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.UploadFiles;
+import com.psddev.dari.db.Application;
 import com.psddev.dari.db.ObjectField;
+import com.psddev.dari.db.ObjectMethod;
 import com.psddev.dari.db.ObjectType;
 
 public class BulkUploadWidget extends DefaultDashboardWidget {
@@ -31,13 +33,34 @@ public class BulkUploadWidget extends DefaultDashboardWidget {
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
         boolean hasUploadable = false;
 
-        for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
-            for (ObjectField field : t.getFields()) {
-                if (ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
-                    hasUploadable = true;
-                    break;
+        // Check for any content type with a file field.
+        if (Application.Static.getInstance(CmsTool.class).isUseOldUploader()) {
+            for (ObjectType t : ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes()) {
+                for (ObjectField field : t.getFields()) {
+                    if (!(field instanceof ObjectMethod) && ObjectField.FILE_TYPE.equals(field.getInternalItemType())) {
+                        hasUploadable = true;
+                        break;
+                    }
                 }
             }
+
+        // Check for explicit usage of @ToolUi.BulkUploadable.
+        } else {
+            hasUploadable = ObjectType.getInstance(Content.class).as(ToolUi.class).findDisplayTypes().stream()
+                    .filter(type -> type.as(ToolUi.class).isRestrictedUpload())
+                    .anyMatch(type -> {
+                        ObjectField field = type.getField(type.as(ToolUi.class).getRestrictedUploadField());
+
+                        // Make sure the specified field is valid.
+                        if (field != null && ObjectField.FILE_TYPE.equals(field.getInternalType())) {
+                            return true;
+                        }
+
+                        // Check the preview field. If invalid, find the first file field.
+                        field = type.getField(type.getPreviewField());
+                        return !(field == null || field instanceof ObjectMethod || !ObjectField.FILE_TYPE.equals(field.getInternalType()))
+                                || type.getFields().stream().anyMatch(f -> ObjectField.FILE_TYPE.equals(f.getInternalType()));
+                    });
         }
 
         CmsTool.BulkUploadSettings settings = null;

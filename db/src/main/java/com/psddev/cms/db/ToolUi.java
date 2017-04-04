@@ -101,6 +101,8 @@ public class ToolUi extends Modification<Object> {
     private String defaultSortField;
     private Boolean unlabeled;
     private Boolean testSms;
+    private Boolean restrictedUpload;
+    private String restrictedUploadField;
 
     public boolean isBulkUpload() {
         return Boolean.TRUE.equals(bulkUpload);
@@ -813,6 +815,22 @@ public class ToolUi extends Modification<Object> {
         }
 
         return isTestSms() && !isColorPicker() && !isSecret();
+    }
+
+    public boolean isRestrictedUpload() {
+        return Boolean.TRUE.equals(restrictedUpload);
+    }
+
+    public void setRestrictedUpload(boolean restrictedUpload) {
+        this.restrictedUpload = restrictedUpload ? Boolean.TRUE : null;
+    }
+
+    public String getRestrictedUploadField() {
+        return restrictedUploadField;
+    }
+
+    public void setRestrictedUploadField(String restrictedUploadField) {
+        this.restrictedUploadField = restrictedUploadField;
     }
 
     /**
@@ -1947,6 +1965,30 @@ public class ToolUi extends Modification<Object> {
         @Override
         public void process(ObjectType type, ObjectField field, Unlabeled annotation) {
             field.as(ToolUi.class).setUnlabeled(annotation.value());
+        }
+    }
+
+    /**
+     * Specifies whether the target type should be an option for restricted
+     * bulk upload. Optionally, the file field can be specified.
+     */
+    @Documented
+    @Inherited
+    @ObjectType.AnnotationProcessorClass(RestrictedUploadProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    public @interface RestrictedUpload {
+        boolean value() default true;
+        String field() default "";
+    }
+
+    private static class RestrictedUploadProcessor implements ObjectType.AnnotationProcessor<RestrictedUpload> {
+
+        @Override
+        public void process(ObjectType type, RestrictedUpload annotation) {
+            ToolUi ui = type.as(ToolUi.class);
+            ui.setRestrictedUpload(annotation.value());
+            ui.setRestrictedUploadField(annotation.field());
         }
     }
 

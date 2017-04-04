@@ -134,6 +134,10 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("UI")
     private boolean enableFrontEndUploader;
 
+    @ToolUi.Note("Enables the uploading of multiple file types at once.")
+    @ToolUi.Tab("UI")
+    private boolean enableSmartUploader;
+
     @ToolUi.Tab("UI")
     private boolean enableViewers;
 
@@ -217,6 +221,10 @@ public class CmsTool extends Tool {
 
     @ToolUi.Tab("Debug")
     private boolean useOldTaxonomyChildrenDetection;
+
+    @ToolUi.Note("Check this to enable bulk uploading of any content type with a file field.")
+    @ToolUi.Tab("Debug")
+    private boolean useOldUploader = true;
 
     @Embedded
     public static class CommonTime extends Record {
@@ -702,6 +710,14 @@ public class CmsTool extends Tool {
         this.enableFrontEndUploader = enableFrontEndUploader;
     }
 
+    public boolean isEnableSmartUploader() {
+        return enableSmartUploader;
+    }
+
+    public void setEnableSmartUploader(boolean enableSmartUploader) {
+        this.enableSmartUploader = enableSmartUploader;
+    }
+
     public boolean isEnableViewers() {
         return enableViewers;
     }
@@ -924,6 +940,14 @@ public class CmsTool extends Tool {
 
     public void setUseOldTaxonomyChildrenDetection(boolean useOldTaxonomyChildrenDetection) {
         this.useOldTaxonomyChildrenDetection = useOldTaxonomyChildrenDetection;
+    }
+
+    public boolean isUseOldUploader() {
+        return useOldUploader;
+    }
+
+    public void setUseOldUploader(boolean useOldUploader) {
+        this.useOldUploader = useOldUploader;
     }
 
     public String createManualContentLockingNoteText() {
