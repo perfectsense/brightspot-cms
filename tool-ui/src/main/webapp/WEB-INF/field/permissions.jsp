@@ -394,12 +394,14 @@ wp.writeStart("div", "class", "inputSmall permissions");
 
                                 StringBuilder excludeFields = new StringBuilder();
 
-                                for (ObjectField typeField : type.getFields()) {
-                                    String fn = typeField.getInternalName();
+                                if (permissions.contains(typePermissionId) && !permissions.contains(typePermissionId + "/")) {
+                                    for (ObjectField typeField : type.getFields()) {
+                                        String fn = typeField.getInternalName();
 
-                                    if (!permissions.contains(typePermissionId + "/field/" + fn)) {
-                                        excludeFields.append(fn);
-                                        excludeFields.append(" ");
+                                        if (!permissions.contains(typePermissionId + "/field/" + fn)) {
+                                            excludeFields.append(fn);
+                                            excludeFields.append(" ");
+                                        }
                                     }
                                 }
 
@@ -470,7 +472,7 @@ private static void writeParent(ToolPageContext wp, Set<String> permissions, Obj
 private static void writeChild(ToolPageContext wp, Set<String> permissions, Object object, String permissionId) throws IOException {
 
     wp.write("<input");
-    if (permissions.contains(permissionId)) {
+    if (permissions.contains(permissionId) && !permissions.contains(permissionId + "/")) {
         wp.write(" checked");
     }
     wp.write(" id=\"");
