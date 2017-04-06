@@ -1,5 +1,9 @@
 package com.psddev.cms.db;
 
+/**
+ * @deprecated Use {@link com.psddev.cms.notification.DeliveryOption} instead.
+ */
+@Deprecated
 public enum NotificationMethod {
 
     EMAIL("Email"),
