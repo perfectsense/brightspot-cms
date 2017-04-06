@@ -68,6 +68,8 @@ public class Site extends Record implements Global, Managed {
     @Indexed
     private SiteCategory siteCategory;
 
+    @Deprecated
+    @ToolUi.Hidden
     @ToolUi.Tab("Advanced")
     private Variation defaultVariation;
 
@@ -163,10 +165,12 @@ public class Site extends Record implements Global, Managed {
         this.siteCategory = siteCategory;
     }
 
+    @Deprecated
     public Variation getDefaultVariation() {
         return defaultVariation;
     }
 
+    @Deprecated
     public void setDefaultVariation(Variation defaultVariation) {
         this.defaultVariation = defaultVariation;
     }

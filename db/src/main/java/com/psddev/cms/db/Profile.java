@@ -14,7 +14,11 @@ import com.psddev.dari.util.StringUtils;
  * <p>An instance of this class is created automatically for each page view,
  * and contains information about the visitor that can be used to process pages
  * differently using {@linkplain Variation variations}.
- * */
+ *
+ * @deprecated No replacement.
+ *
+ */
+@Deprecated
 public class Profile extends Record {
 
     @Indexed(unique = true)

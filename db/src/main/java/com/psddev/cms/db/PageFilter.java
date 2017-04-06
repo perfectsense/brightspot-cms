@@ -119,7 +119,9 @@ public class PageFilter extends AbstractFilter {
     public static final String PAGE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".page";
     public static final String PAGE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".pageChecked";
     public static final String PARENT_SECTIONS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".parentSections";
+    @Deprecated
     public static final String PROFILE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".profile";
+    @Deprecated
     public static final String PROFILE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".profileChecked";
     public static final String RENDERED_OBJECTS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".renderedObjects";
     public static final String SITE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".site";
@@ -2168,7 +2170,8 @@ public class PageFilter extends AbstractFilter {
             request.setAttribute("template", page);
         }
 
-        /** Returns the profile used to process the given {@code request}. */
+        /** @deprecated No replacement. */
+        @Deprecated
         public static Profile getProfile(HttpServletRequest request) {
             if (Boolean.TRUE.equals(request.getAttribute(PROFILE_CHECKED_ATTRIBUTE))) {
                 return (Profile) request.getAttribute(PROFILE_ATTRIBUTE);
@@ -2183,7 +2186,8 @@ public class PageFilter extends AbstractFilter {
             return profile;
         }
 
-        /** Sets the profile used to process the given {@code request}. */
+        /** @deprecated No replacement. */
+        @Deprecated
         public static void setProfile(HttpServletRequest request, Profile profile) {
             request.setAttribute(PROFILE_CHECKED_ATTRIBUTE, Boolean.TRUE);
             request.setAttribute(PROFILE_ATTRIBUTE, profile);
