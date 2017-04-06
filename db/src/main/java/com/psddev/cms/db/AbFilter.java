@@ -23,6 +23,8 @@ import com.psddev.dari.util.AbstractFilter;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StringUtils;
 
+/** @deprecated No replacement. */
+@Deprecated
 public class AbFilter extends AbstractFilter implements AbstractFilter.Auto {
 
     private static final String SEED_COOKIE = "cms.ab";
