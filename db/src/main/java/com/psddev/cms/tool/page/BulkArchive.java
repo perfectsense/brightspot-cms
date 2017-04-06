@@ -202,6 +202,10 @@ public class BulkArchive extends PageServlet {
                                 page.writeEnd();
                             }
                         page.writeEnd(); // end .message-success
+
+                        page.writeStart("script", "type", "text/javascript");
+                            page.writeRaw("$('.search-reset').click();");
+                        page.writeEnd();
                     }
                 } else {
                     page.writeStart("div", "class", "searchResult-action-simple");
