@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -223,6 +225,13 @@ public class SearchResultRenderer {
         }
 
         if (!resultsDisplayed) {
+            for (Class<? extends QueryRestriction> clazz : StreamSupport.stream(QueryRestriction.classIterable().spliterator(), false)
+                    .filter(SearchResultRendererDisplayable.class::isAssignableFrom)
+                    .collect(Collectors.toList())) {
+
+                page.writeQueryRestrictionForm(clazz);
+            }
+
             if (search.findSorts().size() > 1) {
                 page.writeStart("div", "class", "searchSorter");
                     renderSorter();
