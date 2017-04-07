@@ -12,6 +12,7 @@ import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.util.PaginatedResult;
+import com.psddev.dari.util.StringUtils;
 
 /**
  * Provides an extensible base implementation of a {@link DashboardWidget} displaying a {@link PaginatedResult}.
@@ -48,6 +49,19 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
     public abstract Query<T> getQuery(ToolPageContext page);
 
     /**
+     * Optionally override to control the url used for the <form> and <a> elements in this widget.
+     *
+     * @param page Used to create the url.
+     * @param path The base path from which to create the url.
+     * @param parameters The parameters to use for the url query string.
+     *
+     * @return the {@code String} url with any query string.
+     */
+    public String getUrl(ToolPageContext page, String path, Object... parameters) {
+        return page.url(path, parameters);
+    }
+
+    /**
      * Optionally override for more control over the creation of
      * the {@link PaginatedResult}.
      *
@@ -55,6 +69,12 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
      * @return the {@link PaginatedResult} to be displayed by the widget.
      */
     public PaginatedResult<T> getPaginatedResult(ToolPageContext page) {
+        Query<T> query = getQuery(page);
+
+        if (query == null) {
+            return null;
+        }
+
         return getQuery(page).select(page.param(long.class, OFFSET_PARAMETER), page.paramOrDefault(int.class, LIMIT_PARAMETER, LIMITS[0]));
     }
 
@@ -133,23 +153,28 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
 
         page.writeStart("div", "class", "widget");
 
-            page.writeStart("h1");
-                page.writeHtml(getTitle(page));
-            page.writeEnd();
+            String title = getTitle(page);
+            if (!StringUtils.isBlank(title)) {
+                page.writeStart("h1");
+                    page.writeHtml(title);
+                page.writeEnd();
+            }
 
             page.writeStart("div", "class", "widget-filters");
                 page.writeStart("form",
                         "method", "get",
-                        "action", page.url(null));
+                        "action", getUrl(page, null));
                     writeFiltersHtml(page);
                 page.writeEnd();
             page.writeEnd();
 
             PaginatedResult<T> result = getPaginatedResult(page);
 
-            writePaginationHtml(page, result, page.paramOrDefault(int.class, LIMIT_PARAMETER, LIMITS[0]));
+            if (result != null) {
+                writePaginationHtml(page, result, page.paramOrDefault(int.class, LIMIT_PARAMETER, LIMITS[0]));
+            }
 
-            if (result.hasPages()) {
+            if (result != null && result.hasPages()) {
                 writeResultsHtml(page, result);
             } else {
                 writeEmptyHtml(page);
@@ -165,13 +190,13 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
 
             if (result.hasPrevious()) {
                 page.writeStart("li", "class", "first");
-                    page.writeStart("a", "href", page.url("", OFFSET_PARAMETER, result.getFirstOffset()));
+                    page.writeStart("a", "href", getUrl(page, "", OFFSET_PARAMETER, result.getFirstOffset()));
                         page.writeHtml(page.localize(AbstractPaginatedResultWidget.class, "pagination.newest"));
                     page.writeEnd();
                 page.writeEnd();
 
                 page.writeStart("li", "class", "previous");
-                    page.writeStart("a", "href", page.url("", OFFSET_PARAMETER, result.getPreviousOffset()));
+                    page.writeStart("a", "href", getUrl(page, "", OFFSET_PARAMETER, result.getPreviousOffset()));
                         page.writeHtml(page.localize(ImmutableMap.of("count", limit), "pagination.newerCount"));
                     page.writeEnd();
                 page.writeEnd();
@@ -182,7 +207,7 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
                     page.writeStart("form",
                             "data-bsp-autosubmit", "",
                             "method", "get",
-                            "action", page.url(null));
+                            "action", getUrl(page, null));
                         page.writeStart("select", "name", LIMIT_PARAMETER);
                         for (int l : LIMITS) {
                             page.writeStart("option",
@@ -198,7 +223,7 @@ public abstract class AbstractPaginatedResultWidget<T extends Record> extends Da
 
             if (result.hasNext()) {
                 page.writeStart("li", "class", "next");
-                    page.writeStart("a", "href", page.url("", "offset", result.getNextOffset()));
+                    page.writeStart("a", "href", getUrl(page, "", OFFSET_PARAMETER, result.getNextOffset()));
                         page.writeHtml(page.localize(AbstractPaginatedResultWidget.class, ImmutableMap.of("count", limit), "pagination.olderCount"));
                     page.writeEnd();
                 page.writeEnd();
