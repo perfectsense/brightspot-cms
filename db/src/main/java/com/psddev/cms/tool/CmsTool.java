@@ -131,7 +131,7 @@ public class CmsTool extends Tool {
     private boolean enableAjaxSaves;
 
     @ToolUi.Tab("UI")
-    private boolean enableFrontEndUploader;
+    private boolean disableFrontEndUploader;
 
     @ToolUi.Tab("UI")
     private boolean enableViewers;
@@ -697,11 +697,11 @@ public class CmsTool extends Tool {
     }
 
     public boolean isEnableFrontEndUploader() {
-        return enableFrontEndUploader;
+        return !disableFrontEndUploader;
     }
 
     public void setEnableFrontEndUploader(boolean enableFrontEndUploader) {
-        this.enableFrontEndUploader = enableFrontEndUploader;
+        this.disableFrontEndUploader = !enableFrontEndUploader;
     }
 
     public boolean isEnableViewers() {
