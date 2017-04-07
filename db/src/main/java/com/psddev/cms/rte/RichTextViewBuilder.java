@@ -236,10 +236,10 @@ public class RichTextViewBuilder<V> {
 
                 RichTextElement rte = RichTextElement.fromElement(element);
                 ObjectType tagType = rte != null ? rte.getState().getType() : null;
+                V elementView = elementToView.apply(rte);
 
-                if (rte != null && elementToView != null) {
-                    viewNodes.add(new ElementRichTextViewNode<>(rte, elementToView));
-
+                if (elementView != null) {
+                    viewNodes.add(new ElementRichTextViewNode<>(elementView));
                 } else if (tagType == null || keepUnboundElements) {
                     List<RichTextViewNode<V>> childViewNodes = toViewNodes(element.childNodes());
                     String html = element.outerHtml();

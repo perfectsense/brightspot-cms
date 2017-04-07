@@ -6,16 +6,18 @@ import com.psddev.cms.db.RichTextElement;
 
 class ElementRichTextViewNode<V> implements RichTextViewNode<V> {
 
-    private final RichTextElement element;
-    private final Function<RichTextElement, V> elementToView;
+    private final V outputView;
+
+    public ElementRichTextViewNode(V outputView) {
+        this.outputView = outputView;
+    }
 
     public ElementRichTextViewNode(RichTextElement element, Function<RichTextElement, V> elementToView) {
-        this.element = element;
-        this.elementToView = elementToView;
+        this(elementToView != null ? elementToView.apply(element) : null);
     }
 
     @Override
     public V toView() {
-        return elementToView != null ? elementToView.apply(element) : null;
+        return outputView;
     }
 }
