@@ -291,6 +291,10 @@
       left: 20px;
       position: fixed;
       top: (@toolHeader-height + 20px);
+
+      .hasToolBroadcast & {
+        top: (@toolBroadcast-height + @toolHeader-height + 20px);
+      }
   }
 }
 

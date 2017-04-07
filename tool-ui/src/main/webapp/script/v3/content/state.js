@@ -51,8 +51,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
             '[data-dynamic-searcher-path]:not([data-dynamic-searcher-path=""])');
 
         $dynamicTexts = $dynamicTexts.filter(function() {
-          return $(this).closest('.collapsed').length === 0
-              && $(this).closest('.contentDiffCurrent').length === 0;
+          return $(this).closest('.contentDiffCurrent').length === 0;
         });
 
         var fieldNames = { };

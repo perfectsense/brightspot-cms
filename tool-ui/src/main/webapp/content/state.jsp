@@ -5,6 +5,7 @@ com.psddev.cms.db.Page,
 com.psddev.cms.db.Section,
 com.psddev.cms.db.Template,
 com.psddev.cms.tool.ToolPageContext,
+com.psddev.cms.tool.page.content.Edit,
 
 com.psddev.dari.db.Query,
 com.psddev.dari.db.ObjectType,
@@ -48,7 +49,7 @@ State editingState = State.getInstance(editing);
 try {
     editingState.beginWrites();
     wp.updateUsingParameters(editing);
-    wp.updateUsingAllWidgets(editing);
+    Edit.updateUsingWidgets(wp, editing);
     wp.publish(editing);
 } catch (Exception error) {
 } finally {

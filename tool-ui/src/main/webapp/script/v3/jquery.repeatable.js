@@ -198,9 +198,15 @@ The HTML within the repeatable element must conform to these standards:
                 self.modeWeightedInit();
 
                 // For each item initialize it
-                self.dom.$list.find('> li').each(function(){
+                var $items = self.dom.$list.find('> li');
+
+                $items.each(function(){
                     self.initItem(this);
                 });
+
+                if ($items.length === 0 && self.dom.$viewSwitcher) {
+                    self.dom.$viewSwitcher.hide();
+                }
 
                 // After we're done initilizing all the items,
                 // update the carousel if ncessary
@@ -558,7 +564,7 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Set up some parameters so the label text will dynamically update based on the input field
                     'data-object-id': $item.find('> input[type="hidden"][name$=".id"]').val(),
-                    'data-dynamic-html': '${content.state.getType().label}: ${toolPageContext.createObjectLabelHtml(content)}'
+                    'data-dynamic-html': '${toolPageContext.getObjectLabel(content.state.getType())}: ${toolPageContext.createObjectLabelHtml(content)}'
                     
                 }).on('click', function() {
                     self.itemToggle($item);
@@ -1066,7 +1072,7 @@ The HTML within the repeatable element must conform to these standards:
              */
             getCollectionItemWeightColor: function(item) {
                 var $item = $(item);
-                var weightColor = $item.data('weight-color');
+                var weightColor = $item.data('weight-color-field-value');
 
                 if (weightColor) {
                     return weightColor;
@@ -1084,7 +1090,7 @@ The HTML within the repeatable element must conform to these standards:
                 weightColor = colors.generateFromHue(hue);
 
                 $repeatableForm.data('lastHue', hue);
-                $item.data('weight-color', weightColor);
+                $item.data('weight-color-field-value', weightColor);
 
                 return weightColor;
             },
@@ -1190,6 +1196,10 @@ The HTML within the repeatable element must conform to these standards:
                 // For single input mode, don't add another item if the input is empty
                 if (self.modeIsSingle() && !self.dom.$singleInput.val()) {
                     return false;
+                }
+
+                if (self.dom.$viewSwitcher) {
+                    self.dom.$viewSwitcher.show();
                 }
 
                 // Create a copy of the template to use as the new item
@@ -1483,7 +1493,6 @@ The HTML within the repeatable element must conform to these standards:
                     
                     // Remove the attribute and data so we don't fetch again
                     $input.removeAttr('data-form-fields-url');
-                    $input.val('');
 
                     // Fetch the content
                     // Override the promise we created by that returned by the ajax call,
@@ -1499,6 +1508,7 @@ The HTML within the repeatable element must conform to these standards:
                         var content = typeof(response) === 'string' ? response : response.responseText;
 
                         // When ajax completes add the content to the page
+                        $input.val('');
                         $(content).appendTo($location);
 
                         // If the item has already been removed, mark the new content to be removed as well

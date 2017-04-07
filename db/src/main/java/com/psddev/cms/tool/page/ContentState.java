@@ -113,7 +113,7 @@ public class ContentState extends PageServlet {
         try {
             state.beginWrites();
             page.updateUsingParameters(object);
-            page.updateUsingAllWidgets(object);
+            Edit.updateUsingWidgets(page, object);
 
             UUID workflowLogId = page.param(UUID.class, "workflowLogId");
 

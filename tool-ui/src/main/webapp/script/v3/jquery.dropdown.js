@@ -22,6 +22,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
 
     _initVisible: function ($original) {
       var plugin = this,
+          opened = false,
           isFixedPosition = $original.isFixedPosition(),
           isMultiple = $original.is('[multiple]'),
           isSearchable = $original.is('[data-searchable="true"]'),
@@ -101,6 +102,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       function resize() {
+        if (!opened) {
+          return;
+        }
+
         if (!$input.is(':visible')) {
           $openOriginal = null;
           $openList = null;
@@ -110,49 +115,143 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         }
 
         var inputOffset = $input.offset();
-        var inputWidth = $input.outerWidth(true);
+        var inputLeft = inputOffset.left;
+        var inputTop = inputOffset.top;
+        var inputWidth = $input.outerWidth();
+        var inputHeight = $input.outerHeight();
         var winScrollTop = $win.scrollTop();
         var winHeight = $win.height();
 
-        if (inputWidth > $listContainer.outerWidth(true)) {
-          $listContainer.css('min-width', inputWidth + 20);
+        var attachmentFunctions = {
+          left: function () {
+            if (inputWidth > $listContainer.outerWidth()) {
+              $listContainer.css('min-width', inputWidth + 20);
+            }
+
+            $input.add($listContainer).add($markerContainer).attr('data-attachment', 'left');
+
+            $listContainer.css({
+              'bottom': (0 - winScrollTop),
+              'left': inputLeft - $listContainer.outerWidth(),
+              'top': winScrollTop
+            });
+
+            $markerContainer.css({
+              'height': $input.outerHeight(),
+              'left': inputLeft,
+              'top': inputTop
+            });
+          },
+
+          right: function () {
+            if (inputWidth > $listContainer.outerWidth()) {
+              $listContainer.css('min-width', inputWidth + 20);
+            }
+
+            $input.add($listContainer).add($markerContainer).attr('data-attachment', 'right');
+            $listContainer.add($markerContainer).css({
+              'left': inputLeft + inputWidth,
+            });
+
+            $listContainer.css({
+              'bottom': (0 - winScrollTop),
+              'top': winScrollTop
+            });
+
+            $markerContainer.css({
+              'height': $input.outerHeight(),
+              'top': inputTop
+            });
+          },
+
+          side: function () {
+            if (inputLeft < $win.width() - inputLeft - inputWidth) {
+              attachmentFunctions.right();
+
+            } else {
+              attachmentFunctions.left();
+            }
+          },
+
+          top: function () {
+            if (inputWidth > $listContainer.outerWidth()) {
+              $listContainer.css('min-width', inputWidth + 20);
+            }
+
+            var markerBottom = winHeight - inputTop;
+
+            if (isFixedPosition) {
+              markerBottom += winScrollTop;
+            }
+
+            var listContainerHeight = inputTop - winScrollTop;
+
+            $listContainer.css('height', listContainerHeight);
+
+            $list.css({
+              'bottom': '',
+              'top': $list.outerHeight() > listContainerHeight ? '' : 'auto'
+            });
+
+            $input.add($listContainer).add($markerContainer).attr('data-attachment', 'top');
+            $listContainer.add($markerContainer).css({
+              'bottom': markerBottom,
+              'left': inputLeft,
+              'top': ''
+            });
+
+            $markerContainer.css('width', $input.outerWidth());
+          },
+
+          bottom: function () {
+            if (inputWidth > $listContainer.outerWidth()) {
+              $listContainer.css('min-width', inputWidth + 20);
+            }
+
+            var markerTop = inputTop + inputHeight;
+
+            if (isFixedPosition) {
+              markerTop -= winScrollTop;
+            }
+
+            var listContainerHeight = winScrollTop + winHeight - inputTop - inputHeight;
+
+            $listContainer.css('height', listContainerHeight);
+
+            $list.css({
+              'bottom': $list.outerHeight() > listContainerHeight ? '' : 'auto',
+              'top': ''
+            });
+
+            $input.add($listContainer).add($markerContainer).attr('data-attachment', 'bottom');
+            $listContainer.add($markerContainer).css({
+              'bottom': '',
+              'left': inputLeft,
+              'top': markerTop
+            });
+
+            $markerContainer.css('width', $input.outerWidth());
+          },
+
+          end: function () {
+            var heightAbove = inputTop - winScrollTop;
+
+            if (heightAbove < winHeight - (heightAbove + inputHeight)) {
+              attachmentFunctions.bottom();
+
+            } else {
+              attachmentFunctions.top();
+            }
+          }
+        };
+
+        var attach = attachmentFunctions[$original.attr('data-attachment')];
+
+        if (!attach) {
+          attach = attachmentFunctions.end;
         }
 
-        if (inputOffset.top - winScrollTop < winHeight * 0.6) {
-          var inputHeight = $input.outerHeight();
-          var markerTop = inputOffset.top + inputHeight;
-
-          if (isFixedPosition) {
-            markerTop -= $win.scrollTop();
-          }
-
-          $list.css('max-height', winScrollTop + winHeight - inputOffset.top - inputHeight);
-
-          $input.add($listContainer).add($markerContainer).removeClass('dropDown-input-bottom');
-          $listContainer.add($markerContainer).css({
-            'bottom': '',
-            'left': inputOffset.left,
-            'top': markerTop
-          });
-
-        } else {
-          var markerBottom = winHeight - inputOffset.top;
-
-          if (isFixedPosition) {
-            markerBottom += $win.scrollTop();
-          }
-
-          $list.css('max-height', inputOffset.top - winScrollTop);
-
-          $input.add($listContainer).add($markerContainer).addClass('dropDown-input-bottom');
-          $listContainer.add($markerContainer).css({
-            'bottom': markerBottom,
-            'left': inputOffset.left,
-            'top': ''
-          });
-        }
-
-        $markerContainer.css('width', $input.outerWidth());
+        attach();
       }
 
       $label.bind('dropDown-update', function() {
@@ -192,6 +291,8 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       $list.bind('dropDown-open', function() {
+        opened = true;
+
         resize();
 
         $input.addClass(plugin.className('list-open'));
@@ -212,11 +313,20 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         var $selected = $list.find('.' + plugin.className('listItem-selected'));
 
         if ($selected.length > 0) {
-            $list.scrollTop($selected.position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top);
+          var attachment = $listContainer.attr('data-attachment');
+          var scrollTop = $selected.position().top - $list.find('.' + plugin.className('listItem')).eq(0).position().top;
+
+          if (attachment === 'left' || attachment === 'right') {
+            scrollTop -= $input.offset().top - $win.scrollTop() - 20;
+          }
+
+          $list.scrollTop(scrollTop);
         }
       });
 
       $list.bind('dropDown-close', function() {
+        opened = false;
+
         $input.removeClass(plugin.className('list-open'));
 
         $openOriginal = null;
@@ -263,7 +373,7 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       });
 
       // Recalculate position and size whenever viewport is affected.
-      $(window).bind('resize scroll', bsp_utils.throttle(15, resize));
+      $(window).bind('resize', bsp_utils.throttle(15, resize));
 
       // Create the list based on the options in the original input.
       addItem = function($option) {
@@ -356,12 +466,20 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       $original.before($input);
       $original.hide();
 
+      var $containers = $(doc.body).find('> .' + plugin.className('containers'));
+
+      if ($containers.length === 0) {
+        $(doc.body).append($containers = $('<div/>', {
+          'class': plugin.className('containers')
+        }));
+      }
+
       $listContainer.append($list);
-      $(doc.body).append($listContainer);
+      $containers.append($listContainer);
       $listContainer.css('min-width', $listContainer.outerWidth());
 
       $markerContainer.append($marker);
-      $(doc.body).append($markerContainer);
+      $containers.append($markerContainer);
 
       if (isSearchable) {
         $search = $('<input/>', {

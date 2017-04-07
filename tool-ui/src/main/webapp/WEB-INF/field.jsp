@@ -1,5 +1,7 @@
 <%@ page session="false" import="
 
+com.google.common.base.Splitter,
+
 com.psddev.cms.db.AbVariation,
 com.psddev.cms.db.AbVariationField,
 com.psddev.cms.db.AbVariationObject,
@@ -29,6 +31,8 @@ java.util.List,
 java.util.Map,
 java.util.MissingResourceException,
 java.util.UUID,
+java.util.stream.Collectors,
+java.util.stream.StreamSupport,
 
 javax.servlet.ServletException
 " %><%
@@ -480,9 +484,15 @@ public static void writeInput(
     if (ObjectUtils.isBlank(displayType)) {
         displayType = field.getInternalType();
     }
-    while (true) {
 
-        path = prefix + displayType + ".jsp";
+    List<String> displayTypeParts = StreamSupport
+            .stream(Splitter.on('/').split(displayType).spliterator(), false)
+            .map(part -> part.equals(ObjectField.UUID_TYPE) ? ObjectField.TEXT_TYPE : part)
+            .collect(Collectors.toList());
+
+    while (!displayTypeParts.isEmpty()) {
+        path = prefix + displayTypeParts.stream().collect(Collectors.joining("/")) + ".jsp";
+
         if (getResource(application, request, path) != null) {
             JspUtils.include(request, response, out, path);
             return;

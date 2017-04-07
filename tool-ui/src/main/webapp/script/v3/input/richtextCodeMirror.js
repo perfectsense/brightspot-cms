@@ -366,6 +366,7 @@ define([
             self.clipboardInit();
             self.spellcheckInit();
             self.modeInit();
+            self.initPreviewResizer();
 
             var $wrapper = $(self.codeMirror.getWrapperElement());
             var wrapperWidth = $wrapper.width();
@@ -2934,6 +2935,58 @@ define([
 
 
         /**
+         * Work around a problem in CodeMirror: whenever refresh() is called, CodeMirror recreates the DOM.
+         * This causes weird scrolling problems in cases where the preview contains an iframe, because the iframe
+         * reloads whenever it is removed and added back to the DOM.
+         * To mitigate this problem, we will query the height of the preview and set that as a minimum height,
+         * so even if the iframe contents shrink and grow, the scrolling of the overall document should not change.
+         */
+        initPreviewResizer: function() {
+
+            var self;
+            var $wrapper;
+
+            self = this;
+            $wrapper = $(self.codeMirror.getWrapperElement());
+
+            $wrapper.on('resize', '.rte2-block-preview > iframe', function(event) {
+                var $div;
+                var divHeight;
+                var $iframe;
+                var iframeHeight;
+
+                $iframe = $(event.target);
+                // Get the height from the CSS style, not by calculating the height.
+                iframeHeight = parseInt($iframe.prop('style').height, 10);
+
+                $div = $iframe.closest('.rte2-block-preview');
+                divHeight = parseInt($div.prop('style').height, 10);
+
+                // If height is not explicitly set we won't do anything.
+                if (!iframeHeight) {
+                    return;
+                }
+
+                if (!divHeight || iframeHeight > divHeight) {
+                    $div.css({
+                        'height': iframeHeight,
+                        'overflow': 'auto'
+                    });
+                } else if (iframeHeight === divHeight) {
+                    // Heights are equal so do nothing
+                } else if (iframeHeight < divHeight) {
+                    // Height is shrinking so do nothing
+                    // Note we could shrink the preview block, but in some cases like twitter the preview loads
+                    // and is very small, then it grows, then it shrinks again.
+                    // This leads to the page scroll position jumping all over the place,
+                    // so instead we will just set the preview block to the tallest height
+                    // we have seen and leave it at that.
+                }
+            });
+        },
+
+
+        /**
          * Remove the preview lineWidget for a block style
          * (if it exists).
          *
@@ -3165,8 +3218,9 @@ define([
             lineMax = editor.lineCount() - 1;
             lineNumber = self.enhancementGetLineNumber(mark);
 
-            // Get array of enhancements on the current line
-            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark) );
+            // Get array of enhancements on the current line.
+            // But only the block enhancements
+            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark), false );
 
             // If there are multiple enhancements on this line, determine if we need to keep the enhancement
             // on this line (and rearrange the order of enhancements) or move to another line
@@ -3481,10 +3535,13 @@ define([
 
         /**
          * Returns an array of the enhancements on a line.
-         * @param  {[type]} lineNumber [description]
+         * @param {Number} lineNumber
+         * @param {Boolean} [inline=true]
+         * Should inline (align left or right) enhancements be included?
+         * Defaults to true, explicitly set this to false to exclude those enhancements.
          * @return {Array}
          */
-        enhancementGetFromLine: function(lineNumber) {
+        enhancementGetFromLine: function(lineNumber, inline) {
             var editor;
             var lineHandle;
             var self;
@@ -3509,15 +3566,17 @@ define([
             }
 
             // Get all the enhancements that are align left and right
-            $.each(self.enhancementCache, function(i, mark) {
+            if (inline !== false) {
+                $.each(self.enhancementCache, function(i, mark) {
 
-                // Make sure this is not a block enhancement
-                if (mark && mark.options && mark.options.block === false) {
-                    if (self.enhancementGetLineNumber(mark) === lineNumber) {
-                        list.push(mark);
+                    // Make sure this is not a block enhancement
+                    if (mark && mark.options && mark.options.block === false) {
+                        if (self.enhancementGetLineNumber(mark) === lineNumber) {
+                            list.push(mark);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             return list;
         },
@@ -7749,7 +7808,8 @@ define([
                         if ((elementName === 'table') || ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement'))) {
 
                             // End the last line if necessary
-                            if (val[ val.length - 1] !== '\n') {
+                            // (and avoid adding a newline if this is the first line in the editor)
+                            if (val.length && val[ val.length - 1] !== '\n') {
                                 val += '\n';
                                 from.line++;
                                 from.ch = 0;
@@ -7936,7 +7996,11 @@ define([
             processNode(el);
 
             // Replace multiple newlines at the end with single newline
-            val = val.replace(/[\n\r]+$/, '\n');
+            // unless the last line contains an enhancement
+            var enhancementLast = enhancements[ enhancements.length - 1 ];
+            if (!(enhancementLast && enhancementLast.line >= val.split('\n').length - 1)) {
+                val = val.replace(/[\n\r]+$/, '\n');
+            }
 
             if (range) {
 

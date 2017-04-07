@@ -4,6 +4,8 @@ com.psddev.cms.db.Localization,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.page.content.Edit,
+com.psddev.cms.tool.page.TestSms,
+com.psddev.cms.tool.page.content.field.TextField,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.Reference,
@@ -30,6 +32,7 @@ String inputName = (String) request.getAttribute("inputName");
 String placeholder = Edit.createPlaceholderText(wp, field);
 Number suggestedMinimum = ui.getSuggestedMinimum();
 Number suggestedMaximum = ui.getSuggestedMaximum();
+boolean testSms = ui.isEffectivelyTestSms();
 
 if ((Boolean) request.getAttribute("isFormPost")) {
     String newValue = wp.param(String.class, inputName);
@@ -50,11 +53,15 @@ if ((Boolean) request.getAttribute("isFormPost")) {
         }
     }
 
-    state.put(fieldName, newValue);
+    TextField.put(state, field, newValue);
     return;
 }
 
 // --- Presentation ---
+
+if (testSms) {
+    wp.writeStart("div", "class", "Sms");
+}
 
 wp.write("<div class=\"inputSmall inputSmall-text\">");
 
@@ -123,4 +130,14 @@ if (validValues != null) {
 }
 
 wp.write("</div>");
+
+if (testSms) {
+    wp.writeStart("button", "class", "Sms-button").writeHtml(wp.localize(TestSms.class, "action.send")).writeEnd();
+    wp.writeStart("div", "class", "Sms-response");
+        wp.writeStart("div", "class", "Sms-pending").writeEnd();
+    wp.writeEnd();
+
+    // Sms div.
+    wp.writeEnd();
+}
 %>

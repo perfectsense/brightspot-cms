@@ -28,7 +28,7 @@ ContentTemplate template = Query.from(ContentTemplate.class)
 
 if (template != null) {
     type = template.getTemplateType();
-    object = template.getTemplate();
+    object = template.createObject();
 
 } else {
     type = ObjectType.getInstance(typeId);
@@ -43,6 +43,7 @@ objectState.setId(null);
 
 %><input type="hidden" name="<%= wp.h(inputName) %>.id" value="<%= objectState.getId() %>" />
 <input type="hidden" name="<%= wp.h(inputName) %>.typeId" value="<%= type.getId() %>" />
+<input type="hidden" name="<%= wp.h(inputName) %>.templateId" value="<%= template != null ? template.getId() : null %>" />
 <input type="hidden" name="<%= wp.h(inputName) %>.publishDate" value="" />
 <input type="hidden" name="<%= wp.h(inputName) %>.data" value="" />
 <% wp.writeFormFields(object); %>

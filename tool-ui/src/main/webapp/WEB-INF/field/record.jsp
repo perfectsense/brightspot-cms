@@ -5,8 +5,10 @@ com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.Metric,
+com.psddev.dari.db.Modification,
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectFieldComparator,
+com.psddev.dari.db.Recordable,
 com.psddev.dari.db.State,
 com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
@@ -17,6 +19,7 @@ com.psddev.dari.util.StorageItem,
 
 java.util.ArrayList,
 java.util.Collections,
+java.util.Comparator,
 java.util.Date,
 java.util.List,
 java.util.HashMap,
@@ -39,7 +42,9 @@ boolean fieldValueNew = false;
 
 ObjectType fieldValueType = null;
 List<ObjectType> validTypes = field.as(ToolUi.class).findDisplayTypes().stream()
+        .filter(type -> Recordable.class.isAssignableFrom(type.getObjectClass()))
         .filter(type -> !(Metric.class.isAssignableFrom(type.getObjectClass()))
+                && !(Modification.class.isAssignableFrom(type.getObjectClass()))
                 && !(ObjectField.class.isAssignableFrom(type.getObjectClass())))
         .collect(Collectors.toList());
 
@@ -199,12 +204,12 @@ if (isEmbedded) {
             }
         }
 
-        Collections.sort(validObjects, new ObjectFieldComparator("_type/_label", false));
+        validObjects.sort(Comparator.comparing(wp::getTypeLabel));
 
         String validObjectClass = wp.createId();
         Map<UUID, String> showClasses = new HashMap<UUID, String>();
         wp.write("<div class=\"inputSmall\">");
-        wp.write("<select class=\"toggleable\" name=\"", wp.h(idName), "\">");
+        wp.write("<select class=\"toggleable\" name=\"", wp.h(idName), "\" data-searchable=\"true\">");
 
         if (!field.isRequired()) {
             wp.write("<option data-hide=\".", validObjectClass, "\" value=\"\">");
@@ -212,7 +217,10 @@ if (isEmbedded) {
             wp.write("</option>");
         }
 
-        for (Object validObject : validObjects) {
+        int validObjectsSize = validObjects.size();
+
+        for (int i = 0; i < validObjectsSize; ++ i) {
+            Object validObject = validObjects.get(i);
             State validState = State.getInstance(validObject);
             String showClass = wp.createId();
             showClasses.put(validState.getId(), showClass);
@@ -221,7 +229,18 @@ if (isEmbedded) {
                 wp.write(" selected");
             }
             wp.write(">");
-            wp.write(wp.objectLabel(validState.getType()));
+
+            String typeLabel = wp.getTypeLabel(validObject);
+
+            wp.writeHtml(typeLabel);
+
+            if ((i > 0 && typeLabel.equals(wp.getTypeLabel(validObjects.get(i - 1))))
+                    || (i < validObjectsSize - 1 && typeLabel.equals(wp.getTypeLabel(validObjects.get(i + 1))))) {
+                wp.writeHtml(" (");
+                wp.writeHtml(validState.getType().getInternalName());
+                wp.writeHtml(")");
+            }
+
             wp.write("</option>");
         }
         wp.write("</select>");

@@ -26,13 +26,11 @@ com.psddev.cms.db.Workflow,
 com.psddev.cms.db.WorkflowLog,
 com.psddev.cms.db.WorkflowState,
 com.psddev.cms.db.WorkflowTransition,
-com.psddev.cms.db.WorkInProgress,
 com.psddev.cms.db.WorkStream,
 com.psddev.cms.tool.CmsTool,
-com.psddev.cms.tool.ContentEditWidgetDisplay,
+com.psddev.cms.tool.ContentEditWidgetPlacement,
 com.psddev.cms.tool.SearchCarouselDisplay,
 com.psddev.cms.tool.ToolPageContext,
-com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
 
 com.psddev.dari.db.ObjectField,
@@ -40,14 +38,12 @@ com.psddev.dari.db.ObjectType,
 com.psddev.dari.db.Query,
 com.psddev.dari.db.Singleton,
 com.psddev.dari.db.State,
-com.psddev.dari.util.HtmlWriter,
 com.psddev.dari.util.JspUtils,
 com.psddev.dari.util.ObjectUtils,
 com.psddev.dari.util.Settings,
 com.psddev.dari.util.StringUtils,
 com.psddev.cms.tool.ContentEditable,
 
-java.io.StringWriter,
 java.util.ArrayList,
 java.util.Date,
 java.util.LinkedHashMap,
@@ -347,6 +343,8 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
         <input type="hidden" name="<%= editingState.getId() %>/oldValues" value="<%= wp.h(ObjectUtils.toJson(editingOldValues)) %>">
 
         <div class="contentForm-main">
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.TOP); %>
+
             <div class="widget widget-content">
                 <h1 class="breadcrumbs"><%
 
@@ -567,16 +565,16 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
                         wp.writeEnd();
 
                     } else {
-                        wp.writeSomeFormFields(editing, true, null, null);
+                        wp.writeSomeFormFields(editing, true, true, null, null);
                     }
 
                 } else {
-                    wp.writeSomeFormFields(editing, true, null, null);
+                    wp.writeSomeFormFields(editing, true, true, null, null);
                 }
                 %>
             </div>
 
-            <% renderWidgets(wp, editing, CmsTool.CONTENT_BOTTOM_WIDGET_POSITION); %>
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.BOTTOM); %>
         </div>
 
         <div class="contentForm-aside">
@@ -1251,7 +1249,7 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
                 %>
             </div>
 
-            <% renderWidgets(wp, editing, CmsTool.CONTENT_RIGHT_WIDGET_POSITION); %>
+            <% Edit.writeWidgets(wp, editing, ContentEditWidgetPlacement.RIGHT); %>
         </div>
     </form>
 </div>
@@ -1450,65 +1448,6 @@ SearchCarouselDisplay searchCarouselDisplay = wp.getCmsTool().getSearchCarouselD
 <% } %>
 
 <% wp.include("/WEB-INF/footer.jsp"); %><%!
-
-// Renders all the content widgets for the given position.
-private static void renderWidgets(ToolPageContext wp, Object object, String position) throws Exception {
-
-    State state = State.getInstance(object);
-    ObjectType type = state.getType();
-    List<Widget> widgets = null;
-    for (List<Widget> item : wp.getTool().findWidgets(position)) {
-        widgets = item;
-        break;
-    }
-
-    if (!ObjectUtils.isBlank(widgets)) {
-        wp.write("<div class=\"contentWidgets contentWidgets-");
-        wp.write(wp.h(position));
-        wp.write("\">");
-
-        for (Widget widget : widgets) {
-
-            if (object instanceof ContentEditWidgetDisplay) {
-                if (!((ContentEditWidgetDisplay) object).shouldDisplayContentEditWidget(widget.getInternalName())) {
-                    continue;
-                }
-
-            } else if((type == null || !type.as(ToolUi.class).isPublishable()) && !widget.shouldDisplayInNonPublishable()) {
-                continue;
-            }
-
-            if (!wp.hasPermission(widget.getPermissionId())) {
-                continue;
-            }
-
-            wp.write("<input type=\"hidden\" name=\"");
-            wp.write(wp.h(state.getId()));
-            wp.write("/_widget\" value=\"");
-            wp.write(wp.h(widget.getInternalName()));
-            wp.write("\">");
-
-            String displayHtml;
-
-            try {
-                displayHtml = widget.createDisplayHtml(wp, object);
-
-            } catch (Exception ex) {
-                StringWriter sw = new StringWriter();
-                HtmlWriter hw = new HtmlWriter(sw);
-                hw.putAllStandardDefaults();
-                hw.start("pre", "class", "message message-error").object(ex).end();
-                displayHtml = sw.toString();
-            }
-
-            if (!ObjectUtils.isBlank(displayHtml)) {
-                wp.write(displayHtml);
-            }
-        }
-        wp.write("</div>");
-    }
-}
-%><%!
 
 private enum Device {
 

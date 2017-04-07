@@ -2,6 +2,8 @@
 
 com.psddev.cms.db.BulkUploadDraft,
 com.psddev.cms.db.Content,
+com.psddev.cms.db.ContentTemplate,
+com.psddev.cms.db.ContentTemplateSource,
 com.psddev.cms.db.Renderer,
 com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ObjectTypeOrContentTemplate,
@@ -67,6 +69,7 @@ Collections.sort(validTypes, new ObjectFieldComparator("_label", false));
 final String inputName = (String) request.getAttribute("inputName");
 final String idName = inputName + ".id";
 final String typeIdName = inputName + ".typeId";
+final String templateIdName = inputName + ".templateId";
 final String publishDateName = inputName + ".publishDate";
 final String dataName = inputName + ".data";
 String layoutsName = inputName + ".layouts";
@@ -83,10 +86,11 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
         UUID[] ids = wp.uuidParams(idName);
         UUID[] typeIds = wp.uuidParams(typeIdName);
+        UUID[] templateIds = wp.uuidParams(templateIdName);
         Date[] publishDates = wp.dateParams(publishDateName);
         List<String> datas = wp.params(String.class, dataName);
 
-        for (int i = 0, s = Math.min(Math.min(ids.length, typeIds.length), publishDates.length); i < s; ++ i) {
+        for (int i = 0, s = Math.min(Math.min(Math.min(ids.length, typeIds.length), templateIds.length), publishDates.length); i < s; ++ i) {
             Object item = existing.get(ids[i]);
             State itemState = State.getInstance(item);
 
@@ -99,6 +103,15 @@ if ((Boolean) request.getAttribute("isFormPost")) {
                 itemState = State.getInstance(item);
                 itemState.setResolveInvisible(true);
                 itemState.setId(ids[i]);
+            }
+
+            UUID templateId = templateIds[i];
+
+            if (templateId != null) {
+                itemState.as(ContentTemplateSource.class).setSource(Query
+                        .from(ContentTemplate.class)
+                        .where("_id = ?", templateId)
+                        .first());
             }
 
             String data = i < datas.size() ? datas.get(i) : null;
@@ -338,6 +351,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 
                                                             for (Object validObject : validObjects) {
                                                                 State validState = State.getInstance(validObject);
+                                                                ContentTemplate validObjectTemplate = validState.as(ContentTemplateSource.class).getSource();
                                                                 Date validObjectPublishDate = validState.as(Content.ObjectModification.class).getPublishDate();
 
                                                                 wp.writeStart("div",
@@ -346,6 +360,11 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                             "name", typeIdName,
                                                                             "type", "hidden",
                                                                             "value", validState.getTypeId());
+
+                                                                    wp.writeElement("input",
+                                                                            "name", templateIdName,
+                                                                            "type", "hidden",
+                                                                            "value", validObjectTemplate != null ? validObjectTemplate.getId() : null);
 
                                                                     wp.writeElement("input",
                                                                             "name", publishDateName,
@@ -500,6 +519,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 
                                                         for (Object validObject : validObjects) {
                                                             State validState = State.getInstance(validObject);
+                                                            ContentTemplate validObjectTemplate = validState.as(ContentTemplateSource.class).getSource();
                                                             Date validObjectPublishDate = validState.as(Content.ObjectModification.class).getPublishDate();
 
                                                             wp.writeStart("div",
@@ -508,6 +528,11 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
                                                                         "name", typeIdName,
                                                                         "type", "hidden",
                                                                         "value", validState.getTypeId());
+
+                                                                wp.writeElement("input",
+                                                                        "name", templateIdName,
+                                                                        "type", "hidden",
+                                                                        "value", validObjectTemplate != null ? validObjectTemplate.getId() : null);
 
                                                                 wp.writeElement("input",
                                                                         "name", publishDateName,
@@ -559,6 +584,7 @@ UUID containerObjectId = State.getInstance(request.getAttribute("containerObject
 if (!isValueExternal) {
     Set<ObjectType> bulkUploadTypes = new HashSet<ObjectType>();
     Map<ObjectType, String> weightedTypesAndFieldsMap = new CompactMap<ObjectType, String>();
+    Map<ObjectType, String> weightedColorTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, Double> weightedTypesAndTotalsMap = new CompactMap<ObjectType, Double>();
     Map<ObjectType, String> toggleTypesAndFieldsMap = new CompactMap<ObjectType, String>();
     Map<ObjectType, String> progressTypesAndFieldsMap = new CompactMap<ObjectType, String>();
@@ -578,6 +604,9 @@ if (!isValueExternal) {
                 if (ui.isCollectionItemWeightCalculated()) {
                     calculatedWeightsFieldCount ++;
                 }
+            }
+            if (ui.isCollectionItemWeightColor()) {
+                weightedColorTypesAndFieldsMap.put(t, f.getInternalName());
             }
             if (ui.isCollectionItemWeightMarker()) {
                 weightMarkersTypesAndFieldsMap.put(t, f.getInternalName());
@@ -648,6 +677,7 @@ if (!isValueExternal) {
             for (Object item : fieldValue) {
                 State itemState = State.getInstance(item);
                 ObjectType itemType = itemState.getType();
+                ContentTemplate itemTemplate = itemState.as(ContentTemplateSource.class).getSource();
                 Date itemPublishDate = itemState.as(Content.ObjectModification.class).getPublishDate();
 
                 boolean itemExpanded = field.as(ToolUi.class).isExpanded() || Edit.isWorkInProgressRestored(wp, item);
@@ -657,6 +687,7 @@ if (!isValueExternal) {
                 String progressFieldName = progressTypesAndFieldsMap.get(itemType);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(itemType);
                 String weightFieldName = weightedTypesAndFieldsMap.get(itemType);
+                String weightColorFieldName = weightedColorTypesAndFieldsMap.get(itemType);
                 String weightMarkersFieldName = weightMarkersTypesAndFieldsMap.get(itemType);
 
                 Double weight = !StringUtils.isBlank(weightFieldName) ? ObjectUtils.to(double.class, itemState.get(weightFieldName)) : null;
@@ -677,10 +708,12 @@ if (!isValueExternal) {
                         // Add additional data attributes for customizing embedded item display
                         "data-toggle-field", !StringUtils.isBlank(toggleFieldName) ? toggleFieldName : null,
                         "data-weight-field", !StringUtils.isBlank(weightFieldName) ? weightFieldName : null,
+                        "data-weight-color-field", !StringUtils.isBlank(weightColorFieldName) ? weightColorFieldName : null,
                         "data-weight-markers-field", !StringUtils.isBlank(weightMarkersFieldName) ? weightMarkersFieldName : null,
                         "data-progress-field-value", !StringUtils.isBlank(progressFieldName) ? ObjectUtils.to(int.class, ObjectUtils.to(double.class, itemState.get(progressFieldName)) * 100) : null,
                         "data-toggle-field-value", !StringUtils.isBlank(toggleFieldName) ? ObjectUtils.to(boolean.class, itemState.get(toggleFieldName)) : null,
                         "data-weight-field-value", weight != null ? (total != null ? weight / total : weight) : null,
+                        "data-weight-color-field-value", !StringUtils.isBlank(weightColorFieldName) ? ObjectUtils.to(String.class, itemState.get(weightColorFieldName)) : null,
                         "data-weight-markers-field-value", !StringUtils.isBlank(weightMarkersFieldName) ? ObjectUtils.to(new TypeReference<List<Double>>() {}, itemState.get(weightMarkersFieldName)) : null
                 );
 
@@ -696,12 +729,18 @@ if (!isValueExternal) {
 
                     wp.writeElement("input",
                             "type", "hidden",
+                            "name", templateIdName,
+                            "value", itemTemplate != null ? itemTemplate.getId() : null);
+
+                    wp.writeElement("input",
+                            "type", "hidden",
                             "name", publishDateName,
                             "value", itemPublishDate != null ? itemPublishDate.getTime() : null);
 
                     if (!expanded && !itemState.hasAnyErrors()
                             && StringUtils.isBlank(toggleFieldName)
-                            && StringUtils.isBlank(weightFieldName)) {
+                            && StringUtils.isBlank(weightFieldName)
+                            && StringUtils.isBlank(weightColorFieldName)) {
                         wp.writeElement("input",
                                 "type", "hidden",
                                 "name", dataName,
@@ -724,15 +763,18 @@ if (!isValueExternal) {
 
             for (ObjectTypeOrContentTemplate otct : wp.getObjectTypeOrContentTemplates(validTypes, true)) {
                 ObjectType type = otct.getType();
+                boolean expanded = field.as(ToolUi.class).isExpanded()
+                        || type.getFields().stream().anyMatch(f -> f.as(ToolUi.class).isExpanded());
 
                 String progressFieldName = progressTypesAndFieldsMap.get(type);
                 String toggleFieldName = toggleTypesAndFieldsMap.get(type);
                 String weightFieldName = weightedTypesAndFieldsMap.get(type);
+                String weightColorFieldName = weightedColorTypesAndFieldsMap.get(type);
                 String weightMarkersFieldName = weightMarkersTypesAndFieldsMap.get(type);
 
                 wp.writeStart("script", "type", "text/template");
                     wp.writeStart("li",
-                            "class", displayGrid ? "collapsed" : null,
+                            "class", (expanded ? "expanded" : "") + (displayGrid ? " collapsed" : ""),
                             "data-sortable-item-type", type.getId(),
                             "data-type", otct.getLabel(),
                             // Add the name of the preview field so the front end knows
@@ -740,10 +782,12 @@ if (!isValueExternal) {
                             "data-preview-field", type.getPreviewField(),
                             "data-toggle-field", !StringUtils.isBlank(toggleFieldName) ? toggleFieldName : null,
                             "data-weight-field", !StringUtils.isBlank(weightFieldName) ? weightFieldName : null,
+                            "data-weight-color-field", !StringUtils.isBlank(weightColorFieldName) ? weightColorFieldName : null,
                             "data-weight-markers-field", !StringUtils.isBlank(weightMarkersFieldName) ? weightMarkersFieldName : null,
                             "data-progress-field-value", !StringUtils.isBlank(progressFieldName) ? 0.0 : null,
                             "data-toggle-field-value", !StringUtils.isBlank(toggleFieldName) ? true : null,
-                            "data-weight-field-value", !StringUtils.isBlank(weightFieldName) ? "" : null
+                            "data-weight-field-value", !StringUtils.isBlank(weightFieldName) ? "" : null,
+                            "data-weight-color-field-value", !StringUtils.isBlank(weightColorFieldName) ? "" : null
                     );
                         wp.writeStart("a",
                                 "href", wp.cmsUrl("/content/repeatableObject.jsp",
