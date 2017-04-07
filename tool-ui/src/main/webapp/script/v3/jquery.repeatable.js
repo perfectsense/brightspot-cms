@@ -670,14 +670,18 @@ The HTML within the repeatable element must conform to these standards:
                 }).on('change', function(event) {
                     // Add/remove weight and recalculate
                     var checked = $(this).is(':checked');
-                    $item.attr('data-toggle-field-value', checked);
+                    var previouslyChecked = ($item.attr('data-toggle-field-value') == 'true');
 
-                    if ($item.closest('.repeatableForm').hasClass('repeatableForm-weighted')) {
+                    if (checked !== previouslyChecked) {
+                      $item.attr('data-toggle-field-value', checked);
+
+                      if ($item.closest('.repeatableForm').hasClass('repeatableForm-weighted')) {
                         if (checked === true) {
-                            self.addCollectionItemWeight($item);
+                          self.addCollectionItemWeight($item);
                         } else {
-                            self.removeCollectionItemWeight($item);
+                          self.removeCollectionItemWeight($item);
                         }
+                      }
                     }
                 });
 

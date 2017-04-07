@@ -43,7 +43,8 @@ $.plugin2('sortable', {
             }
 
             if ($target.is(':input') ||
-                    $target.closest('.CodeMirror').length > 0) {
+                    $target.closest('.CodeMirror').length > 0 ||
+                    $target.closest('.repeatableForm-itemWeights').length > 0) {
                 return;
             }
 
