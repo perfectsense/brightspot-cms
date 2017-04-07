@@ -131,8 +131,7 @@ public class CmsTool extends Tool {
             + " it's being phased out. Please do not use if at all possible.")
     private boolean enableAjaxSaves;
 
-    @Deprecated
-    @ToolUi.Hidden
+    @ToolUi.Tab("UI")
     private boolean disableFrontEndUploader;
 
     @ToolUi.Tab("UI")
@@ -695,12 +694,10 @@ public class CmsTool extends Tool {
         this.enableAjaxSaves = !disableAjaxSaves;
     }
 
-    @Deprecated
     public boolean isEnableFrontEndUploader() {
         return !disableFrontEndUploader;
     }
 
-    @Deprecated
     public void setEnableFrontEndUploader(boolean enableFrontEndUploader) {
         this.disableFrontEndUploader = !enableFrontEndUploader;
     }
