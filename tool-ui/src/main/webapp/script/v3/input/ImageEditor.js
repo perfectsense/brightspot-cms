@@ -1445,7 +1445,12 @@ define([
                 bounds.width = bounds.width * 100 + '%';
                 bounds.height = bounds.height * 100 + '%';
                 self.$cropSizeBox.css(bounds);
+
+                // Give time for the CSS to take effect before updating the cover
                 self.cropCoverUpdate();
+                setTimeout(function(){
+                    self.cropCoverUpdate();
+                }, 200);
             }
         },
 
