@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -75,6 +76,7 @@ public class ImageFileType implements FileContentType {
         String sepiaName = inputName + ".sepia";
         String sharpenName = inputName + ".sharpen";
         String blurName = inputName + ".blur";
+        String cropName = inputName + ".crop";
 
         String cropsFieldName = fieldName + ".crops";
 
@@ -245,6 +247,22 @@ public class ImageFileType implements FileContentType {
 
                     page.writeStart("table");
                         page.writeStart("tbody");
+
+                            page.writeStart("tr");
+                                page.writeStart("td", "class", "imageEditor-crop");
+
+                                Object filecrop = edits.get("crop");
+                                String initialCropValue = Optional.ofNullable(filecrop != null ? ObjectUtils.toJson(filecrop) : "")
+                                        .map(initialCrop -> ObjectUtils.to(String.class, initialCrop))
+                                        .orElse("");
+
+                                    page.writeTag("input",
+                                            "type", "hidden",
+                                            "name", page.h(cropName),
+                                            "value", initialCropValue);
+                                page.writeEnd();
+                            page.writeEnd();
+
                             if (usingJavaImageEditor) {
                                 page.writeStart("tr");
                                     page.writeStart("th");

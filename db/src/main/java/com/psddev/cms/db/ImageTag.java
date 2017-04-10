@@ -897,6 +897,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
             StorageItem item = null;
             Map<String, ImageCrop> crops = null;
+            Integer originalWidth = null;
+            Integer originalHeight = null;
 
             if (this.state != null) {
                 State objectState = this.state;
@@ -917,6 +919,35 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                 if (item != null) {
                     crops = findImageCrops(item);
+                    originalHeight = findDimension(item, "height");
+                    originalWidth = findDimension(item, "width");
+                }
+            }
+
+            boolean hasInitialCrop = false;
+
+            if (isEdits() && item != null) {
+
+                ImageEditor realEditor = this.editor;
+                if (realEditor == null) {
+                    realEditor = ImageEditor.Static.getDefault();
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> initialCrop = (Map<String, Object>) edits.get("crop");
+                if (!ObjectUtils.isBlank(initialCrop)) {
+                    hasInitialCrop = true;
+                    Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
+
+                    cropX = (int) ((ObjectUtils.to(double.class, initialCrop.get("x"))) * originalWidth);
+                    cropY = (int) ((ObjectUtils.to(double.class, initialCrop.get("y"))) * originalHeight);
+                    cropWidth = (int) ((ObjectUtils.to(double.class, initialCrop.get("width"))) * originalWidth);
+                    cropHeight = (int) ((ObjectUtils.to(double.class, initialCrop.get("height"))) * originalHeight);
+
+                    item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
                 }
             }
 
@@ -943,8 +974,6 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
 
                     width = width != null && width <= 0 ? null : width;
                     height = height != null && height <= 0 ? null : height;
-                    Integer originalWidth = null;
-                    Integer originalHeight = null;
                     if (standardImageSize != null) {
 
                         Integer standardWidth = standardImageSize.getWidth();
@@ -993,12 +1022,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                         }
 
                         // get a potentially smaller image from the StorageItem. This improves
-                        // resize performance on large images.
-                        StorageItem alternateItem = findStorageItemForSize(item, width, height);
-                        if (alternateItem != item) {
-                            item = alternateItem;
-                            originalHeight = findDimension(item, "height");
-                            originalWidth = findDimension(item, "width");
+                        // resize performance on large images. Skip StorageItems with initial crop.
+                        if (!hasInitialCrop) {
+                            StorageItem alternateItem = findStorageItemForSize(item, width, height);
+                            if (alternateItem != item) {
+                                item = alternateItem;
+                                originalHeight = findDimension(item, "height");
+                                originalWidth = findDimension(item, "width");
+                            }
                         }
 
                         // get the crop coordinates
@@ -1137,6 +1168,11 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             Integer originalHeight = null;
             Map<String, ImageCrop> crops = null;
 
+            ImageEditor realEditor = editor;
+            if (realEditor == null) {
+                realEditor = ImageEditor.Static.getDefault();
+            }
+
             if (this.state != null) { // backwards compatibility path
                 State objectState = this.state;
                 String field = this.field;
@@ -1160,6 +1196,31 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     originalWidth = findDimension(item, "width");
                     originalHeight = findDimension(item, "height");
                     crops = findImageCrops(item);
+                }
+            }
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> edits = item != null ? (Map<String, Object>) item.getMetadata().get("cms.edits") : null;
+            if (edits == null) {
+                edits = new HashMap<>();
+            }
+
+            // If initial crop is present (cms.edits.crop), modify originalHeight/originalWidth to reflect
+            boolean hasInitialCrop = false;
+            if (isEdits() && item != null) {
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> initialCrop = (Map<String, Object>) edits.get("crop");
+                if (!ObjectUtils.isBlank(initialCrop)) {
+                    hasInitialCrop = true;
+                    Integer cropX = null, cropY = null, cropWidth = null, cropHeight = null;
+
+                    cropX = (int) ((ObjectUtils.to(double.class, initialCrop.get("x"))) * originalWidth);
+                    cropY = (int) ((ObjectUtils.to(double.class, initialCrop.get("y"))) * originalHeight);
+                    cropWidth = (int) ((ObjectUtils.to(double.class, initialCrop.get("width"))) * originalWidth);
+                    cropHeight = (int) ((ObjectUtils.to(double.class, initialCrop.get("height"))) * originalHeight);
+
+                    item = ImageEditor.Static.crop(realEditor, item, null, cropX, cropY, cropWidth, cropHeight);
                 }
             }
 
@@ -1223,12 +1284,14 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                     }
 
                     // get a potentially smaller image from the StorageItem. This improves
-                    // resize performance on large images.
-                    StorageItem alternateItem = findStorageItemForSize(item, width, height);
-                    if (alternateItem != item) {
-                        item = alternateItem;
-                        originalWidth = findDimension(item, "width");
-                        originalHeight = findDimension(item, "height");
+                    // resize performance on large images. Skip using alternate if intial crop is present.
+                    if (!hasInitialCrop) {
+                        StorageItem alternateItem = findStorageItemForSize(item, width, height);
+                        if (alternateItem != item) {
+                            item = alternateItem;
+                            originalWidth = findDimension(item, "width");
+                            originalHeight = findDimension(item, "height");
+                        }
                     }
 
                     // get the crop coordinates
@@ -1314,15 +1377,7 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 }
 
                 if (isEdits()) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> edits = (Map<String, Object>) item.getMetadata().get("cms.edits");
-
                     if (edits != null) {
-                        ImageEditor realEditor = editor;
-                        if (realEditor == null) {
-                            realEditor = ImageEditor.Static.getDefault();
-                        }
-
                         //rotate first
                         Set<Map.Entry<String, Object>> entrySet = new TreeMap<String, Object>(edits).entrySet();
                         for (Map.Entry<String, Object> entry : entrySet) {
@@ -1331,7 +1386,8 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                             }
                         }
                         for (Map.Entry<String, Object> entry : entrySet) {
-                            if (!entry.getKey().equals("rotate")) {
+                            String key = entry.getKey();
+                            if (!key.equals("rotate") && !key.equals("crop")) {
                                 item = realEditor.edit(item, entry.getKey(), null, entry.getValue());
                             }
                         }
