@@ -1,11 +1,15 @@
 package com.psddev.cms.image;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.view.ViewModel;
+import com.psddev.dari.util.DimsImageEditor;
+import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.StorageItem;
 import com.psddev.dari.util.ThreadLocalStack;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +23,13 @@ public final class ImageSize {
     private static final ThreadLocalStack<String> FIELD = new ThreadLocalStack<>();
     private static final ThreadLocal<List<String>> CONTEXTS = ThreadLocal.withInitial(ArrayList::new);
 
+    private final String group;
+    private final String internalName;
+    private final String displayName;
     private final int width;
     private final int height;
+    private final String format;
+    private final int quality;
 
     /**
      * Returns an instance most appropriate for use with the given
@@ -50,11 +59,18 @@ public final class ImageSize {
         ImageSize size = getInstance(field);
 
         if (size != null) {
-            return new ImageTag.Builder(image)
-                    .setWidth(size.getWidth())
-                    .setHeight(size.getHeight())
-                    .toAttributes()
-                    .get("src");
+            ImageEditor editor = ImageEditor.Static.getDefault();
+
+            if (editor instanceof DimsImageEditor) {
+                return new DimsImageUrl((DimsImageEditor) editor, image, size).toUrl();
+
+            } else {
+                return new ImageTag.Builder(image)
+                        .setWidth(size.getWidth())
+                        .setHeight(size.getHeight())
+                        .toAttributes()
+                        .get("src");
+            }
 
         } else {
             return image.getPublicUrl();
@@ -148,9 +164,36 @@ public final class ImageSize {
         return new ImageSizeBuilder();
     }
 
-    ImageSize(int width, int height) {
+    ImageSize(
+            String group,
+            String internalName,
+            String displayName,
+            int width,
+            int height,
+            String format,
+            int quality) {
+
+        Preconditions.checkNotNull(internalName);
+
+        this.group = group;
+        this.internalName = internalName;
+        this.displayName = !StringUtils.isBlank(displayName) ? displayName : internalName;
         this.width = width;
         this.height = height;
+        this.format = format;
+        this.quality = quality;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public String getInternalName() {
+        return internalName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public int getWidth() {
@@ -161,6 +204,14 @@ public final class ImageSize {
         return height;
     }
 
+    public String getFormat() {
+        return format;
+    }
+
+    public int getQuality() {
+        return quality;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -168,9 +219,7 @@ public final class ImageSize {
 
         } else if (other instanceof ImageSize) {
             ImageSize otherSize = (ImageSize) other;
-
-            return width == otherSize.width
-                    && height == otherSize.height;
+            return getInternalName().equals(otherSize.getInternalName());
 
         } else {
             return false;
@@ -186,8 +235,13 @@ public final class ImageSize {
     public String toString() {
         return MoreObjects
                 .toStringHelper(this)
+                .add("group", getGroup())
+                .add("internalName", getInternalName())
+                .add("displayName", getDisplayName())
                 .add("width", getWidth())
                 .add("height", getHeight())
+                .add("format", getFormat())
+                .add("quality", getQuality())
                 .toString();
     }
 }

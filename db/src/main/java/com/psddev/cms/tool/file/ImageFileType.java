@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
@@ -17,6 +17,8 @@ import com.psddev.cms.db.ImageCrop;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.ResizeOption;
 import com.psddev.cms.db.StandardImageSize;
+import com.psddev.cms.image.ImageSize;
+import com.psddev.cms.image.ImageSizeProvider;
 import com.psddev.cms.tool.FileContentType;
 import com.psddev.cms.tool.ToolPageContext;
 import com.psddev.cms.tool.page.ContentMetadata;
@@ -135,12 +137,33 @@ public class ImageFileType implements FileContentType {
 
         crops = new TreeMap<String, ImageCrop>(crops);
 
-        Map<String, StandardImageSize> sizes = new HashMap<String, StandardImageSize>();
-        for (StandardImageSize size : StandardImageSize.findAll()) {
-            String sizeId = size.getId().toString();
-            sizes.put(sizeId, size);
-            if (crops.get(sizeId) == null) {
-                crops.put(sizeId, new ImageCrop());
+        Map<String, ImageSize> sizes = new HashMap<>();
+        ImageSizeProvider imageSizeProvider = ImageSize.getProviderStack().get();
+
+        if (imageSizeProvider != null) {
+            Set<ImageSize> imageSizes = imageSizeProvider.getAll();
+
+            if (imageSizes != null) {
+                for (ImageSize imageSize : imageSizes) {
+                    String id = imageSize.getInternalName();
+
+                    crops.computeIfAbsent(id, k -> new ImageCrop());
+                    sizes.put(id, imageSize);
+                }
+            }
+
+        } else {
+            for (StandardImageSize size : StandardImageSize.findAll()) {
+                String id = size.getId().toString();
+
+                crops.computeIfAbsent(id, k -> new ImageCrop());
+                sizes.put(id, ImageSize.builder()
+                        .group(size.isIndependent() ? size.getDisplayName() : null)
+                        .internalName(size.getInternalName())
+                        .displayName(size.getDisplayName())
+                        .width(size.getWidth())
+                        .height(size.getHeight())
+                        .build());
             }
         }
 
@@ -376,26 +399,21 @@ public class ImageFileType implements FileContentType {
                                 for (Map.Entry<String, ImageCrop> e : crops.entrySet()) {
                                     String cropId = e.getKey();
                                     ImageCrop crop = e.getValue();
-                                    StandardImageSize size = sizes.get(cropId);
-                                    if (size == null && ObjectUtils.to(UUID.class, cropId) != null) {
+                                    ImageSize size = sizes.get(cropId);
+
+                                    if (size == null) {
                                         continue;
                                     }
 
-                                    if (size != null) {
-                                        page.writeStart("tr",
-                                                "data-size-name", page.h(size.getInternalName()),
-                                                "data-size-independent", page.h(size.isIndependent()),
-                                                "data-size-width", page.h(size.getWidth()),
-                                                "data-size-height", page.h(size.getHeight()));
-                                            page.writeStart("th");
-                                                page.write(page.h(size.getDisplayName()));
-                                            page.writeEnd();
-                                    } else {
-                                        page.writeStart("tr");
-                                            page.writeStart("th");
-                                                page.write(page.h(cropId));
-                                            page.writeEnd();
-                                    }
+                                    page.writeStart("tr",
+                                            "data-size-group", page.h(size.getGroup()),
+                                            "data-size-name", page.h(size.getInternalName()),
+                                            "data-size-width", page.h(size.getWidth()),
+                                            "data-size-height", page.h(size.getHeight()));
+
+                                    page.writeStart("th");
+                                        page.write(page.h(size.getDisplayName()));
+                                    page.writeEnd();
 
                                     // Crop X
                                     page.writeStart("td");

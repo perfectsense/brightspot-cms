@@ -13,12 +13,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import com.psddev.cms.image.ImageSize;
+import com.psddev.cms.image.ImageSizeProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.psddev.cms.db.ImageCrop;
@@ -155,12 +158,33 @@ public class FileField extends PageServlet {
 
         crops = new TreeMap<String, ImageCrop>(crops);
 
-        Map<String, StandardImageSize> sizes = new HashMap<String, StandardImageSize>();
-        for (StandardImageSize size : StandardImageSize.findAll()) {
-            String sizeId = size.getId().toString();
-            sizes.put(sizeId, size);
-            if (crops.get(sizeId) == null) {
-                crops.put(sizeId, new ImageCrop());
+        Map<String, ImageSize> sizes = new HashMap<>();
+        ImageSizeProvider imageSizeProvider = ImageSize.getProviderStack().get();
+
+        if (imageSizeProvider != null) {
+            Set<ImageSize> imageSizes = imageSizeProvider.getAll();
+
+            if (imageSizes != null) {
+                for (ImageSize imageSize : imageSizeProvider.getAll()) {
+                    String id = imageSize.getInternalName();
+
+                    crops.computeIfAbsent(id, k -> new ImageCrop());
+                    sizes.put(id, imageSize);
+                }
+            }
+
+        } else {
+            for (StandardImageSize size : StandardImageSize.findAll()) {
+                String id = size.getId().toString();
+
+                crops.computeIfAbsent(id, k -> new ImageCrop());
+                sizes.put(id, ImageSize.builder()
+                        .group(size.isIndependent() ? size.getDisplayName() : null)
+                        .internalName(size.getInternalName())
+                        .displayName(size.getDisplayName())
+                        .width(size.getWidth())
+                        .height(size.getHeight())
+                        .build());
             }
         }
 
