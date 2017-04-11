@@ -139,6 +139,7 @@ define([
 
             dom.$sizes = $el.find('.imageEditor-sizes');
             dom.$sizesTable = dom.$sizes.find('table');
+            self.cropCenter = dom.$sizesTable.attr('data-crop-center') === 'true';
 
             // The data-name attribute is used to create new hidden inputs when needed
             self.dataName = $el.closest('.inputContainer').attr('data-name');
@@ -1735,7 +1736,7 @@ define([
                     }
 
                     left = (imageWidth - width) / 2;
-                    top = 0;
+                    top = self.cropCenter ? (imageHeight - height) / 2 : 0;
 
                 } else {
 

@@ -137,10 +137,12 @@ public class ImageFileType implements FileContentType {
 
         crops = new TreeMap<String, ImageCrop>(crops);
 
+        boolean cropCenter;
         Map<String, ImageSize> sizes = new HashMap<>();
         ImageSizeProvider imageSizeProvider = ImageSize.getProviderStack().get();
 
         if (imageSizeProvider != null) {
+            cropCenter = true;
             Set<ImageSize> imageSizes = imageSizeProvider.getAll();
 
             if (imageSizes != null) {
@@ -153,6 +155,9 @@ public class ImageFileType implements FileContentType {
             }
 
         } else {
+            ImageEditor defaultImageEditor = ImageEditor.Static.getDefault();
+            cropCenter = !(defaultImageEditor instanceof DimsImageEditor) || ((DimsImageEditor) defaultImageEditor).isUseLegacyThumbnail();
+
             for (StandardImageSize size : StandardImageSize.findAll()) {
                 String id = size.getId().toString();
 
@@ -385,15 +390,12 @@ public class ImageFileType implements FileContentType {
                     page.writeEnd();
                 page.writeEnd();
 
-                ImageEditor defaultImageEditor = ImageEditor.Static.getDefault();
-                boolean centerCrop = !(defaultImageEditor instanceof DimsImageEditor) || ((DimsImageEditor) defaultImageEditor).isUseLegacyThumbnail();
-
                 if (!crops.isEmpty()) {
                     page.writeStart("div", "class", "imageEditor-sizes");
                         page.writeStart("h2");
                             page.writeHtml(page.localize(ImageFileType.class, "subtitle.sizes"));
                         page.writeEnd();
-                        page.writeStart("table", "data-crop-center", page.h(centerCrop));
+                        page.writeStart("table", "data-crop-center", page.h(cropCenter));
                             page.writeStart("tbody");
 
                                 for (Map.Entry<String, ImageCrop> e : crops.entrySet()) {
