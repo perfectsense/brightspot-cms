@@ -122,7 +122,7 @@
 }
 
 .imageEditor-cover {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.65);
 }
 
 .imageEditor-sizeSelectors {
@@ -131,33 +131,43 @@
 }
 
 .imageEditor-sizeButton {
+  .background-striped(@color-heading);
+  border-radius: 2px;
   cursor: pointer;
   overflow: hidden;
-  margin-bottom:1em;
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.imageEditor-sizeSelected {
+    .background-striped(@color-focus);
+
+    a {
+      color: white;
+    }
+  }
 }
 
 .imageEditor-sizePreview {
-  .background-striped(@color-heading);
+  padding: 5px;
 
   canvas,
   img {
+    border: 1px solid white;
+    display: block;
     width: 100%;
   }
 }
 
 .imageEditor-sizeLabel {
-  .background-flat(@color-heading);
-
   display: block;
   font-size: 11px;
   overflow: hidden;
-  padding: 3px;
+  padding: 5px 5px 0 5px;
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  .imageEditor-sizeSelected & {
-    .background-flat(@color-text);
-  }
 }
 
 .imageEditor-sizeBox {
@@ -168,9 +178,10 @@
 
 .imageEditor-resizer {
   background-color: black;
-  border: 1px solid black;
-  height: 8px;
-  width: 8px;
+  border: 1px solid white;
+  border-radius: 2px;
+  height: 9px;
+  width: 9px;
   position: absolute;
   z-index: 2;
 }
@@ -192,8 +203,8 @@
   .icon-action-cancel;
 
   display: none;
-
   font-size: 11px;
+  margin: 5px 5px 0 5px;
 
   .imageEditor-sizeSelected & {
     display: block;
@@ -205,8 +216,8 @@
   .icon-plus;
 
   display: none;
-  
   font-size: 11px;
+  margin: 0 5px;
 
   .imageEditor-sizeSelected & {
     display: block;
@@ -398,14 +409,11 @@
   opacity:0.8;
 }
 .imageEditor-focus-point {
-  position:absolute;
-  width:12px;
-  height:12px;
-  border:1px solid #000;
-  background-color:@color-change;
-  border-radius:6px;
-
-  // Adjust position to account for half the size of the div
-  margin-left:-6px;
-  margin-top:-6px;
+  background: repeating-radial-gradient(black, black 3px, white 3px, white 6px);
+  border-radius: 50%;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  position: absolute;
+  width: 24px;
 }

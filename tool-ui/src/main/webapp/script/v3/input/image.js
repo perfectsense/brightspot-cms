@@ -139,6 +139,7 @@ define([
 
             dom.$sizes = $el.find('.imageEditor-sizes');
             dom.$sizesTable = dom.$sizes.find('table');
+            self.cropCenter = dom.$sizesTable.attr('data-crop-center') === 'true';
 
             // The data-name attribute is used to create new hidden inputs when needed
             self.dataName = $el.closest('.inputContainer').attr('data-name');
@@ -1187,9 +1188,12 @@ define([
 
                     $('<span/>', {
                         title: sizeInfo.description + ' (' + sizeInfo.width + ' x ' + sizeInfo.height + ')',
-                        html: sizeInfo.description
+                        html: sizeInfo.group || sizeInfo.description
                     }).appendTo(groupLabel);
 
+                    if (sizeInfo.group) {
+                        return false;
+                    }
                 });
 
                 // Create the preview image for the group
@@ -1360,6 +1364,7 @@ define([
 
                 $th = $(this);
                 $tr = $th.closest('tr');
+                var sizeGroup = $tr.attr('data-size-group');
                 sizeName = $tr.attr('data-size-name');
                 sizeDescription = $th.text();
                 independent = $tr.attr('data-size-independent') === 'true';
@@ -1403,14 +1408,14 @@ define([
                 var focusY = self.dom.$focusInputY.val();
                 if (focusX !== '' && focusY !== '') {
 
-                    var $focusImage = self.dom.$focusImage[0];
+                    var $focusImage = self.dom.$focusImage;
 
                     focusCrop = self.focusGetCrop({
                         x: focusX,
                         y: focusY
                     }, {
-                        width: $focusImage.width,
-                        height: $focusImage.height,
+                        width: parseInt($focusImage.attr('data-width'), 10),
+                        height: parseInt($focusImage.attr('data-height'), 10)
                     }, {
                         width: sizeWidth,
                         height: sizeHeight
@@ -1419,6 +1424,7 @@ define([
 
                 // Save the size information so we can use it later
                 sizeInfo = self.sizeInfos[sizeName] = {
+                    group: sizeGroup,
                     name: sizeName,
                     description: sizeDescription,
                     inputs: inputs,
@@ -1432,7 +1438,15 @@ define([
                 // Group the sizes according to aspect ratio
                 // (unless this size is marked as an independent size which should be presented on its own)
 
-                if (independent) {
+                if (sizeGroup) {
+                    group = groupsApproximate[sizeGroup]
+
+                    if (!group) {
+                        group = self.sizesCreateGroup(sizeGroup);
+                        groupsApproximate[sizeGroup] = group;
+                    }
+
+                } else if (independent) {
 
                     // Create a new group just for this individual item
                     group = self.sizesCreateGroup(sizeName);
@@ -1722,7 +1736,7 @@ define([
                     }
 
                     left = (imageWidth - width) / 2;
-                    top = 0;
+                    top = self.cropCenter ? (imageHeight - height) / 2 : 0;
 
                 } else {
 
@@ -1826,14 +1840,24 @@ define([
          * The sizeInfo object for the first size in the group.
          */
         sizesGetGroupFirstSizeInfo: function(groupName) {
-            var groupInfo, self, firstSize;
-            self = this;
-            groupInfo = self.sizeGroups[groupName];
+            var self = this;
+            var groupInfo = self.sizeGroups[groupName];
+            var firstSize;
+            var totalAspectRatio = 0;
+            var aspectRatioCount = 0;
+
             $.each(groupInfo.sizeInfos, function(sizeName, sizeInfo){
-                firstSize = sizeInfo;
-                return false; // return after first one
+                if (!firstSize) {
+                    firstSize = sizeInfo;
+                }
+
+                totalAspectRatio += sizeInfo.aspectRatio;
+                aspectRatioCount ++;
             });
-            return firstSize;
+
+            return firstSize ? $.extend(true, { }, firstSize, {
+                aspectRatio: totalAspectRatio / aspectRatioCount
+            }) : null;
         },
 
 
