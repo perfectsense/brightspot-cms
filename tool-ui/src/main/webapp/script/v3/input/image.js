@@ -1187,9 +1187,12 @@ define([
 
                     $('<span/>', {
                         title: sizeInfo.description + ' (' + sizeInfo.width + ' x ' + sizeInfo.height + ')',
-                        html: sizeInfo.description
+                        html: sizeInfo.group || sizeInfo.description
                     }).appendTo(groupLabel);
 
+                    if (sizeInfo.group) {
+                        return false;
+                    }
                 });
 
                 // Create the preview image for the group
@@ -1360,6 +1363,7 @@ define([
 
                 $th = $(this);
                 $tr = $th.closest('tr');
+                var sizeGroup = $tr.attr('data-size-group');
                 sizeName = $tr.attr('data-size-name');
                 sizeDescription = $th.text();
                 independent = $tr.attr('data-size-independent') === 'true';
@@ -1419,6 +1423,7 @@ define([
 
                 // Save the size information so we can use it later
                 sizeInfo = self.sizeInfos[sizeName] = {
+                    group: sizeGroup,
                     name: sizeName,
                     description: sizeDescription,
                     inputs: inputs,
@@ -1432,7 +1437,15 @@ define([
                 // Group the sizes according to aspect ratio
                 // (unless this size is marked as an independent size which should be presented on its own)
 
-                if (independent) {
+                if (sizeGroup) {
+                    group = groupsApproximate[sizeGroup]
+
+                    if (!group) {
+                        group = self.sizesCreateGroup(sizeGroup);
+                        groupsApproximate[sizeGroup] = group;
+                    }
+
+                } else if (independent) {
 
                     // Create a new group just for this individual item
                     group = self.sizesCreateGroup(sizeName);
@@ -1826,14 +1839,24 @@ define([
          * The sizeInfo object for the first size in the group.
          */
         sizesGetGroupFirstSizeInfo: function(groupName) {
-            var groupInfo, self, firstSize;
-            self = this;
-            groupInfo = self.sizeGroups[groupName];
+            var self = this;
+            var groupInfo = self.sizeGroups[groupName];
+            var firstSize;
+            var totalAspectRatio = 0;
+            var aspectRatioCount = 0;
+
             $.each(groupInfo.sizeInfos, function(sizeName, sizeInfo){
-                firstSize = sizeInfo;
-                return false; // return after first one
+                if (!firstSize) {
+                    firstSize = sizeInfo;
+                }
+
+                totalAspectRatio += sizeInfo.aspectRatio;
+                aspectRatioCount ++;
             });
-            return firstSize;
+
+            return firstSize ? $.extend(true, { }, firstSize, {
+                aspectRatio: totalAspectRatio / aspectRatioCount
+            }) : null;
         },
 
 
