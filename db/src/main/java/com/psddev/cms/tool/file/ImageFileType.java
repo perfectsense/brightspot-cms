@@ -503,6 +503,8 @@ public class ImageFileType implements FileContentType {
                 }
                 page.writeTag("img",
                         "alt", "",
+                        "data-width", ObjectUtils.to(Integer.class, CollectionUtils.getByPath(fieldValue.getMetadata(), "width")),
+                        "data-height", ObjectUtils.to(Integer.class, CollectionUtils.getByPath(fieldValue.getMetadata(), "height")),
                         "data-scale", resizeScale,
                         "src", page.url("/misc/proxy.jsp",
                                 "url", fieldValueUrl,

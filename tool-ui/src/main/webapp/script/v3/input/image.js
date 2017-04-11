@@ -1403,14 +1403,14 @@ define([
                 var focusY = self.dom.$focusInputY.val();
                 if (focusX !== '' && focusY !== '') {
 
-                    var $focusImage = self.dom.$focusImage[0];
+                    var $focusImage = self.dom.$focusImage;
 
                     focusCrop = self.focusGetCrop({
                         x: focusX,
                         y: focusY
                     }, {
-                        width: $focusImage.width,
-                        height: $focusImage.height,
+                        width: parseInt($focusImage.attr('data-width'), 10),
+                        height: parseInt($focusImage.attr('data-height'), 10)
                     }, {
                         width: sizeWidth,
                         height: sizeHeight
