@@ -116,6 +116,7 @@ public class PageFilter extends AbstractFilter {
     public static final String MAIN_OBJECT_ATTRIBUTE = ATTRIBUTE_PREFIX + ".mainObject";
     public static final String MAIN_OBJECT_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".mainObjectChecked";
     private static final String OBJECTS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".objects";
+    private static final String VIEWS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".views";
     public static final String PAGE_ATTRIBUTE = ATTRIBUTE_PREFIX + ".page";
     public static final String PAGE_CHECKED_ATTRIBUTE = ATTRIBUTE_PREFIX + ".pageChecked";
     public static final String PARENT_SECTIONS_ATTRIBUTE = ATTRIBUTE_PREFIX + ".parentSections";
@@ -825,7 +826,6 @@ public class PageFilter extends AbstractFilter {
                 layoutPath = findLayoutPath(mainObject, true);
             }
 
-            String typePath = mainType.as(Renderer.TypeModification.class).getPath();
             boolean rendered = false;
 
             try {
@@ -845,9 +845,50 @@ public class PageFilter extends AbstractFilter {
                     }
                 }
 
+                // find the renderer path.
+                String typePath;
+                if (mainObject instanceof RendererPathResolver) {
+                    typePath = ((RendererPathResolver) mainObject).getRendererPath(request);
+
+                } else {
+                    typePath = mainType.as(Renderer.TypeModification.class).findContextualPath(request);
+                }
+
+                // find the renderer view.
+                View<Recordable> typeView = null;
+                Class<? extends View> typeViewClass;
+                if (mainObject instanceof ViewClassResolver) {
+                    typeViewClass = ((ViewClassResolver) mainObject).getViewClass(request);
+
+                } else {
+                    typeViewClass = mainType.as(View.TypeModification.class).findContextualViewClass(request);
+                }
+
+                if (typeViewClass != null) {
+                    try {
+                        typeView = View.create(typeViewClass, (Recordable) mainObject, request, response);
+
+                    } catch (Exception e) {
+                        LOGGER.warn("Failed to create RendererView of type [" +
+                                typeViewClass.getName() + "]. Cause: " + e.getMessage());
+                    }
+                }
+
                 if (!rendered && !embed && !ObjectUtils.isBlank(typePath)) {
                     rendered = true;
-                    JspUtils.include(request, response, writer, StringUtils.ensureStart(typePath, "/"));
+
+                    if (typeView != null) {
+                        Static.pushView(request, typeView);
+                    }
+
+                    try {
+                        JspUtils.include(request, response, writer, StringUtils.ensureStart(typePath, "/"));
+
+                    } finally {
+                        if (typeView != null) {
+                            Static.popView(request);
+                        }
+                    }
                 }
 
                 if (!rendered && mainObject instanceof Renderer) {
@@ -1675,6 +1716,8 @@ public class PageFilter extends AbstractFilter {
             script = null;
         }
 
+        View<?> view = null;
+
         if (object != null) {
             Object substitution = getSubstitutions(request).get(State.getInstance(object).getId());
             if (substitution != null) {
@@ -1690,7 +1733,33 @@ public class PageFilter extends AbstractFilter {
                 if (type != null) {
                     Renderer.TypeModification typeRenderer = type.as(Renderer.TypeModification.class);
                     engine = typeRenderer.getEngine();
-                    script = typeRenderer.findContextualPath(request);
+
+                    // find the renderer path.
+                    if (object instanceof RendererPathResolver) {
+                        script = ((RendererPathResolver) object).getRendererPath(request);
+
+                    } else {
+                        script = type.as(Renderer.TypeModification.class).findContextualPath(request);
+                    }
+
+                    // find the renderer view.
+                    Class<? extends View> viewClass;
+                    if (object instanceof ViewClassResolver) {
+                        viewClass = ((ViewClassResolver) object).getViewClass(request);
+
+                    } else {
+                        viewClass = type.as(View.TypeModification.class).findContextualViewClass(request);
+                    }
+
+                    if (viewClass != null) {
+                        try {
+                            view = View.create(viewClass, (Recordable) object, request, response);
+
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to create RendererView of type [" +
+                                    viewClass.getName() + "]. Cause: " + e.getMessage());
+                        }
+                    }
                 }
             }
         }
@@ -1711,6 +1780,10 @@ public class PageFilter extends AbstractFilter {
         try {
             if (object != null) {
                 Static.pushObject(request, object);
+            }
+
+            if (view != null) {
+                Static.pushView(request, view);
             }
 
             if (lazyWriter != null) {
@@ -1758,6 +1831,10 @@ public class PageFilter extends AbstractFilter {
         } finally {
             if (object != null) {
                 Static.popObject(request);
+            }
+
+            if (view != null) {
+                Static.popView(request);
             }
 
             if (lazyWriter != null) {
@@ -2268,6 +2345,60 @@ public class PageFilter extends AbstractFilter {
             }
 
             return null;
+        }
+
+        /**
+         * Pushes the given {@code view} to the list of views that
+         * are currently being loaded.
+         */
+        public static void pushView(HttpServletRequest request, View<?> view) {
+            ErrorUtils.errorIfNull(view, "view");
+
+            @SuppressWarnings("unchecked")
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+
+            if (views == null) {
+                views = new ArrayList<>();
+                request.setAttribute(VIEWS_ATTRIBUTE, views);
+            }
+
+            views.add(view);
+            request.setAttribute("view", view);
+        }
+
+        /**
+         * Pops the last view from the list of views that are currently
+         * being loaded.
+         */
+        public static View<?> popView(HttpServletRequest request) {
+            @SuppressWarnings("unchecked")
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+
+            if (views == null || views.isEmpty()) {
+                return null;
+
+            } else {
+                View<?> popped = views.remove(views.size() - 1);
+                View<?> view = peekView(request);
+                request.setAttribute("view", view);
+                return popped;
+            }
+        }
+
+        /**
+         * Returns the last view from the list of views that are currently
+         * being loaded.
+         */
+        public static View<?> peekView(HttpServletRequest request) {
+            @SuppressWarnings("unchecked")
+            List<View<?>> views = (List<View<?>>) request.getAttribute(VIEWS_ATTRIBUTE);
+
+            if (views == null || views.isEmpty()) {
+                return null;
+
+            } else {
+                return views.get(views.size() - 1);
+            }
         }
 
         /**

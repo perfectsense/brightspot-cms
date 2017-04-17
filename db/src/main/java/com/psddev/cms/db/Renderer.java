@@ -4,14 +4,18 @@ import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -26,7 +30,12 @@ import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.HtmlWriter;
 import com.psddev.dari.util.ObjectUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface Renderer extends Recordable {
+
+    public static final String DEFAULT_CONTEXT = "";
 
     public void renderObject(
             HttpServletRequest request,
@@ -60,6 +69,8 @@ public interface Renderer extends Recordable {
     @FieldInternalNamePrefix("cms.render.")
     public static class TypeModification extends Modification<ObjectType> {
 
+        private static final Logger LOGGER = LoggerFactory.getLogger(Renderer.class);
+
         @InternalName("renderScript")
         private String path;
 
@@ -80,15 +91,7 @@ public interface Renderer extends Recordable {
          * @return May be {@code null}.
          */
         public String getPath() {
-            if (ObjectUtils.isBlank(path)) {
-                String jsp = getDefaultRecordJsp();
-
-                if (!ObjectUtils.isBlank(jsp)) {
-                    path = jsp;
-                }
-            }
-
-            return path;
+            return getEffectivePaths().get(DEFAULT_CONTEXT);
         }
 
         /**
@@ -109,9 +112,8 @@ public interface Renderer extends Recordable {
          * @see ContextTag
          */
         public Map<String, String> getPaths() {
-            if (paths == null) {
-                paths = new CompactMap<String, String>();
-            }
+            Map<String, String> paths = getEffectivePaths();
+            paths.remove(DEFAULT_CONTEXT);
             return paths;
         }
 
@@ -124,6 +126,46 @@ public interface Renderer extends Recordable {
          */
         public void setPaths(Map<String, String> paths) {
             this.paths = paths;
+        }
+
+        /**
+         * Returns the raw default servlet path used to render instances of
+         * this type. Raw in this case means the data stored directly on this
+         * type definition. Additional data may be used when resolving the path
+         * based on other related type definitions.
+         *
+         * @return May be {@code null}.
+         * @see #getPath()
+         */
+        String getRawPath() {
+            if (ObjectUtils.isBlank(path)) {
+                String jsp = getDefaultRecordJsp();
+
+                if (!ObjectUtils.isBlank(jsp)) {
+                    path = jsp;
+                }
+            }
+
+            return path;
+        }
+
+        /**
+         * Returns all the raw servlet paths associated with rendering
+         * instances of this type in a specific context.  Raw in this case
+         * means the data stored directly on this type definition. Additional
+         * data may be used when resolving the path based on other related type
+         * definitions.
+         *
+         * @return Never {@code null}.
+         * @see ContextTag
+         * @see #getRawPaths()
+         */
+        Map<String, String> getRawPaths() {
+            if (paths == null) {
+                paths = new CompactMap<>();
+            }
+
+            return paths;
         }
 
         /**
@@ -182,6 +224,111 @@ public interface Renderer extends Recordable {
             }
 
             return getPath();
+        }
+
+        private Map<String, String> getEffectiveRawPaths() {
+            Map<String, String> paths = new CompactMap<>();
+
+            paths.putAll(getRawPaths());
+
+            String defaultPath = getRawPath();
+            if (!ObjectUtils.isBlank(defaultPath)) {
+                paths.put(DEFAULT_CONTEXT, defaultPath);
+            }
+
+            return paths;
+        }
+
+        private Map<String, String> getInheritedPaths() {
+            Map<String, String> paths = new CompactMap<>();
+
+            ObjectType originalType = getOriginalObject();
+
+            List<ObjectType> superTypes = new ArrayList<>();
+
+            superTypes.add(originalType);
+
+            for (String className : getOriginalObject().getSuperClassNames()) {
+
+                Class<?> klass = ObjectUtils.getClassByName(className);
+                if (klass != null) {
+
+                    ObjectType type = ObjectType.getInstance(klass);
+                    if (type != null && !type.equals(originalType)) {
+                        superTypes.add(type);
+                    }
+                }
+            }
+
+            Collections.reverse(superTypes);
+
+            for (ObjectType type : superTypes) {
+                paths.putAll(type.as(Renderer.TypeModification.class).getEffectiveRawPaths());
+            }
+
+            return paths;
+        }
+
+        private Map<String, String> getInterfacePaths() {
+            Map<String, String> paths = new CompactMap<>();
+
+            Set<String> seenContexts = new HashSet<>();
+
+            ObjectType originalType = getOriginalObject();
+
+            for (String group : originalType.getGroups()) {
+
+                Class<?> klass = ObjectUtils.getClassByName(group);
+                if (klass != null && klass.isInterface()) {
+
+                    ObjectType type = ObjectType.getInstance(klass);
+
+                    if (type != null && !type.equals(originalType)) {
+
+                        for (Map.Entry<String, String> entry : type.as(Renderer.TypeModification.class).getEffectiveRawPaths().entrySet()) {
+
+                            String context = entry.getKey();
+                            String path = entry.getValue();
+                            if (context != null) {
+
+                                if (seenContexts.add(context)) {
+                                    paths.put(context, path);
+
+                                } else {
+                                    paths.remove(context);
+                                    LOGGER.warn("More than one renderer mapping for context [" +
+                                            context + "], skipping path [" + path + "].");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return paths;
+        }
+
+        private Map<String, String> getEffectivePaths() {
+            Map<String, String> paths = new CompactMap<>();
+
+            paths.putAll(getInheritedPaths());
+
+            // only add contexts that don't already exist.
+            for (Map.Entry<String, String> entry : getInterfacePaths().entrySet()) {
+
+                String context = entry.getKey();
+                String path = entry.getValue();
+
+                if (!paths.containsKey(context)) {
+                    paths.put(context, path);
+
+                } else {
+                    LOGGER.warn("A renderer mapping for context [" + context +
+                            "] already exists, skipping path [" + path + "].");
+                }
+            }
+
+            return paths;
         }
 
         // --- Deprecated ---
@@ -260,9 +407,10 @@ public interface Renderer extends Recordable {
     @ObjectType.AnnotationProcessorClass(PathProcessor.class)
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
+    @Repeatable(Paths.class)
     public @interface Path {
         String value();
-        String context() default "";
+        String context() default Renderer.DEFAULT_CONTEXT;
     }
 
     @Documented
@@ -359,7 +507,7 @@ class PathProcessor implements ObjectType.AnnotationProcessor<Renderer.Path> {
     @Override
     public void process(ObjectType type, Renderer.Path annotation) {
         Renderer.TypeModification rendererData = type.as(Renderer.TypeModification.class);
-        Map<String, String> paths = rendererData.getPaths();
+        Map<String, String> paths = rendererData.getRawPaths();
         String value = annotation.value();
         String context = annotation.context();
 
