@@ -134,6 +134,12 @@
                                             <className>com/psddev/cms/tool/page/SearchAdvancedFullResult</className>
                                             <differenceType>8001</differenceType>
                                         </difference>
+                                        <difference>
+                                            <className>com/psddev/cms/db/ImageTag$Builder</className>
+                                            <differenceType>7006</differenceType>
+                                            <method>void setDisableHotSpotCrop(boolean)</method>
+                                            <to>com.psddev.cms.db.ImageTag$Builder</to>
+                                        </difference>
                                     </ignored>
                                     <logResults>true</logResults>
                                 </configuration>

@@ -824,8 +824,9 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
             return disableHotSpotCrop;
         }
 
-        public void setDisableHotSpotCrop(boolean disableHotSpotCrop) {
+        public Builder setDisableHotSpotCrop(boolean disableHotSpotCrop) {
             this.disableHotSpotCrop = disableHotSpotCrop;
+            return this;
         }
 
         public boolean isEdits() {
