@@ -72,6 +72,8 @@ public abstract class ViewModel<M> {
 
     protected M model;
 
+    protected Boolean shouldCreate;
+
     /**
      * Called during creation of this view model before {@link #onCreate(ViewResponse)}.
      * The object is fully initialized at this point so it is safe to utilize
@@ -201,6 +203,7 @@ public abstract class ViewModel<M> {
                 ((ViewModel<? super M>) viewModel).viewResponse = viewResponse;
 
                 viewModel.model = model;
+                viewModel.shouldCreate = Boolean.TRUE;
 
                 beforeViewModelOnCreate(viewModel);
 
@@ -209,6 +212,10 @@ public abstract class ViewModel<M> {
                 }
 
                 viewModel.onCreate(viewResponse);
+
+                if (Boolean.FALSE.equals(viewModel.shouldCreate)) {
+                    return null;
+                }
 
                 return viewModel;
             }
