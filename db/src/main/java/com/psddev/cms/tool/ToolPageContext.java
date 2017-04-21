@@ -2021,7 +2021,7 @@ public class ToolPageContext extends WebPageContext {
                     richTextElement.put("submenu", menu);
                 }
 
-                String styleName = type.getInternalName().replace(".", "-");
+                String styleName = type.getObjectClassName().replace(".", "-");
                 tagNameToStyleNameMap.put(tagName, styleName);
 
                 richTextElement.put("styleName", styleName);
