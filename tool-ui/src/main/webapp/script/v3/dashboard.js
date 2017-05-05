@@ -5,7 +5,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
         var $widget = $(this);
         var widgetUrl = $widget.attr('data-dashboard-widget-url');
 
-        if (widgetUrl && !$widget.is(':hover')) {
+        if (widgetUrl
+            && !$widget.is(':hover')
+            && $widget.find('.dropDown-list-open').size() === 0) {
           $.ajax({
             'cache': false,
             'type': 'get',
