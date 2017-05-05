@@ -13,7 +13,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
         if (widgetUrl
             && !$widget.is(':hover')
             && $widget.find('.dropDown-list-open').size() === 0
-            && $('body').find('.pageThumbnails_toggle').size() === 0) {
+            && $('body').children('.pageThumbnails_toggle').size() === 0) {
 
           $.ajax({
             'cache': false,
