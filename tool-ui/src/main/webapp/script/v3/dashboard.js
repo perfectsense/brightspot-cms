@@ -5,7 +5,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
         var $widget = $(this);
         var widgetUrl = $widget.attr('data-dashboard-widget-url');
 
-        if (widgetUrl) {
+        if (widgetUrl && !$widget.is(':hover')) {
           $.ajax({
             'cache': false,
             'type': 'get',
