@@ -692,20 +692,23 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         wp.writeStart("div", "class", "message message-warning");
                             wp.writeStart("p");
-                                if (draft != null && !draft.isNewContent()) {
-                                    wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+                                wp.writeStart("span", "class", "visibilityLabel widget-publishingWorkflowState");
+                                    if (draft != null && !draft.isNewContent()) {
+                                        wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
 
-                                    String draftName = draft.getName();
+                                        String draftName = draft.getName();
 
-                                    if (!ObjectUtils.isBlank(draftName)) {
-                                        wp.writeHtml(" (");
-                                        wp.writeHtml(draftName);
-                                        wp.writeHtml(")");
+                                        if (!ObjectUtils.isBlank(draftName)) {
+                                            wp.writeHtml(" (");
+                                            wp.writeHtml(draftName);
+                                            wp.writeHtml(")");
+                                        }
+
+                                    } else {
+                                        wp.writeHtml("Initial Draft");
                                     }
+                                wp.writeEnd();
 
-                                } else {
-                                    wp.writeHtml("Initial Draft");
-                                }
 
                                 wp.writeHtml(" last saved ");
                                 wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
