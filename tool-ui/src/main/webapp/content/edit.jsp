@@ -710,11 +710,10 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeEnd();
 
 
-                                wp.writeHtml(" last saved ");
-                                wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                                 wp.writeHtml(" by ");
                                 wp.writeObjectLabel(draftContentData.getUpdateUser());
-                                wp.writeHtml(".");
+                                wp.writeHtml(" at ");
+                                wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                             wp.writeEnd();
 
                             if (schedule != null) {
