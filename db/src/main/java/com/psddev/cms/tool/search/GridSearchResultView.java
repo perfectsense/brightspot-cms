@@ -2,10 +2,13 @@ package com.psddev.cms.tool.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Localization;
 import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUi;
@@ -16,6 +19,7 @@ import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Predicate;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.util.PaginatedResult;
+import com.psddev.dari.util.StringUtils;
 
 public class GridSearchResultView extends ListSearchResultView {
 
@@ -87,6 +91,10 @@ public class GridSearchResultView extends ListSearchResultView {
         }
 
         writeSortsHtml();
+        // TODO: It would make sense to move this up to the right of the view selection
+        //       However, that happens in Search.java, which is also the model for search.
+        //       I didn't want to touch that for the proof of concept
+        writeSizesHtml();
 
         page.writeStart("div", "class", "searchResult-list infiniteScroll");
         if (result.hasPages()) {
@@ -106,6 +114,11 @@ public class GridSearchResultView extends ListSearchResultView {
 
     @Override
     protected void writeItemsHtml(Collection<?> items) throws IOException {
-        writeImagesHtml(items);
+        String size = page.pageParam(String.class, SIZE_PARAMETER, SIZES[0]);
+        int sizeIndex = Arrays.asList(SIZES).indexOf(size);
+        int maxHeight = SIZES_MAX_HEIGHT[Math.max(0, sizeIndex)];
+        //System.out.println("RHS [size=" + size + "] [sizeIndex=" + sizeIndex + "] [maxHeight=" + maxHeight + "]");
+        writeImagesHtml(items, maxHeight);
     }
+
 }

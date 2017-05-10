@@ -14,10 +14,12 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
         insert: function() {
             $('.searchResult-images').each(function() {
                 var $grid = $(this);
+                var currentHeight = $grid.attr('data-size-height');
+                console.log("current height", currentHeight);
                 var options = {
                     container: 'figure',
                     object: 'img',
-                    rowHeight: 200 //,
+                    rowHeight: (currentHeight === undefined ? 200 : currentHeight)
                     //maxRows: null,
                     //truncate: false
                 };

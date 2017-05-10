@@ -3,6 +3,7 @@ package com.psddev.cms.tool.search;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -52,6 +53,10 @@ public class ListSearchResultView extends AbstractSearchResultView {
     private static final String ATTRIBUTE_PREFIX = ListSearchResultView.class.getName() + ".";
     private static final String PREVIOUS_DATE_ATTRIBUTE = ATTRIBUTE_PREFIX + "previousDate";
     private static final String MAX_SUM_ATTRIBUTE = ATTRIBUTE_PREFIX + ".maximumSum";
+
+    public static final String SIZE_PARAMETER = "size";
+    public static final String[] SIZES = { "small", "large" };
+    public static final Integer[] SIZES_MAX_HEIGHT = { 200, 400 };
 
     protected ObjectField sortField;
     protected boolean showSiteLabel;
@@ -121,7 +126,13 @@ public class ListSearchResultView extends AbstractSearchResultView {
     }
 
     protected void writeImagesHtml(Iterable<?> items) throws IOException {
-        page.writeStart("div", "class", "searchResult-images");
+        writeImagesHtml(items, SIZES_MAX_HEIGHT[0]);
+    }
+
+    protected void writeImagesHtml(Iterable<?> items, int currentHeight) throws IOException {
+        //System.out.println("RHS: currentHeight=" + currentHeight);
+
+        page.writeStart("div", "class", "searchResult-images", "data-size-height", currentHeight);
             for (Object item : items) {
                 StorageItem preview = item instanceof StorageItem
                         ? (StorageItem) item
@@ -616,4 +627,39 @@ public class ListSearchResultView extends AbstractSearchResultView {
 
         page.writeEnd();
     }
+
+    protected void writeSizesHtml() throws IOException {
+        page.writeStart("div", "class", "searchResult-sizes");
+            page.writeStart("form",
+                    "data-bsp-autosubmit", "",
+                    "method", "get",
+                    "action", page.url(null));
+
+                for (Map.Entry<String, List<String>> entry : StringUtils.getQueryParameterMap(page.url("",
+                        SIZE_PARAMETER, null)).entrySet()) {
+
+                    String name = entry.getKey();
+
+                    for (String value : entry.getValue()) {
+                        page.writeElement("input", "type", "hidden", "name", name, "value", value);
+                    }
+                }
+
+                String currentSize = page.pageParam(String.class, SIZE_PARAMETER, SIZES[0]);
+                for (String size : SIZES) {
+                    if (StringUtils.equals(currentSize, size)) {
+                        page.writeStart("input", "type", "radio", "name", SIZE_PARAMETER, "value", size, "checked", "true");
+                    } else {
+                        page.writeStart("input", "type", "radio", "name", SIZE_PARAMETER, "value", size);
+
+                    }
+                        page.writeHtml(StringUtils.toLabel(size));
+                    page.writeEnd();
+                }
+
+            page.writeEnd();
+        page.writeEnd();
+
+    }
+
 }
