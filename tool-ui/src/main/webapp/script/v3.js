@@ -92,7 +92,10 @@ require([
   'v3/search-fields',
   'v3/search-filters',
   'v3/search-result-check',
-  'v3/tabs' ],
+  'v3/tabs',
+  'v3/justifiedGridThumbnailLayout',
+  'v3/jquery.flex-images'
+    ],
 
 function() {
   var $ = arguments[0];

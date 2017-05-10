@@ -1,0 +1,25 @@
+.flex-images {
+    overflow: hidden;
+}
+
+.flex-images .item,
+.flex-images .flex-images-container {
+    display: inline-block;
+    float: left;
+    box-sizing: content-box;
+    overflow: hidden;
+    position: relative;
+}
+
+.flex-images .item img,
+.flex-images .flex-images-container .flex-images-container-img {
+    display: block;
+    width: auto;
+    height: 100%;
+}
+
+/* This is the styling for the container + image that's not part of it being a flex grid */
+.searchResult-images figure {
+    margin: 4px;
+    border: 1px solid #eee;
+}

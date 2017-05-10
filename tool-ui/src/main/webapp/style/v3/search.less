@@ -113,7 +113,7 @@
   }
 }
 
-.searchResult-images {
+.searchResult-imagesOld {
   margin-bottom: 10px;
   overflow: hidden;
 
@@ -126,6 +126,33 @@
     padding: 4px;
     position: relative;
     width: 200px;
+
+    input[type='checkbox'] {
+      left: 10px;
+      position: absolute;
+      top: 10px;
+      z-index: 1;
+    }
+
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    .searchResult-mixed & {
+      height: 100px;
+      width: auto;
+    }
+  }
+}
+
+.searchResult-images {
+  margin-bottom: 10px;
+  overflow: hidden;
+
+  figure {
+    border: 1px solid darken(white, 20%);
+    margin: 0 10px 10px 0;
 
     input[type='checkbox'] {
       left: 10px;

@@ -14,7 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.ImageTag;
 import com.psddev.cms.db.Localization;
+import com.psddev.cms.db.ResizeOption;
 import com.psddev.cms.tool.ToolPageContext;
+import com.psddev.cms.tool.file.SvgFileType;
 import com.psddev.cms.tool.page.SearchResultActions;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.HtmlWriter;
@@ -121,11 +123,18 @@ public class ListSearchResultView extends AbstractSearchResultView {
     protected void writeImagesHtml(Iterable<?> items) throws IOException {
         page.writeStart("div", "class", "searchResult-images");
             for (Object item : items) {
-                page.writeStart("figure");
+                StorageItem preview = item instanceof StorageItem
+                        ? (StorageItem) item
+                        : State.getInstance(item).getPreview();
+
+                page.writeStart("figure",
+                        "data-w", (preview != null ? preview.getMetadata().getOrDefault("width", null) : null),
+                        "data-h", (preview != null ? preview.getMetadata().getOrDefault("height", null) : null));
+
                     itemWriter.writeCheckboxHtml(page, search, item);
 
                     page.writeElement("img",
-                            "src", page.getPreviewThumbnailUrl(item),
+                            "src", getPreviewThumbnailUrl(item),
                             "alt", (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "")
                                     + (showTypeLabel ? page.getTypeLabel(item) + ": " : "")
                                     + page.getObjectLabel(item));
@@ -149,6 +158,36 @@ public class ListSearchResultView extends AbstractSearchResultView {
             }
         page.writeEnd();
     }
+
+    // copying this here while we play with the code
+    public String getPreviewThumbnailUrl(Object object) {
+        if (object != null) {
+
+            StorageItem preview = object instanceof StorageItem
+                    ? (StorageItem) object
+                    : State.getInstance(object).getPreview();
+
+            if (preview != null) {
+
+                String contentType = preview.getContentType();
+
+                if (ImageEditor.Static.getDefault() != null
+                        && (contentType != null && !contentType.equals(SvgFileType.CONTENT_TYPE))) {
+
+                    return new ImageTag.Builder(preview)
+                            //.setHeight(300)
+                            //.setResizeOption(ResizeOption.ONLY_SHRINK_LARGER)
+                            .toUrl();
+
+                } else {
+                    return preview.getPublicUrl();
+                }
+            }
+        }
+
+        return null;
+    }
+
 
     protected void writeTableHtml(Iterable<?> items) throws IOException {
         HttpServletRequest request = page.getRequest();

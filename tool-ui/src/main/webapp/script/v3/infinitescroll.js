@@ -73,6 +73,10 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 $itemContainer.append($items);
                 $next.attr('href', nextLink.attr('href'));
                 fill();
+
+                if ($itemContainer.data('onLoadCallback') !== undefined) {
+                    $itemContainer.data('onLoadCallback')($scrollable);
+                }
               });
           }
         }
