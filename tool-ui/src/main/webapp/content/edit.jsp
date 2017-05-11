@@ -715,12 +715,14 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeHtml(" at ");
                                 wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                             wp.writeEnd();
+                        wp.writeEnd();
 
-                            if (schedule != null) {
-                                Date triggerDate = schedule.getTriggerDate();
-                                ToolUser triggerUser = schedule.getTriggerUser();
+                        if (schedule != null) {
+                            Date triggerDate = schedule.getTriggerDate();
+                            ToolUser triggerUser = schedule.getTriggerUser();
 
-                                if (triggerDate != null || triggerUser != null) {
+                            if (triggerDate != null || triggerUser != null) {
+                                wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
                                         wp.writeHtml(" Scheduled to be published");
 
@@ -736,9 +738,9 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                                         wp.writeHtml(".");
                                     wp.writeEnd();
-                                }
+                                wp.writeEnd();
                             }
-                        wp.writeEnd();
+                        }
 
                     // Message and actions if the content is a past revision.
                     } else if (isHistory) {
