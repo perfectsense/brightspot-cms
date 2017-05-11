@@ -74,6 +74,7 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
                 $next.attr('href', nextLink.attr('href'));
                 fill();
 
+                // TODO: This should be changed so that multiple callbacks can be registered
                 if ($itemContainer.data('onLoadCallback') !== undefined) {
                     $itemContainer.data('onLoadCallback')($scrollable);
                 }

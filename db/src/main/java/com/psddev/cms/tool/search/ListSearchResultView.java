@@ -133,6 +133,11 @@ public class ListSearchResultView extends AbstractSearchResultView {
         //System.out.println("RHS: currentHeight=" + currentHeight);
 
         page.writeStart("div", "class", "searchResult-images", "data-size-height", currentHeight);
+            page.writeStart("div", "class", "previewContainer");
+                page.writeStart("div", "class", "left-scroll scroll-area").writeHtml("<").writeEnd();
+                page.writeStart("div", "class", "content").writeEnd();
+                page.writeStart("div", "class", "right-scroll scroll-area").writeHtml(">").writeEnd();
+            page.writeEnd();
             for (Object item : items) {
                 StorageItem preview = item instanceof StorageItem
                         ? (StorageItem) item
@@ -140,16 +145,22 @@ public class ListSearchResultView extends AbstractSearchResultView {
 
                 page.writeStart("figure",
                         "data-w", (preview != null ? preview.getMetadata().getOrDefault("width", null) : null),
-                        "data-h", (preview != null ? preview.getMetadata().getOrDefault("height", null) : null));
+                        "data-h", (preview != null ? preview.getMetadata().getOrDefault("height", null) : null),
+                        "data-uuid", (item instanceof Recordable ? ((Recordable)item).getState().getId() : null));
 
                     itemWriter.writeCheckboxHtml(page, search, item);
 
+                    // The image
                     page.writeElement("img",
                             "src", getPreviewThumbnailUrl(item),
                             "alt", (showSiteLabel ? page.getObjectLabel(State.getInstance(item).as(Site.ObjectModification.class).getOwner()) + ": " : "")
                                     + (showTypeLabel ? page.getTypeLabel(item) + ": " : "")
                                     + page.getObjectLabel(item));
 
+                    // The clickable are to bring up the preview
+                    page.writeStart("div", "class", "previewToggleArea").writeEnd();
+
+                    // The label
                     itemWriter.writeBeforeHtml(page, search, item);
                     page.writeStart("figcaption");
                         if (showSiteLabel) {

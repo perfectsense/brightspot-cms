@@ -18,6 +18,19 @@
     height: 100%;
 }
 
+/* Below should be moved to a more general css file for the grid view? */
+
+/* Styling for the preview box */
+.searchResult-images .previewContainer {
+    display: none;
+}
+.searchResult-images .previewContainer .previewImage {
+    width: 50%;
+}
+.searchResult-images .previewContainer .previewMetadata {
+    width: 50%;
+}
+
 /* This is the styling for the container + image that's not part of it being a flex grid */
 .searchResult-images figure {
     margin: 4px;
