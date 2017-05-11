@@ -59,10 +59,23 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
                             //console.log("focus in hiding", $figure, $previewToggleArea);
                         });
                     $previewToggleArea.click(function() {
-                        console.log("clicked preview");
+                        //console.log("clicked preview");
                         togglePreviewFor($figure);
                     });
                 });
+
+                // Setup the next/previous buttons on the preview container
+                var $previewContainer = $grid.find('.previewContainer');
+                $previewContainer.find('.left-scroll').click({
+                    action: 'previous',
+                    previewContainer: $previewContainer,
+                    grid: $grid
+                }, displayNextPreviousItem)
+                $previewContainer.find('.right-scroll').click({
+                    action: 'next',
+                    previewContainer: $previewContainer,
+                    grid: $grid
+                }, displayNextPreviousItem)
 
             });
         }
@@ -73,25 +86,33 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
     // If it's already displayed and showing a different image's preview, switch it to the current image
     // If it's not displayed, display it and show the current image's preview
     var togglePreviewFor = function($gridItemContainer) {
-        var uuid = $gridItemContainer.attr('data-uuid');
-        if (uuid === undefined || uuid === null) { // TODO: is this how we check for undefined?
+        var uuidToDisplay = $gridItemContainer.attr('data-uuid');
+        if (uuidToDisplay === undefined || uuidToDisplay === null) { // TODO: is this how we check for undefined?
             console.log("Cannot load previewContainer, no uuid");
             return;
         }
 
         var $previewContainer = $gridItemContainer.parents('.searchResult-images').find('.previewContainer');
-        var currentDisplayedUuid = $previewContainer.data('displayedUuid');
+        var $displayedItem = $previewContainer.data('displayedItem');
+        //console.log('displayed item', $displayedItem);
+        var uuidCurrentlyDisplayed = $displayedItem === undefined || $displayedItem === null || $displayedItem.length === 0
+            ? null
+            : $displayedItem.attr('data-uuid');
 
-        console.log("[uuid=" + uuid + "] [currentUuid=" + currentDisplayedUuid + "] [displayed=" + $previewContainer.data('displayed') + ']');
-        if (uuid === currentDisplayedUuid && $previewContainer.data('displayed') === true) {
+        //console.log("[uuid=" + uuidToDisplay + "] [currentUuid=" + uuidCurrentlyDisplayed + "] [displayed=" + $previewContainer.data('displayed') + ']');
+        if (uuidToDisplay === uuidCurrentlyDisplayed && $previewContainer.data('displayed') === true) {
             // If it's already displaying the preview and is visible, we hide it
             hidePreviewContainer($previewContainer);
             return;
         }
 
-        if (uuid !== currentDisplayedUuid) {
-            loadPreview($previewContainer, uuid);
-            positionPreviewContainer($previewContainer, $gridItemContainer);
+        if (uuidToDisplay !== uuidCurrentlyDisplayed) {
+            loadPreview($previewContainer, $gridItemContainer);
+            // Position the preview container under the container
+            $previewContainer.insertAfter(findLastContainerInRow($gridItemContainer));
+            // Scroll the frame to make sure the preview is visible
+            // TODO: ^ Scroll the frame to make sure the preview is visible
+            setupNextPreviousButtons($previewContainer, $gridItemContainer);
         }
 
         if ($previewContainer.data('displayed') !== true) {
@@ -101,31 +122,36 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
     }
 
     // Load the preview content into the preview container
-    var loadPreview = function($previewContainer, uuid) {
-        // do the load .. yadda yadda
-        // for now we pretend
+    var loadPreview = function($previewContainer, $gridItemContainer) {
+        var uuidToDisplay = $gridItemContainer.attr('data-uuid');
+
         // TODO: should the url generation be handled better?
-        $previewContainer.find('.content').load("/cms/gridPreview?uuid=" + uuid, function( response, status, xhr ) {
+        $previewContainer.find('.content').load("/cms/gridPreview?uuid=" + uuidToDisplay, function( response, status, xhr ) {
             if ( status == "error" ) {
                 var msg = "Sorry but there was an error: ";
                 $( "#error" ).html( msg + xhr.status + " " + xhr.statusText );
             } else {
-                $previewContainer.data('displayedUuid', uuid);
+                $previewContainer.data('displayedItem', $gridItemContainer);
             }
         });
     }
 
-    // Position the preview container under the container
-    // We also resize it if necessary
-    var positionPreviewContainer = function($previewContainer, $gridItemContainer) {
-        // $grid = $previewContainer.parents('.searchResult-images');
-        // $previewContainer.width($grid.innerWidth());
-        // TODO
+    // find the last container on the same row as the grid item we're previewing
+    var findLastContainerInRow = function($gridItemContainer) {
+        var $currentGridItemContainer = $gridItemContainer;
+        while ($currentGridItemContainer.next('figure').length !== 0) {
+            var $nextSibling = $currentGridItemContainer.next('figure');
+            if ($nextSibling.position().top !== $currentGridItemContainer.position().top) {
+                return $currentGridItemContainer;
+            }
+            $currentGridItemContainer = $nextSibling;
+        }
+        return $currentGridItemContainer;
     }
 
     // Displays (makes visible) the preview container, if it's not already
     var displayPreviewContainer = function($previewContainer) {
-        console.log("displaying preview container");
+        //console.log("displaying preview container");
         if ($previewContainer.data('displayed') === true) {
             return;
         }
@@ -134,11 +160,57 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
     }
 
     var hidePreviewContainer = function($previewContainer) {
-        console.log("hiding preview container");
+        //console.log("hiding preview container");
         $previewContainer.css('display', 'none');
         $previewContainer.data('displayed', false);
     }
 
+    /*
+     * TODO: 1. Have each of these ( setupNextPreviousButtons , displayNextPreviousItem ) use the same method to get the next/prev
+     * TODO: 2. Use next/prev and iterate (until we find a figure or the end) instead of nextAll/prevAll (which will scale poorly as more assets are added)
+     */
+    var setupNextPreviousButtons = function($previewContainer, $gridItemContainer) {
+        // TODO: make the hover not do anything, or look disabled
+        var $previous = $gridItemContainer.prevAll('figure');
+        if ($previous.length > 0) {
+            // There is a previous grid item, the previous button should send us to it
+            $previewContainer.find('.left-scroll').css('cursor', 'pointer');
+        } else {
+            // There is no previous grid item, the previous button should do nothing
+            $previewContainer.find('.left-scroll').css('cursor', 'auto');
+        }
+
+        var $next = $gridItemContainer.nextAll('figure');
+        if ($next.length > 0) {
+            // There is a previous grid item, the previous button should send us to it
+            $previewContainer.find('.right-scroll').css('cursor', 'pointer');
+        } else {
+            // There is no previous grid item, the previous button should do nothing
+            $previewContainer.find('.right-scroll').css('cursor', 'auto');
+        }
+
+    }
+
+    var displayNextPreviousItem = function(eventObject) {
+        var $previewContainer = $(eventObject.data.previewContainer);
+        var action = eventObject.data.action;
+        var currentlySelectedItem =  $previewContainer.data('displayedItem');
+
+        if (currentlySelectedItem === undefined || currentlySelectedItem === null || currentlySelectedItem.length === 0) {
+            // nothing is currently displayed, we can't do anything
+            return false;
+        }
+
+        var $target = action === 'previous' ? $(currentlySelectedItem).prevAll('figure')
+            : action === 'next' ? $(currentlySelectedItem).nextAll('figure')
+                : null;
+
+        if ($target.length > 0) {
+            // There is a previous/next grid item, the button should send us to it
+            togglePreviewFor($($target[0]));
+        }
+        return false;
+    }
 });
 
 // We need to figure out how to call .flexImages on the grid whenever an ajax event loads more images (lazy load)
