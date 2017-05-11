@@ -1,14 +1,12 @@
 package com.psddev.cms.db;
 
-import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Record;
 import com.psddev.dari.util.PeriodicValue;
 import com.psddev.dari.util.PullThroughValue;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +58,8 @@ public class StandardImageSize extends Record {
 
     private CropOption cropOption;
     private ResizeOption resizeOption;
+
+    private Clip clip;
 
     /** Returns a list of all the image sizes. */
     public static List<StandardImageSize> findAll() {
@@ -120,5 +120,71 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    public Clip getClip() {
+        return clip;
+    }
+
+    public void setClip(Clip clip) {
+        this.clip = clip;
+    }
+
+    @Embedded
+    public abstract static class Clip extends Record {
+    }
+
+    @Embedded
+    public static class Circle extends Clip {
+    }
+
+    @Embedded
+    public static class Star extends Clip {
+    }
+
+    @Embedded
+    public static class StarBurst extends Clip {
+        @ToolUi.Note("Defaults to 5")
+        private Integer size;
+        @ToolUi.Note("Defaults to 30")
+        private Integer points;
+
+        public Integer getSize() {
+            return size;
+        }
+
+        public void setSize(int size) {
+            this.size = size;
+        }
+
+        public Integer getPoints() {
+            return points;
+        }
+
+        public void setPoints(int points) {
+            this.points = points;
+        }
+
+        public String getValue() {
+            if (size != null || points != null) {
+                if (size != null && points != null) {
+                    return String.format("%sx%s", getSize(), getPoints());
+                } else if (size != null) {
+                    return String.format("%s", getSize());
+                } else {
+                    return String.format("x%s", getPoints());
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String getLabel() {
+            if (points == null && size == null) {
+                return "";
+            } else {
+                return String.format("%s x %s", points == null ? "" : points, size == null ? "" : size);
+            }
+        }
     }
 }

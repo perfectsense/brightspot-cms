@@ -36,6 +36,7 @@ import com.psddev.dari.db.State;
 import com.psddev.dari.util.CollectionUtils;
 import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.ImageResizeStorageItemListener;
+import com.psddev.dari.util.JavaImageEditor;
 import com.psddev.dari.util.JspUtils;
 import com.psddev.dari.util.ObjectMap;
 import com.psddev.dari.util.ObjectUtils;
@@ -1363,6 +1364,27 @@ public class ImageTag extends TagSupport implements DynamicAttributes {
                 // Requires only one of either the width or the height to perform a resize
                 if (width != null || height != null) {
                     item = ImageEditor.Static.resize(editor, item, options, width, height);
+                }
+
+                if (standardImageSize != null && standardImageSize.getClip() != null) {
+                    ImageEditor realEditor = editor;
+                    if (realEditor == null) {
+                        realEditor = ImageEditor.Static.getDefault();
+                    }
+                    if (realEditor instanceof JavaImageEditor) {
+                        if (standardImageSize.getClip() instanceof StandardImageSize.Circle) {
+                            item = realEditor.edit(item, ImageEditor.CROP_OPTION_CIRCLE, null);
+                        } else if (standardImageSize.getClip() instanceof StandardImageSize.Star) {
+                            item = realEditor.edit(item, ImageEditor.CROP_OPTION_STAR, null);
+                        } else if (standardImageSize.getClip() instanceof StandardImageSize.StarBurst) {
+                            StandardImageSize.StarBurst starBurst = (StandardImageSize.StarBurst) standardImageSize.getClip();
+                            if (!StringUtils.isBlank(starBurst.getValue())) {
+                                item = realEditor.edit(item, ImageEditor.CROP_OPTION_STARBURST, null, starBurst.getValue());
+                            } else {
+                                item = realEditor.edit(item, ImageEditor.CROP_OPTION_STARBURST, null);
+                            }
+                        }
+                    }
                 }
 
                 String url = item.getPublicUrl();
