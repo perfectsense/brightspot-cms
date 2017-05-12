@@ -223,19 +223,27 @@
       flex: 1;
       display: flex;
      .image {
-        display: inline-block;
-        width: 50%;
-        height: 100%;
-        img {
-          width:auto;
-          height:auto;
-          max-width: 100%;
-          max-height: 100%;
-        }
-      }
+       display: inline-block;
+       width: 60%;
+       height: 100%;
+       position: relative;
+       img {
+         max-height: 100%;
+         max-width: 100%;
+         width: auto;
+         height: auto;
+         position: absolute;
+         top: 0;
+         bottom: 0;
+         left: 0;
+         right: 0;
+         margin: auto;
+         padding-right: 20px;
+       }
+     }
       .metadata {
         display: inline-block;
-        width: 50%;
+        width: 40%;
         height: 100%;
         padding: 5px;
         .label {

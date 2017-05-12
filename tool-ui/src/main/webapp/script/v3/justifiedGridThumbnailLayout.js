@@ -27,8 +27,9 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
                     //truncate: false
                 };
                 $grid.flexImages(options);
+
+                // When more images are loaded (lazyload, infinitescroll), remove the extra previewContainer that's added and tell flexImages to redo layout
                 $grid.data('onLoadCallback', function() {
-                    // When more images are loaded (lazyload, infinitescroll), remove the extra previewContainer that's added and tell flexImages to redo layout
                     $grid.find('.previewContainer:not(:first)').remove();
                     $grid.flexImages(options);
                 });
@@ -74,13 +75,22 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
                     action: 'previous',
                     previewContainer: $previewContainer,
                     grid: $grid
-                }, displayNextPreviousItem)
+                }, displayNextPreviousItem);
                 $previewContainer.find('.right-scroll').click({
                     action: 'next',
                     previewContainer: $previewContainer,
                     grid: $grid
-                }, displayNextPreviousItem)
+                }, displayNextPreviousItem);
 
+                // setup a resize handler
+                $(window).resize(function(eventObject) {
+                    // Set the size of the preview container
+                    // console.log("Handling rezize");
+                    //$previewContainer.css('width', $grid.innerWidth);
+                    console.log("Setting previewContainer height to " + ($grid.innerWidth() / 2), $previewContainer);
+                    $previewContainer.height($grid.innerWidth() / 2);
+                    return true;
+                })
             });
         }
     });
