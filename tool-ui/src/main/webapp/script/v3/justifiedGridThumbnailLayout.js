@@ -27,7 +27,11 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
                     //truncate: false
                 };
                 $grid.flexImages(options);
-                $grid.data('onLoadCallback', function() { $grid.flexImages(options); });
+                $grid.data('onLoadCallback', function() {
+                    // When more images are loaded (lazyload, infinitescroll), remove the extra previewContainer that's added and tell flexImages to redo layout
+                    $grid.find('.previewContainer:not(:first)').remove();
+                    $grid.flexImages(options);
+                });
 
                 // Setup the preview toggle area to display on mouseover
                 $grid.find("figure").each(function() {
