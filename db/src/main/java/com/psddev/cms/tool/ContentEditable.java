@@ -1,11 +1,12 @@
 package com.psddev.cms.tool;
 
+import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
 
 /**
  * Interface for displaying {@link com.psddev.cms.db.Content} edit form as read-only.
  */
-public interface ContentEditable {
+public interface ContentEditable extends Recordable {
 
     /**
      * Returns {@code true} if {@link com.psddev.cms.db.Content}
