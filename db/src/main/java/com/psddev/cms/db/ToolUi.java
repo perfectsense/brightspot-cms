@@ -89,6 +89,8 @@ public class ToolUi extends Modification<Object> {
     private Set<String> richTextElementClassNames;
     private boolean secret;
     private Boolean sortable;
+    private Boolean sortAscending;
+    private Boolean sortDescending;
     private Set<String> standardImageSizes;
     private Boolean suggestions;
     private Number suggestedMaximum;
@@ -657,10 +659,29 @@ public class ToolUi extends Modification<Object> {
         this.sortable = sortable;
     }
 
+    public boolean isSortAscending() {
+        return Boolean.TRUE.equals(sortAscending);
+    }
+
+    public void setSortAscending(boolean sortAscending) {
+        this.sortAscending = sortAscending ? Boolean.TRUE : null;
+    }
+
+    public boolean isSortDescending() {
+        return Boolean.TRUE.equals(sortDescending);
+    }
+
+    public void setSortDescending(boolean sortDescending) {
+        this.sortDescending = sortDescending ? Boolean.TRUE : null;
+    }
+
     public boolean isEffectivelySortable() {
         Boolean sortable = getSortable();
 
         if (sortable != null) {
+            if (Boolean.TRUE.equals(sortable) && !isSortAscending() && !isSortDescending()) {
+                return false;
+            }
             return sortable;
         }
 
@@ -1747,7 +1768,7 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target field should be offered as a sortable
-     * field in search.
+     * field in search, along with ordering options.
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(SortableProcessor.class)
@@ -1755,13 +1776,18 @@ public class ToolUi extends Modification<Object> {
     @Target({ ElementType.FIELD, ElementType.METHOD })
     public @interface Sortable {
         boolean value() default true;
+        boolean ascending() default true;
+        boolean descending() default false;
     }
 
     private static class SortableProcessor implements ObjectField.AnnotationProcessor<Sortable> {
 
         @Override
         public void process(ObjectType type, ObjectField field, Sortable annotation) {
-            field.as(ToolUi.class).setSortable(annotation.value());
+            ToolUi ui = field.as(ToolUi.class);
+            ui.setSortable(annotation.value());
+            ui.setSortAscending(annotation.ascending());
+            ui.setSortDescending(annotation.descending());
         }
     }
 

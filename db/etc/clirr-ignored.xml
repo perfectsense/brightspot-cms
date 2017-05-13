@@ -75,6 +75,18 @@
     </difference>
 
     <difference>
+        <className>com/psddev/cms/db/ToolUi$Sortable</className>
+        <differenceType>7012</differenceType>
+        <method>boolean ascending()</method>
+    </difference>
+
+    <difference>
+        <className>com/psddev/cms/db/ToolUi$Sortable</className>
+        <differenceType>7012</differenceType>
+        <method>boolean descending()</method>
+    </difference>
+
+    <difference>
         <className>com/psddev/cms/rtc/RtcState</className>
         <differenceType>7012</differenceType>
         <method>java.lang.Iterable close(java.util.Map, java.util.UUID)</method>

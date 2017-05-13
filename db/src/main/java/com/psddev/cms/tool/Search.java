@@ -101,6 +101,9 @@ public class Search extends Record {
     public static final String RELEVANT_SORT_LABEL = "Relevant";
     public static final String RELEVANT_SORT_VALUE = "_relevant";
 
+    public static final String ASCENDING_SORT_VALUE_SUFFIX = "/sortAscending";
+    public static final String DESCENDING_SORT_VALUE_SUFFIX = "/sortDescending";
+
     public static final double RELEVANT_SORT_LABEL_BOOST = 10.0;
 
     private String name;
@@ -514,7 +517,31 @@ public class Search extends Record {
         sorts.clear();
 
         for (Map.Entry<String, String> entry : sortsList) {
-            sorts.put(entry.getKey(), entry.getValue());
+            String value = entry.getKey();
+            String label = entry.getValue();
+            ObjectField sortField = selectedType != null
+                    ? selectedType.getFieldGlobally(value)
+                    : Database.Static.getDefault().getEnvironment().getField(value);
+
+            if (sortField != null) {
+                ToolUi ui = sortField.as(ToolUi.class);
+
+                // Append ascending/descending sort value suffix(es).
+                if (ui.isSortDescending()) {
+
+                    // Add specific ascending sort option ONLY if descending sort option also exists.
+                    if (ui.isSortAscending()) {
+                        sorts.put(value + ASCENDING_SORT_VALUE_SUFFIX, label);
+                    }
+                    sorts.put(value + DESCENDING_SORT_VALUE_SUFFIX, label);
+
+                } else {
+                    sorts.put(value, label);
+                }
+
+            } else {
+                sorts.put(value, label);
+            }
         }
 
         return sorts;
@@ -804,6 +831,18 @@ public class Search extends Record {
         }
 
         String sort = getSort();
+        Boolean sortAscending = null;
+
+        // Check if sort has ascending/descending order specified.
+        if (sort.endsWith(ASCENDING_SORT_VALUE_SUFFIX)) {
+            sort = StringUtils.replaceAll(sort, ASCENDING_SORT_VALUE_SUFFIX + "$", "");
+            sortAscending = Boolean.TRUE;
+
+        } else if (sort.endsWith(DESCENDING_SORT_VALUE_SUFFIX)) {
+            sort = StringUtils.replaceAll(sort, DESCENDING_SORT_VALUE_SUFFIX + "$", "");
+            sortAscending = Boolean.FALSE;
+        }
+
         boolean metricSort = false;
 
         if (RELEVANT_SORT_VALUE.equals(sort)) {
@@ -826,7 +865,13 @@ public class Search extends Record {
                         ? selectedType.getInternalName() + "/" + sort
                         : sort;
 
-                if (ObjectField.TEXT_TYPE.equals(sortField.getInternalType())) {
+                if (Boolean.TRUE.equals(sortAscending)) {
+                    query.sortAscending(sortName);
+
+                } else if (Boolean.FALSE.equals(sortAscending)) {
+                    query.sortDescending(sortName);
+
+                } else if (ObjectField.TEXT_TYPE.equals(sortField.getInternalType())) {
                     query.sortAscending(sortName);
 
                 } else {
