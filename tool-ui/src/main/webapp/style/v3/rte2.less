@@ -462,6 +462,10 @@ li.CodeMirror-hint-active {
   .CodeMirror-linewidget {
     overflow: visible;
   }
+  .CodeMirror pre {
+    // Solve problem of certain font-ligatures like "fi" from messing up CodeMirror cursor positions
+    font-variant-ligatures: no-common-ligatures;
+  }
 }
 
 .rte-fullscreen {
