@@ -1,8 +1,10 @@
 package com.psddev.cms.view;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.psddev.dari.util.ClassFinder;
 import com.psddev.dari.util.TypeDefinition;
 
 /**
@@ -149,22 +152,38 @@ public abstract class ViewModel<M> {
 
         Class<?> modelClass = model.getClass();
 
-        // if it's a view model class, with no type specified, then just verify that the model types match.
-        if (viewClass != null && viewType == null
-                && ViewModel.class.isAssignableFrom(viewClass)) {
+        Class<? extends V> concreteViewModelClass = null;
 
-            Class<?> declaredModelClass = TypeDefinition.getInstance(viewClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
+        // if it's a class with no type specified, try to find a single compatible concrete ViewModel class, otherwise, do a lookup of the view bindings.
+        if (viewClass != null && viewType == null) {
 
-            if (declaredModelClass != null && declaredModelClass.isAssignableFrom(modelClass)) {
+            Set<Class<? extends V>> concreteViewClasses = new HashSet<>(ClassFinder.findConcreteClasses(viewClass));
 
-                @SuppressWarnings("unchecked")
-                Class<? extends ViewModel<? super M>> viewModelClass = (Class<? extends ViewModel<? super M>>) viewClass;
-
-                return viewModelClass;
-
-            } else {
-                return null;
+            // ClassFinder only finds sub-classes, so if the current viewClass is also concrete, add it to the set.
+            if (!viewClass.isInterface() && !Modifier.isAbstract(viewClass.getModifiers())) {
+                concreteViewClasses.add(viewClass);
             }
+
+            Set<Class<? extends V>> concreteViewModelClasses = concreteViewClasses
+                    .stream()
+                    .filter(ViewModel.class::isAssignableFrom)
+                    .filter(concreteClass -> {
+                        Class<?> declaredModelClass = TypeDefinition.getInstance(concreteClass).getInferredGenericTypeArgumentClass(ViewModel.class, 0);
+                        return declaredModelClass != null && declaredModelClass.isAssignableFrom(modelClass);
+                    })
+                    .collect(Collectors.toSet());
+
+            if (concreteViewModelClasses.size() == 1) {
+                concreteViewModelClass = concreteViewModelClasses.iterator().next();
+            }
+        }
+
+        // if a single concrete view model class was found, then return.
+        if (concreteViewModelClass != null) {
+
+            @SuppressWarnings("unchecked")
+            Class<? extends ViewModel<? super M>> viewModelClass = (Class<? extends ViewModel<? super M>>) concreteViewModelClass;
+            return viewModelClass;
 
         } else { // do a lookup of the view bindings on the model.
 
