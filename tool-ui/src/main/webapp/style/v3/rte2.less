@@ -88,7 +88,10 @@
 
   // To leave room for the word count, make sure there is space after the last toolbar item
   > li:last-of-type {
-      margin-right: 7em;
+    margin-right: 7em;
+    .rte2-enhancement & {
+      margin-right:0;
+    }
   }
   
   a, span, .rte2-toolbar-separator {
@@ -692,18 +695,9 @@ li.CodeMirror-hint-active {
   .rte2-enhancement,
   .rte2-table {
     box-sizing: border-box;
-    padding: 0 5px (@lineHeight-default + 5px) 5px;
+    padding: 0 5px 5px 5px;
     position: relative;
-
-    &:before {
-      .background-striped(@color-heading);
-      bottom: @lineHeight-default;
-      content: '';
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 0;
-    }
+    .background-striped(@color-heading);
 
     .rte2-enhancement-label {
       overflow: hidden;
