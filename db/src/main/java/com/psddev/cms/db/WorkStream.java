@@ -70,6 +70,10 @@ public class WorkStream extends Record {
         this.assignedEntities = assignedEntities;
     }
 
+    public Map<String, List<UUID>> getSkippedItems() {
+        return skippedItems;
+    }
+
     /** Returns the tool search that can return all items to be worked on. */
     public com.psddev.cms.tool.Search getSearch() {
         return search;
