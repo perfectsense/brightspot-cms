@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.common.base.Preconditions;
+import com.psddev.cms.tool.CrossDomainFilter;
 import com.psddev.cms.view.ViewTemplateLoader;
 import com.psddev.dari.util.CompactMap;
 import org.slf4j.Logger;
@@ -60,7 +61,6 @@ import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.State;
-import com.psddev.dari.util.AbstractFilter;
 import com.psddev.dari.util.Converter;
 import com.psddev.dari.util.ErrorUtils;
 import com.psddev.dari.util.HtmlWriter;
@@ -75,7 +75,7 @@ import com.psddev.dari.util.StorageItemFilter;
 import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.TypeDefinition;
 
-public class PageFilter extends AbstractFilter {
+public class PageFilter extends CrossDomainFilter {
 
     /** @deprecated No replacement. */
     @Deprecated
@@ -355,7 +355,7 @@ public class PageFilter extends AbstractFilter {
         request.removeAttribute(PROFILE_CHECKED_ATTRIBUTE);
         request.removeAttribute(SITE_CHECKED_ATTRIBUTE);
 
-        doRequest(request, response, chain);
+        doCrossDomainRequest(request, response, chain);
     }
 
     @Override
@@ -378,8 +378,10 @@ public class PageFilter extends AbstractFilter {
         }
     }
 
+    // --- CrossDomainFilter Support ---
+
     @Override
-    protected void doRequest(
+    protected void doCrossDomainRequest(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain chain)

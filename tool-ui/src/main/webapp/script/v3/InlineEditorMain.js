@@ -8,14 +8,14 @@ require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
 
     // Enable "click-through" editor IFRAME.
     $parentDocument.on('mousemove', function(event) {
-        if ($($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls').length > 0) {
+        if ($($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls, .contentEditor-controls, .iframeEdit-container').length > 0) {
             $editor.css('pointer-events', 'auto');
         }
     });
 
     $document.on('mousemove', function(event) {
         if ($body.find('.popup:visible').length === 0 &&
-                $($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls').length === 0) {
+                $($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls, .contentEditor-controls, .iframeEdit-container').length === 0) {
             $editor.css('pointer-events', 'none');
         }
     });
@@ -65,6 +65,11 @@ require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
     // Allow inline editor to be closed.
     $('.InlineEditorMainObject-close').on('click', function () {
         $editor.remove();
+        
+        // Trigger an event so other code can know that the editor has closed
+        // This is used by the inline editor contentEditable code
+        $parentBody.trigger('brightspot-editor-close');
+        
         return false;
     });
 

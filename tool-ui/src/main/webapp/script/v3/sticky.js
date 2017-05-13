@@ -16,6 +16,12 @@ define([ 'jquery', 'bsp-utils', 'sticky-kit' ], function($, bsp_utils) {
         return;
       }
 
+      // If we are in an iframe do not make it sticky
+      // This is used for editInline
+      if (window.parent !== window.top) {
+          return;
+      }
+      
       $element.stick_in_parent({
         offset_top: function () {
           return toolHeaderBottom(true);
