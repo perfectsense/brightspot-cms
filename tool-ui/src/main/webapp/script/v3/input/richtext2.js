@@ -4764,7 +4764,8 @@ define(['jquery', 'v3/input/richtextCodeMirror', 'v3/input/tableEditor', 'v3/plu
                 keymap: rtElement.keymap,
                 clear: rtElement.clear,
                 toggle: rtElement.toggle,
-                previewable: Boolean(rtElement.previewable)
+                previewable: Boolean(rtElement.previewable),
+                urlPatterns: rtElement.urlPatterns
             };
         });
     }
