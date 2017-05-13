@@ -335,8 +335,8 @@ public class SearchResultRenderer {
 
                     page.writeStart("option",
                             "value", value,
-                            "selected", value.equals(search.getSort()) ? "selected" : null);
-                        page.writeHtml("Sort: ").writeHtml(label);
+                            "selected", value.equals(search.getFullyQualifiedSort()) ? "selected" : null);
+                        page.writeHtml(label);
                     page.writeEnd();
                 }
             page.writeEnd();

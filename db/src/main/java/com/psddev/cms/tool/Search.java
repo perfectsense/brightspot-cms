@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
 import com.psddev.cms.db.Draft;
@@ -38,6 +39,7 @@ import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.db.ToolUserSearch;
 import com.psddev.cms.db.Workflow;
 import com.psddev.cms.db.WorkflowState;
+import com.psddev.cms.tool.search.AbstractSearchResultView;
 import com.psddev.cms.tool.search.ListSearchResultView;
 import com.psddev.dari.db.CompoundPredicate;
 import com.psddev.dari.db.Database;
@@ -66,6 +68,8 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Search extends Record {
 
@@ -103,6 +107,11 @@ public class Search extends Record {
 
     public static final double RELEVANT_SORT_LABEL_BOOST = 10.0;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Search.class);
+
+    private static final String ASCENDING_SORT_VALUE_SUFFIX = "/sa";
+    private static final String DESCENDING_SORT_VALUE_SUFFIX = "/sd";
+
     private String name;
     private Set<ObjectType> types;
     private ObjectType selectedType;
@@ -116,7 +125,9 @@ public class Search extends Record {
     private UUID parentTypeId;
     private Map<String, String> globalFilters;
     private Map<String, Map<String, String>> fieldFilters;
+    private String fullyQualifiedSort;
     private String sort;
+    private String sortOperator;
     private boolean showDrafts;
     private List<String> visibilities;
     private boolean showMissing;
@@ -354,12 +365,47 @@ public class Search extends Record {
         this.fieldFilters = fieldFilters;
     }
 
+    /**
+     * Returns the sort value with the operator suffix appended (if it exists).
+     * Eg. <code>title/sa</code>.
+     */
+    public String getFullyQualifiedSort() {
+        return fullyQualifiedSort;
+    }
+
+    public void setFullyQualifiedSort(String fullyQualifiedSort) {
+        this.fullyQualifiedSort = fullyQualifiedSort;
+    }
+
     public String getSort() {
         return sort;
     }
 
     public void setSort(String sort) {
-        this.sort = sort;
+        if (sort != null) {
+            setFullyQualifiedSort(sort);
+
+            // Check if sort has an operator specified.
+            if (sort.endsWith(ASCENDING_SORT_VALUE_SUFFIX)) {
+                this.sort = StringUtils.replaceAll(sort, ASCENDING_SORT_VALUE_SUFFIX + "$", "");
+                setSortOperator(Sorter.ASCENDING_OPERATOR);
+
+            } else if (sort.endsWith(DESCENDING_SORT_VALUE_SUFFIX)) {
+                this.sort = StringUtils.replaceAll(sort, DESCENDING_SORT_VALUE_SUFFIX + "$", "");
+                setSortOperator(Sorter.DESCENDING_OPERATOR);
+
+            } else {
+                this.sort = sort;
+            }
+        }
+    }
+
+    public String getSortOperator() {
+        return sortOperator;
+    }
+
+    public void setSortOperator(String sortOperator) {
+        this.sortOperator = sortOperator;
     }
 
     public boolean isShowDrafts() {
@@ -520,11 +566,43 @@ public class Search extends Record {
         return sorts;
     }
 
+    // Adds and localizes sorts.
     private void addSorts(Map<String, String> sorts, ObjectStruct struct) {
         if (struct != null) {
             for (ObjectField field : ObjectStruct.Static.findIndexedFields(struct)) {
-                if (field.as(ToolUi.class).isEffectivelySortable()) {
-                    sorts.put(field.getInternalName(), Localization.currentUserText(field, "field." + field.getInternalName()));
+                ToolUi ui = field.as(ToolUi.class);
+
+                if (ui.isEffectivelySortable()) {
+                    String internalName = field.getInternalName();
+                    Map<String, Object> label = ImmutableMap.of("label", Localization.currentUserText(field, "field." + internalName));
+                    Set<String> sortOperators = ui.getSortOperators();
+
+                    try {
+                        // Natural sort order if there are no sort operators OR if neither
+                        // ascending/descending sort operators are present.
+                        if (sortOperators.isEmpty()
+                                || (!sortOperators.contains(Sorter.ASCENDING_OPERATOR)
+                                && !sortOperators.contains(Sorter.DESCENDING_OPERATOR))) {
+
+                            sorts.put(internalName, page.localize(AbstractSearchResultView.class, label, "option.sort"));
+
+                        } else {
+                            if (sortOperators.contains(Sorter.ASCENDING_OPERATOR)) {
+                                sorts.put(
+                                        internalName + ASCENDING_SORT_VALUE_SUFFIX,
+                                        page.localize(AbstractSearchResultView.class, label, "option.sortAscending"));
+                            }
+
+                            if (sortOperators.contains(Sorter.DESCENDING_OPERATOR)) {
+                                sorts.put(
+                                        internalName + DESCENDING_SORT_VALUE_SUFFIX,
+                                        page.localize(AbstractSearchResultView.class, label, "option.sortDescending"));
+                            }
+                        }
+
+                    } catch (IOException error) {
+                        LOGGER.error("Unable to localize sorts!", error);
+                    }
                 }
             }
         }
@@ -804,6 +882,7 @@ public class Search extends Record {
         }
 
         String sort = getSort();
+        String sortOperator = getSortOperator();
         boolean metricSort = false;
 
         if (RELEVANT_SORT_VALUE.equals(sort)) {
@@ -826,7 +905,10 @@ public class Search extends Record {
                         ? selectedType.getInternalName() + "/" + sort
                         : sort;
 
-                if (ObjectField.TEXT_TYPE.equals(sortField.getInternalType())) {
+                if (sortOperator != null) {
+                    query.sort(sortOperator, sortName);
+
+                } else if (ObjectField.TEXT_TYPE.equals(sortField.getInternalType())) {
                     query.sortAscending(sortName);
 
                 } else {

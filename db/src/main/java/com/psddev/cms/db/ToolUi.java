@@ -8,6 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -89,6 +90,7 @@ public class ToolUi extends Modification<Object> {
     private Set<String> richTextElementClassNames;
     private boolean secret;
     private Boolean sortable;
+    private Set<String> sortOperators;
     private Set<String> standardImageSizes;
     private Boolean suggestions;
     private Number suggestedMaximum;
@@ -655,6 +657,17 @@ public class ToolUi extends Modification<Object> {
 
     public void setSortable(Boolean sortable) {
         this.sortable = sortable;
+    }
+
+    public Set<String> getSortOperators() {
+        if (sortOperators == null) {
+            sortOperators = new LinkedHashSet<>();
+        }
+        return sortOperators;
+    }
+
+    public void setSortOperators(Set<String> sortOperators) {
+        this.sortOperators = sortOperators;
     }
 
     public boolean isEffectivelySortable() {
@@ -1747,7 +1760,10 @@ public class ToolUi extends Modification<Object> {
 
     /**
      * Specifies whether the target field should be offered as a sortable
-     * field in search.
+     * field in search, along with sort operators (see {@link com.psddev.dari.db.Sorter}).
+     *
+     * Currently, only {@link com.psddev.dari.db.Sorter#ASCENDING_OPERATOR} and
+     * {@link com.psddev.dari.db.Sorter#DESCENDING_OPERATOR} are supported.
      */
     @Documented
     @ObjectField.AnnotationProcessorClass(SortableProcessor.class)
@@ -1755,13 +1771,16 @@ public class ToolUi extends Modification<Object> {
     @Target({ ElementType.FIELD, ElementType.METHOD })
     public @interface Sortable {
         boolean value() default true;
+        String[] sortOperators() default { };
     }
 
     private static class SortableProcessor implements ObjectField.AnnotationProcessor<Sortable> {
 
         @Override
         public void process(ObjectType type, ObjectField field, Sortable annotation) {
-            field.as(ToolUi.class).setSortable(annotation.value());
+            ToolUi ui = field.as(ToolUi.class);
+            ui.setSortable(annotation.value());
+            ui.setSortOperators(new LinkedHashSet<>(Arrays.asList(annotation.sortOperators())));
         }
     }
 
