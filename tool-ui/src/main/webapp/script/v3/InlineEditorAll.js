@@ -1,27 +1,63 @@
+/* global require window NodeFilter setInterval */
+
 require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
     var $document = $(window.document),
             $body = $($document[0].body),
             $parent = $(window.parent),
             $parentDocument = $($parent[0].document),
             $parentBody = $($parentDocument[0].body),
-            mainObjectData;
+            mainObjectData,
+            objectFields = {},
+            objectFieldList;
 
     // Find all objects in the parent document.
     var MAIN_OBJECT_PREFIX = 'BrightspotCmsMainObject ';
     var OBJECT_BEGIN_PREFIX = 'BrightspotCmsObjectBegin ';
+    var OBJECT_END_PREFIX = 'BrightspotCmsObjectEnd';
+    var FIELD_PREFIX = 'BrightspotCmsFieldAccess ';
     var parentCommentWalker = $parentDocument[0].createTreeWalker($parentBody[0], NodeFilter.SHOW_COMMENT, null, null);
-
+    
     while (parentCommentWalker.nextNode()) {
+        
         var comment = parentCommentWalker.currentNode;
         var commentValue = comment.nodeValue;
+        var objectData = '';
+        var $objectElement;
+        var fieldData;
 
         if (commentValue.indexOf(MAIN_OBJECT_PREFIX) === 0) {
             mainObjectData = $.parseJSON(commentValue.substring(MAIN_OBJECT_PREFIX.length));
 
         } else if (commentValue.indexOf(OBJECT_BEGIN_PREFIX) === 0) {
-            $(comment.nextElementSibling).attr(
-                    'data-brightspot-cms-object',
-                    commentValue.substring(OBJECT_BEGIN_PREFIX.length));
+            
+            // Object begin comment looks like this:
+            // <!--BrightspotCmsObjectBegin {"typeLabel":"Story","id":"00000157-affa-dfd2-a15f-efffd89a0000","label":"Testing Headline"}-->
+            
+            // Get the JSON data part of the comment but leave it as a string
+            objectData = commentValue.substring(OBJECT_BEGIN_PREFIX.length);
+            
+            // Get the next element after the comment
+            $objectElement = $(comment.nextElementSibling);
+            
+            // Save the object data in an attribue on the object element
+            $objectElement.attr('data-brightspot-cms-object', objectData);
+                        
+        } else if (commentValue.indexOf(OBJECT_END_PREFIX) === 0) {
+            // Object end comment looks like this:
+            // <!--BrightspotCmsObjectEnd-->
+            
+        } else if (commentValue.indexOf(FIELD_PREFIX) === 0) {
+            // Field comment looks like this:
+            // <!--BrightspotCmsFieldAccess {"id":"00000157-affa-dfd2-a15f-efffd89a0000","name":"paths"}-->
+            
+            // Get the JSON data from the comment
+            fieldData = $.parseJSON(commentValue.substring(FIELD_PREFIX.length));
+
+            // Add this field to the list of fields for an object id. For example:
+            // objectFields['123'] = {"firstname":true,"lastname":true};
+            objectFieldList = objectFields[ fieldData.id ] || {};
+            objectFieldList[ fieldData.name ] = true;
+            objectFields[ fieldData.id ] = objectFieldList;
         }
     }
 
@@ -34,21 +70,29 @@ require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
                 id = objectData.id,
                 $outline,
                 $edit,
-                $controls;
+                $controls,
+                href;
 
         if ($.inArray(id, ids) > -1) {
             return;
         }
 
         ids.push(id);
-
+        
         $outline = $('<div/>', {
             'class': 'InlineEditorOutline'
         });
 
+        href = window.CONTEXT_PATH + '/content/edit.jsp?id=' + objectData.id;
+        if (objectFields[id]) {
+            $.each(objectFields[id], function(fieldName){
+                href += '&f=' + encodeURIComponent(fieldName);
+            });
+        }
+        
         $edit = $('<a/>', {
             'class': 'icon icon-action-edit',
-            'href': CONTEXT_PATH + '/content/edit.jsp?id=' + objectData.id,
+            'href': href,
             'target': '_blank',
             'text': objectData.typeLabel,
 
@@ -133,6 +177,7 @@ require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
             // Move the controls down until they don't overlay with
             // any other controls.
             if (previousBoxes.length > 0) {
+                var retry;
                 do {
                     retry = false;
 
