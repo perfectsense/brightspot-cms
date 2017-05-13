@@ -8,14 +8,14 @@ require([ 'bsp-utils', 'jquery' ], function (bsp_utils, $) {
 
     // Enable "click-through" editor IFRAME.
     $parentDocument.on('mousemove', function(event) {
-        if ($($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls').length > 0) {
+        if ($($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls, .iframeEdit-container').length > 0) {
             $editor.css('pointer-events', 'auto');
         }
     });
 
     $document.on('mousemove', function(event) {
         if ($body.find('.popup:visible').length === 0 &&
-                $($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls').length === 0) {
+                $($document[0].elementFromPoint(event.pageX, event.pageY)).closest('.InlineEditorMainObject, .InlineEditorControls, .iframeEdit-container').length === 0) {
             $editor.css('pointer-events', 'none');
         }
     });

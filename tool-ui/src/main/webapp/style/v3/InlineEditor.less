@@ -114,3 +114,56 @@
         display: block;
     }
 }
+
+.iframeEdit-container {
+    position:absolute;
+    left: 5vw;
+    top: 5vh;
+    border: 4px solid rgba(0, 0, 0, 0.3);
+    border-radius:10px;
+    padding: 20px 10px 10px;
+    background-color: white;
+    
+    // The inlineEditorMain.js code sets pointer-events:none on the parent iframe
+    pointer-events:auto;
+    
+    .iframeEdit-close {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+    
+    .iframeEdit-loading {
+        padding-top: 30px;
+        color: #888;
+        text-align:center;
+        line-height: 20px;
+        vertical-align: middle;
+        span {
+            display:none;
+        }
+        &:after {
+            content: url(icon/ajax-loader.gif);
+        }
+    }
+    
+    .iframeEdit-iframe {
+        width: 80vw;
+        height: 1px;
+        margin-top: 30px;
+        border: 0;
+        visibility:hidden;
+    }    
+
+    &.loaded {
+        .iframeEdit-loading {
+            display:none;
+        }
+    
+        .iframeEdit-iframe {
+            height: 80vh;
+            visibility: visible;
+        }
+    }
+
+}
