@@ -577,38 +577,35 @@
   overflow: hidden;
 
   &-left,
-  &-right,
-  &-bottom {
+  &-right {
     list-style-type: none;
     margin: 0;
   }
 
-  &-left,
-  &-bottom {
+  &-left {
     float: left;
   }
 
   &-right {
     float: right;
   }
+}
 
-  &-bottom {
-    li {
-      padding-top: 15px;
-      border-top: 1px solid @color-placeholder;
-    }
+.widget-publishingHistory {
+  margin-top: 10px;
+  overflow: hidden;
+  border-top: 1px solid fade(@color-placeholder, 25%);
 
-    p {
-      margin-bottom: 0;
-      color: fade(@color-text, 50%);
-    }
+  p {
+    padding: 10px 0 10px 0;
+    color: fade(@color-text, 50%);
+    margin: 0;
   }
 }
 
 .widget-publishingPublish + .widget-publishingExtra {
   .widget-publishingExtra-left,
-  .widget-publishingExtra-right,
-  .widget-publishingExtra-bottom {
+  .widget-publishingExtra-right {
     margin-top: 15px;
   }
 }

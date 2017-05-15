@@ -1223,38 +1223,38 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeEnd();
                             }
                         wp.writeEnd();
-
-                        History publishHistory;
-
-                        if (wp.getCmsTool().isUseOldHistoryIndex()) {
-                            publishHistory = Query
-                                    .from(History.class)
-                                    .where("name = missing and objectId = ?", state.getId())
-                                    .sortDescending("updateDate")
-                                    .first();
-
-                        } else {
-                            publishHistory = Query
-                                    .from(History.class)
-                                    .where("name = missing and getObjectIdUpdateDate ^= ?", state.getId().toString())
-                                    .sortDescending("getObjectIdUpdateDate")
-                                    .first();
-                        }
-
-                        if (publishHistory != null) {
-                            wp.writeStart("ul", "class", "widget-publishingExtra-bottom");
-                                wp.writeStart("li");
-                                    wp.writeStart("p");
-                                        wp.writeHtml("Published by ");
-                                        wp.writeObjectLabel(publishHistory.getUpdateUser());
-                                        wp.writeHtml(" at ");
-                                        wp.writeHtml(wp.formatUserDateTime(publishHistory.getUpdateDate()));
-                                    wp.writeEnd();
-                                wp.writeEnd();
-                            wp.writeEnd();
-                        }
                     }
                 wp.writeEnd();
+
+
+                wp.writeStart("div", "class", "widget-publishingHistory");
+                    History publishHistory;
+
+                    if (wp.getCmsTool().isUseOldHistoryIndex()) {
+                        publishHistory = Query
+                            .from(History.class)
+                            .where("name = missing and objectId = ?", state.getId())
+                            .sortDescending("updateDate")
+                            .first();
+
+                    } else {
+                        publishHistory = Query
+                            .from(History.class)
+                            .where("name = missing and getObjectIdUpdateDate ^= ?", state.getId().toString())
+                            .sortDescending("getObjectIdUpdateDate")
+                            .first();
+                    }
+
+                    if (publishHistory != null) {
+                        wp.writeStart("p");
+                            wp.writeHtml("Published by ");
+                            wp.writeObjectLabel(publishHistory.getUpdateUser());
+                            wp.writeHtml(" at ");
+                            wp.writeHtml(wp.formatUserDateTime(publishHistory.getUpdateDate()));
+                        wp.writeEnd();
+                    }
+                wp.writeEnd();
+
                 %>
             </div>
 
