@@ -577,23 +577,38 @@
   overflow: hidden;
 
   &-left,
-  &-right {
+  &-right,
+  &-bottom {
     list-style-type: none;
     margin: 0;
   }
 
-  &-left {
+  &-left,
+  &-bottom {
     float: left;
   }
 
   &-right {
     float: right;
   }
+
+  &-bottom {
+    li {
+      padding-top: 15px;
+      border-top: 1px solid @color-placeholder;
+    }
+
+    p {
+      margin-bottom: 0;
+      color: fade(@color-text, 50%);
+    }
+  }
 }
 
 .widget-publishingPublish + .widget-publishingExtra {
   .widget-publishingExtra-left,
-  .widget-publishingExtra-right {
+  .widget-publishingExtra-right,
+  .widget-publishingExtra-bottom {
     margin-top: 15px;
   }
 }

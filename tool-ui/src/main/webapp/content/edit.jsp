@@ -1223,6 +1223,19 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeEnd();
                             }
                         wp.writeEnd();
+
+                        if (isHistory) {
+                            wp.writeStart("ul", "class", "widget-publishingExtra-bottom");
+                                wp.writeStart("li");
+                                    wp.writeStart("p");
+                                        wp.writeHtml("Published by ");
+                                        wp.writeObjectLabel(history.getUpdateUser());
+                                        wp.writeHtml(" at ");
+                                        wp.writeHtml(wp.formatUserDateTime(history.getUpdateDate()));
+                                    wp.writeEnd();
+                                wp.writeEnd();
+                            wp.writeEnd();
+                        }
                     }
                 wp.writeEnd();
                 %>
