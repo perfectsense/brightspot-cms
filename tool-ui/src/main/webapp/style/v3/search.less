@@ -222,6 +222,9 @@
     .content {
       flex: 1;
       display: flex;
+      .previewContentWrapper {
+       flex: 1;
+     display: flex;
      .image {
        display: inline-block;
        width: 60%;
@@ -246,10 +249,15 @@
         width: 40%;
         height: 100%;
         padding: 5px;
+        .field[data-field='title'] {
+          font-weight: bold;
+          font-size: 1.2em;
+        }
         .label {
           font-weight: bold;
           padding-right: 1em;
         }
+      }
       }
     }
   }

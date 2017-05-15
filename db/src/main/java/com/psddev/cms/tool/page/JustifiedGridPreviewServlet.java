@@ -1,17 +1,12 @@
 package com.psddev.cms.tool.page;
 
-import com.psddev.cms.db.ImageTag;
-import com.psddev.cms.db.Site;
 import com.psddev.cms.db.ToolUser;
+import com.psddev.cms.tool.GridPreviewRenderer;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.ToolPageContext;
-import com.psddev.cms.tool.file.SvgFileType;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.db.Recordable;
-import com.psddev.dari.db.State;
-import com.psddev.dari.util.ImageEditor;
 import com.psddev.dari.util.RoutingFilter;
-import com.psddev.dari.util.StorageItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,60 +45,15 @@ public class JustifiedGridPreviewServlet extends PageServlet {
         if (!(asset instanceof Recordable)) {
             throw new ServletException("Asset with id [" + UUID_PARAM + "] is not Recordable, cannot be previewed");
         }
+
+        // TODO: Check that the user has permission to view the asset in question
+
         Recordable recordable = (Recordable)asset;
 
-        // TODO: We want ObjectTypes to be able to define their own preview response... but for now, something generic
-        page.writeStart("div", "class", "image");
-            page.writeElement("img",
-                            "src", getPreviewUrl(recordable),
-                            "alt", page.getObjectLabel(recordable));
-        page.writeEnd();
-        page.writeStart("div", "class", "metadata");
-            page.writeStart("div", "class", "field", "data-field", "uuid");
-                page.writeStart("span", "class", "label");
-                    page.writeHtml("UUID");
-                page.writeEnd();
-                page.writeStart("span", "class", "value");
-                    page.writeHtml(recordable.getState().getId());
-                page.writeEnd();
-            page.writeEnd();
-            page.writeStart("div", "class", "field", "data-field", "label");
-                page.writeStart("span", "class", "label");
-                    page.writeHtml("Label");
-                page.writeEnd();
-                page.writeStart("span", "class", "value");
-                    page.writeHtml(recordable.getState().getLabel());
-                page.writeEnd();
-            page.writeEnd();
-        page.writeEnd();
-    }
-
-    public String getPreviewUrl(Object object) {
-        if (object != null) {
-
-            StorageItem preview = object instanceof StorageItem
-                    ? (StorageItem) object
-                    : State.getInstance(object).getPreview();
-
-            if (preview != null) {
-
-                String contentType = preview.getContentType();
-
-                if (ImageEditor.Static.getDefault() != null
-                        && (contentType != null && !contentType.equals(SvgFileType.CONTENT_TYPE))) {
-
-                    return new ImageTag.Builder(preview)
-                            //.setHeight(300)
-                            //.setResizeOption(ResizeOption.ONLY_SHRINK_LARGER)
-                            .toUrl();
-
-                } else {
-                    return preview.getPublicUrl();
-                }
-            }
+        if (recordable instanceof GridPreviewRenderer.CustomGridPreviewRenderer) {
+            ((GridPreviewRenderer.CustomGridPreviewRenderer) recordable).getGridPreviewRenderer().renderPreview(page);
+        } else {
+            new GridPreviewRenderer(recordable).renderPreview(page);
         }
-
-        return null;
     }
-
 }

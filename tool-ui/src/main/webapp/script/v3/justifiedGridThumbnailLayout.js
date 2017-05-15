@@ -227,4 +227,39 @@ define([ 'jquery', 'bsp-utils' ], function ($, bsp_utils) {
     }
 });
 
-// We need to figure out how to call .flexImages on the grid whenever an ajax event loads more images (lazy load)
+/*
+ * Example code for a (very) simple custom renderer for the BEX Image class
+
+    public class ImageGridPreviewRenderer extends GridPreviewRenderer<Image> {
+        public ImageGridPreviewRenderer(Image asset) {
+            super(asset);
+        }
+
+        @Override
+        public void renderPreviewMetaData(ToolPageContext page) throws IOException, ServletException {
+            page.writeStart("div", "class", "field", "data-field", "title");
+                page.writeHtml(asset.getLabel());
+            page.writeEnd();
+            page.writeStart("div", "class", "field", "data-field", "orientation");
+                page.writeStart("span", "class", "label");
+                    page.writeHtml("Orientation");
+                page.writeEnd();
+                page.writeStart("span", "class", "value");
+                    page.writeHtml(asset.getWidth() > asset.getHeight() ? "Horizontal"
+                        : asset.getWidth() < asset.getHeight() ? "Vertical"
+                        : "None");
+                page.writeEnd();
+            page.writeEnd();
+            page.writeStart("div", "class", "field", "data-field", "dimensions");
+                page.writeStart("span", "class", "label");
+                    page.writeHtml("Dimensions");
+                page.writeEnd();
+                page.writeStart("span", "class", "value");
+                    page.writeHtml(asset.getWidth() + "x" + asset.getHeight());
+                page.writeEnd();
+            page.writeEnd();
+        }
+
+    }
+
+ */
