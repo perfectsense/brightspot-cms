@@ -1228,29 +1228,14 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
 
                 wp.writeStart("div", "class", "widget-publishingHistory");
-                    History publishHistory;
+                    Date updateDate = contentData.getUpdateDate();
 
-                    if (wp.getCmsTool().isUseOldHistoryIndex()) {
-                        publishHistory = Query
-                            .from(History.class)
-                            .where("name = missing and objectId = ?", state.getId())
-                            .sortDescending("updateDate")
-                            .first();
-
-                    } else {
-                        publishHistory = Query
-                            .from(History.class)
-                            .where("name = missing and getObjectIdUpdateDate ^= ?", state.getId().toString())
-                            .sortDescending("getObjectIdUpdateDate")
-                            .first();
-                    }
-
-                    if (publishHistory != null) {
+                    if (updateDate != null) {
                         wp.writeStart("p");
                             wp.writeHtml("Published by ");
-                            wp.writeObjectLabel(publishHistory.getUpdateUser());
+                            wp.writeObjectLabel(contentData.getUpdateUser());
                             wp.writeHtml(" at ");
-                            wp.writeHtml(wp.formatUserDateTime(publishHistory.getUpdateDate()));
+                            wp.writeHtml(wp.formatUserDateTime(updateDate));
                         wp.writeEnd();
                     }
                 wp.writeEnd();
