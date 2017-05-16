@@ -726,7 +726,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
                                         wp.writeHtml(wp.localize(ScheduleEdit.class,
-                                                ImmutableMap.of("publishMessage", publishedLabel,
+                                                ImmutableMap.of("publishedMessage", publishedLabel,
                                                         "publishTime", wp.formatUserDateTime(triggerDate)),
                                                 "message.scheduled"));
                                     wp.writeEnd();
