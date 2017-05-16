@@ -1227,7 +1227,6 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     }
                 wp.writeEnd();
 
-
                 wp.writeStart("div", "class", "widget-publishingHistory");
                     Date updateDate = contentData.getUpdateDate();
                     String publishedLabel = wp.localize(editingType, "label.published");
