@@ -114,6 +114,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
             efu_cache.put(data);
         }
 
+        var currentUser = $('html').attr('data-user-id');
         var userId = data.userId;
         var fieldNamesByObjectId = data.fieldNamesByObjectId;
 
@@ -123,6 +124,10 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
             updateContainer($container, data);
 
             if (!$container.is('form')) {
+                return;
+            }
+
+            if (currentUser === userId) {
                 return;
             }
 
