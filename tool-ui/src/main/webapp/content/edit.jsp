@@ -30,6 +30,7 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
+com.psddev.cms.tool.page.ScheduleEdit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
@@ -719,24 +720,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         if (schedule != null) {
                             Date triggerDate = schedule.getTriggerDate();
-                            ToolUser triggerUser = schedule.getTriggerUser();
+                            String publishedLabel = wp.localize(editingType, "label.published");
 
-                            if (triggerDate != null || triggerUser != null) {
+                            if (triggerDate != null && publishedLabel != null) {
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
-                                        wp.writeHtml(" Scheduled to be published");
-
-                                        if (triggerDate != null) {
-                                            wp.writeHtml(" ");
-                                            wp.writeHtml(wp.formatUserDateTime(triggerDate));
-                                        }
-
-                                        if (triggerUser != null) {
-                                            wp.writeHtml(" by ");
-                                            wp.writeObjectLabel(triggerUser);
-                                        }
-
-                                        wp.writeHtml(".");
+                                        wp.writeHtml(wp.localize(ScheduleEdit.class,
+                                                ImmutableMap.of("publishMessage", publishedLabel,
+                                                        "publishTime", wp.formatUserDateTime(triggerDate)),
+                                                "message.scheduled"));
                                     wp.writeEnd();
                                 wp.writeEnd();
                             }
