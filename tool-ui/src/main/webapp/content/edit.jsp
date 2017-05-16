@@ -721,13 +721,12 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         if (schedule != null) {
                             Date triggerDate = schedule.getTriggerDate();
                             ToolUser triggerUser = schedule.getTriggerUser();
-                            String publishedLabel = wp.localize(editingType, "label.published");
 
-                            if (triggerDate != null && publishedLabel != null) {
+                            if (triggerDate != null && triggerUser != null) {
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
                                         wp.writeHtml(wp.localize(ScheduleEdit.class,
-                                                ImmutableMap.of("publishedMessage", publishedLabel,
+                                                ImmutableMap.of("publishedMessage", wp.localize(editingType, "label.published"),
                                                         "publishTime", wp.formatUserDateTime(triggerDate),
                                                         "publishUser", wp.createObjectLabelHtml(triggerUser)),
                                                 "message.scheduled"));
