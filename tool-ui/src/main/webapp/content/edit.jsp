@@ -30,6 +30,7 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
+com.psddev.cms.tool.page.ScheduleEdit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
@@ -1229,13 +1230,15 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 wp.writeStart("div", "class", "widget-publishingHistory");
                     Date updateDate = contentData.getUpdateDate();
+                    String publishedLabel = wp.localize(editingType, "label.published");
 
-                    if (updateDate != null) {
+                    if (updateDate != null && publishedLabel != null) {
                         wp.writeStart("p");
-                            wp.writeHtml("Published by ");
-                            wp.writeObjectLabel(contentData.getUpdateUser());
-                            wp.writeHtml(" at ");
-                            wp.writeHtml(wp.formatUserDateTime(updateDate));
+                            wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Edit",
+                                    ImmutableMap.of("publishLabel", publishedLabel,
+                                            "publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
+                                            "publishTime", wp.formatUserDateTime(updateDate)),
+                                    "message.published"));
                         wp.writeEnd();
                     }
                 wp.writeEnd();
