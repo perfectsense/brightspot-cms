@@ -18,6 +18,16 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
         var fieldNamesByObjectId = data.fieldNamesByObjectId;
         var $viewersContainer = $container.find('[data-rtc-edit-field-update-viewers]');
 
+        if ($viewersContainer.length === 0) {
+            $viewersContainer = $container.find('[data-rtc-edit-field-update-other-viewers]');
+
+            if ($viewersContainer.length > 0 &&
+                ($('html').attr('data-user-id') === userId)) {
+
+                return;
+            }
+        }
+
         if ($viewersContainer.length > 0) {
             var userAvatarHtml = data.userAvatarHtml;
             var closed = data.closed;
