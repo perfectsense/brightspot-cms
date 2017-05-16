@@ -1,0 +1,21 @@
+{
+  "name": "${artifactId}",
+  "private": true,
+  "devDependencies": {
+    "autoprefixer": "6.5.1",
+    "brightspot-styleguide": "perfectsense/brightspot-styleguide#feature/bsp-2649/gulp-tasks",
+    "gulp": "3.9.1",
+    "gulp-bower": "0.0.13",
+    "gulp-file": "0.3.0",
+    "gulp-less": "3.1.0",
+    "gulp-postcss": "6.2.0",
+    "gulp-rename": "1.2.2",
+    "gulp-sourcemaps": "2.1.1",
+    "gulp-uglify": "2.0.0",
+    "minimist": "1.2.0",
+    "systemjs-builder": "0.15.32"
+  },
+  "scripts": {
+    "gulp": "gulp"
+  }
+}

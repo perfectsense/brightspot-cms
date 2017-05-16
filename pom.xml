@@ -24,7 +24,7 @@
     <name>BrightSpot CMS</name>
 
     <modules>
-        <module>archetypes/app</module>
+        <module>demo/archetype</module>
         <module>db</module>
         <module>hunspell</module>
         <module>tool-ui</module>

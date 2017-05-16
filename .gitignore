@@ -3,17 +3,11 @@
 # it using "git config --global core.excludesfile ~/.gitignore".
 
 # Maven
-/target/
-/app-archetype/
-/archetypes/app/target/
-/archetypes/content-article/target/
-/archetypes/content-common/target/
-/archetypes/app-archetype/target/
-/archetypes/content-common-archetype/target/
-/archetypes/content-article-archetype/target/
+/demo/archetype/target/
 /db/target/
 /docs/documentation/_site/*
 /hunspell/target/
+/target/
 /tool-ui/bower_components/
 /tool-ui/node/
 /tool-ui/node_modules/

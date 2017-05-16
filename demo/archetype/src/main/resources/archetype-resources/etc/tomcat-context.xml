@@ -1,0 +1,27 @@
+##
+#set($tomcatPortProperty = '${tomcat.port}')
+##
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+    <Resources cachingAllowed="false" />
+
+    <Environment name="PRODUCTION" type="java.lang.Boolean" value="false" />
+
+    <!-- Database -->
+    <Environment name="dari/defaultDatabase" type="java.lang.String" value="${artifactId}.local" />
+    <Environment name="dari/database/${artifactId}.local/class" type="java.lang.String" value="com.psddev.dari.db.AggregateDatabase" />
+    <Environment name="dari/database/${artifactId}.local/defaultDelegate" type="java.lang.String" value="sql" />
+
+    <!-- SQL via H2 -->
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/class" type="java.lang.String" value="com.psddev.dari.h2.H2Database" />
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/dataSource/class" type="java.lang.String" value="org.h2.jdbcx.JdbcDataSource" />
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/dataSource/url" type="java.lang.String" value="jdbc:h2:${dataDirectory}/h2" />
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/dataSource/user" type="java.lang.String" value="root" />
+    <Environment name="dari/database/${artifactId}.local/delegate/sql/dataSource/password" type="java.lang.String" value="" />
+
+    <!-- Storage -->
+    <Environment name="dari/defaultStorage" type="java.lang.String" value="${artifactId}.local" />
+    <Environment name="dari/storage/${artifactId}.local/class" type="java.lang.String" value="com.psddev.dari.util.LocalStorageItem" />
+    <Environment name="dari/storage/${artifactId}.local/baseUrl" type="java.lang.String" value="http://localhost:${tomcatPortProperty}/storage" />
+    <Environment name="dari/storage/${artifactId}.local/rootPath" type="java.lang.String" value="${dataDirectory}/storage" />
+</Context>

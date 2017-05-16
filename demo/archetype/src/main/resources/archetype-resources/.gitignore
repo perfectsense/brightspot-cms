@@ -2,8 +2,7 @@
 # to your global config. If you don't have one set up already, you can create
 # it using "git config --global core.excludesfile ~/.gitignore".
 
-bower_components
-node
-node_modules
+styleguide/_build
+styleguide/node_modules
 target
 
