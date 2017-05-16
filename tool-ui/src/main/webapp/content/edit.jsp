@@ -1233,7 +1233,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                     if (updateDate != null && publishedLabel != null) {
                         wp.writeStart("p");
-                            wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Edit",
+                            wp.writeHtml(wp.localize(Edit.class,
                                     ImmutableMap.of("publishLabel", publishedLabel,
                                             "publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
                                             "publishTime", wp.formatUserDateTime(updateDate)),
