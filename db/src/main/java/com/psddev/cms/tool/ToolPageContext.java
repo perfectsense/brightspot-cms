@@ -1136,10 +1136,6 @@ public class ToolPageContext extends WebPageContext {
 
         } else {
             draft = getOverlaidDraft(object);
-
-            if (draft != null) {
-                object = draft.recreate();
-            }
         }
 
         State state = State.getInstance(object);
