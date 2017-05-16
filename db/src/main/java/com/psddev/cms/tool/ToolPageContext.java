@@ -1143,24 +1143,29 @@ public class ToolPageContext extends WebPageContext {
         }
 
         State state = State.getInstance(object);
+        Set<String> labels = new LinkedHashSet<>();
 
         if (draft != null) {
             if (draft.isNewContent()) {
                 Object original = draft.recreate();
 
                 if (original != null) {
-                    return State.getInstance(original).getVisibilityLabel();
+                    labels.add(State.getInstance(original).getVisibilityLabel());
                 }
 
             } else if (draft.getSchedule() != null) {
-                return localize(State.getInstance(object).getType(), "visibility.scheduledDraft");
+                labels.add(localize(state.getType(), "visibility.scheduledDraft"));
 
             } else {
-                return localize(Draft.class, "displayName");
+                labels.add(localize(Draft.class, "displayName"));
             }
         }
 
-        return State.getInstance(object).getVisibilityLabel();
+        labels.add(state.getVisibilityLabel());
+
+        return labels.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(", ", "", ""));
     }
 
     /**
