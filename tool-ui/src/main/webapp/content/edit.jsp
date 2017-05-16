@@ -1229,12 +1229,11 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 wp.writeStart("div", "class", "widget-publishingHistory");
                     Date updateDate = contentData.getUpdateDate();
-                    String publishedLabel = wp.localize(editingType, "label.published");
 
-                    if (updateDate != null && publishedLabel != null) {
+                    if (updateDate != null) {
                         wp.writeStart("p");
                             wp.writeHtml(wp.localize(Edit.class,
-                                    ImmutableMap.of("publishLabel", publishedLabel,
+                                    ImmutableMap.of("publishLabel", wp.localize(editingType, "label.published"),
                                             "publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
                                             "publishTime", wp.formatUserDateTime(updateDate)),
                                     "message.published"));
