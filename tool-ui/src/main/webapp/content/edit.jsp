@@ -559,7 +559,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             %>
 
             <div class="widget widget-publishing"<%= publishable ? " data-publishable" : "" %>>
-                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
+                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-other-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
