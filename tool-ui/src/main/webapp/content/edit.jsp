@@ -30,7 +30,6 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
-com.psddev.cms.tool.page.ScheduleEdit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
@@ -725,9 +724,8 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             if (triggerDate != null && triggerUser != null) {
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
-                                        wp.writeHtml(wp.localize(ScheduleEdit.class,
-                                                ImmutableMap.of("publishedLabel", wp.localize(editingType, "label.published"),
-                                                        "publishTime", wp.formatUserDateTime(triggerDate),
+                                        wp.writeHtml(wp.localize(editingType,
+                                                ImmutableMap.of("publishTime", wp.formatUserDateTime(triggerDate),
                                                         "publishUser", wp.createObjectLabelHtml(triggerUser)),
                                                 "message.scheduled"));
                                     wp.writeEnd();
