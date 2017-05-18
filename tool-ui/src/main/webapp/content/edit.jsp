@@ -1226,18 +1226,18 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     }
                 wp.writeEnd();
 
-                wp.writeStart("div", "class", "widget-publishingHistory");
-                    Date updateDate = contentData.getUpdateDate();
+                Date updateDate = contentData.getUpdateDate();
 
-                    if (updateDate != null) {
+                if (updateDate != null) {
+                    wp.writeStart("div", "class", "widget-publishingHistory");
                         wp.writeStart("p");
                             wp.writeHtml(wp.localize(editingType,
                                     ImmutableMap.of("publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
                                             "publishTime", wp.formatUserDateTime(updateDate)),
                                     "message.published"));
                         wp.writeEnd();
-                    }
-                wp.writeEnd();
+                    wp.writeEnd();
+                }
 
                 %>
             </div>
