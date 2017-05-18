@@ -1231,9 +1231,8 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                     if (updateDate != null) {
                         wp.writeStart("p");
-                            wp.writeHtml(wp.localize(Edit.class,
-                                    ImmutableMap.of("publishLabel", wp.localize(editingType, "label.published"),
-                                            "publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
+                            wp.writeHtml(wp.localize(editingType,
+                                    ImmutableMap.of("publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
                                             "publishTime", wp.formatUserDateTime(updateDate)),
                                     "message.published"));
                         wp.writeEnd();
