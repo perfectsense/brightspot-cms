@@ -219,7 +219,7 @@ public class Draft extends Content {
             return true;
         }
 
-        if (ObjectField.BOOLEAN_TYPE.equals(fieldInternalType) && !field.isPrimitive()) {
+        if (ObjectField.BOOLEAN_TYPE.equals(fieldInternalType) && !field.isJavaFieldTypePrimitive()) {
             return Objects.equals(x, y);
         }
 
