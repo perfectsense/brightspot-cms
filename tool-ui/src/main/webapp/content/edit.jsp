@@ -30,7 +30,6 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
-com.psddev.cms.tool.page.ScheduleEdit,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
