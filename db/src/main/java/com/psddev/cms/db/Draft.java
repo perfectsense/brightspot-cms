@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -208,13 +209,18 @@ public class Draft extends Content {
     }
 
     private static boolean roughlyEquals(ObjectField field, Object x, Object y) {
-        if (field != null && field.getInternalType().startsWith(ObjectField.SET_TYPE + "/")) {
+        String fieldInternalType = field != null ? field.getInternalType() : null;
+        if (fieldInternalType != null && fieldInternalType.startsWith(ObjectField.SET_TYPE + "/")) {
             x = ObjectUtils.to(Set.class, x);
             y = ObjectUtils.to(Set.class, y);
         }
 
         if (ObjectUtils.equals(x, y)) {
             return true;
+        }
+
+        if (ObjectField.BOOLEAN_TYPE.equals(fieldInternalType) && !field.isPrimitive()) {
+            return Objects.equals(x, y);
         }
 
         // null equals false.
