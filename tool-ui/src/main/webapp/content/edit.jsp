@@ -721,22 +721,13 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             Date triggerDate = schedule.getTriggerDate();
                             ToolUser triggerUser = schedule.getTriggerUser();
 
-                            if (triggerDate != null || triggerUser != null) {
+                            if (triggerDate != null && triggerUser != null) {
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
-                                        wp.writeHtml(" Scheduled to be published");
-
-                                        if (triggerDate != null) {
-                                            wp.writeHtml(" ");
-                                            wp.writeHtml(wp.formatUserDateTime(triggerDate));
-                                        }
-
-                                        if (triggerUser != null) {
-                                            wp.writeHtml(" by ");
-                                            wp.writeObjectLabel(triggerUser);
-                                        }
-
-                                        wp.writeHtml(".");
+                                        wp.writeHtml(wp.localize(editingType,
+                                                ImmutableMap.of("publishTime", wp.formatUserDateTime(triggerDate),
+                                                        "publishUser", wp.createObjectLabelHtml(triggerUser)),
+                                                "message.scheduled"));
                                     wp.writeEnd();
                                 wp.writeEnd();
                             }
