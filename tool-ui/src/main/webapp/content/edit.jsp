@@ -559,7 +559,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             %>
 
             <div class="widget widget-publishing"<%= publishable ? " data-publishable" : "" %>>
-                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
+                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-other-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
@@ -721,22 +721,13 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                             Date triggerDate = schedule.getTriggerDate();
                             ToolUser triggerUser = schedule.getTriggerUser();
 
-                            if (triggerDate != null || triggerUser != null) {
+                            if (triggerDate != null && triggerUser != null) {
                                 wp.writeStart("div", "class", "message message-warning");
                                     wp.writeStart("p");
-                                        wp.writeHtml(" Scheduled to be published");
-
-                                        if (triggerDate != null) {
-                                            wp.writeHtml(" ");
-                                            wp.writeHtml(wp.formatUserDateTime(triggerDate));
-                                        }
-
-                                        if (triggerUser != null) {
-                                            wp.writeHtml(" by ");
-                                            wp.writeObjectLabel(triggerUser);
-                                        }
-
-                                        wp.writeHtml(".");
+                                        wp.writeHtml(wp.localize(editingType,
+                                                ImmutableMap.of("publishTime", wp.formatUserDateTime(triggerDate),
+                                                        "publishUser", wp.createObjectLabelHtml(triggerUser)),
+                                                "message.scheduled"));
                                     wp.writeEnd();
                                 wp.writeEnd();
                             }

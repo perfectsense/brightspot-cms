@@ -3348,7 +3348,9 @@ define([
 
             self = this;
 
-            if (changeObj.origin === 'brightspotEnhancementMove') {
+            // New line adjustment does not need to take place after 'brightspotPaste' events. This is triggered
+            // when switching between HTML and Rich Text modes.
+            if (changeObj.origin === 'brightspotEnhancementMove' || changeObj.origin === 'brightspotPaste') {
                 return;
             }
 

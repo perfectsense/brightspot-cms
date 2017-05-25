@@ -12,7 +12,7 @@ class EditFieldUpdateBroadcast implements RtcBroadcast<EditFieldUpdate> {
 
     @Override
     public boolean shouldBroadcast(Map<String, Object> data, UUID currentUserId) {
-        return !currentUserId.toString().equals(data.get("userId"));
+        return true;
     }
 
     @Override
