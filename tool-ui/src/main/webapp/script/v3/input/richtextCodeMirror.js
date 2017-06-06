@@ -3768,6 +3768,18 @@ define([
                 ++ blanksAfter;
             }
 
+            // Find the number of blank lines before the mark to preserve before
+            // the "from" position.
+            var blanksBefore = 0;
+
+            for (var i = from - 1; i >= 0; -- i) {
+                if (cm.getLine(i) === '') {
+                    ++ blanksBefore;
+                } else {
+                    break;
+                }
+            }
+
             // Make sure that the move is possible.
             var move = -1;
 
@@ -3814,6 +3826,10 @@ define([
                 // Insert the blank lines found previously.
                 for (var i = 0; i < blanksAfter; ++ i) {
                     cm.replaceRange('\n', movePosition, movePosition);
+                }
+
+                for (var i = 0; i < blanksBefore; ++ i) {
+                    cm.replaceRange('\n', { line: from + 1, ch: 0 }, { line: from + 1, ch: 0 });
                 }
 
                 // Insert the mark at the new position.
