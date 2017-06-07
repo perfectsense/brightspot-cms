@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.AuthenticationFilter;
 import com.psddev.cms.tool.CmsTool;
+import com.psddev.cms.tool.CrossDomainFilter;
 import com.psddev.dari.db.Database;
 import com.psddev.dari.db.Query;
 import com.psddev.dari.util.AbstractFilter;
@@ -31,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * Filter that handles the real-time communication between the server
  * and the clients.
  */
-public class RtcFilter extends AbstractFilter implements AbstractFilter.Auto {
+public class RtcFilter extends CrossDomainFilter implements AbstractFilter.Auto {
 
     public static final String PATH = "/_rtc";
 
@@ -100,8 +101,10 @@ public class RtcFilter extends AbstractFilter implements AbstractFilter.Auto {
         }
     }
 
+    // --- CrossDomainFilter Support ---
+
     @Override
-    protected void doRequest(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doCrossDomainRequest(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         if (!request.getServletPath().startsWith(PATH)) {
             chain.doFilter(request, response);
             return;
