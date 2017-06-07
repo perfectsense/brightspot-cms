@@ -3756,7 +3756,6 @@ define([
 
             var self = this;
             var cm = self.codeMirror;
-            var from = markRange.from.line;
 
             // Find the number of blank lines after the mark to include in the
             // move.
@@ -3770,14 +3769,17 @@ define([
 
             // Find the number of blank lines before the mark to preserve before
             // the "from" position.
+            var from = markRange.from.line;
             var blanksBefore = 0;
 
-            for (var i = from - 1; i >= 0; -- i) {
-                if (cm.getLine(i) === '') {
-                    ++ blanksBefore;
-                } else {
-                    break;
-                }
+            while (from > 0 && cm.getLine(from - 1) === '') {
+                -- from;
+                ++ blanksBefore;
+            }
+
+            // Improve spacing when mark is moved from first position.
+            if (from === 0) {
+                ++ blanksBefore;
             }
 
             // Make sure that the move is possible.
@@ -3811,10 +3813,29 @@ define([
                 var initialTop = cm.charCoords({ line: from, ch: 0 }).top;
                 var html = self.toHTML(markRange);
                 var cursor = cm.getCursor();
-                var movePosition = { line: move, ch: 0 };
+
+                var replaceWithNewLine = blanksBefore + blanksAfter > 0 && from !== 0;
 
                 // Delete the existing mark.
-                cm.replaceRange('', { line: from, ch: 0 }, { line: to, ch: 0 });
+                // Collapses one or more adjacent blank lines into single blank line
+                if (replaceWithNewLine) {
+                    cm.replaceRange('\n', { line: from, ch: 0 }, { line: to, ch: 0 });
+                    if (move !== 0) {
+                        move += 1;
+                    }
+                } else {
+                    cm.replaceRange('', { line: from, ch: 0 }, { line: to, ch: 0 });
+                }
+
+                // Insert the blank lines found previously before the mark.
+                if (move > 0) {
+                    for (var i = 0; i < blanksBefore; ++ i) {
+                        cm.replaceRange('\n', { line: move, ch: 0}, { line: move, ch: 0 });
+                        if (direction > 0) {
+                            ++ move;
+                        }
+                    }
+                }
 
                 // Insert an extra blank line if moving to the beginning or
                 // the end of the text and there isn't already a blank line
@@ -3823,17 +3844,13 @@ define([
                     cm.replaceRange('\n', { line: move, ch: 0 }, { line: move, ch: 0 });
                 }
 
-                // Insert the blank lines found previously.
+                // Insert the blank lines found previously after the mark.
                 for (var i = 0; i < blanksAfter; ++ i) {
-                    cm.replaceRange('\n', movePosition, movePosition);
-                }
-
-                for (var i = 0; i < blanksBefore; ++ i) {
-                    cm.replaceRange('\n', { line: from + 1, ch: 0 }, { line: from + 1, ch: 0 });
+                    cm.replaceRange('\n', { line: move, ch: 0}, { line: move, ch: 0});
                 }
 
                 // Insert the mark at the new position.
-                self.fromHTML(html, { from: movePosition, to: movePosition });
+                self.fromHTML(html, { from: { line: move, ch: 0}, to: { line: move, ch: 0} });
 
                 // Move the cursor to the newly created mark.
                 var cursorLine = move + blanksAfter + cursor.line - from + 1;
