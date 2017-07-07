@@ -109,7 +109,16 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                     }
                 }
 
-                return typeOk && userOk;
+                ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
+                boolean permissionOk = permissionItemType != null && page.getUser().hasPermission("type/" + permissionItemType.getId() + "/read");
+
+                return permissionOk && typeOk && userOk;
+            };
+        } else {
+            queryFilter = item -> {
+                State itemState = State.getInstance(item);
+                ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
+                return permissionItemType != null && page.getUser().hasPermission("type/" + permissionItemType.getId() + "/read");
             };
         }
 
