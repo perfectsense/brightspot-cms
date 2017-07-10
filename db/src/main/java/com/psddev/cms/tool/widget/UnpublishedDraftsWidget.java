@@ -109,17 +109,10 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                     }
                 }
 
-                ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
-                boolean permissionOk = permissionItemType != null && page.getUser().hasPermission("type/" + permissionItemType.getId() + "/read");
-
-                return permissionOk && typeOk && userOk;
+                return doesUserHaveAccess(page.getUser(), item) && typeOk && userOk;
             };
         } else {
-            queryFilter = item -> {
-                State itemState = State.getInstance(item);
-                ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
-                return permissionItemType != null && page.getUser().hasPermission("type/" + permissionItemType.getId() + "/read");
-            };
+            queryFilter = item -> doesUserHaveAccess(page.getUser(), item);
         }
 
         QueryRestriction.updateQueryUsingAll(draftsQuery, page);
@@ -370,6 +363,12 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                 page.writeEnd();
             }
         page.writeEnd();
+    }
+
+    private boolean doesUserHaveAccess(ToolUser user, Object item) {
+        State itemState = State.getInstance(item);
+        ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
+        return permissionItemType != null && user.hasPermission("type/" + permissionItemType.getId() + "/read");
     }
 
     private enum UserType {
