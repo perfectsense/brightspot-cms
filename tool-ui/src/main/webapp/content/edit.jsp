@@ -1219,7 +1219,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                 Date updateDate = contentData.getUpdateDate();
 
-                if (updateDate != null) {
+                if (updateDate != null && !contentData.isDraft() && !contentData.isTrash()) {
                     wp.writeStart("div", "class", "widget-publishingHistory");
                         wp.writeStart("p");
                             wp.writeHtml(wp.localize(editingType,
