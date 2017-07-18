@@ -13,8 +13,7 @@ java.util.Collections,
 java.util.List,
 
 javax.servlet.ServletException
-" %>
-<%
+" %><%
 
 // --- Presentation ---
 
