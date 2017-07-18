@@ -6,12 +6,15 @@ com.psddev.dari.db.ValidationException,
 
 com.psddev.dari.util.ObjectUtils,
 
+com.psddev.dari.util.Settings,
+
 java.util.ArrayList,
 java.util.Collections,
 java.util.List,
 
 javax.servlet.ServletException
-" %><%
+" %>
+<%
 
 // --- Presentation ---
 
@@ -48,16 +51,20 @@ for (Throwable error : errors) {
 
         wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Errors", "error.general"));
         wp.write("<ul class=\"exception\">");
-        for (Throwable cause : causes) {
-            wp.write("<li>");
-            wp.write(wp.h(cause.getClass().getName()));
-            wp.write(": ");
-            wp.write(wp.h(cause.getMessage()));
-            wp.write("<ul class=\"stackTrace\">");
-            for (StackTraceElement e : cause.getStackTrace()) {
-                wp.write("<li>", wp.h(e), "</li>");
+        Boolean hideErrorStackTrace = Settings.get(Boolean.class, "cms/tool/hideErrorStackTrace");
+        if (hideErrorStackTrace == null || !hideErrorStackTrace) {
+            for (Throwable cause : causes) {
+                    wp.write("<li>");
+                    wp.write(wp.h(cause.getClass().getName()));
+                    wp.write(": ");
+                    wp.write(wp.h(cause.getMessage()));
+                    wp.write("<ul class=\"stackTrace\">");
+                    for (StackTraceElement e : cause.getStackTrace()) {
+                        wp.write("<li>", wp.h(e), "</li>");
+                    }
+                    wp.write("</ul>");
+                    wp.write("</li>");
             }
-            wp.write("</ul></li>");
         }
         wp.write("</ul>");
     }
