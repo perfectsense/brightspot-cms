@@ -5,6 +5,7 @@ com.psddev.cms.db.Directory,
 com.psddev.cms.db.Site,
 com.psddev.cms.db.ToolUser,
 com.psddev.cms.db.Workflow,
+com.psddev.cms.tool.CmsTool,
 com.psddev.cms.tool.JspWidget,
 com.psddev.cms.tool.ToolPageContext,
 
@@ -12,6 +13,7 @@ com.psddev.dari.db.Query,
 com.psddev.dari.db.State,
 com.psddev.dari.util.CompactMap,
 com.psddev.dari.util.CompactSet,
+com.psddev.dari.util.StringUtils,
 com.psddev.dari.util.ObjectUtils,
 
 java.util.HashSet,
@@ -22,9 +24,7 @@ java.util.Set,
 java.util.UUID,
 java.util.stream.Collectors,
 java.util.stream.Stream
-" %>
-<%@ page import="com.psddev.cms.tool.CmsTool" %>
-<%@ page import="com.psddev.dari.util.StringUtils" %><%
+" %><%
 
 ToolPageContext wp = new ToolPageContext(pageContext);
 Object object = JspWidget.getOriginal(wp);
