@@ -22,7 +22,9 @@ java.util.Set,
 java.util.UUID,
 java.util.stream.Collectors,
 java.util.stream.Stream
-" %><%
+" %>
+<%@ page import="com.psddev.cms.tool.CmsTool" %>
+<%@ page import="com.psddev.dari.util.StringUtils" %><%
 
 ToolPageContext wp = new ToolPageContext(pageContext);
 Object object = JspWidget.getOriginal(wp);
@@ -174,7 +176,13 @@ if (!paths.isEmpty()) {
             Site pathSite = path.getSite();
             String pathPath = path.getPath();
             String pathDisplay = ObjectUtils.firstNonNull(Directory.extractExternalUrl(pathPath), pathPath);
-            String href = pathSite != null ? pathSite.getPrimaryUrl() + pathPath : pathPath;
+            String href;
+            if (pathSite != null) {
+                href = pathSite.getPrimaryUrl() + pathPath;
+            } else {
+                String defaultSiteUrl = Query.from(CmsTool.class).first().getDefaultSiteUrl();
+                href = defaultSiteUrl != null ? StringUtils.removeEnd(defaultSiteUrl, "/") + pathPath : pathPath;
+            }
 
             while (href.endsWith("*")) {
                 href = href.substring(0, href.length() - 1);
