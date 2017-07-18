@@ -358,6 +358,10 @@ public class Workflow extends Record {
 
                 if ("Published".equals(transitionTarget)) {
                     transitionTarget = null;
+
+                } else if ("New".equals(transitionTarget)) {
+                    transitionTarget = null;
+                    as(Content.ObjectModification.class).setDraft(true);
                 }
             }
 
