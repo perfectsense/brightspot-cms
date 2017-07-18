@@ -3,7 +3,6 @@ package com.psddev.cms.tool.page;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -409,21 +408,25 @@ public class UploadFiles extends PageServlet {
             for (ObjectType type : types) {
                 String name = "typeForm-" + type.getId();
                 Object common = type.createObject(null);
+                State typeState = State.getInstance(common);
 
                 page.writeStart("div", "class", "typeForm " + name);
                     page.writeElement("input",
                             "type", "hidden",
                             "name", name,
-                            "value", State.getInstance(common).getId());
+                            "value", typeState.getId());
 
                     ObjectField previewField = getPreviewField(type);
 
-                    List<String> excludedFields = null;
-                    if (previewField != null) {
-                        excludedFields = Arrays.asList(previewField.getInternalName());
-                    }
-
-                    page.writeSomeFormFields(common, false, null, excludedFields);
+                    page.writeStart("div",
+                            "class", "toggleable-form",
+                            "data-form-fields-data", ObjectUtils.toJson(typeState.getSimpleValues()),
+                            "data-form-fields-url", page.cmsUrl(
+                                    "/contentFormFields",
+                                    "typeId", typeState.getTypeId(),
+                                    "id", typeState.getId(),
+                                    "excluded", previewField != null ? Collections.singletonList(previewField.getInternalName()) : null));
+                    page.writeEnd();
                 page.writeEnd();
             }
 
