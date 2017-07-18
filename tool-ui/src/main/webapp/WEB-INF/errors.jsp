@@ -61,8 +61,7 @@ for (Throwable error : errors) {
                     for (StackTraceElement e : cause.getStackTrace()) {
                         wp.write("<li>", wp.h(e), "</li>");
                     }
-                    wp.write("</ul>");
-                    wp.write("</li>");
+                    wp.write("</ul></li>");
             }
         }
         wp.write("</ul>");
