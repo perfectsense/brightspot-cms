@@ -50,8 +50,7 @@ for (Throwable error : errors) {
 
         wp.writeHtml(wp.localize("com.psddev.cms.tool.page.content.Errors", "error.general"));
         wp.write("<ul class=\"exception\">");
-        Boolean hideErrorStackTrace = Settings.get(Boolean.class, "cms/tool/hideErrorStackTrace");
-        if (hideErrorStackTrace == null || !hideErrorStackTrace) {
+        if (!Settings.get(boolean.class, "cms/tool/hideErrorStackTrace")) {
             for (Throwable cause : causes) {
                     wp.write("<li>");
                     wp.write(wp.h(cause.getClass().getName()));
