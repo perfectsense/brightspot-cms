@@ -256,9 +256,14 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
             $check;
 
         $item = $('<div/>', {
-          'class': plugin.className('listItem'),
-          'html': $option.attr("data-drop-down-html") || $option.text() || '&nbsp;'
-        });
+          'class': plugin.className('listItem')}
+        );
+
+        if ($option.attr("data-drop-down-html")) {
+          $item.html($option.attr("data-drop-down-html"));
+        } else {
+          $item.text($option.text() || '&nbsp;');
+        }
 
         $check = $('<input/>', {
           'type': isMultiple ? 'checkbox' : 'radio'
