@@ -155,14 +155,14 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         var newLabel;
         if (selected) {
           var textAndHtml = document.createElement('div');
-          for(var i = 0; i < selected.length; ++i) {
+          for (var i = 0; i < selected.length; ++i) {
             var option = selected[i];
             if ($(option).attr('data-drop-down-html')) {
               $(textAndHtml).append($(option).attr('data-drop-down-html'));
             } else {
               $(textAndHtml).append(document.createTextNode($(option).text()));
             }
-            if(i < selected.length - 1){
+            if (i < selected.length - 1){
               $(textAndHtml).append(', ');
             }
           }
