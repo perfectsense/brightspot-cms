@@ -53,7 +53,9 @@ java.util.Set,
 java.util.UUID,
 
 org.joda.time.DateTime,
-com.google.common.collect.ImmutableMap" %><%
+com.google.common.collect.ImmutableMap" %>
+<%@ page import="com.psddev.dari.db.StateStatus" %>
+<%
 
 // --- Logic ---
 
@@ -498,13 +500,28 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                     wp.writeEnd();
 
                 } else if (history != null || (draft != null && !draft.isNewContent())) {
-                    State original = State.getInstance(Query.
-                            from(Object.class).
-                            where("_id = ?", editing).
-                            noCache().
-                            first());
+                    State compareState = new State();
 
-                    if (original != null) {
+                    UUID compareId = wp.param(UUID.class, "compareId");
+                    if (compareId != null) {
+                        Object compareObj = Query.
+                                from(Object.class).
+                                where("_id = ?", compareId).
+                                noCache().
+                                first();
+                        //Security, only let you compare to drafts and history of the current id
+                        if (compareObj instanceof History) {
+                            compareState.setValues(((History) compareObj).getObjectOriginals());
+                        }
+                    } else {
+                        compareState = State.getInstance(Query.
+                                from(Object.class).
+                                where("_id = ?", editing).
+                                noCache().
+                                first());
+                    }
+
+                    if (compareState != null) {
                         wp.writeStart("div", "class", "contentDiff");
                             if (history != null) {
                                 wp.writeStart("div", "class", "contentDiffOld contentDiffLeft");
@@ -519,10 +536,25 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.disableFormFields();
 
                                 wp.writeStart("div", "class", "contentDiffCurrent " + (history != null ? "contentDiffRight" : "contentDiffLeft"));
-                                    wp.writeStart("h2");
-                                        wp.writeHtml(wp.localize(editingState.getType(), "subtitle.current"));
+//                                    wp.writeStart("h2");
+//                                        wp.writeHtml(wp.localize(editingState.getType(), "subtitle.current"));
+//                                    wp.writeEnd();
+
+                                    wp.writeStart("select", "name", "compareId", "onChange", "window.document.location.href=this.options[this.selectedIndex].value;");
+                                    wp.writeStart("option",
+                                            "selected", compareId == null ? "selected" : null,
+                                            "value", wp.objectUrl("/content/edit.jsp", editing));
+                                    wp.writeHtml("Current");
                                     wp.writeEnd();
-                                    wp.writeSomeFormFields(original.getOriginalObject(), true, null, null);
+                                    for (History historySelect : Query.from(History.class).where("objectId = ?", state.getId()).sortDescending("updateDate").selectAll()) {
+                                        wp.writeStart("option",
+                                                "selected", compareId != null && compareId.equals(historySelect.getId()) ? "selected" : null,
+                                                "value", wp.objectUrl("/content/edit.jsp", editing, "compareId", historySelect.getId().toString()));
+                                        wp.writeHtml(historySelect.getLabel());
+                                        wp.writeEnd();
+                                    }
+                                    wp.writeEnd();
+                                    wp.writeSomeFormFields(compareState, true, null, null);
                                 wp.writeEnd();
 
                             } finally {
