@@ -151,11 +151,30 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       }
 
       $label.bind('dropDown-update', function() {
-        var newLabel = $.map($original.find('option').filter(':selected'), function(option) {
-          return $(option).attr("data-drop-down-html") || $(option).text();
-        }).join(', ');
-
-        $label.html(newLabel || dynamicPlaceholderHtml || placeholder || '&nbsp;');
+        var selected = $original.find('option').filter(':selected');
+        var newLabel;
+        if (selected) {
+          var textAndHtml = document.createElement('div');
+          for(var i = 0; i < selected.length; ++i) {
+            var option = selected[i];
+            if ($(option).attr('data-drop-down-html')) {
+              $(textAndHtml).append($(option).attr('data-drop-down-html'));
+            } else {
+              $(textAndHtml).append(document.createTextNode($(option).text()));
+            }
+            if(i < selected.length - 1){
+              $(textAndHtml).append(', ');
+            }
+          }
+          newLabel = $(textAndHtml).html();
+          $label.html(newLabel);
+        } else if (dynamicPlaceholderHtml) {
+          $label.html(dynamicPlaceholderHtml);
+        } else if (placeholder) {
+          $label.text(placeholder);
+        } else {
+          $label.html('&nbsp;');
+        }
         $label.toggleClass('state-placeholder', !newLabel);
 
         resize();
@@ -261,8 +280,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
 
         if ($option.attr("data-drop-down-html")) {
           $item.html($option.attr("data-drop-down-html"));
+        } else if ($option.text()) {
+          $item.text($option.text());
         } else {
-          $item.text($option.text() || '&nbsp;');
+          $item.html('&nbsp;');
         }
 
         $check = $('<input/>', {
