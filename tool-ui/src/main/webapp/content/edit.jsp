@@ -55,6 +55,7 @@ java.util.UUID,
 org.joda.time.DateTime,
 com.google.common.collect.ImmutableMap" %>
 <%@ page import="com.psddev.dari.db.StateStatus" %>
+<%@ page import="com.psddev.dari.db.QueryFilter" %>
 <%
 
 // --- Logic ---
@@ -504,14 +505,17 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                     UUID compareId = wp.param(UUID.class, "compareId");
                     if (compareId != null) {
-                        Object compareObj = Query.
-                                from(Object.class).
-                                where("_id = ?", compareId).
-                                noCache().
-                                first();
-                        //Security, only let you compare to drafts and history of the current id
+                        Object compareObj = Query
+                                .from(Object.class)
+                                .where("_id = ?", compareId)
+                                .noCache()
+                                .first();
+                        //TODO Security, only let you compare to drafts and history of the current id
                         if (compareObj instanceof History) {
                             compareState.setValues(((History) compareObj).getObjectOriginals());
+                        } else if (compareObj instanceof Draft) {
+                            Object obj = ((Draft) compareObj).recreate();
+                            compareState = State.getInstance(obj);
                         }
                     } else {
                         compareState = State.getInstance(Query.
@@ -536,24 +540,53 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                                 wp.disableFormFields();
 
                                 wp.writeStart("div", "class", "contentDiffCurrent " + (history != null ? "contentDiffRight" : "contentDiffLeft"));
-//                                    wp.writeStart("h2");
-//                                        wp.writeHtml(wp.localize(editingState.getType(), "subtitle.current"));
-//                                    wp.writeEnd();
-
-                                    wp.writeStart("select", "name", "compareId", "onChange", "window.document.location.href=this.options[this.selectedIndex].value;");
-                                    wp.writeStart("option",
-                                            "selected", compareId == null ? "selected" : null,
-                                            "value", wp.objectUrl("/content/edit.jsp", editing));
-                                    wp.writeHtml("Current");
-                                    wp.writeEnd();
-                                    for (History historySelect : Query.from(History.class).where("objectId = ?", state.getId()).sortDescending("updateDate").selectAll()) {
+                                    if (history == null) {
+                                        wp.writeStart("h2");
+                                        wp.writeHtml(wp.localize(editingState.getType(), "subtitle.current"));
+                                        wp.writeEnd();
+                                    } else {
+                                        wp.writeStart("select", "name", "compareId", "onChange", "window.document.location.href=this.options[this.selectedIndex].value;");
                                         wp.writeStart("option",
-                                                "selected", compareId != null && compareId.equals(historySelect.getId()) ? "selected" : null,
-                                                "value", wp.objectUrl("/content/edit.jsp", editing, "compareId", historySelect.getId().toString()));
-                                        wp.writeHtml(historySelect.getLabel());
+                                                "selected", compareId == null ? "selected" : null,
+                                                "value", wp.objectUrl("/content/edit.jsp", editing));
+                                        wp.writeHtml("Current");
+                                        wp.writeEnd();
+                                        Query<History> historyCompareQuery = Query.from(History.class).where("objectId = ?", state.getId());
+                                        if (history != null) {
+                                            historyCompareQuery.and("_id != ?", history);
+                                        }
+                                        //TODO select all is a worry here
+                                        List<History> historyCompareOptions = historyCompareQuery.sortDescending("updateDate").selectAll();
+                                        if (!ObjectUtils.isBlank(historyCompareOptions)) {
+                                            wp.writeStart("optgroup", "label", "History");
+                                            for (History historySelect : historyCompareOptions) {
+                                                wp.writeStart("option",
+                                                        "selected", compareId != null && compareId.equals(historySelect.getId()) ? "selected" : null,
+                                                        "value", wp.objectUrl("/content/edit.jsp", editing, "compareId", historySelect.getId().toString()));
+                                                wp.writeHtml(historySelect.getLabel());
+                                                wp.writeEnd();
+                                            }
+                                            wp.writeEnd();
+                                        }
+                                        Query<Draft> draftCompareQuery = Query.from(Draft.class).where("objectId = ?", state.getId());
+                                        if (draft != null) {
+                                            draftCompareQuery.and("_id != ?", draft);
+                                        }
+                                        //TODO select all is a worry here
+                                        List<Draft> draftCompareOptions = draftCompareQuery.sortDescending("cms.content.updateDate").selectAll();
+                                        if (!ObjectUtils.isBlank(draftCompareOptions)) {
+                                            wp.writeStart("optgroup", "label", "Draft");
+                                            for (Draft draftSelect : draftCompareOptions) {
+                                                wp.writeStart("option",
+                                                        "selected", compareId != null && compareId.equals(draftSelect.getId()) ? "selected" : null,
+                                                        "value", wp.objectUrl("/content/edit.jsp", editing, "compareId", draftSelect.getId().toString()));
+                                                wp.writeHtml(draftSelect.getLabel());
+                                                wp.writeEnd();
+                                            }
+                                            wp.writeEnd();
+                                        }
                                         wp.writeEnd();
                                     }
-                                    wp.writeEnd();
                                     wp.writeSomeFormFields(compareState, true, null, null);
                                 wp.writeEnd();
 
