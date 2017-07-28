@@ -154,27 +154,27 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
         var selected = $original.find('option').filter(':selected');
         var newLabel;
         if (selected) {
-          var textAndHtml = document.createElement('div');
-          for (var i = 0; i < selected.length; ++i) {
+          var $textAndHtml = $(document.createElement('div'));
+          var lengthOfSelected = selected.length;
+          for (var i = 0; i < lengthOfSelected; ++i) {
             var option = selected[i];
             if ($(option).attr('data-drop-down-html')) {
-              $(textAndHtml).append($(option).attr('data-drop-down-html'));
+              $textAndHtml.append($(option).attr('data-drop-down-html'));
             } else {
-              $(textAndHtml).append(document.createTextNode($(option).text()));
+              $textAndHtml.append(document.createTextNode($(option).text()));
             }
-            if (i < selected.length - 1){
-              $(textAndHtml).append(', ');
+            if (i < lengthOfSelected - 1) {
+              $textAndHtml.append(', ');
             }
           }
-          newLabel = $(textAndHtml).html();
-          $label.html(newLabel);
-        } else if (dynamicPlaceholderHtml) {
-          $label.html(dynamicPlaceholderHtml);
-        } else if (placeholder) {
-          $label.text(placeholder);
-        } else {
-          $label.html('&nbsp;');
+          newLabel = $textAndHtml.html();
         }
+        if (newLabel || dynamicPlaceholderHtml || !placeholder) {
+          $label.html(newLabel || dynamicPlaceholderHtml || '&nbsp;');
+        } else {
+          $label.text(placeholder);
+        }
+
         $label.toggleClass('state-placeholder', !newLabel);
 
         resize();
