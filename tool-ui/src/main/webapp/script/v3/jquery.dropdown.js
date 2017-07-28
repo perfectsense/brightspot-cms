@@ -157,11 +157,11 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           var $textAndHtml = $(document.createElement('div'));
           var lengthOfSelected = selected.length;
           for (var i = 0; i < lengthOfSelected; ++i) {
-            var option = selected[i];
-            if ($(option).attr('data-drop-down-html')) {
-              $textAndHtml.append($(option).attr('data-drop-down-html'));
+            var $option = $(selected[i]);
+            if ($option.attr('data-drop-down-html')) {
+              $textAndHtml.append($option.attr('data-drop-down-html'));
             } else {
-              $textAndHtml.append(document.createTextNode($(option).text()));
+              $textAndHtml.append(document.createTextNode($option.text()));
             }
             if (i < lengthOfSelected - 1) {
               $textAndHtml.append(', ');
@@ -278,12 +278,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           'class': plugin.className('listItem')}
         );
 
-        if ($option.attr("data-drop-down-html")) {
-          $item.html($option.attr("data-drop-down-html"));
-        } else if ($option.text()) {
-          $item.text($option.text());
+        if ($option.attr("data-drop-down-html") || !$option.text()) {
+          $item.html($option.attr("data-drop-down-html") || '&nbsp;');
         } else {
-          $item.html('&nbsp;');
+          $item.text($option.text());
         }
 
         $check = $('<input/>', {
