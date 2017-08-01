@@ -484,7 +484,7 @@ The HTML within the repeatable element must conform to these standards:
             initIndexer: function () {
                 var self = this;
                 var $index = $('<div/>', {'class': 'item-index-select'});
-                var $select = $('<select/>', {'class': 'plugin-dropDown'}).appendTo($index);
+                var $select = $('<select/>').appendTo($index);
                 for (var i = 1; i < self.dom.$list.find('li').length + 1; i++) {
                     var $option = $('<option></option>').val(i).html(i);
                     $select.append($option);
@@ -502,7 +502,6 @@ The HTML within the repeatable element must conform to these standards:
                         }
                     }
                 })
-                self.dom.$indexer.find('select').trigger('create');
             },
 
             /**
@@ -762,9 +761,15 @@ The HTML within the repeatable element must conform to these standards:
                     if ($itemEditContainer.is(":hidden")) {
                         return;
                     }
+                    $(this).prepend(self.dom.$indexer);
                     self.dom.$indexer.$activeItem = $item;
                     self.dom.$indexer.find('select').val($item.index() + 1).change();
-                    $(this).prepend(self.dom.$indexer);
+
+                    // trigger 'create' event to apply bsp modification on selector
+                    self.dom.$indexer.find('select').show().css('visibility', 'hidden');
+                    self.dom.$indexer.find('>.dropDown-input').remove();
+                    self.dom.$indexer.trigger('create');
+
                 }).appendTo($item);
 
                 var dataPreviewField = $item.attr('data-preview-field');
