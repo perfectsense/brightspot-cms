@@ -735,7 +735,7 @@ The HTML within the repeatable element must conform to these standards:
                 var $item = $(item);
 
                 // if vertical view switch is hidden, do nothing
-                if (self.dom.$viewSwitcher.find('.view-switcher-vertical').is(':hidden')) {
+                if (!self.dom.$viewSwitcher || self.dom.$viewSwitcher.find('.view-switcher-vertical').is(':hidden')) {
                     return
                 }
 
