@@ -597,7 +597,7 @@ public class Draft extends Content {
 
         setName("#" + Sequence.Static.nextLong(
                 getClass().getName() + "/" + newId,
-                newStateCopy != null ? newStateCopy.as(NameData.class).getIndex() + 1 : 1));
+                newStateCopy != null ? ObjectUtils.to(int.class, newStateCopy.as(NameData.class).getIndex()) + 1 : 1));
     }
 
     /**
