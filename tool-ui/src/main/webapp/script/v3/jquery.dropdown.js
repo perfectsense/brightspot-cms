@@ -151,11 +151,30 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
       }
 
       $label.bind('dropDown-update', function() {
-        var newLabel = $.map($original.find('option').filter(':selected'), function(option) {
-          return $(option).attr("data-drop-down-html") || $(option).text();
-        }).join(', ');
+        var selected = $original.find('option').filter(':selected');
+        var newLabel;
+        if (selected) {
+          var $textAndHtml = $(document.createElement('div'));
+          var lengthOfSelected = selected.length;
+          for (var i = 0; i < lengthOfSelected; ++i) {
+            var $option = $(selected[i]);
+            if ($option.attr('data-drop-down-html')) {
+              $textAndHtml.append($option.attr('data-drop-down-html'));
+            } else {
+              $textAndHtml.append(document.createTextNode($option.text()));
+            }
+            if (i < lengthOfSelected - 1) {
+              $textAndHtml.append(', ');
+            }
+          }
+          newLabel = $textAndHtml.html();
+        }
+        if (newLabel || dynamicPlaceholderHtml || !placeholder) {
+          $label.html(newLabel || dynamicPlaceholderHtml || '&nbsp;');
+        } else {
+          $label.text(placeholder);
+        }
 
-        $label.html(newLabel || dynamicPlaceholderHtml || placeholder || '&nbsp;');
         $label.toggleClass('state-placeholder', !newLabel);
 
         resize();
@@ -259,10 +278,10 @@ define([ 'string', 'bsp-utils' ], function (S, bsp_utils) {
           'class': plugin.className('listItem')}
         );
 
-        if ($option.attr("data-drop-down-html")) {
-          $item.html($option.attr("data-drop-down-html"));
+        if ($option.attr("data-drop-down-html") || !$option.text()) {
+          $item.html($option.attr("data-drop-down-html") || '&nbsp;');
         } else {
-          $item.text($option.text() || '&nbsp;');
+          $item.text($option.text());
         }
 
         $check = $('<input/>', {
