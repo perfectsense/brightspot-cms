@@ -1930,7 +1930,7 @@ The HTML within the repeatable element must conform to these standards:
                     '</span>').appendTo($topButtonContainer);
 
                 // Hide vertical view by default;
-                // $viewSwitcher.find('.view-switcher-vertical').hide();
+                $viewSwitcher.find('.view-switcher-vertical').hide();
                 self.dom.$viewSwitcher = $viewSwitcher; // Save for later
 
                 // The grid view will use the existing UL or OL
