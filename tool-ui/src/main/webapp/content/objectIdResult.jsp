@@ -112,7 +112,8 @@ String removeId = wp.createId();
             } else if ($repeatableForm.length > 0) {
                 $sourceContainer = $source.closest('li');
 
-                if ($sourceContainer.length > 0 && $sourceContainer.nextAll('li').length === 0) {
+                if ($sourceContainer.length > 0 && $sourceContainer.nextAll('li').length === 0 && !win.repeatableInsertFront
+                || $sourceContainer.length > 0 && $sourceContainer.prevAll('li').length === 0 && win.repeatableInsertFront) {
                     fieldName = $source.closest('.inputContainer').attr('data-field-name');
 
                     $repeatableForm.find('.addButton[data-sortable-item-type="' + $sourceContainer.attr('data-sortable-item-type') + '"]').eq(-1).trigger('click', [
@@ -126,6 +127,10 @@ String removeId = wp.createId();
 
                                         $addedInputs = $addedInputs.add($select.closest('.inputSmall').find('> :input.objectId'));
                                         $page.popup('source', $select);
+                                        // No extra scroll if it's vertical view
+                                        if ($(added).hasClass('item-vertical-view')) {
+                                            return;
+                                        }
                                         $win.scrollTop($win.scrollTop() + $sourceContainer.outerHeight(true));
                                     }
                                 })
@@ -178,18 +183,33 @@ String removeId = wp.createId();
                     if (!$input.val()) {
                         var $li = $input.closest('li');
                         var repeatable = $li.closest('.plugin-repeatable').data('repeatable');
-                        if (repeatable) {
-                            repeatable.removeItemImmediately($li);
-                        }
 
-                        var $itemEdit = $input.closest('.itemEdit');
+                        if ($li.hasClass('item-vertical-view')) {
+                            var index = $li.index();
+                            var $viewCarousel = $li.closest('.plugin-repeatable').find('.viewCarousel');
+                            var $itemEdit = $viewCarousel.find('.itemEdit').eq(index);
 
-                        if ($itemEdit.length > 0) {
-                            var index = $itemEdit.parent().index($itemEdit);
+                            if ($itemEdit.length > 0) {
+                                $viewCarousel.find('.carousel-tiles > li').eq(index).remove();
+                                //$itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
+                                $itemEdit.remove();
+                            }
+                            if (repeatable) {
+                                repeatable.removeItemImmediately($li);
+                            }
+                        } else {
+                            if (repeatable) {
+                                repeatable.removeItemImmediately($li);
+                            }
+                            var $itemEdit = $input.closest('.itemEdit');
 
-                            $itemEdit.closest('.viewCarousel').find('.carousel-tiles > li').eq(index).remove();
-                            $itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
-                            $itemEdit.remove();
+                            if ($itemEdit.length > 0) {
+                                var index = $itemEdit.parent().index($itemEdit);
+
+                                $itemEdit.closest('.viewCarousel').find('.carousel-tiles > li').eq(index).remove();
+                                $itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
+                                $itemEdit.remove();
+                            }
                         }
                     }
                 });
