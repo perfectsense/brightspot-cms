@@ -1390,10 +1390,8 @@ The HTML within the repeatable element must conform to these standards:
                     if (win.repeatableInsertFront && self.modeIsPreview()) {
                         // move added item to the beginning
                         self.repositionItem(currentIndex, 0, $addedItem);
-                        if (self.modeIsPreview()) {
-                            self.carousel.repositionTile(currentIndex + 1, 1); // this api use index start from 1
-                            self.repositionCarouselTarget(currentIndex, 0)
-                        }
+                        self.carousel.repositionTile(currentIndex + 1, 1); // this api use index start from 1
+                        self.repositionCarouselTarget(currentIndex, 0)
                     }
 
                     if (self.modeIsPreview()) {
@@ -2546,7 +2544,7 @@ The HTML within the repeatable element must conform to these standards:
                 thumbnailName = thumbnailName.replace(/(.*)\/.*/, '$1'); // remove last / and beyond
 
                 if (target) {
-                    // If a change is made to the preview image update the thumbnail image in the carousel and grid view
+                    // If a change is made to the preview image, update the thumbnail image in the carousel and grid view
                     $target = $(target);
                 } else {
                     $target = $item.find('[data-field = "' + thumbnailName + '"]').find('[data-preview]');
