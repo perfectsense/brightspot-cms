@@ -191,7 +191,6 @@ String removeId = wp.createId();
 
                             if ($itemEdit.length > 0) {
                                 $viewCarousel.find('.carousel-tiles > li').eq(index).remove();
-                                //$itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
                                 $itemEdit.remove();
                             }
                             if (repeatable) {
@@ -204,7 +203,7 @@ String removeId = wp.createId();
                             var $itemEdit = $input.closest('.itemEdit');
 
                             if ($itemEdit.length > 0) {
-                                var index = $itemEdit.parent().index($itemEdit);
+                                var index = $itemEdit.index();
 
                                 $itemEdit.closest('.viewCarousel').find('.carousel-tiles > li').eq(index).remove();
                                 $itemEdit.closest('.repeatableForm').find('> ol, > ul').find('> li').eq(index).remove();
