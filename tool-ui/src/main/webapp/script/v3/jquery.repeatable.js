@@ -47,11 +47,12 @@ The HTML within the repeatable element must conform to these standards:
   with classname li.template or a script element with type="text/template".
 
 
- Acceptable variation
- --------------------
- * The first visible `editable-view` div under view switcher will decide the default editing view for previewable items
- * By default, new item is inserted at the end of list;
-   set global variable 'repeatableInsertFront' to be true to let new item inserted to the beginning of the list
+ Acceptable variation for previewable items
+ -------------------------------------------
+ * The first visible `editable-view` <div> under view switcher will decide the default editing view for previewable items;
+   By default, vertical view switcher is hidden.
+ * By default, new items are inserted to the end of list;
+   set global variable 'repeatableInsertFront' to be true to let new *previewable* items inserted to the beginning of the list.
 
 ==================================================
 ***/
@@ -744,9 +745,8 @@ The HTML within the repeatable element must conform to these standards:
                 // load item edit form but hide for now
                 var $itemEditContainer = $item.find('.itemEdit-vertical-container');
                 if ($itemEditContainer.length == 0) {
-                    $itemEditContainer = $('<div/>', {'class': 'itemEdit-vertical-container'}).on('change', function (event) {
-                        var $target = $(event.target).closest('[data-preview]');
-                        self.modePreviewImageChangeSync($item, $target);
+                    $itemEditContainer = $('<div/>', {'class': 'itemEdit-vertical-container'}).on('change', function () {
+                        self.modePreviewImageChangeSync($item);
                     }).appendTo($item);
                 }
                 var $itemEdit = $itemEditContainer.find('> .objectInputs');
@@ -1329,7 +1329,6 @@ The HTML within the repeatable element must conform to these standards:
                 
                 // Run more code after the item has been loaded
                 promise.always(function() {
-
                     // Add the item to the page
                     self.dom.$list.append($addedItem);
                     
@@ -1387,7 +1386,8 @@ The HTML within the repeatable element must conform to these standards:
                     $addedItem.trigger('change');
 
                     var currentIndex = $addedItem.index();
-                    if (win.repeatableInsertFront) {
+
+                    if (win.repeatableInsertFront && self.modeIsPreview()) {
                         // move added item to the beginning
                         self.repositionItem(currentIndex, 0, $addedItem);
                         if (self.modeIsPreview()) {
@@ -1398,7 +1398,10 @@ The HTML within the repeatable element must conform to these standards:
 
                     if (self.modeIsPreview()) {
                         if (self.itemIsVerticalView($addedItem)) {
+                            // Switch to vertical view and focuse to added item
                             self.modePreviewEditVertical($addedItem);
+                            // Make sure newly added image is used for preview
+                            self.modePreviewImageChangeSync($addedItem);
                         } else {
                             $addedItem.data("currentView", "gallery");
                             self.modePreviewEdit($addedItem, true);
@@ -2518,7 +2521,10 @@ The HTML within the repeatable element must conform to these standards:
                 self.modePreviewUpdateEditContainer();
             },
 
-            modePreviewImageChangeSync: function (item, carouselTarget) {
+            /**
+             * Sync image changes and update thumbnail/preview for both gallery and vertical view
+             */
+            modePreviewImageChangeSync: function (item, target) {
                 var self = this;
                 var $item = $(item);
                 var itemId = $item.find('> input[type="hidden"][name$=".id"]').val();
@@ -2533,16 +2539,23 @@ The HTML within the repeatable element must conform to these standards:
                     self.modePreviewMarkAsChanged($item);
                 }, 1);
 
-                // If a change is made to the preview image update the thumbnail image in the carousel and grid view
-                $target = $(carouselTarget);
-                imageUrl = $target.attr('data-preview');
-                targetName = $target.attr('name');
-
-                // Make sure this changed item is actually used for the thumbnail
+                // Get preview field from item
                 // The data-preview-field contains the name of the field and the type,
                 // so we need to remove the /type part
                 thumbnailName = $item.attr('data-preview-field') || '';
                 thumbnailName = thumbnailName.replace(/(.*)\/.*/, '$1'); // remove last / and beyond
+
+                if (target) {
+                    // If a change is made to the preview image update the thumbnail image in the carousel and grid view
+                    $target = $(target);
+                } else {
+                    $target = $item.find('[data-field = "' + thumbnailName + '"]').find('[data-preview]');
+                }
+
+                imageUrl = $target.attr('data-preview');
+                targetName = $target.attr('name');
+
+                // Make sure this changed item is actually used for the thumbnail
                 thumbnailName = itemId + '/' + thumbnailName;
 
                 // Make sure the preview that was changed is actually used as the thumbnail for this repeatable object.
@@ -2660,8 +2673,7 @@ The HTML within the repeatable element must conform to these standards:
                     var $itemEditContainer = $item.find('.itemEdit-vertical-container');
                     if ($itemEditContainer.length == 0) {
                         $itemEditContainer = $('<div/>', {'class': 'itemEdit-vertical-container'}).on('change', function (event) {
-                            var $target = $(event.target).closest('[data-preview]');
-                            self.modePreviewImageChangeSync($item, $target);
+                            self.modePreviewImageChangeSync($item);
                         }).appendTo($item);
                     }
                     var $itemEdit = $itemEditContainer.find('> .objectInputs');
