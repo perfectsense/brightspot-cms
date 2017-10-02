@@ -18,8 +18,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -84,9 +86,13 @@ public class HunspellSpellChecker implements SpellChecker {
 
                                     Hunspell hunspell = new Hunspell(dictionaryPath.toString(), affixPath.toString());
 
-                                    Optional.ofNullable(Application.Static.getInstance(CmsTool.class))
-                                            .map(tool -> tool.as(HunspellSettings.class).getDictionary(name))
-                                            .ifPresent(d -> d.getWords().stream().forEach(hunspell::add));
+                                    List<HunspellDictionary> customDictionaries = Optional
+                                            .ofNullable(Application.Static.getInstance(CmsTool.class))
+                                            .map(tool -> tool.as(HunspellSettings.class)
+                                                    .getDictionaries(name)).orElse(new ArrayList<>());
+                                    customDictionaries.stream()
+                                            .filter(Objects::nonNull)
+                                            .forEach(d -> d.getWords().forEach(hunspell::add));
 
                                     return Optional.of(hunspell);
                                 }
@@ -140,9 +146,9 @@ public class HunspellSpellChecker implements SpellChecker {
     }
 
     /**
-     * Public accessor to invalidate dictionaries by name
+     * Public accessor to invalidate dictionaries
      */
-    public static void inValidateDictionary(String name) {
-        HUNSPELLS.invalidate(name);
+    public static void inValidateDictionaries() {
+        HUNSPELLS.invalidateAll();
     }
 }

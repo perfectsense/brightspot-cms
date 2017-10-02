@@ -2,35 +2,37 @@ package com.psddev.cms.hunspell;
 
 import com.psddev.cms.db.ToolUi;
 import com.psddev.dari.db.Record;
-import com.psddev.dari.util.StringUtils;
+import com.psddev.dari.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HunspellDictionary extends Record {
 
-    private transient String oldName;
-    private static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+    private String label;
 
     @ToolUi.ReadOnly
     private String name;
 
     @Required
-    @Indexed(unique = true)
     private Locale locale;
 
     private List<String> words;
+
+    @Override
+    public String getLabel() {
+        return ObjectUtils.firstNonBlank(label, name, super.getLabel());
+    }
 
     public String getName() {
         return name;
     }
 
     public Locale getLocale() {
-        return Optional.ofNullable(locale).orElse(DEFAULT_LOCALE);
+        return locale;
     }
 
     public List<String> getWords() {
@@ -40,26 +42,26 @@ public class HunspellDictionary extends Record {
         return words;
     }
 
-    @Override
-    protected void beforeSave() {
-        if (oldName == null) {
-            oldName = name;
-        }
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+    }
+
+    public void setWords(List<String> words) {
+        this.words = words;
     }
 
     @Override
     protected void beforeCommit() {
-        name = HunspellSpellChecker.DICTIONARY_BASE_NAME + "_" + getLocale().toString();
+        name = HunspellSpellChecker.DICTIONARY_BASE_NAME + "_" + locale.toString();
         words = new HashSet<>(getWords()).stream().sorted().collect(Collectors.toList());
-
-        if (!StringUtils.isBlank(oldName) && !oldName.equals(name)) {
-            HunspellSpellChecker.inValidateDictionary(oldName);
-        }
-        HunspellSpellChecker.inValidateDictionary(name);
-    }
-
-    @Override
-    protected void afterCreate() {
-        locale = DEFAULT_LOCALE;
+        HunspellSpellChecker.inValidateDictionaries();
     }
 }
