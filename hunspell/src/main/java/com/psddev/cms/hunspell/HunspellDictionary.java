@@ -50,9 +50,9 @@ public class HunspellDictionary extends Record {
     @Override
     protected void beforeCommit() {
         name = HunspellSpellChecker.DICTIONARY_BASE_NAME + "_" + getLocale().toString();
-        words = new HashSet<>(words).stream().sorted().collect(Collectors.toList());
+        words = new HashSet<>(getWords()).stream().sorted().collect(Collectors.toList());
 
-        if (!StringUtils.equals(oldName, name)) {
+        if (!StringUtils.isBlank(oldName) && !oldName.equals(name)) {
             HunspellSpellChecker.inValidateDictionary(oldName);
         }
         HunspellSpellChecker.inValidateDictionary(name);

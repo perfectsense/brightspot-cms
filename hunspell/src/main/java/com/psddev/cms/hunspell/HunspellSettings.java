@@ -3,11 +3,13 @@ package com.psddev.cms.hunspell;
 import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.CmsTool;
 import com.psddev.dari.db.Modification;
+import com.psddev.dari.db.Recordable;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+@Recordable.FieldInternalNamePrefix("hunspell.")
 public class HunspellSettings extends Modification<CmsTool> {
     private static final String TAB_NAME = "Hunspell";
 
