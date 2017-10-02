@@ -40,6 +40,10 @@ public class HunspellDictionary extends Record {
         return words;
     }
 
+    public void setWords(Set<String> words) {
+        this.words = words;
+    }
+
     public List<String> getHunspellDictionaryNames() {
         return HunspellSpellChecker.getCandidateDictionaryNames(locale);
     }
