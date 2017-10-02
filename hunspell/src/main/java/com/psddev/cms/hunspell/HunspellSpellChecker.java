@@ -18,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -86,13 +85,12 @@ public class HunspellSpellChecker implements SpellChecker {
 
                                     Hunspell hunspell = new Hunspell(dictionaryPath.toString(), affixPath.toString());
 
-                                    List<HunspellDictionary> customDictionaries = Optional
-                                            .ofNullable(Application.Static.getInstance(CmsTool.class))
-                                            .map(tool -> tool.as(HunspellSettings.class)
-                                                    .getDictionaries(name)).orElse(new ArrayList<>());
-                                    customDictionaries.stream()
-                                            .filter(Objects::nonNull)
-                                            .forEach(d -> d.getWords().forEach(hunspell::add));
+                                    Optional.ofNullable(Application.Static.getInstance(CmsTool.class))
+                                            .ifPresent(tool -> tool.as(HunspellSettings.class)
+                                                    .getDictionaries(name)
+                                                    .stream()
+                                                    .filter(Objects::nonNull)
+                                                    .forEach(d -> d.getWords().forEach(hunspell::add)));
 
                                     return Optional.of(hunspell);
                                 }

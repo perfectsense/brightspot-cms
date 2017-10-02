@@ -31,4 +31,9 @@ public class HunspellSettings extends Modification<CmsTool> {
                 .filter(d -> Objects.equals(d.getName(), name))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    protected void beforeCommit() {
+        HunspellSpellChecker.inValidateDictionaries();
+    }
 }
