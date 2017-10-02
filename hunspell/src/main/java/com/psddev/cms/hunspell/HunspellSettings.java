@@ -28,7 +28,7 @@ public class HunspellSettings extends Modification<CmsTool> {
     public List<HunspellDictionary> getDictionaries(String name) {
         return getDictionaries().stream()
                 .filter(Objects::nonNull)
-                .filter(d -> Objects.equals(d.getHunspellDictionaryName(), name))
+                .filter(d -> d.getHunspellDictionaryNames().contains(name))
                 .collect(Collectors.toList());
     }
 

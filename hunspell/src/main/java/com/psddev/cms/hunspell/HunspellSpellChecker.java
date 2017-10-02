@@ -51,8 +51,6 @@ public class HunspellSpellChecker implements SpellChecker {
      */
     public static final String DICTIONARY_FILE_SUFFIX = ".dic";
 
-    public static final String DICTIONARY_BASE_NAME = "HunspellDictionary";
-
     private static final LoadingCache<String, Optional<Hunspell>> HUNSPELLS = CacheBuilder
             .newBuilder()
             .removalListener(new RemovalListener<String, Optional<Hunspell>>() {
@@ -103,12 +101,16 @@ public class HunspellSpellChecker implements SpellChecker {
             });
 
     private Hunspell findHunspell(Locale locale) {
-        return SpellChecker.createDictionaryNames(DICTIONARY_BASE_NAME, locale)
+        return getCandidateDictionaryNames(locale)
                 .stream()
                 .map(l -> HUNSPELLS.getUnchecked(l).orElse(null))
                 .filter(h -> h != null)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public static List<String> getCandidateDictionaryNames(Locale locale) {
+        return SpellChecker.createDictionaryNames("HunspellDictionary", locale);
     }
 
     @Override

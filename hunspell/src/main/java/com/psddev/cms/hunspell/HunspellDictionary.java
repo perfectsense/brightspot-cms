@@ -2,6 +2,7 @@ package com.psddev.cms.hunspell;
 
 import com.psddev.dari.db.Record;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -39,8 +40,8 @@ public class HunspellDictionary extends Record {
         return words;
     }
 
-    public String getHunspellDictionaryName() {
-        return HunspellSpellChecker.DICTIONARY_BASE_NAME + "_" + locale.toString();
+    public List<String> getHunspellDictionaryNames() {
+        return HunspellSpellChecker.getCandidateDictionaryNames(locale);
     }
 
     @Override
