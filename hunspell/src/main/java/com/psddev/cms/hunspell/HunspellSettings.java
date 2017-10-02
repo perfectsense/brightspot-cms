@@ -28,12 +28,12 @@ public class HunspellSettings extends Modification<CmsTool> {
     public List<HunspellDictionary> getDictionaries(String name) {
         return getDictionaries().stream()
                 .filter(Objects::nonNull)
-                .filter(d -> Objects.equals(d.getName(), name))
+                .filter(d -> Objects.equals(d.getHunspellDictionaryName(), name))
                 .collect(Collectors.toList());
     }
 
     @Override
-    protected void beforeCommit() {
-        HunspellSpellChecker.inValidateDictionaries();
+    protected void afterSave() {
+        HunspellSpellChecker.inValidateAll();
     }
 }

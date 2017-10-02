@@ -144,9 +144,9 @@ public class HunspellSpellChecker implements SpellChecker {
     }
 
     /**
-     * Public accessor to invalidate dictionaries
+     * Public accessor to invalidate all
      */
-    public static void inValidateDictionaries() {
+    public static void inValidateAll() {
         HUNSPELLS.invalidateAll();
     }
 }
