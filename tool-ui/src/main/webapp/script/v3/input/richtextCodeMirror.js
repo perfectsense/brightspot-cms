@@ -4978,7 +4978,8 @@ define([
 
                 // Clear the cut area
                 if (e.type === 'cut') {
-                    editor.replaceRange('', range.from, range.to);
+                    // if track insert exist without any trackDelete delete the existing text when copied
+                    self.trackMarkDeleted(range)
                 }
 
                 // Don't let the actual cut/copy event occur
