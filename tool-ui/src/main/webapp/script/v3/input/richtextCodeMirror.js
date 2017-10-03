@@ -4973,7 +4973,8 @@ define([
                 // We set the html using mime type text/brightspot-rte
                 // so we can get it back from the clipboard without browser modification
                 // (since browser tends to add a <meta> element to text/html)
-                e.clipboardData.setData('text/brightspot-rte2', html);
+                // since all copies and cuts are inserts we remove del and ins tags
+                e.clipboardData.setData('text/brightspot-rte2', html.replace(/<\/?[del|ins]+(>|$)/g, ""));
 
                 // Clear the cut area
                 if (e.type === 'cut') {
