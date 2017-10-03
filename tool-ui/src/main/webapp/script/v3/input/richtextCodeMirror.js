@@ -4439,9 +4439,11 @@ define([
             var editor;
             var self;
             var textOriginal;
+            var deleteTextFlag;
 
             self = this;
             editor = self.codeMirror;
+            deleteTextFlag = self.inlineGetStyles(range).trackInsert || false
 
             // If we're deleting just a line just let it be deleted
             // Because we don't have a good way to accept or reject a blank line
@@ -4460,8 +4462,9 @@ define([
                 self.inlineSetStyle('trackDelete', range);
             }
 
+            // if trackInsert is on a line on its own the deleteTextFlag should be true
             // Remove any text within the range that is marked as inserted
-            self.inlineRemoveStyle('trackInsert', range, {deleteText:true});
+            self.inlineRemoveStyle('trackInsert', range, {deleteText:deleteTextFlag});
         },
 
 
