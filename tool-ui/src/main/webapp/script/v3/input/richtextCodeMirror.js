@@ -4253,7 +4253,9 @@ define([
 
                         // Some text was pasted in and already marked as new,
                         // but we must remove any regions within that were previously marked deleted
-                        self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
+                        if (changeObj.origin === 'paste') {
+                          self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
+                        }
 
                     } else {
 
