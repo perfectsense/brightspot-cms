@@ -1078,6 +1078,7 @@ public class CmsTool extends Tool {
     @Embedded
     public static class CommonContentSettings extends Record {
 
+        @Where("isConcrete = true")
         private Set<ObjectType> createNewTypes;
         private Set<Content> editExistingContents;
 
