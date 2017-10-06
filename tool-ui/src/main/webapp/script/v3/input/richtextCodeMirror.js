@@ -4245,11 +4245,15 @@ define([
 
                         // Mark the range as inserted (before we let the insertion occur)
                         // Then when text is replaced it will already be in an area marked as new
-                        self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.to});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert){
+                          self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.to});
+                        }
 
                         // In case we are inserting inside a deleted block,
                         // make sure the new text we are adding is not also marked as deleted
-                        self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.to});
+                        if(self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete){
+                          self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.to});
+                        }
 
                         // Some text was pasted in and already marked as new,
                         // but we must remove any regions within that were previously marked deleted
@@ -4258,28 +4262,33 @@ define([
                         }
 
                     } else {
-
                         // We are replacing existing text, so we need to handle cases where the text to be replaced
                         // already has things that we are tracking as deleted or inserted.
 
                         // Do not do the paste or insert
                         changeObj.cancel();
 
+                        // this prevents rest of code from executing when text is empty
+                        isEmpty = Boolean(changeObj.text.join('') === '');
+                        if (isEmpty) {
+                            return;
+                        }
+
                         // Mark the whole range as "deleted" for track changes
                         // Note there might be some regions inside this that are marked as "inserted" but we'll deal with that below
-                        self.trackMarkDeleted({from: changeObj.from, to:changeObj.to});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert && !self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete) {
+                          self.trackMarkDeleted({from: changeObj.from, to:changeObj.to});
+                        }
 
-                        // Delete text within the range if it was previously marked as a new insertion
-                        // Note: after doing this, the range might not be valid since we might have removed characters within it
-                        self.inlineRemoveStyle('trackInsert', {from:changeObj.to, to:changeObj.to}, {deleteText:true});
-
-                        // Insert the new text...
-
-                        // First remove the "delete" mark at the point where we are insering to make sure the new text is not also marked as deleted
-                        self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.from});
-
+                        // // Insert the new text...
+                        // // First remove the "delete" mark at the point where we are insering to make sure the new text is not also marked as deleted
+                        if(self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete){
+                          self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.from});
+                        }
                         // Then add a mark so the inserted text will be marked as an insert
-                        self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.from}, {inclusiveLeft:true});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert){
+                          self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.from}, {inclusiveLeft:true});
+                        }
 
                         // Finally insert the text at the starting point (before the other text in the range that was marked deleted)
                         // Note we add at the front because we're not sure if the end is valid because we might have removed some text
@@ -4290,7 +4299,7 @@ define([
                             // but it could have deleted text within it.
                             // We need to remove that deleted text *after* the new content is pasted in.
                             editor.replaceRange(changeObj.text, changeObj.from, undefined, 'brightspotTrackInsert');
-
+                            self.setCursor(changeObj.from.line, changeObj.from.ch+1)
                         }
                     }
 
@@ -4461,6 +4470,9 @@ define([
             // Determine if every character in the range is already marked as an insertion.
             // In this case we can just delete the content and don't need to mark it as deleted.
             if (self.inlineGetStyles(range).trackInsert !== true) {
+              // if range has exising track Delete remove it before adding a new one to entire range.
+              // prevents a selected deleted text from getting a double trackDelete class
+                self.inlineRemoveStyle('trackDelete', range)
                 self.inlineSetStyle('trackDelete', range);
             }
 
@@ -8142,7 +8154,6 @@ define([
                 }
                 if (styleObj) {
                     if (styleObj.line) {
-
                         // If this is a list item, then only set the style on the first line
                         annotationRange = {
                             from: annotation.from,
