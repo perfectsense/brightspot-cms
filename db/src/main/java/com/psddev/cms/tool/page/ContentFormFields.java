@@ -38,7 +38,7 @@ public class ContentFormFields extends PageServlet {
             State.getInstance(object).putAll((Map<String, Object>) ObjectUtils.fromJson(data));
         }
 
-        List excluded = page.param(List.class, "excluded");
+        List<String> excluded = page.params(String.class, "excluded");
 
         page.writeSomeFormFields(object, false, null, excluded);
     }
