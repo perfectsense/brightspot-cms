@@ -71,6 +71,9 @@ public class HunspellSpellChecker implements SpellChecker {
                         if (affixInput != null) {
                             try (InputStream dictionaryInput = getClass().getResourceAsStream("/" + name + DICTIONARY_FILE_SUFFIX)) {
                                 if (dictionaryInput != null) {
+                                    // Doesn't work - needs a way to acquire the dictionary
+                                    HunspellDictionary dictionary = HunspellDictionary.forName(name);
+
                                     String tmpdir = System.getProperty("java.io.tmpdir");
                                     Path affixPath = Paths.get(tmpdir, name + AFFIX_FILE_SUFFIX);
                                     Path dictionaryPath = Paths.get(tmpdir, name + DICTIONARY_FILE_SUFFIX);
@@ -78,7 +81,15 @@ public class HunspellSpellChecker implements SpellChecker {
                                     Files.copy(affixInput, affixPath, StandardCopyOption.REPLACE_EXISTING);
                                     Files.copy(dictionaryInput, dictionaryPath, StandardCopyOption.REPLACE_EXISTING);
 
-                                    return Optional.of(new Hunspell(dictionaryPath.toString(), affixPath.toString()));
+                                    Hunspell hunspell = new Hunspell(dictionaryPath.toString(), affixPath.toString());
+
+                                    if (dictionary != null) {
+                                        for (String word : dictionary.getAllWords()) {
+                                            hunspell.add(word);
+                                        }
+                                    }
+
+                                    return Optional.of(hunspell);
                                 }
                             }
                         }
