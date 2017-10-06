@@ -6,13 +6,13 @@ import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.Recordable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Recordable.FieldInternalNamePrefix("hunspell.")
 public class HunspellSettings extends Modification<CmsTool> {
+
     private static final String HEADING = "Hunspell";
 
     @ToolUi.Heading(HEADING)
@@ -25,15 +25,15 @@ public class HunspellSettings extends Modification<CmsTool> {
         return dictionaries;
     }
 
-    public List<HunspellDictionary> getDictionaries(String name) {
+    public Set<HunspellDictionary> findDictionaries(String name) {
         return getDictionaries().stream()
                 .filter(Objects::nonNull)
-                .filter(d -> d.getHunspellDictionaryNames().contains(name))
-                .collect(Collectors.toList());
+                .filter(d -> HunspellSpellChecker.createDictionaryNames(d.getLocale()).contains(name))
+                .collect(Collectors.toSet());
     }
 
     @Override
     protected void afterSave() {
-        HunspellSpellChecker.inValidateAll();
+        HunspellSpellChecker.HUNSPELLS.invalidateAll();
     }
 }

@@ -51,7 +51,7 @@ public class HunspellSpellChecker implements SpellChecker {
      */
     public static final String DICTIONARY_FILE_SUFFIX = ".dic";
 
-    private static final LoadingCache<String, Optional<Hunspell>> HUNSPELLS = CacheBuilder
+    static final LoadingCache<String, Optional<Hunspell>> HUNSPELLS = CacheBuilder
             .newBuilder()
             .removalListener(new RemovalListener<String, Optional<Hunspell>>() {
 
@@ -85,7 +85,7 @@ public class HunspellSpellChecker implements SpellChecker {
 
                                     Optional.ofNullable(Application.Static.getInstance(CmsTool.class))
                                             .ifPresent(tool -> tool.as(HunspellSettings.class)
-                                                    .getDictionaries(name)
+                                                    .findDictionaries(name)
                                                     .stream()
                                                     .filter(Objects::nonNull)
                                                     .forEach(d -> d.getWords().forEach(hunspell::add)));
@@ -100,17 +100,23 @@ public class HunspellSpellChecker implements SpellChecker {
                 }
             });
 
+    /**
+     * Creates a list of Hunspell dictionary names based on the given
+     * {@code locale}.
+     *
+     * @param locale Nonnull.
+     */
+    public static List<String> createDictionaryNames(Locale locale) {
+        return SpellChecker.createDictionaryNames("HunspellDictionary", locale);
+    }
+
     private Hunspell findHunspell(Locale locale) {
-        return getCandidateDictionaryNames(locale)
+        return createDictionaryNames(locale)
                 .stream()
                 .map(l -> HUNSPELLS.getUnchecked(l).orElse(null))
                 .filter(h -> h != null)
                 .findFirst()
                 .orElse(null);
-    }
-
-    public static List<String> getCandidateDictionaryNames(Locale locale) {
-        return SpellChecker.createDictionaryNames("HunspellDictionary", locale);
     }
 
     @Override
@@ -143,12 +149,5 @@ public class HunspellSpellChecker implements SpellChecker {
         } else {
             return hunspell.suggest(word);
         }
-    }
-
-    /**
-     * Public accessor to invalidate all
-     */
-    public static void inValidateAll() {
-        HUNSPELLS.invalidateAll();
     }
 }

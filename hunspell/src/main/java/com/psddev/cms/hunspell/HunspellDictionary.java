@@ -2,7 +2,6 @@ package com.psddev.cms.hunspell;
 
 import com.psddev.dari.db.Record;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -44,10 +43,6 @@ public class HunspellDictionary extends Record {
         this.words = words;
     }
 
-    public List<String> getHunspellDictionaryNames() {
-        return HunspellSpellChecker.getCandidateDictionaryNames(locale);
-    }
-
     @Override
     protected void beforeCommit() {
         words = new TreeSet<>(getWords());
@@ -55,6 +50,6 @@ public class HunspellDictionary extends Record {
 
     @Override
     protected void afterSave() {
-        HunspellSpellChecker.inValidateAll();
+        HunspellSpellChecker.HUNSPELLS.invalidateAll();
     }
 }
