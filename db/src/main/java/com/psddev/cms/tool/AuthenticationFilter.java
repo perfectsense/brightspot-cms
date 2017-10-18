@@ -271,6 +271,25 @@ public class AuthenticationFilter extends AbstractFilter {
             setSignedCookie(request, response, getInsecureToolUserCookieName(), "", 0, false);
         }
 
+        public static void reauthenticate(HttpServletRequest request, HttpServletResponse response) {
+            if (request != null) {
+                ToolUser user = getUser(request);
+                String token = (String) request.getAttribute(USER_TOKEN);
+            }
+
+            if (user != null) {
+
+            }
+
+            setSignedCookie(request, response, getToolUserCookieName(), token, -1, true);
+            setSignedCookie(request, response, getInsecureToolUserCookieName(), token, -1, false);
+            request.setAttribute(USER_ATTRIBUTE, user);
+            request.setAttribute(USER_TOKEN, token);
+            request.setAttribute(USER_CHECKED_ATTRIBUTE, Boolean.TRUE);
+
+
+        }
+
         /**
          * Logs out the current tool user.
          *

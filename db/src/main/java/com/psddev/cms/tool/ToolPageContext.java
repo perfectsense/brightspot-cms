@@ -1493,6 +1493,7 @@ public class ToolPageContext extends WebPageContext {
                         if (hasBroadcast) {
                             writeHtml(" - ");
                             writeHtml(broadcastMessage);
+                            writeHtml("ATTN !!!!! logout warning???");
                         }
                     writeEnd();
                 }
@@ -4557,5 +4558,9 @@ public class ToolPageContext extends WebPageContext {
     @Deprecated
     public void objectSelect(ObjectField field, Object value, Object... attributes) throws IOException {
         writeObjectSelect(field, value, attributes);
+    }
+
+    public void writeWarning(ToolPageContext page) {
+
     }
 }
