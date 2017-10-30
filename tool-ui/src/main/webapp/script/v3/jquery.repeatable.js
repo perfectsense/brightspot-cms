@@ -759,13 +759,14 @@ The HTML within the repeatable element must conform to these standards:
                 // init item preview placeholder and indexer
                 var $preview = $('<div/>', {
                     'class': 'item-preview'
-                }).on('hover', function(){
+                }).mouseenter(function(){
                     if ($itemEditContainer.is(":hidden")) {
                         return;
                     }
                     $(this).prepend(self.dom.$indexer);
                     self.dom.$indexer.$activeItem = $item;
                     self.dom.$indexer.find('select').val($item.index() + 1).change();
+                    self.dom.$indexer.show();
 
                     // trigger 'create' event to apply bsp modification on selector
                     self.dom.$indexer.find('select').show().css('visibility', 'hidden');
@@ -2029,6 +2030,13 @@ The HTML within the repeatable element must conform to these standards:
                     }
 
                 });
+
+                self.dom.$list.on('sortable.start', function () {
+                    if (self.dom.$indexer != null) {
+                        self.dom.$indexer.hide();
+                        self.dom.$indexer.$activeItem = null;
+                    }
+                })
 
                 // initializing $defaultEditableView to be the first visible .editable-view
                 var $defaultEditableView = self.dom.$viewCarousel;
