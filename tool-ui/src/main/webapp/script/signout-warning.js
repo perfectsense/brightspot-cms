@@ -5,7 +5,7 @@ define([
 function($, bsp_utils) {
     bsp_utils.onDomInsert(document, 'meta[name=doomsday]', {
         insert: function () {
-        var WARN_MINS = 10;
+        var WARN_MINS = 5;
         var exp_time = new Date(Date.parse($('meta[name=doomsday').attr('content')));
         var warn_time = new Date((exp_time.valueOf()+(-1000*60*WARN_MINS)));
         var already_warned = false;
@@ -21,7 +21,6 @@ function($, bsp_utils) {
             if (time > exp_time) {
                 broadcast = true;
                 message = "You have been logged out and your work may not be saved."
-                console.log("you have been logged out");
             } else if (time > warn_time) {
                 broadcast = true;
                 // construct warning message and redirect url
@@ -54,7 +53,6 @@ function($, bsp_utils) {
                 if ($("body").hasClass("hasToolBroadcast"))	{
                     message = " - " + message;
                     $('span[name=logout-message]').html(message);
-                    console.log(message);
                 } else {
                     $("body").attr("class", "hasToolBroadcast");
                     var elem_bcast = document.createElement("div");
