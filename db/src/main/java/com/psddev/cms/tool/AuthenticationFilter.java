@@ -283,6 +283,11 @@ public class AuthenticationFilter extends AbstractFilter {
             setSignedCookie(request, response, getInsecureToolUserCookieName(), "", 0, false);
         }
 
+        /**
+         * Extends the current tool user's session.
+         *
+         * @param request Can't be {@code null}.
+         */
         public static void reauthenticate(HttpServletRequest request, HttpServletResponse response) {
             String token = "";
             ToolUser user = null;
