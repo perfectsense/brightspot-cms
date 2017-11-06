@@ -1451,28 +1451,20 @@ public class ToolPageContext extends WebPageContext {
                 writeElement("meta", "name", "robots", "content", "noindex");
                 writeElement("meta", "name", "viewport", "content", "width=device-width, initial-scale=1");
 
-                DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+                int maxAge = Arrays.stream(getRequest().getCookies())
+                        .filter(c -> c.getName().startsWith("bsp.tu")
+                                || c.getName().startsWith("bsp.itu"))
+                        .findFirst()
+                        .get()
+                        .getMaxAge();
 
-//                dateTime = dateTime.plusSeconds(Arrays.stream(getRequest().getCookies())
-//                                        .filter(c -> c.getName().startsWith("bsp.tu")
-//                                        || c.getName().startsWith("bsp.itu"))
-//                                        .findFirst()
-//                                        .get()
-//                                        .getMaxAge());
-
-                DateTime oldDateTime = DateTime.now(DateTimeZone.UTC);
-                for (Cookie c : getRequest().getCookies()) {
-                    if (c.getName().startsWith("bsp.tu") || c.getName().startsWith("bsp.itu")) {
-                        if (c.getMaxAge() > 0) { // TODO REMOVE FOR TESTING ONLY!!!!
-                            dateTime = dateTime.plusSeconds(c.getMaxAge());
-                        } else {
-                            dateTime = dateTime.plusMinutes(5);
-                        }
-                    }
+                if (maxAge > 0) {
+                    DateTime dateTime = DateTime.now(DateTimeZone.UTC).plusSeconds(maxAge);
+                    writeElement("meta","name", "doomsday", "content", dateTime);
                 }
 
-                writeElement("meta","name", "doomsday", "content", dateTime);
-                // TODO 300 -> max_time - 300 seconds
+                writeElement("meta","name", "maxAge", "content", maxAge);
+
 
                 writeStylesAndScripts();
 
