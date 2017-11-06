@@ -76,6 +76,7 @@ require([
   'nv.d3',
 
   'v3/Dropbox',
+  'signout-warning',
   'v3/EditFieldUpdate',
         
   'v3/dashboard',
