@@ -9,6 +9,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +37,7 @@ import java.util.stream.Stream;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
@@ -1447,6 +1450,30 @@ public class ToolPageContext extends WebPageContext {
                 writeElement("meta", "name", "referrer", "content", "never");
                 writeElement("meta", "name", "robots", "content", "noindex");
                 writeElement("meta", "name", "viewport", "content", "width=device-width, initial-scale=1");
+
+                DateTime dateTime = DateTime.now(DateTimeZone.UTC);
+
+//                dateTime = dateTime.plusSeconds(Arrays.stream(getRequest().getCookies())
+//                                        .filter(c -> c.getName().startsWith("bsp.tu")
+//                                        || c.getName().startsWith("bsp.itu"))
+//                                        .findFirst()
+//                                        .get()
+//                                        .getMaxAge());
+
+                DateTime oldDateTime = DateTime.now(DateTimeZone.UTC);
+                for (Cookie c : getRequest().getCookies()) {
+                    if (c.getName().startsWith("bsp.tu") || c.getName().startsWith("bsp.itu")) {
+                        if (c.getMaxAge() > 0) { // TODO REMOVE FOR TESTING ONLY!!!!
+                            dateTime = dateTime.plusSeconds(c.getMaxAge());
+                        } else {
+                            dateTime = dateTime.plusMinutes(5);
+                        }
+                    }
+                }
+
+                writeElement("meta","name", "doomsday", "content", dateTime);
+                // TODO 300 -> max_time - 300 seconds
+
                 writeStylesAndScripts();
 
                 for (Class<? extends ToolPageHead> headClass : ClassFinder.findConcreteClasses(ToolPageHead.class)) {
@@ -1493,8 +1520,9 @@ public class ToolPageContext extends WebPageContext {
                         if (hasBroadcast) {
                             writeHtml(" - ");
                             writeHtml(broadcastMessage);
-                            writeHtml("ATTN !!!!! logout warning???");
                         }
+                    writeStart("span", "name", "logout-warning");
+                    writeEnd();
                     writeEnd();
                 }
 
@@ -2072,6 +2100,23 @@ public class ToolPageContext extends WebPageContext {
                 write(extraJavaScript);
             writeEnd();
         }
+
+        // TODO
+//        writeStart("script", "type", "text/javascript", "src", "");
+//        writeEnd();
+
+        /*String src = *//*cms.isUseNonMinifiedJavaScript()
+                ?*//* cmsResource(scriptPrefix + "warn.js")*//*
+                : ElFunctionUtils.resource(toolPath(CmsTool.class, scriptPrefix + "warn.js"))*//*;
+
+
+        writeStart("script", "type", "text/javascript", "src", src);
+        writeEnd();
+*/
+
+
+
+//        writeStart("script","type", "text/javascript");
     }
 
     /**
