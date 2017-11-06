@@ -21,7 +21,9 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StringUtils;
+import com.psddev.dari.util.Task;
 import com.psddev.dari.util.UrlBuilder;
+import org.apache.http.auth.AUTH;
 
 public class AuthenticationFilter extends AbstractFilter {
 
@@ -79,6 +81,16 @@ public class AuthenticationFilter extends AbstractFilter {
             HttpServletResponse response,
             FilterChain chain)
             throws Exception {
+
+        if (ObjectUtils.to(boolean.class, request.getParameter("_renewSession"))) {
+            AuthenticationFilter.Static.reauthenticate(request, response);
+            response.sendRedirect(new UrlBuilder(request)
+                    .currentPath()
+                    .currentParameters()
+                    .parameter("_renewSession", null)
+                    .toString());
+            return;
+        }
 
         if (ObjectUtils.to(boolean.class, request.getParameter("_clearPreview"))) {
             Static.removeCurrentPreview(request, response);
@@ -272,13 +284,11 @@ public class AuthenticationFilter extends AbstractFilter {
         }
 
         public static void reauthenticate(HttpServletRequest request, HttpServletResponse response) {
+            String token = "";
+            ToolUser user = null;
             if (request != null) {
-                ToolUser user = getUser(request);
-                String token = (String) request.getAttribute(USER_TOKEN);
-            }
-
-            if (user != null) {
-
+                user = getUser(request);
+                token = (String) request.getAttribute(USER_TOKEN);
             }
 
             setSignedCookie(request, response, getToolUserCookieName(), token, -1, true);
@@ -286,14 +296,11 @@ public class AuthenticationFilter extends AbstractFilter {
             request.setAttribute(USER_ATTRIBUTE, user);
             request.setAttribute(USER_TOKEN, token);
             request.setAttribute(USER_CHECKED_ATTRIBUTE, Boolean.TRUE);
-
-
         }
 
         /**
          * Logs out the current tool user.
          *
-         * @param request Can't be {@code null}.
          * @param response Can't be {@code null}.
          * @deprecated Use {@link #logOut(HttpServletRequest, HttpServletResponse)} instead.
          */
