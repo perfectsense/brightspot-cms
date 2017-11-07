@@ -8,7 +8,6 @@ function($, bsp_utils) {
         var WARN_MINS = 5;
         var exp_time = new Date(Date.parse($('meta[name=doomsday').attr('content')));
         var warn_time = new Date((exp_time.valueOf()+(-1000*60*WARN_MINS)));
-        var already_warned = false;
 
         setInterval(function() {
             var time = new Date(Date.now());
