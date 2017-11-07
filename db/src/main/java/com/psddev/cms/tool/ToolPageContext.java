@@ -9,7 +9,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1459,7 +1458,7 @@ public class ToolPageContext extends WebPageContext {
                         long timestamp = ObjectUtils.to(long.class, parts[1]);
                         long expiration = timestamp + maxAge;
                         DateTime dateTime = new DateTime(expiration, DateTimeZone.UTC);
-                        writeElement("meta","name", "doomsday", "content", dateTime);
+                        writeElement("meta", "name", "doomsday", "content", dateTime);
 
                     }
                 }

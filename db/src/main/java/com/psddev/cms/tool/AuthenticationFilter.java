@@ -21,9 +21,7 @@ import com.psddev.dari.util.ObjectUtils;
 import com.psddev.dari.util.PageContextFilter;
 import com.psddev.dari.util.Settings;
 import com.psddev.dari.util.StringUtils;
-import com.psddev.dari.util.Task;
 import com.psddev.dari.util.UrlBuilder;
-import org.apache.http.auth.AUTH;
 
 public class AuthenticationFilter extends AbstractFilter {
 
