@@ -42,7 +42,7 @@ function($, bsp_utils) {
                     + url + '">I\'m still working.</a>';
             }
             // there is a message to broadcast.
-            if (broadcast) {
+            if (broadcast && !($(".widget-logIn")[0])) {
                 if ($("body").hasClass("hasToolBroadcast"))	{
                     message = " - " + message;
                     $('span[name=logout-message]').html(message);
