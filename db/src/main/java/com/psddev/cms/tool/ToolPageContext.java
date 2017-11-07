@@ -2090,7 +2090,6 @@ public class ToolPageContext extends WebPageContext {
                 write(extraJavaScript);
             writeEnd();
         }
-
     }
 
     /**

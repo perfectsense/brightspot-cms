@@ -26,9 +26,6 @@ function($, bsp_utils) {
                 var mins = time_left.getMinutes();
                 var secs = time_left.getSeconds();
 
-
-                console.log(time_left.toUTCString());
-
                 var url = window.location.href;
                 if (url.indexOf('?') < 0) {
                     url += "?_renewSession=true";
