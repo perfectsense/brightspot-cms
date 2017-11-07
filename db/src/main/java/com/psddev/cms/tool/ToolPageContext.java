@@ -9,7 +9,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +36,6 @@ import java.util.stream.Stream;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
@@ -1451,20 +1449,20 @@ public class ToolPageContext extends WebPageContext {
                 writeElement("meta", "name", "robots", "content", "noindex");
                 writeElement("meta", "name", "viewport", "content", "width=device-width, initial-scale=1");
 
-                int maxAge = Arrays.stream(getRequest().getCookies())
-                        .filter(c -> c.getName().startsWith("bsp.tu")
-                                || c.getName().startsWith("bsp.itu"))
-                        .findFirst()
-                        .get()
-                        .getMaxAge();
+                Long maxAge = Settings.get(Long.class, AuthenticationFilter.TOOL_USER_SESSION_TIMEOUT_SETTING);
 
                 if (maxAge > 0) {
-                    DateTime dateTime = DateTime.now(DateTimeZone.UTC).plusSeconds(maxAge);
-                    writeElement("meta","name", "doomsday", "content", dateTime);
+                    DateTime oldDateTime = DateTime.now(DateTimeZone.UTC).plusMillis((maxAge).intValue());
+                    String value = JspUtils.getCookie(getRequest(), "bsp.tu").getValue();
+                    String[] parts = StringUtils.split(value, "\\|");
+                    if (parts.length == 3) {
+                        long timestamp = ObjectUtils.to(long.class, parts[1]);
+                        long expiration = timestamp + maxAge;
+                        DateTime dateTime = new DateTime(expiration, DateTimeZone.UTC);
+                        writeElement("meta","name", "doomsday", "content", dateTime);
+
+                    }
                 }
-
-                writeElement("meta","name", "maxAge", "content", maxAge);
-
 
                 writeStylesAndScripts();
 
@@ -1513,8 +1511,8 @@ public class ToolPageContext extends WebPageContext {
                             writeHtml(" - ");
                             writeHtml(broadcastMessage);
                         }
-                    writeStart("span", "name", "logout-warning");
-                    writeEnd();
+                        writeStart("span", "name", "logout-warning");
+                        writeEnd();
                     writeEnd();
                 }
 
@@ -2093,22 +2091,6 @@ public class ToolPageContext extends WebPageContext {
             writeEnd();
         }
 
-        // TODO
-//        writeStart("script", "type", "text/javascript", "src", "");
-//        writeEnd();
-
-        /*String src = *//*cms.isUseNonMinifiedJavaScript()
-                ?*//* cmsResource(scriptPrefix + "warn.js")*//*
-                : ElFunctionUtils.resource(toolPath(CmsTool.class, scriptPrefix + "warn.js"))*//*;
-
-
-        writeStart("script", "type", "text/javascript", "src", src);
-        writeEnd();
-*/
-
-
-
-//        writeStart("script","type", "text/javascript");
     }
 
     /**
@@ -4595,9 +4577,5 @@ public class ToolPageContext extends WebPageContext {
     @Deprecated
     public void objectSelect(ObjectField field, Object value, Object... attributes) throws IOException {
         writeObjectSelect(field, value, attributes);
-    }
-
-    public void writeWarning(ToolPageContext page) {
-
     }
 }
