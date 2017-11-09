@@ -3,10 +3,10 @@ define([
     'bsp-utils' ],
 
 function($, bsp_utils) {
-    bsp_utils.onDomInsert(document, 'meta[name=doomsday]', {
+    bsp_utils.onDomInsert(document, 'meta[name=bsp\\.tu\\.sessionExpiration]', {
         insert: function () {
         var WARN_MINS = 5;
-        var exp_time = new Date(Date.parse($('meta[name=doomsday').attr('content')));
+        var exp_time = new Date(Date.parse($('meta[name=bsp\\.tu\\.sessionExpiration]').attr('content')));
         var warn_time = new Date((exp_time.valueOf()+(-1000*60*WARN_MINS)));
 
         setInterval(function() {
