@@ -5,25 +5,25 @@ define([
 function($, bsp_utils) {
     bsp_utils.onDomInsert(document, 'meta[name=bsp\\.tu\\.sessionExpiration]', {
         insert: function () {
-        var WARN_MINS = 5;
-        var exp_time = new Date(Date.parse($('meta[name=bsp\\.tu\\.sessionExpiration]').attr('content')));
-        var warn_time = new Date((exp_time.valueOf()+(-1000*60*WARN_MINS)));
+        var warnMins = 5;
+        var expireTime = new Date(Date.parse($('meta[name=bsp\\.tu\\.sessionExpiration]').attr('content')));
+        var warnTime = new Date((expireTime.valueOf()+(-1000*60*warnMins)));
 
         setInterval(function() {
             var time = new Date(Date.now());
             var message = '';
             var broadcast = false;
-            if (time > exp_time) {
+            if (time > expireTime) {
                 broadcast = true;
                 message = "You have been logged out and your work may not be saved."
-            } else if (time > warn_time) {
+            } else if (time > warnTime) {
                 broadcast = true;
                 // construct warning message and redirect url
 
                 // calculate time left.
-                var time_left = new Date(exp_time.valueOf() - time.valueOf());
-                var mins = time_left.getMinutes();
-                var secs = time_left.getSeconds();
+                var timeLeft = new Date(expireTime.valueOf() - time.valueOf());
+                var mins = timeLeft.getMinutes();
+                var secs = timeLeft.getSeconds();
 
                 var url = window.location.href;
                 if (url.indexOf('?') < 0) {
@@ -47,16 +47,16 @@ function($, bsp_utils) {
                     $('span[name=logout-message]').html(message);
                 } else {
                     $("body").attr("class", "hasToolBroadcast");
-                    var elem_bcast = document.createElement("div");
-                    elem_bcast.classList.add("toolBroadcast");
+                    var broadcastElem = document.createElement("div");
+                    broadcastElem.classList.add("toolBroadcast");
 
                     var span = document.createElement("span");
                     span.setAttribute("name","logout-message");
                     span.innerHTML = message;
 
-                    elem_bcast.appendChild(span);
+                    broadcastElem.appendChild(span);
 
-                    $("body").prepend(elem_bcast);
+                    $("body").prepend(broadcastElem);
                 }
             }
 
