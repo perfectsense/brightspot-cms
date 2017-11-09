@@ -31,9 +31,6 @@ function($, bsp_utils) {
                 } else {
                     url += "&_renewSession=true";
                 }
-                var a = document.createElement('a');
-                a.setAttribute('href',url);
-                a.innerHTML = "I'm still working."
 
                 message = ' Your session expires in '
                     + (("0" + mins).slice(-2)) + ':'
@@ -46,15 +43,13 @@ function($, bsp_utils) {
                     message = " - " + message;
                     $('span[name=logout-message]').html(message);
                 } else {
-                    $("body").attr("class", "hasToolBroadcast");
-                    var broadcastElem = document.createElement("div");
-                    broadcastElem.classList.add("toolBroadcast");
+                    $("body").addClass("hasToolBroadcast");
+                    // TODO
+                    var broadcastElem = $("<div>").addClass("toolBroadcast");
 
-                    var span = document.createElement("span");
-                    span.setAttribute("name","logout-message");
-                    span.innerHTML = message;
-
-                    broadcastElem.appendChild(span);
+                    var span = $("<span>").attr("name", "logout-message")
+                                          .html(message);
+                    broadcastElem.append(span);
 
                     $("body").prepend(broadcastElem);
                 }
