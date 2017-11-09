@@ -76,7 +76,6 @@ require([
   'nv.d3',
 
   'v3/Dropbox',
-  'signout-warning',
   'v3/EditFieldUpdate',
         
   'v3/dashboard',
@@ -92,7 +91,8 @@ require([
   'v3/search-fields',
   'v3/search-filters',
   'v3/search-result-check',
-  'v3/tabs' ],
+  'v3/tabs',
+  'session-expiration' ],
 
 function() {
   var $ = arguments[0];
