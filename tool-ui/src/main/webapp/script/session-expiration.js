@@ -32,25 +32,26 @@ function($, bsp_utils) {
                     url += "&_renewSession=true";
                 }
 
-                message = ' Your session expires in '
+                message = ' You will be logged out in '
                     + (("0" + mins).slice(-2)) + ':'
                     + (("0" + secs).slice(-2)) + ', <a href="'
                     + url + '">I\'m still working.</a>';
             }
             // there is a message to broadcast.
             if (broadcast && !($(".widget-logIn")[0])) {
+                var span = $("<span>").attr("name", "logout-message")
+                                      .html(message);
+
                 if ($("body").hasClass("hasToolBroadcast"))	{
-                    message = " - " + message;
-                    $('span[name=logout-message]').html(message);
+                    if (!($("span[name=logout-message]")[0])) {
+                        $(".toolBroadcast").append(" - ").append(span);
+                    } else {
+                        $('span[name=logout-message]').html(message);
+                    }
                 } else {
                     $("body").addClass("hasToolBroadcast");
-                    // TODO
                     var broadcastElem = $("<div>").addClass("toolBroadcast");
-
-                    var span = $("<span>").attr("name", "logout-message")
-                                          .html(message);
                     broadcastElem.append(span);
-
                     $("body").prepend(broadcastElem);
                 }
             }

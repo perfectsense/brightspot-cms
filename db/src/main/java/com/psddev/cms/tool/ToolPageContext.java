@@ -1510,8 +1510,6 @@ public class ToolPageContext extends WebPageContext {
                             writeHtml(" - ");
                             writeHtml(broadcastMessage);
                         }
-                        writeStart("span", "name", "logout-warning");
-                        writeEnd();
                     writeEnd();
                 }
 
