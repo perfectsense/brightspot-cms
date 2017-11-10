@@ -9,7 +9,6 @@ function($, bsp_utils) {
         var expireTime = new Date(Date.parse($('meta[name=bsp\\.tu\\.sessionExpiration]').attr('content')));
         var warnTime = new Date((expireTime.valueOf()+(-1000*60*warnMins)));
         var goTime = Math.max(0, warnTime.getTime() - Date.now());
-        var warnTime = Math.max(0, expireTime.getTime() - Date.now());
 
         setTimeout(function() {
             // construct warning message and redirect url
