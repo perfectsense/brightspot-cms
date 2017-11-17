@@ -1458,7 +1458,7 @@ public class ToolPageContext extends WebPageContext {
                         long timestamp = ObjectUtils.to(long.class, parts[1]);
                         long expiration = timestamp + maxAge;
                         DateTime dateTime = new DateTime(expiration, DateTimeZone.UTC);
-                        writeElement("meta", "name", "bsp.tu.sessionExpiration", "content", dateTime);
+                        writeElement("meta", "name", "bsp-tu-sessionExpiration", "content", dateTime);
 
                     }
                 }
