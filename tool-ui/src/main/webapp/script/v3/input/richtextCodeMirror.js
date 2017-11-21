@@ -4989,9 +4989,13 @@ define([
                 e.clipboardData.setData('text/brightspot-rte2', html.replace(/<\/?[del|ins]+(>|$)/g, ""));
 
                 // Clear the cut area
-                if (e.type === 'cut') {
+                if (e.type === 'cut' && self.trackIsOn()) {
+                    self.trackMarkDeleted(range);
                     // if track insert exist without any trackDelete delete the existing text when copied
-                    self.trackMarkDeleted(range)
+                    return false;
+                }
+                if (e.type === 'cut') {
+                    editor.replaceRange('', range.from, range.to);
                 }
 
                 // Don't let the actual cut/copy event occur
