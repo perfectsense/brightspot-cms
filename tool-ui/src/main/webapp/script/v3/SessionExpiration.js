@@ -14,6 +14,15 @@ function($, bsp_utils) {
             // construct warning message and redirect url
             var expireMillis = Math.max(0, expireTime.getTime() - Date.now());
             var message = '';
+            var timeLeft = new Date(expireMillis);
+            if (expireMillis == 0) {
+                message = "You have been logged out and your work may not be saved.";
+            } else {
+                message = ' You will be logged out in '
+                              + (("0" + timeLeft.getMinutes()).slice(-2)) + ':'
+                              + (("0" + timeLeft.getSeconds()).slice(-2)) + ', <a href="'
+                              + url + '">I\'m still working.</a>';
+            }
 
             var url = window.location.href;
             if (url.indexOf('?') < 0) {
@@ -22,11 +31,12 @@ function($, bsp_utils) {
                 url += "&_renewSession=true";
             }
 
-            if (!($(".widget-logIn")[0])) {
-                var span = $("<span>").attr("name", "logout-message");
+            if ($(".widget-logIn").size() == 0) {
+                var span = $("<span>").attr("name", "logout-message")
+                                      .html(message);
 
                 if ($("body").hasClass("hasToolBroadcast"))	{
-                    if (!($("span[name=logout-message]")[0])) {
+                    if ($("span[name=logout-message]").size() == 0) {
                         $(".toolBroadcast").append(" - ").append(span);
                     }
                 } else {
@@ -37,20 +47,19 @@ function($, bsp_utils) {
                 }
             }
 
-            setInterval(function() {
+            var warningInterval = setInterval(function() {
                 expireMillis -= 1000;
 
                 if (expireMillis <= 0) {
                     message = "You have been logged out and your work may not be saved.";
+                    clearInterval(warningInterval);
                 } else {
                     // calculate time left.
-                    var timeLeft = new Date(expireMillis);
-                    var mins = timeLeft.getMinutes();
-                    var secs = timeLeft.getSeconds();
+                    timeLeft = new Date(expireMillis);
 
                     message = ' You will be logged out in '
-                        + (("0" + mins).slice(-2)) + ':'
-                        + (("0" + secs).slice(-2)) + ', <a href="'
+                        + (("0" + timeLeft.getMinutes()).slice(-2)) + ':'
+                        + (("0" + timeLeft.getSeconds()).slice(-2)) + ', <a href="'
                         + url + '">I\'m still working.</a>';
                 }
 

@@ -92,7 +92,7 @@ require([
   'v3/search-filters',
   'v3/search-result-check',
   'v3/tabs',
-  'session-expiration' ],
+  'v3/SessionExpiration' ],
 
 function() {
   var $ = arguments[0];
