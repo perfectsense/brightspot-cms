@@ -1450,7 +1450,7 @@ public class ToolPageContext extends WebPageContext {
 
                 Long maxAge = Settings.get(Long.class, AuthenticationFilter.TOOL_USER_SESSION_TIMEOUT_SETTING);
 
-                if (maxAge > 0) {
+                if (getUser() != null && maxAge != null && maxAge > 0) {
                     DateTime oldDateTime = DateTime.now(DateTimeZone.UTC).plusMillis((maxAge).intValue());
                     String value = JspUtils.getCookie(getRequest(), "bsp.tu").getValue();
                     String[] parts = StringUtils.split(value, "\\|");
