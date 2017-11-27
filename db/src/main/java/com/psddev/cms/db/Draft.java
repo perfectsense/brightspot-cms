@@ -21,6 +21,7 @@ import com.psddev.dari.db.Sequence;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.UuidUtils;
 
 /** Unpublished object or unsaved changes to an existing object. */
@@ -595,9 +596,11 @@ public class Draft extends Content {
                 .noCache()
                 .first());
 
-        setName("#" + Sequence.Static.nextLong(
-                getClass().getName() + "/" + newId,
-                newStateCopy != null ? ObjectUtils.to(int.class, newStateCopy.as(NameData.class).getIndex()) + 1 : 1));
+        if (StringUtils.isBlank(getName())) {
+            setName("#" + Sequence.Static.nextLong(
+                    getClass().getName() + "/" + newId,
+                    newStateCopy != null ? ObjectUtils.to(int.class, newStateCopy.as(NameData.class).getIndex()) + 1 : 1));
+        }
     }
 
     /**
