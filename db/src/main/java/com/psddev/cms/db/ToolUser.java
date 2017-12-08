@@ -109,7 +109,7 @@ public class ToolUser extends Record implements ToolEntity {
     private Schedule currentSchedule;
 
     @ToolUi.Tab("Advanced")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     @ToolUi.Placeholder("Default")
     private ToolEntityTfaRequired tfaRequired;
 

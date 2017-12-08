@@ -50,7 +50,9 @@ if (wp.getOverlaidDraft(object) == null) {
     if (!contentUpdates.isEmpty()) {
         wp.writeStart("div", "class", "message message-info");
         wp.writeStart("p");
-        wp.writeHtml("Recent Drafts:");
+        wp.writeHtml(wp.localize(
+                "com.psddev.cms.tool.page.content.ObjectMessage",
+                "message.recentDraftsHeading"));
         wp.writeEnd();
 
         wp.writeStart("ul");

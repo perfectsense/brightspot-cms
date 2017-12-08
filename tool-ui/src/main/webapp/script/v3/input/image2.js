@@ -16,7 +16,8 @@ define([
     'pixastic/actions/invert',
     'pixastic/actions/rotate',
     'pixastic/actions/sepia',
-    'pixastic/actions/sharpen'
+    'pixastic/actions/sharpen',
+    'jquery.tabbed'
 ], function($, bsp_utils, rte2) {
     
     var imageEditorUtility;

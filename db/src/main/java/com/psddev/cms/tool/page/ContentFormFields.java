@@ -1,6 +1,7 @@
 package com.psddev.cms.tool.page;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,6 +38,8 @@ public class ContentFormFields extends PageServlet {
             State.getInstance(object).putAll((Map<String, Object>) ObjectUtils.fromJson(data));
         }
 
-        page.writeFormFields(object);
+        List<String> excluded = page.params(String.class, "excluded");
+
+        page.writeSomeFormFields(object, false, null, excluded);
     }
 }

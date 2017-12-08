@@ -18,6 +18,16 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
         var fieldNamesByObjectId = data.fieldNamesByObjectId;
         var $viewersContainer = $container.find('[data-rtc-edit-field-update-viewers]');
 
+        if ($viewersContainer.length === 0) {
+            $viewersContainer = $container.find('[data-rtc-edit-field-update-other-viewers]');
+
+            if ($viewersContainer.length > 0 &&
+                ($('html').attr('data-user-id') === userId)) {
+
+                return;
+            }
+        }
+
         if ($viewersContainer.length > 0) {
             var userAvatarHtml = data.userAvatarHtml;
             var closed = data.closed;
@@ -104,6 +114,7 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
             efu_cache.put(data);
         }
 
+        var currentUser = $('html').attr('data-user-id');
         var userId = data.userId;
         var fieldNamesByObjectId = data.fieldNamesByObjectId;
 
@@ -113,6 +124,10 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc', 'v3/color-utils', 'v3/EditFieldUpdateC
             updateContainer($container, data);
 
             if (!$container.is('form')) {
+                return;
+            }
+
+            if (currentUser === userId) {
                 return;
             }
 

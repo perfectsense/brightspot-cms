@@ -274,7 +274,7 @@ public class RichTextViewBuilder<V> {
                 }
 
             } else if (sibling instanceof TextNode) {
-                viewNodes.add(new StringRichTextViewNode<>(((TextNode) sibling).text(), htmlToView));
+                viewNodes.add(new StringRichTextViewNode<>(sibling.outerHtml(), htmlToView));
 
             } else if (sibling instanceof DataNode) {
                 viewNodes.add(new StringRichTextViewNode<>(((DataNode) sibling).getWholeData(), htmlToView));

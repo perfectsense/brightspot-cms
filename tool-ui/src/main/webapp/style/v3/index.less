@@ -64,6 +64,7 @@
 @import 'OverlayProviderSelect.less';
 @import 'Tab.less';
 @import 'ToolUserAvatar.less';
+@import 'WidgetSearchAdvancedQuery.less';
 
 // From Bower.
 @import url('../handsontable.full.css');
@@ -590,6 +591,17 @@
   }
 }
 
+.widget-publishingHistory {
+  margin-top: 10px;
+  overflow: hidden;
+
+  p {
+    padding: 10px 0 10px 0;
+    color: fade(@color-text, 50%);
+    margin: 0;
+  }
+}
+
 .widget-publishingPublish + .widget-publishingExtra {
   .widget-publishingExtra-left,
   .widget-publishingExtra-right {
@@ -805,48 +817,6 @@ form[data-type='com.psddev.cms.db.ContentType'] {
 
 .inputContainer[data-field='dari.singleton.key'] {
   display: none !important;
-}
-
-.widget-searchAdvancedQuery {
-  .dropDown-input,
-  .objectId-select {
-    max-width: 15%;
-    width: 15%;
-  }
-
-  .repeatableObjectId {
-    .objectId-select {
-      max-width: 40%;
-      width: 40%;
-    }
-
-    .addButtonContainer {
-      margin-left: 23px;
-      margin-top: 0;
-    }
-  }
-
-  .objectId-edit,
-  .objectId-clear {
-    display: none !important;
-  }
-
-  form {
-    position: relative;
-  }
-
-  ul {
-    margin-bottom: 0;
-  }
-
-  li {
-    margin-top: 5px;
-    position: relative;
-  }
-
-  button.icon-action-add {
-    margin-left: @gap-medium;
-  }
 }
 
 .contentForm-main > .widget > h1 {

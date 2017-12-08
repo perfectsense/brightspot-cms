@@ -8,6 +8,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.psddev.cms.nlp.SpellChecker;
+import com.psddev.cms.tool.CmsTool;
+import com.psddev.dari.db.Application;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -48,7 +51,7 @@ public class HunspellSpellChecker implements SpellChecker {
      */
     public static final String DICTIONARY_FILE_SUFFIX = ".dic";
 
-    private final LoadingCache<String, Optional<Hunspell>> hunspells = CacheBuilder
+    static final LoadingCache<String, Optional<Hunspell>> HUNSPELLS = CacheBuilder
             .newBuilder()
             .removalListener(new RemovalListener<String, Optional<Hunspell>>() {
 
@@ -78,7 +81,16 @@ public class HunspellSpellChecker implements SpellChecker {
                                     Files.copy(affixInput, affixPath, StandardCopyOption.REPLACE_EXISTING);
                                     Files.copy(dictionaryInput, dictionaryPath, StandardCopyOption.REPLACE_EXISTING);
 
-                                    return Optional.of(new Hunspell(dictionaryPath.toString(), affixPath.toString()));
+                                    Hunspell hunspell = new Hunspell(dictionaryPath.toString(), affixPath.toString());
+
+                                    Optional.ofNullable(Application.Static.getInstance(CmsTool.class))
+                                            .ifPresent(tool -> tool.as(HunspellSettings.class)
+                                                    .findDictionaries(name)
+                                                    .stream()
+                                                    .filter(Objects::nonNull)
+                                                    .forEach(d -> d.getWords().forEach(hunspell::add)));
+
+                                    return Optional.of(hunspell);
                                 }
                             }
                         }
@@ -88,10 +100,20 @@ public class HunspellSpellChecker implements SpellChecker {
                 }
             });
 
+    /**
+     * Creates a list of Hunspell dictionary names based on the given
+     * {@code locale}.
+     *
+     * @param locale Nonnull.
+     */
+    public static List<String> createDictionaryNames(Locale locale) {
+        return SpellChecker.createDictionaryNames("HunspellDictionary", locale);
+    }
+
     private Hunspell findHunspell(Locale locale) {
-        return SpellChecker.createDictionaryNames("HunspellDictionary", locale)
+        return createDictionaryNames(locale)
                 .stream()
-                .map(l -> hunspells.getUnchecked(l).orElse(null))
+                .map(l -> HUNSPELLS.getUnchecked(l).orElse(null))
                 .filter(h -> h != null)
                 .findFirst()
                 .orElse(null);

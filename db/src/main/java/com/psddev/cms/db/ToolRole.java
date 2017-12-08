@@ -39,7 +39,7 @@ public class ToolRole extends Record implements ToolEntity {
     private CmsTool.CommonContentSettings roleCommonContentSettings;
 
     @ToolUi.Tab("Advanced")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     @ToolUi.Placeholder("Default")
     private ToolEntityTfaRequired tfaRequired;
 

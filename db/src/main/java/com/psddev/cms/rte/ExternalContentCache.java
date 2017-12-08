@@ -137,7 +137,7 @@ public class ExternalContentCache extends Record {
         cache.getState().setId(id);
         cache.created = now;
         cache.response = response;
-        cache.save();
+        cache.saveImmediately();
 
         return response;
     }

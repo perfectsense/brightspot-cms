@@ -63,7 +63,7 @@ public class SearchAdvancedQuery extends PageServlet {
         Collections.sort(paramNames);
 
         page.writeHeader();
-            page.writeStart("div", "class", "widget widget-searchAdvancedQuery");
+            page.writeStart("div", "class", "widget WidgetSearchAdvancedQuery");
                 page.writeStart("h1", "class", "icon icon-wrench");
                     page.writeHtml(page.localize(SearchAdvancedQuery.class, "title"));
                 page.writeEnd();
@@ -156,17 +156,24 @@ public class SearchAdvancedQuery extends PageServlet {
             page.writeStart("div", "id", pageId);
             page.writeEnd();
 
+            String advancedQueryEditUrl = page.url("", "action-search", null);
+
             page.writeStart("script", "type", "text/javascript");
                 page.writeRaw("var $page = $('#" + pageId + "'),");
                 page.writeRaw("$edit = $page.popup('source');");
 
                 page.writeRaw("$edit.attr('href', '");
-                page.writeRaw(StringUtils.escapeJavaScript(page.url("", "action-search", null)));
+                page.writeRaw(StringUtils.escapeJavaScript(advancedQueryEditUrl));
                 page.writeRaw("');");
 
-                if (page.param(String.class, "action-search") != null) {
-                    page.writeRaw("var $input = $edit.closest('.searchFilter-advancedQuery').find('input[type=\"text\"]');");
+                page.writeRaw("var $advancedQueryContainer = $edit.closest('.searchFilter-advancedQuery');");
+                page.writeRaw("var $queryStringInput = $advancedQueryContainer.find('input[type=\"hidden\"]');");
 
+                int queryParamsIndex = advancedQueryEditUrl.indexOf("?");
+                page.writeRaw("$queryStringInput.val('" + StringUtils.escapeJavaScript((queryParamsIndex > -1 ? advancedQueryEditUrl.substring(queryParamsIndex) : "")) + "');");
+
+                if (page.param(String.class, "action-search") != null) {
+                    page.writeRaw("var $input = $advancedQueryContainer.find('input[type=\"text\"]');");
                     page.writeRaw("$input.val('" + StringUtils.escapeJavaScript(globalPredicate != null ? globalPredicate.toString() : "") + "');");
                     page.writeRaw("$input.change();");
                     page.writeRaw("$page.popup('close');");

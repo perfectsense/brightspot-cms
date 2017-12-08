@@ -158,17 +158,15 @@ public class SearchResultActions extends PageServlet {
 
             page.writeEnd();
 
-            if (count > 0) {
-                page.writeStart("div", "class", "searchResult-action-simple");
-                writeDeleteAction(page);
-                page.writeEnd();
-            }
+            page.writeStart("div", "class", "searchResult-action-simple");
+                writeDeleteAction(page, count);
+            page.writeEnd();
 
         } else if (count > 0) {
 
             page.writeStart("h2");
-            page.writeHtml(page.localize(SearchResultActions.class, "subtitle.selection"));
-            writeDeleteAction(page);
+                page.writeHtml(page.localize(SearchResultActions.class, "subtitle.selection"));
+                writeDeleteAction(page, count);
             page.writeEnd();
         }
 
@@ -241,19 +239,19 @@ public class SearchResultActions extends PageServlet {
         page.writeEnd();
     }
 
-    private void writeDeleteAction(ToolPageContext page) throws IOException {
+    private void writeDeleteAction(ToolPageContext page, long count) throws IOException {
         if (page.getUser().isSavedSearchResultSelection(page.getUser().getCurrentSearchResultSelection())) {
             page.writeStart("a",
                     "class", "searchResult-selectionReset action action-delete",
                     "href", page.url("", ACTION_PARAMETER, ACTION_CLEAR, SELECTION_ID_PARAMETER, null));
-            page.writeHtml(page.localize(SearchResultActions.class, "action.delete"));
+                page.writeHtml(page.localize(SearchResultActions.class, "action.delete"));
             page.writeEnd();
 
-        } else {
+        } else if (count > 0) {
             page.writeStart("a",
                     "class", "searchResult-selectionReset action action-cancel",
                     "href", page.url("", ACTION_PARAMETER, ACTION_CLEAR, SELECTION_ID_PARAMETER, null));
-            page.writeHtml(page.localize(SearchResultActions.class, "action.clear"));
+                page.writeHtml(page.localize(SearchResultActions.class, "action.clear"));
             page.writeEnd();
         }
     }
