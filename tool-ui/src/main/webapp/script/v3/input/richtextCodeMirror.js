@@ -366,6 +366,7 @@ define([
             self.clipboardInit();
             self.spellcheckInit();
             self.modeInit();
+            self.initPreviewResizer();
 
             var $wrapper = $(self.codeMirror.getWrapperElement());
             var wrapperWidth = $wrapper.width();
@@ -2238,7 +2239,7 @@ define([
             if (mark.rteReadOnly) {
                 this.codeMirror.markText(
                         { line: range.from.line, ch: 0 },
-                        { line: range.to.line + 1, ch: 0 },
+                        { line: range.to.line, ch: null }, // null = end of line
                         {
                             atomic: true,
                             clearWhenEmpty: true,
@@ -2934,6 +2935,58 @@ define([
 
 
         /**
+         * Work around a problem in CodeMirror: whenever refresh() is called, CodeMirror recreates the DOM.
+         * This causes weird scrolling problems in cases where the preview contains an iframe, because the iframe
+         * reloads whenever it is removed and added back to the DOM.
+         * To mitigate this problem, we will query the height of the preview and set that as a minimum height,
+         * so even if the iframe contents shrink and grow, the scrolling of the overall document should not change.
+         */
+        initPreviewResizer: function() {
+
+            var self;
+            var $wrapper;
+
+            self = this;
+            $wrapper = $(self.codeMirror.getWrapperElement());
+
+            $wrapper.on('resize', '.rte2-block-preview > iframe', function(event) {
+                var $div;
+                var divHeight;
+                var $iframe;
+                var iframeHeight;
+
+                $iframe = $(event.target);
+                // Get the height from the CSS style, not by calculating the height.
+                iframeHeight = parseInt($iframe.prop('style').height, 10);
+
+                $div = $iframe.closest('.rte2-block-preview');
+                divHeight = parseInt($div.prop('style').height, 10);
+
+                // If height is not explicitly set we won't do anything.
+                if (!iframeHeight) {
+                    return;
+                }
+
+                if (!divHeight || iframeHeight > divHeight) {
+                    $div.css({
+                        'height': iframeHeight,
+                        'overflow': 'auto'
+                    });
+                } else if (iframeHeight === divHeight) {
+                    // Heights are equal so do nothing
+                } else if (iframeHeight < divHeight) {
+                    // Height is shrinking so do nothing
+                    // Note we could shrink the preview block, but in some cases like twitter the preview loads
+                    // and is very small, then it grows, then it shrinks again.
+                    // This leads to the page scroll position jumping all over the place,
+                    // so instead we will just set the preview block to the tallest height
+                    // we have seen and leave it at that.
+                }
+            });
+        },
+
+
+        /**
          * Remove the preview lineWidget for a block style
          * (if it exists).
          *
@@ -3165,8 +3218,9 @@ define([
             lineMax = editor.lineCount() - 1;
             lineNumber = self.enhancementGetLineNumber(mark);
 
-            // Get array of enhancements on the current line
-            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark) );
+            // Get array of enhancements on the current line.
+            // But only the block enhancements
+            enhancementsOnLine = self.enhancementGetFromLine( self.enhancementGetLineNumber(mark), false );
 
             // If there are multiple enhancements on this line, determine if we need to keep the enhancement
             // on this line (and rearrange the order of enhancements) or move to another line
@@ -3294,7 +3348,9 @@ define([
 
             self = this;
 
-            if (changeObj.origin === 'brightspotEnhancementMove') {
+            // New line adjustment does not need to take place after 'brightspotPaste' events. This is triggered
+            // when switching between HTML and Rich Text modes.
+            if (changeObj.origin === 'brightspotEnhancementMove' || changeObj.origin === 'brightspotPaste') {
                 return;
             }
 
@@ -3481,10 +3537,13 @@ define([
 
         /**
          * Returns an array of the enhancements on a line.
-         * @param  {[type]} lineNumber [description]
+         * @param {Number} lineNumber
+         * @param {Boolean} [inline=true]
+         * Should inline (align left or right) enhancements be included?
+         * Defaults to true, explicitly set this to false to exclude those enhancements.
          * @return {Array}
          */
-        enhancementGetFromLine: function(lineNumber) {
+        enhancementGetFromLine: function(lineNumber, inline) {
             var editor;
             var lineHandle;
             var self;
@@ -3509,15 +3568,17 @@ define([
             }
 
             // Get all the enhancements that are align left and right
-            $.each(self.enhancementCache, function(i, mark) {
+            if (inline !== false) {
+                $.each(self.enhancementCache, function(i, mark) {
 
-                // Make sure this is not a block enhancement
-                if (mark && mark.options && mark.options.block === false) {
-                    if (self.enhancementGetLineNumber(mark) === lineNumber) {
-                        list.push(mark);
+                    // Make sure this is not a block enhancement
+                    if (mark && mark.options && mark.options.block === false) {
+                        if (self.enhancementGetLineNumber(mark) === lineNumber) {
+                            list.push(mark);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             return list;
         },
@@ -3695,7 +3756,6 @@ define([
 
             var self = this;
             var cm = self.codeMirror;
-            var from = markRange.from.line;
 
             // Find the number of blank lines after the mark to include in the
             // move.
@@ -3705,6 +3765,21 @@ define([
             while (to < cm.lineCount() && cm.getLine(to) === '') {
                 ++ to;
                 ++ blanksAfter;
+            }
+
+            // Find the number of blank lines before the mark to preserve before
+            // the "from" position.
+            var from = markRange.from.line;
+            var blanksBefore = 0;
+
+            while (from > 0 && cm.getLine(from - 1) === '') {
+                -- from;
+                ++ blanksBefore;
+            }
+
+            // Improve spacing when mark is moved from first position.
+            if (from === 0) {
+                ++ blanksBefore;
             }
 
             // Make sure that the move is possible.
@@ -3738,10 +3813,29 @@ define([
                 var initialTop = cm.charCoords({ line: from, ch: 0 }).top;
                 var html = self.toHTML(markRange);
                 var cursor = cm.getCursor();
-                var movePosition = { line: move, ch: 0 };
+
+                var replaceWithNewLine = blanksBefore + blanksAfter > 0 && from !== 0;
 
                 // Delete the existing mark.
-                cm.replaceRange('', { line: from, ch: 0 }, { line: to, ch: 0 });
+                // Collapses one or more adjacent blank lines into single blank line
+                if (replaceWithNewLine) {
+                    cm.replaceRange('\n', { line: from, ch: 0 }, { line: to, ch: 0 });
+                    if (move !== 0) {
+                        move += 1;
+                    }
+                } else {
+                    cm.replaceRange('', { line: from, ch: 0 }, { line: to, ch: 0 });
+                }
+
+                // Insert the blank lines found previously before the mark.
+                if (move > 0) {
+                    for (var i = 0; i < blanksBefore; ++ i) {
+                        cm.replaceRange('\n', { line: move, ch: 0}, { line: move, ch: 0 });
+                        if (direction > 0) {
+                            ++ move;
+                        }
+                    }
+                }
 
                 // Insert an extra blank line if moving to the beginning or
                 // the end of the text and there isn't already a blank line
@@ -3750,13 +3844,13 @@ define([
                     cm.replaceRange('\n', { line: move, ch: 0 }, { line: move, ch: 0 });
                 }
 
-                // Insert the blank lines found previously.
+                // Insert the blank lines found previously after the mark.
                 for (var i = 0; i < blanksAfter; ++ i) {
-                    cm.replaceRange('\n', movePosition, movePosition);
+                    cm.replaceRange('\n', { line: move, ch: 0}, { line: move, ch: 0});
                 }
 
                 // Insert the mark at the new position.
-                self.fromHTML(html, { from: movePosition, to: movePosition });
+                self.fromHTML(html, { from: { line: move, ch: 0}, to: { line: move, ch: 0} });
 
                 // Move the cursor to the newly created mark.
                 var cursorLine = move + blanksAfter + cursor.line - from + 1;
@@ -4151,39 +4245,50 @@ define([
 
                         // Mark the range as inserted (before we let the insertion occur)
                         // Then when text is replaced it will already be in an area marked as new
-                        self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.to});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert){
+                          self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.to});
+                        }
 
                         // In case we are inserting inside a deleted block,
                         // make sure the new text we are adding is not also marked as deleted
-                        self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.to});
+                        if(self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete){
+                          self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.to});
+                        }
 
                         // Some text was pasted in and already marked as new,
                         // but we must remove any regions within that were previously marked deleted
-                        self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
+                        if (changeObj.origin === 'paste') {
+                          self.trackAfterPaste(changeObj.from, changeObj.to, changeObj.text);
+                        }
 
                     } else {
-
                         // We are replacing existing text, so we need to handle cases where the text to be replaced
                         // already has things that we are tracking as deleted or inserted.
 
                         // Do not do the paste or insert
                         changeObj.cancel();
 
+                        // this prevents rest of code from executing when text is empty
+                        isEmpty = Boolean(changeObj.text.join('') === '');
+                        if (isEmpty) {
+                            return;
+                        }
+
                         // Mark the whole range as "deleted" for track changes
                         // Note there might be some regions inside this that are marked as "inserted" but we'll deal with that below
-                        self.trackMarkDeleted({from: changeObj.from, to:changeObj.to});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert && !self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete) {
+                          self.trackMarkDeleted({from: changeObj.from, to:changeObj.to});
+                        }
 
-                        // Delete text within the range if it was previously marked as a new insertion
-                        // Note: after doing this, the range might not be valid since we might have removed characters within it
-                        self.inlineRemoveStyle('trackInsert', {from:changeObj.to, to:changeObj.to}, {deleteText:true});
-
-                        // Insert the new text...
-
-                        // First remove the "delete" mark at the point where we are insering to make sure the new text is not also marked as deleted
-                        self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.from});
-
+                        // // Insert the new text...
+                        // // First remove the "delete" mark at the point where we are insering to make sure the new text is not also marked as deleted
+                        if(self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackDelete){
+                          self.inlineRemoveStyle('trackDelete', {from: changeObj.from, to:changeObj.from});
+                        }
                         // Then add a mark so the inserted text will be marked as an insert
-                        self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.from}, {inclusiveLeft:true});
+                        if(!self.inlineGetStyles({from: changeObj.from, to:changeObj.to}).trackInsert){
+                          self.inlineSetStyle('trackInsert', {from: changeObj.from, to:changeObj.from}, {inclusiveLeft:true});
+                        }
 
                         // Finally insert the text at the starting point (before the other text in the range that was marked deleted)
                         // Note we add at the front because we're not sure if the end is valid because we might have removed some text
@@ -4194,7 +4299,7 @@ define([
                             // but it could have deleted text within it.
                             // We need to remove that deleted text *after* the new content is pasted in.
                             editor.replaceRange(changeObj.text, changeObj.from, undefined, 'brightspotTrackInsert');
-
+                            self.setCursor(changeObj.from.line, changeObj.from.ch+1)
                         }
                     }
 
@@ -4345,9 +4450,11 @@ define([
             var editor;
             var self;
             var textOriginal;
+            var deleteTextFlag;
 
             self = this;
             editor = self.codeMirror;
+            deleteTextFlag = self.inlineGetStyles(range).trackInsert || false
 
             // If we're deleting just a line just let it be deleted
             // Because we don't have a good way to accept or reject a blank line
@@ -4363,11 +4470,15 @@ define([
             // Determine if every character in the range is already marked as an insertion.
             // In this case we can just delete the content and don't need to mark it as deleted.
             if (self.inlineGetStyles(range).trackInsert !== true) {
+              // if range has exising track Delete remove it before adding a new one to entire range.
+              // prevents a selected deleted text from getting a double trackDelete class
+                self.inlineRemoveStyle('trackDelete', range)
                 self.inlineSetStyle('trackDelete', range);
             }
 
+            // if trackInsert is on a line on its own the deleteTextFlag should be true
             // Remove any text within the range that is marked as inserted
-            self.inlineRemoveStyle('trackInsert', range, {deleteText:true});
+            self.inlineRemoveStyle('trackInsert', range, {deleteText:deleteTextFlag});
         },
 
 
@@ -4874,9 +4985,15 @@ define([
                 // We set the html using mime type text/brightspot-rte
                 // so we can get it back from the clipboard without browser modification
                 // (since browser tends to add a <meta> element to text/html)
-                e.clipboardData.setData('text/brightspot-rte2', html);
+                // since all copies and cuts are inserts we remove del and ins tags
+                e.clipboardData.setData('text/brightspot-rte2', html.replace(/<\/?[del|ins]+(>|$)/g, ""));
 
                 // Clear the cut area
+                if (e.type === 'cut' && self.trackIsOn()) {
+                    self.trackMarkDeleted(range);
+                    // if track insert exist without any trackDelete delete the existing text when copied
+                    return false;
+                }
                 if (e.type === 'cut') {
                     editor.replaceRange('', range.from, range.to);
                 }
@@ -7428,15 +7545,13 @@ define([
             });
 
             // Bubble sort the marks for each character based on the context
-            $.each(spansByChar, function() {
+            $.each(spansByChar, function(spanIndex, spans) {
 
                 var compare;
-                var spans;
                 var swapped;
                 var temp;
 
-                spans = this;
-                if (spans.length > 1) {
+                if (spans && spans.length > 1) {
                     do {
                         swapped = false;
                         for (var i=0; i < spans.length-1; i++) {
@@ -7751,7 +7866,8 @@ define([
                         if ((elementName === 'table') || ((elementName === 'span' || elementName === 'button') && $(next).hasClass('enhancement'))) {
 
                             // End the last line if necessary
-                            if (val[ val.length - 1] !== '\n') {
+                            // (and avoid adding a newline if this is the first line in the editor)
+                            if (val.length && val[ val.length - 1] !== '\n') {
                                 val += '\n';
                                 from.line++;
                                 from.ch = 0;
@@ -7938,7 +8054,11 @@ define([
             processNode(el);
 
             // Replace multiple newlines at the end with single newline
-            val = val.replace(/[\n\r]+$/, '\n');
+            // unless the last line contains an enhancement
+            var enhancementLast = enhancements[ enhancements.length - 1 ];
+            if (!(enhancementLast && enhancementLast.line >= val.split('\n').length - 1)) {
+                val = val.replace(/[\n\r]+$/, '\n');
+            }
 
             if (range) {
 
@@ -8038,7 +8158,6 @@ define([
                 }
                 if (styleObj) {
                     if (styleObj.line) {
-
                         // If this is a list item, then only set the style on the first line
                         annotationRange = {
                             from: annotation.from,

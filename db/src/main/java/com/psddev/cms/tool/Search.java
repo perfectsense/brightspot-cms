@@ -71,6 +71,7 @@ public class Search extends Record {
 
     public static final String ADDITIONAL_PREDICATE_PARAMETER = "aq";
     public static final String ADVANCED_QUERY_PARAMETER = "av";
+    public static final String ADVANCED_QUERY_EDIT_STRING_PARAMETER = "au";
     public static final String CONTEXT_PARAMETER = "cx";
     public static final String GLOBAL_FILTER_PARAMETER_PREFIX = "gf.";
     public static final String IGNORE_SITE_PARAMETER = "is";
@@ -110,6 +111,7 @@ public class Search extends Record {
     private boolean onlyPathed;
     private String additionalPredicate;
     private String advancedQuery;
+    private String advancedQueryEditStringParameters;
     private UUID parentId;
     private UUID parentTypeId;
     private Map<String, String> globalFilters;
@@ -197,6 +199,7 @@ public class Search extends Record {
         setOnlyPathed(page.param(boolean.class, IS_ONLY_PATHED));
         setAdditionalPredicate(page.param(String.class, ADDITIONAL_QUERY_PARAMETER));
         setAdvancedQuery(page.param(String.class, ADVANCED_QUERY_PARAMETER));
+        setAdvancedQueryEditStringParameters(page.param(String.class, ADVANCED_QUERY_EDIT_STRING_PARAMETER));
         setParentId(page.param(UUID.class, PARENT_PARAMETER));
         setParentTypeId(page.param(UUID.class, PARENT_TYPE_PARAMETER));
         setSort(page.param(String.class, SORT_PARAMETER));
@@ -303,6 +306,14 @@ public class Search extends Record {
 
     public void setAdvancedQuery(String advancedQuery) {
         this.advancedQuery = advancedQuery;
+    }
+
+    public String getAdvancedQueryEditStringParameters() {
+        return advancedQueryEditStringParameters;
+    }
+
+    public void setAdvancedQueryEditStringParameters(String advancedQueryEditStringParameters) {
+        this.advancedQueryEditStringParameters = advancedQueryEditStringParameters;
     }
 
     public UUID getParentId() {

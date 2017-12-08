@@ -74,7 +74,7 @@ public class CmsTool extends Tool {
     private List<CommonTime> commonTimes;
 
     @ToolUi.Tab("Defaults")
-    @DisplayName("Two Factor Authentication Required?")
+    @DisplayName("Two-Factor Authentication Required?")
     private boolean tfaRequired;
 
     @DisplayName("Default Dashboard")
@@ -1078,6 +1078,7 @@ public class CmsTool extends Tool {
     @Embedded
     public static class CommonContentSettings extends Record {
 
+        @Where("isConcrete = true")
         private Set<ObjectType> createNewTypes;
         private Set<Content> editExistingContents;
 

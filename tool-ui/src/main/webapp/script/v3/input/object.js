@@ -20,6 +20,7 @@ function($) {
           labelHtml,
           dynamicPlaceholderText,
           dynamicFieldName,
+          isReadOnly,
           placeholder,
           value,
           selectHref,
@@ -175,10 +176,13 @@ function($) {
             '&sg=' + encodeURIComponent($input.attr('data-suggestions') || '')
       });
 
+      var isReadOnly = $input.data('read-only');
+
       $edit = $('<a/>', {
         'class': 'objectId-edit',
+        'data-read-only': isReadOnly,
         'target': target + '-edit',
-        'text': 'Edit'
+        'text': !isReadOnly ? 'Edit' : 'View'
       });
 
       $clear = $('<a/>', {

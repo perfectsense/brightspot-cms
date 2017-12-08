@@ -78,7 +78,7 @@ class ViewMap implements Map<String, Object> {
                 .stream()
                 // grab the list of bean property descriptors
                 .map(ViewMap::getBeanPropertyDescriptors)
-                // flatten the descriptors across all the interfaces
+                // flatten the descriptors across all the classes
                 .flatMap(Collection::stream)
                 // exclude the getClass() method
                 .filter((prop) -> !"class".equals(prop.getName()))
@@ -103,7 +103,7 @@ class ViewMap implements Map<String, Object> {
     /**
      * @return the backing view object for this map.
      */
-    public Object getView() {
+    public Object toView() {
         return view;
     }
 
@@ -142,7 +142,7 @@ class ViewMap implements Map<String, Object> {
                 Supplier<Object> supplier = unresolved.remove(key);
 
                 if (supplier != null) {
-                    Object value = convertValue(supplier.get());
+                    Object value = convertValue((String) key, supplier.get());
                     if (value != null) {
                         resolved.put((String) key, value);
                     }
@@ -208,7 +208,7 @@ class ViewMap implements Map<String, Object> {
      * Converts a value to a Json Map friendly value. Only supports String,
      * Boolean, Number, Collection, and simple String key (non-State) based Maps.
      */
-    private Object convertValue(Object value) {
+    private Object convertValue(String key, Object value) {
 
         if (value instanceof String) {
             return value;
@@ -223,7 +223,7 @@ class ViewMap implements Map<String, Object> {
             List<Object> immutableViewList = new ArrayList<>();
 
             for (Object item : (Iterable<?>) value) {
-                immutableViewList.add(convertValue(item));
+                immutableViewList.add(convertValue(key, item));
             }
 
             return immutableViewList;
@@ -240,7 +240,7 @@ class ViewMap implements Map<String, Object> {
                 Object entryValue = entry.getValue();
 
                 if (entryKey instanceof String) {
-                    convertedMap.put((String) entryKey, convertValue(entryValue));
+                    convertedMap.put((String) entryKey, convertValue((String) entryKey, entryValue));
                 }
             }
 
@@ -248,6 +248,14 @@ class ViewMap implements Map<String, Object> {
 
         } else if (value != null && !getViewClasses(value).isEmpty()) {
             return new ViewMap(value, includeClassName);
+
+        } else if (value != null) {
+            LOGGER.warn("Unsupported type [{}] returned from [{}#{}].",
+                    new Object[] {
+                            value.getClass().getName(),
+                            view.getClass().getName(),
+                            key
+                    });
         }
 
         return null;
@@ -280,15 +288,13 @@ class ViewMap implements Map<String, Object> {
         }
     }
 
-    // Gets a list of all the interface classes that are implemented by the view
-    // objects and are annotated with @ViewInterface.
+    // Gets a list of all the classes that are implemented by the view objects
+    // and are annotated with @ViewInterface.
     private static List<Class<?>> getViewClasses(Object view) {
 
         // find all the classes that could contain annotations
         return ViewUtils.getAnnotatableClasses(view.getClass())
                 .stream()
-                // only look at interfaces
-                .filter(Class::isInterface)
                 // that are annotated with @ViewInterface
                 .filter(klass -> klass.isAnnotationPresent(ViewInterface.class))
                 // add to list

@@ -151,6 +151,13 @@ public class SelectionsWidget extends AbstractPaginatedResultWidget<SearchResult
         page.writeEnd();
     }
 
+    // --- Record Support ---
+
+    @Override
+    public String getLabel() {
+        return getState().getType().getDisplayName();
+    }
+
     private enum ToolEntityType {
 
         ANYONE("label.anyone"),

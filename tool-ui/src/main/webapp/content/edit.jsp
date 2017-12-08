@@ -301,12 +301,18 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             method="post"
             enctype="multipart/form-data"
             action="<%= wp.objectUrl("", selected,
-                    "action-delete", null,
-                    "action-draft", null,
-                    "action-publish", null,
-                    "action-restore", null,
-                    "action-save", null,
-                    "action-trash", null,
+                    ToolPageContext.DELETE_ACTION_PARAMETER, null,
+                    ToolPageContext.TRASH_ACTION_PARAMETER, null,
+                    ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.NEW_DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.PUBLISH_ACTION_PARAMETER, null,
+                    ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                    ToolPageContext.SAVE_ACTION_PARAMETER, null,
+                    ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                    ToolPageContext.MERGE_ACTION_PARAMETER, null,
+                    ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                    ToolPageContext.WORKFLOW_ACTION_PARAMETER, null,
+                    ToolPageContext.UNSCHEDULE_ACTION_PARAMETER, null,
                     "published", null) %>"
             autocomplete="off"
             <% if (!wp.getCmsTool().isDisableFieldLocking()) { %>
@@ -387,7 +393,19 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 %></h1>
 
                 <div class="widgetControls">
-                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("") %>">
+                    <a class="icon icon-action-edit widgetControlsEditInFull" target="_blank" href="<%= wp.url("",
+                                                                                                        ToolPageContext.DELETE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.TRASH_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.NEW_DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.PUBLISH_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.SAVE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.DRAFT_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.MERGE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.RESTORE_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.WORKFLOW_ACTION_PARAMETER, null,
+                                                                                                        ToolPageContext.UNSCHEDULE_ACTION_PARAMETER, null) %>">
                         <%= wp.h(wp.localize("com.psddev.cms.tool.page.content.Edit", "action.editFull"))%>
                     </a>
                     <% if (wp.getCmsTool().isEnableAbTesting()) { %>
@@ -541,7 +559,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
             %>
 
             <div class="widget widget-publishing"<%= publishable ? " data-publishable" : "" %>>
-                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
+                <h1 class="icon icon-action-publish" data-rtc-edit-field-update-other-viewers><%= wp.h(wp.localize(editingState.getType(), publishable ? "action.publish" : "action.save")) %></h1>
 
                 <%
                 wp.writeStart("div", "class", "widget-controls");
@@ -674,51 +692,46 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
 
                         wp.writeStart("div", "class", "message message-warning");
                             wp.writeStart("p");
-                                if (draft != null && !draft.isNewContent()) {
-                                    wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
+                                wp.writeStart("span", "class", "visibilityLabel widget-publishingWorkflowState");
+                                    if (draft != null && !draft.isNewContent()) {
+                                        wp.writeObjectLabel(ObjectType.getInstance(Draft.class));
 
-                                    String draftName = draft.getName();
+                                        String draftName = draft.getName();
 
-                                    if (!ObjectUtils.isBlank(draftName)) {
-                                        wp.writeHtml(" (");
-                                        wp.writeHtml(draftName);
-                                        wp.writeHtml(")");
+                                        if (!ObjectUtils.isBlank(draftName)) {
+                                            wp.writeHtml(" (");
+                                            wp.writeHtml(draftName);
+                                            wp.writeHtml(")");
+                                        }
+
+                                    } else {
+                                        wp.writeHtml("Initial Draft");
                                     }
+                                wp.writeEnd();
 
-                                } else {
-                                    wp.writeHtml("Initial Draft");
-                                }
 
-                                wp.writeHtml(" last saved ");
-                                wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                                 wp.writeHtml(" by ");
                                 wp.writeObjectLabel(draftContentData.getUpdateUser());
-                                wp.writeHtml(".");
+                                wp.writeHtml(" at ");
+                                wp.writeHtml(wp.formatUserDateTime(draftContentData.getUpdateDate()));
                             wp.writeEnd();
-
-                            if (schedule != null) {
-                                Date triggerDate = schedule.getTriggerDate();
-                                ToolUser triggerUser = schedule.getTriggerUser();
-
-                                if (triggerDate != null || triggerUser != null) {
-                                    wp.writeStart("p");
-                                        wp.writeHtml(" Scheduled to be published");
-
-                                        if (triggerDate != null) {
-                                            wp.writeHtml(" ");
-                                            wp.writeHtml(wp.formatUserDateTime(triggerDate));
-                                        }
-
-                                        if (triggerUser != null) {
-                                            wp.writeHtml(" by ");
-                                            wp.writeObjectLabel(triggerUser);
-                                        }
-
-                                        wp.writeHtml(".");
-                                    wp.writeEnd();
-                                }
-                            }
                         wp.writeEnd();
+
+                        if (schedule != null) {
+                            Date triggerDate = schedule.getTriggerDate();
+                            ToolUser triggerUser = schedule.getTriggerUser();
+
+                            if (triggerDate != null && triggerUser != null) {
+                                wp.writeStart("div", "class", "message message-warning");
+                                    wp.writeStart("p");
+                                        wp.writeHtml(wp.localize(editingType,
+                                                ImmutableMap.of("publishTime", wp.formatUserDateTime(triggerDate),
+                                                        "publishUser", wp.createObjectLabelHtml(triggerUser)),
+                                                "message.scheduled"));
+                                    wp.writeEnd();
+                                wp.writeEnd();
+                            }
+                        }
 
                     // Message and actions if the content is a past revision.
                     } else if (isHistory) {
@@ -1203,6 +1216,20 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                         wp.writeEnd();
                     }
                 wp.writeEnd();
+
+                Date updateDate = contentData.getUpdateDate();
+
+                if (updateDate != null) {
+                    wp.writeStart("div", "class", "widget-publishingHistory");
+                        wp.writeStart("p");
+                            wp.writeHtml(wp.localize(editingType,
+                                    ImmutableMap.of("publishUser", wp.createObjectLabelHtml(contentData.getUpdateUser()),
+                                            "publishTime", wp.formatUserDateTime(updateDate)),
+                                    "message.published"));
+                        wp.writeEnd();
+                    wp.writeEnd();
+                }
+
                 %>
             </div>
 

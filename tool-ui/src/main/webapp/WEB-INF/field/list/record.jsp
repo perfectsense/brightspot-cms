@@ -834,10 +834,15 @@ if (!isValueExternal) {
         writer.end();
 
         if (displayGrid && !field.as(ToolUi.class).isReadOnly()) {
+
+            String uploadFilesPath = wp.getCmsTool().isEnableFrontEndUploader()
+                    ? "/content/upload"
+                    : "/content/uploadFiles";
+
             writer.start("a",
                     "class", "action-upload",
                     "href", wp.url(
-                            "/content/uploadFiles?" + typeIdsQuery,
+                            uploadFilesPath + "?" + typeIdsQuery,
                             "containerId", containerObjectId,
                             "context", UploadFiles.Context.FIELD),
                     "target", "uploadFiles");

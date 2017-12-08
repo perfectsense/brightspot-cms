@@ -12,16 +12,16 @@ import java.util.stream.IntStream;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.psddev.dari.db.Database;
 import com.psddev.dari.db.DatabaseEnvironment;
-import com.psddev.dari.db.DistributedLock;
 import com.psddev.dari.db.Modification;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Sequence;
 import com.psddev.dari.db.State;
 import com.psddev.dari.util.CompactMap;
 import com.psddev.dari.util.ObjectUtils;
+import com.psddev.dari.util.StringUtils;
 import com.psddev.dari.util.UuidUtils;
 
 /** Unpublished object or unsaved changes to an existing object. */
@@ -596,33 +596,10 @@ public class Draft extends Content {
                 .noCache()
                 .first());
 
-        if (newStateCopy == null) {
-            setName("#1");
-            newState.as(NameData.class).setIndex(1);
-
-        } else {
-            DistributedLock lock = DistributedLock.Static.getInstance(
-                    Database.Static.getDefault(),
-                    getClass().getName() + "/" + newId);
-
-            lock.lock();
-
-            try {
-                NameData nameData = newStateCopy.as(NameData.class);
-
-                Integer index = nameData.getIndex();
-                index = index != null ? index + 1 : 1;
-
-                if (ObjectUtils.isBlank(getName())) {
-                    setName("#" + index);
-                }
-
-                nameData.setIndex(index);
-                nameData.save();
-
-            } finally {
-                lock.unlock();
-            }
+        if (StringUtils.isBlank(getName())) {
+            setName("#" + Sequence.Static.nextLong(
+                    getClass().getName() + "/" + newId,
+                    newStateCopy != null ? ObjectUtils.to(int.class, newStateCopy.as(NameData.class).getIndex()) + 1 : 1));
         }
     }
 

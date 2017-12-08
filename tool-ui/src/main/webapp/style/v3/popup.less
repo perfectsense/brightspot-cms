@@ -163,6 +163,10 @@
   top: (@toolHeader-height) !important;
   width: 100% !important;
 
+  .hasToolBroadcast & {
+    top: (@toolBroadcast-height + @toolHeader-height) !important;
+  }
+
   &:before {
     background: #c9c9c9;
     opacity: 0.9;

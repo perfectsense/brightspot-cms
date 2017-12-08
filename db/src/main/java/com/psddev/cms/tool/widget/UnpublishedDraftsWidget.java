@@ -45,6 +45,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
 
     @Override
     public void writeHtml(ToolPageContext page, Dashboard dashboard) throws IOException, ServletException {
+        ToolUser currentUser = page.getUser();
         Query<Workflow> workflowQuery = Query.from(Workflow.class);
         if (page.getSite() != null) {
             workflowQuery.where("sites is missing or sites = ?", page.getSite());
@@ -82,13 +83,12 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
         final UserType userType = page.pageParam(UserType.class, "userType", UserType.ANYONE);
         String userParameter = userType + ".value";
         final Object user = Query.from(Object.class).where("_id = ?", page.pageParam(UUID.class, userParameter, null)).first();
-        QueryFilter<Object> queryFilter = null;
+        QueryFilter<Object> queryFilter = item -> {
+            State itemState = State.getInstance(item);
+            boolean typeOk = true;
+            boolean userOk = true;
 
-        if (type != null || userType != UserType.ANYONE) {
-            queryFilter = item -> {
-                State itemState = State.getInstance(item);
-                boolean typeOk = true;
-                boolean userOk = true;
+            if (type != null || userType != UserType.ANYONE) {
 
                 if (type != null) {
                     ObjectType itemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
@@ -99,7 +99,7 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                     ToolUser updateUser = itemState.as(Content.ObjectModification.class).getUpdateUser();
 
                     if (userType == UserType.ME) {
-                        userOk = page.getUser().equals(updateUser);
+                        userOk = currentUser.equals(updateUser);
 
                     } else if (user instanceof ToolUser) {
                         userOk = user.equals(updateUser);
@@ -108,10 +108,12 @@ public class UnpublishedDraftsWidget extends DefaultDashboardWidget {
                         userOk = user.equals(updateUser.getRole());
                     }
                 }
+            }
+            ObjectType permissionItemType = item instanceof Draft ? ((Draft) item).getObjectType() : itemState.getType();
+            boolean currentUserHasAccess = permissionItemType != null && currentUser.hasPermission("type/" + permissionItemType.getId() + "/read");
 
-                return typeOk && userOk;
-            };
-        }
+            return currentUserHasAccess && typeOk && userOk;
+        };
 
         QueryRestriction.updateQueryUsingAll(draftsQuery, page);
 

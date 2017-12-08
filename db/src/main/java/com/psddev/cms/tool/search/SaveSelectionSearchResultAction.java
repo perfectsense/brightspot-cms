@@ -1,5 +1,6 @@
 package com.psddev.cms.tool.search;
 
+import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.Search;
 import com.psddev.cms.tool.SearchResultAction;
 import com.psddev.cms.tool.SearchResultSelection;
@@ -16,21 +17,32 @@ public class SaveSelectionSearchResultAction implements SearchResultAction {
             SearchResultSelection selection)
             throws IOException {
 
+        ToolUser user = page.getUser();
+
+        if (selection == null) {
+            selection = user.getCurrentSearchResultSelection();
+        }
+
         if (selection == null) {
             return;
         }
 
+        if (user.isSavedSearchResultSelection(selection)) {
+            writeAction(page, selection, page.localize(SaveSelectionSearchResultAction.class, "action.editSelection"));
+
+        } else if (selection.size() > 0) {
+            writeAction(page, selection, page.localize(SaveSelectionSearchResultAction.class, "action.saveSelection"));
+        }
+    }
+
+    private void writeAction(ToolPageContext page, SearchResultSelection selection, String key) throws IOException {
         page.writeStart("div", "class", "searchResult-action-simple");
             page.writeStart("a",
                     "class", "button",
                     "target", "toolUserSaveSearch",
                     "href", page.cmsUrl("/toolUserSaveSelection",
                             "selectionId", selection.getId().toString()));
-                if (page.getUser().isSavedSearchResultSelection(page.getUser().getCurrentSearchResultSelection())) {
-                    page.writeHtml(page.localize(SaveSelectionSearchResultAction.class, "action.editSelection"));
-                } else {
-                    page.writeHtml(page.localize(SaveSelectionSearchResultAction.class, "action.saveSelection"));
-                }
+                page.writeHtml(key);
             page.writeEnd();
         page.writeEnd();
     }
