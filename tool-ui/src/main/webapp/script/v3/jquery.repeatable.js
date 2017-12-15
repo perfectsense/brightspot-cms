@@ -186,6 +186,8 @@ The HTML within the repeatable element must conform to these standards:
                 
                 // Override the default options
                 self.options = $.extend(true, {}, self.defaults, options);
+
+                self.initializingCount = 0;
                 
                 // Get the various things we will need from the DOM
                 self.initDOM();
@@ -216,6 +218,11 @@ The HTML within the repeatable element must conform to these standards:
 
                 // Create the "Add Item" button(s)
                 self.initAddButton();
+
+                if (self.mode == 'preview') {
+                    // Create the modal for waiting items to be initialized
+                    self.initWaitingModal();
+                }
 
                 if (self.dom.$defaultEditableView == self.dom.$viewVertical) {
                     // Create index selector
@@ -452,7 +459,15 @@ The HTML within the repeatable element must conform to these standards:
                         // 'data-addButtonTemplate': $template
                         
                     }).on('click', function(event, customCallback) {
+                        ++ self.initializingCount;
 
+                        if (self.mode == 'preview') {
+                            self.dom.$modal.appendTo(self.$element);
+
+                            if (self.initializingCount > 15 && self.dom.$modal.is( ":hidden" )) {
+                                self.dom.$modal.show();
+                            }
+                        }
                         // The click event for the add button supports an
                         // optional callback function that will be called after
                         // the new item is added.
@@ -504,6 +519,20 @@ The HTML within the repeatable element must conform to these standards:
                         }
                     }
                 })
+            },
+
+            /**
+             * Initialize the modal that presents when there're more than 5 items being added through #addItem()
+             */
+            initWaitingModal: function () {
+                var self = this;
+                var $modal = $('<div/>', {'class': 'waiting-modal'});
+                if (self.dom.$defaultEditableView == self.dom.$viewVertical) {
+                    $modal.append($('<div/>', {'class': 'waiting-modal-first'}))
+                        .append($('<div/>', {'class': 'waiting-modal-last'}))
+                }
+                self.dom.$modal = $modal;
+                self.dom.$modal.hide();
             },
 
             /**
@@ -1320,6 +1349,12 @@ The HTML within the repeatable element must conform to these standards:
 
                         // Add the loaded content into the new item
                         $addedItem.html(content);
+
+                        // Hide waiting modal if all calls returned
+                        if (self.mode == 'preview' && --self.initializingCount <= 0 && self.dom.$modal.is( ":visible" )) {
+                            self.dom.$modal.hide();
+                        }
+
                     });
                     
                 } else {

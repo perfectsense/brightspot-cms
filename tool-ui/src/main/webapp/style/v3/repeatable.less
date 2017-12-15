@@ -165,7 +165,35 @@
 
   &.repeatableForm-previewable {
     @preview-counter: preview-counter;
-    
+
+    .waiting-modal {
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+      background: rgba(211, 211, 211, 0.5) url(http://www.ifmo.ru/images/loader.gif) center center no-repeat;
+      background-size: 150px;
+      position: absolute;
+      z-index: 999;
+      top: 10px;
+      right: 0px;
+      .waiting-modal-first {
+        position: absolute;
+        height: 10%;
+        width: 100%;
+        top: 0px;
+        background: url(http://www.ifmo.ru/images/loader.gif) center center no-repeat;
+        background-size: 150px;
+      }
+      .waiting-modal-last {
+        position: absolute;
+        height: 10%;
+        width: 100%;
+        bottom: 0px;
+        background: url(http://www.ifmo.ru/images/loader.gif) center center no-repeat;
+        background-size: 150px;
+      }
+    }
+
     > ol,
     > ul {
       overflow: hidden;
