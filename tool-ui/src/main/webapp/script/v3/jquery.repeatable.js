@@ -1928,11 +1928,16 @@ The HTML within the repeatable element must conform to these standards:
                 $viewSwitcher = $('<span class="view-switcher">' +
                     '<a href="#" class="view-switcher-active view-switcher-grid">Grid</a>' +
                     '<span class="view-switcher-vertical editable-view">|</span> <a href="#" class="view-switcher-vertical editable-view">Vertical</a>' +
-                    ' <span class="view-switcher-gallery editable-view">|</span> <a href="#" class="view-switcher-gallery editable-view">Gallery</a>' +
+                    ' <span class="view-switcher-gallery editable-view">|</span> <a href="#" class="view-switcher-gallery editable-view">Carousel</a>' +
                     '</span>').appendTo($topButtonContainer);
 
-                // Hide vertical view by default;
-                $viewSwitcher.find('.view-switcher-vertical').hide();
+                // win.showVerticalView is set in edit.jsp basing on CmsTool.galleryDisplay
+                if (!win.showVerticalView) {
+                    $viewSwitcher.find('.view-switcher-vertical').hide();
+                } else {
+                    $viewSwitcher.find('.view-switcher-gallery').hide();
+                }
+
                 self.dom.$viewSwitcher = $viewSwitcher; // Save for later
 
                 // The grid view will use the existing UL or OL
@@ -2686,6 +2691,13 @@ The HTML within the repeatable element must conform to these standards:
                     if ($itemEdit.length == 0) {
                         $item.data("currentView", "vertical");
                         self.itemLoadOrMove($item, $itemEditContainer);
+                    }
+
+                    var dataPreviewField = $item.attr('data-preview-field');
+                    if (dataPreviewField) {
+                        var fieldName = dataPreviewField.split('/')[0];
+                        var $previewEle = $item.find('> .itemEdit-vertical-container').find('> .objectInputs').find('> .inputContainer[data-field ="' + fieldName + '"]');
+                        $previewEle.hide();
                     }
 
                     // hide richtext content temporarily before it's properly rendered
