@@ -1523,20 +1523,13 @@ body.loading {
   margin-left: 0;
   width: 20%;
   min-width: 270px;
-  > .content {
-    > .closeButton {
+  .content {
+    .closeButton {
       display: none;
     }
-    > .plugin-popup > div {
+    .plugin-popup > div {
       text-align: center;
       height: 200px;
-      > img {
-        width: 10%;
-        position: absolute;
-        top: 40%;
-        right: 45%;
-        display: block;
-      }
 
       @keyframes spinner {
         to {transform: rotate(360deg);}
@@ -1544,7 +1537,6 @@ body.loading {
 
       .spinner:before {
         content: '';
-        -moz-box-sizing: border-box;
         box-sizing: border-box;
         position: absolute;
         top: 40%;
@@ -1554,7 +1546,6 @@ body.loading {
         border-radius: 50%;
         border: 3px solid #ccc;
         border-top-color: #85bd43;
-        -webkit-animation: spinner .9s linear infinite;
         animation: spinner .9s linear infinite;
       }
     }
