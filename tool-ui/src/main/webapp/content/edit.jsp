@@ -1432,18 +1432,18 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
         };
         require(['v3/content/preview']);
     </script>
-
-    <%
-        GalleryDisplay galleryDisplay = wp.getCmsTool().getGalleryDisplay();
-        if (galleryDisplay != null && galleryDisplay.equals(GalleryDisplay.VERTICAL)) {
-    %>
-    <script type="text/javascript">
-        (function($, window) {
-            window.showVerticalView = true;
-        })(jQuery, window);
-    </script>
-    <% } %>
 <% } %>
+<%
+    wp.write("<div class='test'>wp.getCmsTool(): " + wp.getCmsTool() + "</div>");
+    GalleryDisplay galleryDisplay = wp.getCmsTool().getGalleryDisplay();
+    if (galleryDisplay != null && galleryDisplay.equals(GalleryDisplay.VERTICAL)) {
+%>
+<script type="text/javascript">
+    (function($, window) {
+        window.showVerticalView = true;
+    })(jQuery, window);
+</script>
+<%  } %>
 <% wp.include("/WEB-INF/footer.jsp"); %><%!
 
 // Renders all the content widgets for the given position.
