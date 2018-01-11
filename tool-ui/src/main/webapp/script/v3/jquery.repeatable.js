@@ -526,7 +526,7 @@ The HTML within the repeatable element must conform to these standards:
             initWaitingModal: function () {
                 var self = this;
                 var $modal = $('<div>');
-                $modal.append($('<div>').append($('<div class="spinner"></div>')));
+                $modal.append($('<div class="spinner"></div>'));
                 self.dom.$modal = $modal;
                 $('body').append(self.dom.$modal);
                 self.dom.$modal.popup();

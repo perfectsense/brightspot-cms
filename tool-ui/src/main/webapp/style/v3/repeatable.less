@@ -1521,15 +1521,18 @@ body.loading {
   top: 30%;
   left: 40%;
   margin-left: 0;
-  width: 20%;
-  min-width: 270px;
+  width: 200px;
   .content {
+    padding: 0px !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: center;
     .closeButton {
       display: none;
     }
-    .plugin-popup > div {
-      text-align: center;
-      height: 200px;
+    .plugin-popup {
 
       @keyframes spinner {
         to {transform: rotate(360deg);}
@@ -1539,8 +1542,8 @@ body.loading {
         content: '';
         box-sizing: border-box;
         position: absolute;
-        top: 40%;
-        left: 45%;
+        top: 35%;
+        left: 40%;
         width: 50px;
         height: 50px;
         border-radius: 50%;
@@ -1550,4 +1553,9 @@ body.loading {
       }
     }
   }
+}
+
+.loading-modal:before {
+  background-color: fade(white, 80%);
+  opacity: 1;
 }
