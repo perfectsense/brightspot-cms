@@ -55,7 +55,6 @@ java.util.UUID,
 
 org.joda.time.DateTime,
 com.google.common.collect.ImmutableMap" %>
-<%@ page import="com.psddev.cms.tool.GalleryDisplay" %>
 <%
 
 // --- Logic ---
@@ -1434,7 +1433,6 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
     </script>
 <% } %>
 <%
-    wp.write("<div class='test'>wp.getCmsTool(): " + wp.getCmsTool() + "</div>");
     GalleryDisplay galleryDisplay = wp.getCmsTool().getGalleryDisplay();
     if (galleryDisplay != null && galleryDisplay.equals(GalleryDisplay.VERTICAL)) {
 %>
