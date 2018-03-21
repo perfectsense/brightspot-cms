@@ -10,26 +10,16 @@ define([
                 var expireMillis = Math.max(0, expireTime.getTime() - Date.now())
                 var goTime = Math.max(0, expireMillis + (-1000 * 60 * warnMins))
 
+                var url = window.location.href
+                if (url.indexOf('?') < 0) {
+                    url += "?_renewSession=true"
+                } else {
+                    url += "&_renewSession=true"
+                }
+
                 setTimeout(function() {
                     // construct warning message and redirect url
-                    var expireMillis = Math.max(0, expireTime.getTime() - Date.now())
-                    var message = ''
-                    var timeLeft = new Date(expireMillis)
-                    if (expireMillis == 0) {
-                        message = "You have been logged out and your work may not be saved."
-                    } else {
-                        message = ' You will be logged out in '
-                                      + (("0" + timeLeft.getMinutes()).slice(-2)) + ':'
-                                      + (("0" + timeLeft.getSeconds()).slice(-2)) + ', <a href="'
-                                      + url + '">I\'m still working.</a>'
-                    }
-
-                    var url = window.location.href
-                    if (url.indexOf('?') < 0) {
-                        url += "?_renewSession=true"
-                    } else {
-                        url += "&_renewSession=true"
-                    }
+                    var message = constructMessage(Math.max(0, expireTime.getTime() - Date.now()), url)
 
                     if ($(".widget-logIn").size() == 0) {
                         var span = $("<span>").attr("name", "logout-message")
@@ -49,20 +39,10 @@ define([
 
                     var warningInterval = setInterval(function() {
                         expireTime = new Date(getLatestSessionExpiration(expireTime))
-                        var expireMillis = Math.max(0, expireTime.getTime() - Date.now())
 
-                        if (expireMillis <= 0) {
-                            message = "You have been logged out and your work may not be saved."
-                            clearInterval(warningInterval)
-                        } else {
-                            // calculate time left.
-                            timeLeft = new Date(expireMillis)
-
-                            message = ' You will be logged out in '
-                                + (("0" + timeLeft.getMinutes()).slice(-2)) + ':'
-                                + (("0" + timeLeft.getSeconds()).slice(-2)) + ', <a href="'
-                                + url + '">I\'m still working.</a>'
-                        }
+                        var message = constructMessage(Math.max(0, expireTime.getTime() - Date.now()),
+                            url,
+                            warningInterval)
 
                         $("span[name=logout-message]").html(message)
 
@@ -86,6 +66,27 @@ define([
                     }
 
                     return expireTime
+                }
+
+                function constructMessage(expireMillis, url, intervalFunc) {
+                    if (expireMillis <= 0) {
+                        message = "You have been logged out and your work may not be saved."
+                        if (intervalFunc) {
+                            clearInterval(intervalFunc)
+                        }
+                    } else {
+                        // calculate time left.
+                        timeLeft = new Date(expireMillis)
+
+                        message = ' You will be logged out in '
+                            + (("0" + timeLeft.getMinutes()).slice(-2)) + ':'
+                            + (("0" + timeLeft.getSeconds()).slice(-2))
+
+                        if (url) {
+                            message += ', <a href="' + url + '">I\'m still working.</a>'
+                        }
+                    }
+                    return message
                 }
 
             }
