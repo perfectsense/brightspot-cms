@@ -1,3 +1,7 @@
+body.loading {
+  overflow: hidden !important;
+}
+
 .repeatableForm {
   > ol {
     counter-reset: item;
@@ -165,7 +169,7 @@
 
   &.repeatableForm-previewable {
     @preview-counter: preview-counter;
-    
+
     > ol,
     > ul {
       overflow: hidden;
@@ -173,12 +177,56 @@
       // For a numbered carousel create a CSS counter
       counter-reset: @preview-counter;
 
-      > li.state-changed {
-        .background-flat(@color-change);
-      }
+      > li:not(.item-vertical-view) {
+        &.state-changed {
+          .background-flat(@color-change);
+        }
+        &.state-error {
+          .background-flat(@color-remove);
+        }
 
-      > li.state-error {
-        .background-flat(@color-remove);
+        .inputLabel {
+          display: block;
+          float: none;
+          margin: 0 0 5px 0;
+          padding: 5px;
+          width: auto;
+        }
+
+        .inputSmall {
+          margin-left: 0;
+          padding-left: 2px;
+        }
+
+        .inputNote {
+          margin-left: 2px;
+        }
+
+        .objectId-select {
+          width: 100%;
+        }
+
+        .objectId-edit {
+          margin-left: 0;
+        }
+
+        &.collapsed {
+          .inputLabel,
+          .objectId-clear {
+            display: none !important;
+          }
+
+          .objectId-select {
+            @img-height: 100px;
+
+            display: block;
+            height: (@img-height + 2 * (@input-padding + @input-borderWidth));
+
+            img {
+              height: @img-height;
+            }
+          }
+        }
       }
       
       > li {
@@ -195,6 +243,7 @@
         counter-increment: @preview-counter;
 
         .previewable-image {
+          display: block;
           width: 200px;
           height:150px;
           cursor: pointer;
@@ -205,6 +254,16 @@
 
           // In case src is blank set a background color
           background-color:#ddd;
+          // In case src is blank set a placeholder color
+          &::before {
+            content: ' ';
+            display: block;
+            position: absolute;
+            width: 200px;
+            height: 150px;
+            min-height: 150px;
+            background-color: #ddd;
+          }
         }
 
         .previewable-label {
@@ -255,49 +314,6 @@
           color:#999;
         }
 
-        .inputLabel {
-          display: block;
-          float: none;
-          margin: 0 0 5px 0;
-          padding: 5px;
-          width: auto;
-        }
-
-        .inputSmall {
-          margin-left: 0;
-          padding-left: 2px;
-        }
-
-        .inputNote {
-          margin-left: 2px;
-        }
-
-        .objectId-select {
-          width: 100%;
-        }
-
-        .objectId-edit {
-          margin-left: 0;
-        }
-
-        &.collapsed {
-          .inputLabel,
-          .objectId-clear {
-            display: none !important;
-          }
-
-          .objectId-select {
-            @img-height: 100px;
-
-            display: block;
-            height: (@img-height + 2 * (@input-padding + @input-borderWidth));
-
-            img {
-              height: @img-height;
-            }
-          }
-        }
-
         &:before {
           background: @color-overlay;
           border: 2px solid white;
@@ -314,6 +330,218 @@
           top: 10px;
         }
 
+        &.item-vertical-view {
+          position: relative;
+          min-height: 250px;
+          height: auto;
+          width: auto;
+          padding-top: 10px;
+          padding-left:5px;
+          border: none;
+          float: none;
+          margin: 0;
+          overflow-y: auto;
+          > .item-preview {
+            position: relative;
+            min-height: 170px;
+            background: white;
+            box-sizing: border-box;
+            float: left;
+            width: 210px;
+            padding: 4px 4px 22px 4px;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+
+            .previewable-image {
+              width: 200px;
+              height: 150px;
+              cursor: pointer;
+
+              // Resize the image so it's largest dimension fills the tile completely
+              // and keeps the correct aspect ratio.
+              object-fit: cover;
+
+              // In case src is blank set a background color
+              background-color: #ddd;
+              // In case src is blank set a placeholder color
+              &::before {
+                content: ' ';
+                display: block;
+                position: absolute;
+                width: 200px;
+                height: 150px;
+                min-height: 150px;
+                background-color: #ddd;
+              }
+            }
+
+            .previewable-label {
+              margin: 2px 4px 8px;
+              height: 2.5em;
+              overflow: hidden;
+            }
+
+            .previewable-label-prefix {
+              font-weight: bold;
+            }
+
+            .previewable-controls {
+              height: 22px;
+              position: absolute;
+              width: 100%;
+              left: 0;
+              bottom: 0;
+              background-color: #f8f8f8;
+            }
+
+            .previewable-control-edit {
+              .icon;
+              .icon-pencil;
+              .icon-only;
+              position: absolute;
+              right: 30px;
+              bottom: 2px;
+              cursor: pointer;
+              color: #999;
+            }
+
+            > .repeatableLabel {
+              box-sizing: border-box;
+              overflow: hidden;
+              padding-right: 30px;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            > .removeButton {
+              .icon;
+              .icon-remove;
+              .icon-only;
+              .link;
+
+              position: absolute;
+
+              left: auto;
+              right: 8px;
+              top: auto;
+              bottom: 2px;
+              color: #999;
+            }
+
+            .inputLabel {
+              display: block;
+              float: none;
+              margin: 0 0 5px 0;
+              padding: 5px;
+              width: auto;
+            }
+
+            .inputSmall {
+              margin-left: 0;
+              padding-left: 2px;
+            }
+
+            .inputNote {
+              margin-left: 2px;
+            }
+
+            .objectId-select {
+              width: 100%;
+            }
+
+            .objectId-edit {
+              margin-left: 0;
+            }
+
+            &.collapsed {
+              .inputLabel,
+              .objectId-clear {
+                display: none !important;
+              }
+
+              .objectId-select {
+                @img-height: 100px;
+
+                display: block;
+                height: (@img-height + 2 * (@input-padding + @input-borderWidth));
+
+                img {
+                  height: @img-height;
+                }
+              }
+            }
+
+            &:before {
+              background: @color-overlay;
+              border: 2px solid white;
+              border-radius: 12px;
+              color: white;
+              content: counter(@preview-counter);
+              height: 24px;
+              left: 10px;
+              line-height: 20px;
+              min-width: 24px;
+              padding: 0 4px;
+              position: absolute;
+              text-align: center;
+              top: 10px;
+            }
+
+            .item-index-select {
+              height: 24px;
+              left: 10px;
+              line-height: 20px;
+              min-width: 24px;
+              position: absolute;
+              text-align: center;
+              top: 10px;
+              z-index: 99;
+            }
+          }
+          > .itemEdit-vertical-container {
+            min-height: 170px;
+            position: absolute;
+            float: left;
+            left: 230px;
+            right: 5px;
+          }
+          &.state-changed {
+            > .item-preview {
+              .background-flat(@color-change);
+            }
+          }
+          &.state-error {
+            > .item-preview {
+              .background-flat(@color-remove);
+              > .previewable-label > a {
+                color:white;
+              }
+            }
+          }
+        }
+
+        &.toBeRemoved {
+          > .item-preview {
+            .previewable-control-edit {
+              display: none;
+            }
+            > .removeButton {
+              .icon-plus;
+            }
+          }
+          > .itemEdit-vertical-container {
+            opacity: 0.5;
+          }
+        }
+      }
+    }
+
+    > ol,
+    > ul {
+      &.view-vertical {
+        > li > div {
+          position: relative;
+        }
       }
     }
 
@@ -1287,4 +1515,47 @@
       border-radius: 100%;
     }
   }
+}
+
+.loading-modal {
+  top: 30%;
+  left: 40%;
+  margin-left: 0;
+  width: 200px;
+  .content {
+    padding: 0px !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-align: center;
+    .closeButton {
+      display: none;
+    }
+    .plugin-popup {
+
+      @keyframes spinner {
+        to {transform: rotate(360deg);}
+      }
+
+      .spinner:before {
+        content: '';
+        box-sizing: border-box;
+        position: absolute;
+        top: 35%;
+        left: 40%;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid #ccc;
+        border-top-color: #85bd43;
+        animation: spinner .9s linear infinite;
+      }
+    }
+  }
+}
+
+.loading-modal:before {
+  background-color: fade(white, 80%);
+  opacity: 1;
 }

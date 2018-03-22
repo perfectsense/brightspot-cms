@@ -30,6 +30,7 @@ com.psddev.cms.tool.ContentEditWidgetDisplay,
 com.psddev.cms.tool.ToolPageContext,
 com.psddev.cms.tool.Widget,
 com.psddev.cms.tool.page.content.Edit,
+com.psddev.cms.tool.GalleryDisplay,
 
 com.psddev.dari.db.ObjectField,
 com.psddev.dari.db.ObjectType,
@@ -53,7 +54,8 @@ java.util.Set,
 java.util.UUID,
 
 org.joda.time.DateTime,
-com.google.common.collect.ImmutableMap" %><%
+com.google.common.collect.ImmutableMap" %>
+<%
 
 // --- Logic ---
 
@@ -1430,7 +1432,16 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
         require(['v3/content/preview']);
     </script>
 <% } %>
-
+<%
+    GalleryDisplay galleryDisplay = wp.getCmsTool().getGalleryDisplay();
+    if (galleryDisplay != null && galleryDisplay.equals(GalleryDisplay.VERTICAL)) {
+%>
+<script type="text/javascript">
+    (function($, window) {
+        window.showVerticalView = true;
+    })(jQuery, window);
+</script>
+<%  } %>
 <% wp.include("/WEB-INF/footer.jsp"); %><%!
 
 // Renders all the content widgets for the given position.

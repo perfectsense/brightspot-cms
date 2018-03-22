@@ -217,6 +217,10 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("Debug")
     private boolean useOldTaxonomyChildrenDetection;
 
+    @ToolUi.Tab("UI")
+    @ToolUi.Placeholder("Horizontal")
+    private GalleryDisplay galleryDisplay;
+
     @Embedded
     public static class CommonTime extends Record {
 
@@ -913,6 +917,14 @@ public class CmsTool extends Tool {
 
     public void setUseOldTaxonomyChildrenDetection(boolean useOldTaxonomyChildrenDetection) {
         this.useOldTaxonomyChildrenDetection = useOldTaxonomyChildrenDetection;
+    }
+
+    public GalleryDisplay getGalleryDisplay() {
+        return galleryDisplay;
+    }
+
+    public void setGalleryDisplay(GalleryDisplay galleryDisplay) {
+        this.galleryDisplay = galleryDisplay;
     }
 
     public String createManualContentLockingNoteText() {

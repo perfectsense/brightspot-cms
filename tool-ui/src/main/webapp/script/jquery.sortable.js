@@ -77,6 +77,9 @@ $.plugin2('sortable', {
                     'z-index': 1000000
                 });
 
+                // Trigger an event to indicate 'sortable' is started
+                $container.trigger('sortable.start', [this]);
+
                 data.$parents = $selected.parentsUntil('.toolContent');
 
                 data.$parents.addClass('sortable-parent');
