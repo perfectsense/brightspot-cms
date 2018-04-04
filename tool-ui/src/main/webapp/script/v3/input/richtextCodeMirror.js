@@ -8092,6 +8092,18 @@ define([
                         self.removeStyles(range);
 
                     }
+                } else {
+                    // Resolves issue where a link/linklist marker is added to empty rte and the state of the rte freezes
+                    // below a space is added to the marker 
+                    // and then the styles are cleared from the space above
+                    if (range.from.line === 0 && range.to.ch > 0){
+                        editor.replaceRange(' ', { line:range.to.line, ch:range.to.ch + 1 }, { line:range.to.line, ch:range.to.ch + 1 }, null);
+                        self.removeStyles( {
+                            from: { line:range.to.line, ch:range.to.ch + 1 },
+                            to:  { line:range.to.line, ch:range.to.ch + 1 }
+                        });
+                        editor.replaceRange('', { line:range.to.line, ch:range.to.ch + 1 }, { line:range.to.line, ch:range.to.ch + 1 }, null);
+                    }
                 }
 
             } else {
