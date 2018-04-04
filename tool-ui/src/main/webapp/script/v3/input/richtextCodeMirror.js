@@ -7676,9 +7676,9 @@ define([
 
             // For performance, tell CodeMirror not to update the DOM
             // until our fromHTML() has completed.
-            self.codeMirror.operation(function(){
+            // self.codeMirror.operation(function(){
                 self._fromHTML.apply(self, args);
-            });
+            // });
         },
         _fromHTML: function(html, range, allowRaw, retainStyles) {
 
@@ -8097,11 +8097,11 @@ define([
                     // below a space is added to the marker 
                     // and then the styles are cleared from the space above
                     if (range.from.line === 0 && range.to.ch > 0){
-                        var fromRange = { line:range.to.line, ch:range.to.ch + 1 }
-                        editor.replaceRange(' ', fromRange, fromRange, null);
+                        var replaceRange = { line:range.to.line, ch:range.to.ch + 1 }
+                        editor.replaceRange(' ', replaceRange, replaceRange, null);
                         self.removeStyles( {
-                            from: fromRange,
-                            to: fromRange
+                            from: replaceRange,
+                            to: replaceRange
                         });
                     }
                 }
