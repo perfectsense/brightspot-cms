@@ -11,11 +11,6 @@ define([
                 var goTime = Math.max(0, expireMillis + (-1000 * 60 * warnMins))
 
                 var url = window.location.href
-                if (url.indexOf('?') < 0) {
-                    url += "?_renewSession=true"
-                } else {
-                    url += "&_renewSession=true"
-                }
 
                 setTimeout(function() {
                     // construct warning message and redirect url
@@ -36,6 +31,11 @@ define([
                             $("body").prepend(broadcastElem)
                         }
                     }
+
+                    $("span[name=logout-message]").click(function(e) {
+                        e.preventDefault()
+                        $.post( url, { _renewSession: "true" } , function(success) { location.reload() })
+                    })
 
                     var warningInterval = setInterval(function() {
                         expireTime = new Date(getLatestSessionExpiration(expireTime))

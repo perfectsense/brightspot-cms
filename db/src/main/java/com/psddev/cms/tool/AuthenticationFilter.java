@@ -82,11 +82,6 @@ public class AuthenticationFilter extends AbstractFilter {
 
         if (ObjectUtils.to(boolean.class, request.getParameter("_renewSession"))) {
             AuthenticationFilter.Static.reauthenticate(request, response);
-            response.sendRedirect(new UrlBuilder(request)
-                    .currentPath()
-                    .currentParameters()
-                    .parameter("_renewSession", null)
-                    .toString());
             return;
         }
 
