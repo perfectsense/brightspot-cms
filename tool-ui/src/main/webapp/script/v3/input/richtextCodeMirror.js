@@ -8098,7 +8098,7 @@ define([
                     // and then the styles are cleared from the space above
                     if (range.from.line === 0 && range.to.ch > 0){
                         var fromRange = { line:range.to.line, ch:range.to.ch + 1 }
-                        editor.replaceRange(' ', fromRange, null, null);
+                        editor.replaceRange(' ', fromRange, fromRange, null);
                         self.removeStyles( {
                             from: fromRange,
                             to: fromRange
