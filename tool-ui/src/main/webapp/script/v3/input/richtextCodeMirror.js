@@ -8097,12 +8097,12 @@ define([
                     // below a space is added to the marker 
                     // and then the styles are cleared from the space above
                     if (range.from.line === 0 && range.to.ch > 0){
-                        editor.replaceRange(' ', { line:range.to.line, ch:range.to.ch + 1 }, { line:range.to.line, ch:range.to.ch + 1 }, null);
+                        var fromRange = { line:range.to.line, ch:range.to.ch + 1 }
+                        editor.replaceRange(' ', fromRange, null, null);
                         self.removeStyles( {
-                            from: { line:range.to.line, ch:range.to.ch + 1 },
-                            to:  { line:range.to.line, ch:range.to.ch + 1 }
+                            from: fromRange,
+                            to: fromRange
                         });
-                        editor.replaceRange('', { line:range.to.line, ch:range.to.ch + 1 }, { line:range.to.line, ch:range.to.ch + 1 }, null);
                     }
                 }
 
