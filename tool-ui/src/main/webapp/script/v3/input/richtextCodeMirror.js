@@ -7676,9 +7676,9 @@ define([
 
             // For performance, tell CodeMirror not to update the DOM
             // until our fromHTML() has completed.
-            // self.codeMirror.operation(function(){
+            self.codeMirror.operation(function(){
                 self._fromHTML.apply(self, args);
-            // });
+            });
         },
         _fromHTML: function(html, range, allowRaw, retainStyles) {
 
