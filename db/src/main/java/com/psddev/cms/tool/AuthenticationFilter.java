@@ -282,8 +282,13 @@ public class AuthenticationFilter extends AbstractFilter {
          * @param request Can't be {@code null}.
          */
         public static void reauthenticate(HttpServletRequest request, HttpServletResponse response) {
-            String token = "";
+            if (request != null && !JspUtils.isFormPost(request)) {
+                return;
+            }
+
             ToolUser user = null;
+            String token = "";
+
             if (request != null) {
                 user = getUser(request);
                 token = (String) request.getAttribute(USER_TOKEN);
