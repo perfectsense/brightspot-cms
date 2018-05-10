@@ -1,6 +1,8 @@
 package com.psddev.cms.tool.page;
 
+import com.psddev.cms.db.Content;
 import com.psddev.cms.db.Directory;
+import com.psddev.cms.db.Site;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.SearchResultField;
 import com.psddev.cms.tool.SearchResultSelection;
@@ -13,6 +15,7 @@ import com.psddev.dari.db.Metric;
 import com.psddev.dari.db.ObjectField;
 import com.psddev.dari.db.ObjectType;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Recordable;
 import com.psddev.dari.db.SqlDatabase;
 import com.psddev.dari.db.State;
@@ -38,6 +41,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Modifier;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -360,18 +364,25 @@ public class ExportContent extends PageServlet {
             List<String> fieldNames = getUser().getSearchResultFieldsByTypeId().get(selectedType.getId().toString());
 
             if (fieldNames == null) {
-                for (Class<? extends SearchResultField> c : ClassFinder.Static.findClasses(SearchResultField.class)) {
-                    if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
-                        SearchResultField field = TypeDefinition.getInstance(c).newInstance();
+                if (getRequest().getAttribute("exportFields") != null) {
+                    for (String fieldName : getRequest().getAttribute("exportFields").toString().split(",")) {
+                        writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
+                        writeRaw(fieldName);
+                        writeRaw(CSV_BOUNDARY);
+                    }
+                } else {
+                    for (Class<? extends SearchResultField> c : ClassFinder.Static.findClasses(SearchResultField.class)) {
+                        if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
+                            SearchResultField field = TypeDefinition.getInstance(c).newInstance();
 
-                        if (field.isDefault(selectedType)) {
-                            writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
-                            writeRaw(field.createHeaderCellText());
-                            writeRaw(CSV_BOUNDARY);
+                            if (field.isDefault(selectedType)) {
+                                writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
+                                writeRaw(field.createHeaderCellText());
+                                writeRaw(CSV_BOUNDARY);
+                            }
                         }
                     }
                 }
-
             } else {
                 for (String fieldName : fieldNames) {
                     Class<?> fieldNameClass = ObjectUtils.getClassByName(fieldName);
@@ -430,12 +441,20 @@ public class ExportContent extends PageServlet {
             List<String> fieldNames = getUser().getSearchResultFieldsByTypeId().get(selectedType.getId().toString());
 
             if (fieldNames == null) {
-                for (Class<? extends SearchResultField> c : ClassFinder.Static.findClasses(SearchResultField.class)) {
-                    if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
-                        SearchResultField field = TypeDefinition.getInstance(c).newInstance();
+                if (getRequest().getAttribute("exportFields") != null) {
+                    for (String fieldName : getRequest().getAttribute("exportFields").toString().split(",")) {
 
-                        if (field.isDefault(selectedType)) {
-                            writeRaw(field.createDataCellText(item));
+                        writeCustomFieldValue(item, itemType, itemState, fieldName);
+                    }
+
+                } else {
+                    for (Class<? extends SearchResultField> c : ClassFinder.Static.findClasses(SearchResultField.class)) {
+                        if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
+                            SearchResultField field = TypeDefinition.getInstance(c).newInstance();
+
+                            if (field.isDefault(selectedType)) {
+                                writeRaw(field.createDataCellText(item));
+                            }
                         }
                     }
                 }
@@ -517,6 +536,41 @@ public class ExportContent extends PageServlet {
             htmlWriter.writeObject(item);
 
             write(StringUtils.unescapeHtml(stringWriter.toString().replaceAll(CSV_BOUNDARY.toString(), CSV_BOUNDARY.toString() + CSV_BOUNDARY)));
+        }
+
+        private void writeCustomFieldValue(Object item, ObjectType itemType,
+                State itemState, String fieldName) throws IOException {
+
+            ObjectField field = itemType.getField(fieldName);
+
+            writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
+            if (field != null) {
+
+                for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(field.getInternalName())).iterator(); i.hasNext();) {
+                    Object value = i.next();
+                    writeCsvItem(value);
+                    if (i.hasNext()) {
+                        writeRaw(VALUE_DELIMITER);
+                    }
+                }
+
+            } else {
+                if (fieldName.equalsIgnoreCase("id") && item instanceof Record) {
+                    writeCsvItem(((Record) item).getId().toString());
+                } else if (fieldName.equalsIgnoreCase("permalink") && item instanceof Content &&
+                        ((Content) item).getPermalink() != null) {
+                    writeCsvItem(((Content) item).getPermalink());
+                } else if (fieldName.equalsIgnoreCase("publishDate") && item instanceof Content &&
+                        ((Content) item).getPublishDate() != null) {
+                    writeCsvItem( new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(((Content) item).getPublishDate()));
+                } else if (fieldName.equalsIgnoreCase("site") && item instanceof Content &&
+                        ((Content) item).as(Site.ObjectModification.class).getOwner() != null) {
+                    writeCsvItem( ((Content) item).as(Site.ObjectModification.class).getOwner().getName());
+                } else {
+                    writeRaw("");
+                }
+            }
+            writeRaw(CSV_BOUNDARY);
         }
     }
 }
