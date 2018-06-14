@@ -342,6 +342,7 @@ public class ImageFileType implements FileContentType {
                                         page.writeStart("tr",
                                                 "data-size-name", page.h(size.getInternalName()),
                                                 "data-size-independent", page.h(size.isIndependent()),
+                                                "data-size-hidden", page.h(size.isHiddenFromUI()),
                                                 "data-size-width", page.h(size.getWidth()),
                                                 "data-size-height", page.h(size.getHeight()));
                                             page.writeStart("th");

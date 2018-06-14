@@ -2,6 +2,7 @@ package com.psddev.cms.db;
 
 import com.psddev.dari.db.Record;
 import com.psddev.dari.db.Query;
+import com.psddev.dari.db.State;
 import com.psddev.dari.util.PeriodicValue;
 import com.psddev.dari.util.PullThroughValue;
 
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 public class StandardImageSize extends Record {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardImageSize.class);
+
+    private static final String HIDDEN_FROM_UI_VALIDATION_ERROR_MESSAGE = "'Independent' and 'Hide From UI' fields cannot be checked at the same time.";
 
     private static final PullThroughValue<PeriodicValue<List<StandardImageSize>>>
             ALL = new PullThroughValue<PeriodicValue<List<StandardImageSize>>>() {
@@ -57,6 +60,10 @@ public class StandardImageSize extends Record {
 
     @ToolUi.Note("Check to prevent this standard image size from merging with others in the image editor.")
     private boolean independent;
+
+    @ToolUi.Note("Check to hide this standard image size from UI.")
+    @DisplayName("Hide From UI")
+    private Boolean hiddenFromUI;
 
     private CropOption cropOption;
     private ResizeOption resizeOption;
@@ -106,6 +113,14 @@ public class StandardImageSize extends Record {
         this.independent = independent;
     }
 
+    public boolean isHiddenFromUI() {
+        return Boolean.TRUE.equals(hiddenFromUI);
+    }
+
+    public void setHiddenFromUI(Boolean hiddenFromUI) {
+        this.hiddenFromUI = hiddenFromUI;
+    }
+
     public CropOption getCropOption() {
         return cropOption;
     }
@@ -120,5 +135,15 @@ public class StandardImageSize extends Record {
 
     public void setResizeOption(ResizeOption resizeOption) {
         this.resizeOption = resizeOption;
+    }
+
+    @Override
+    protected void onValidate() {
+        super.onValidate();
+        if (isIndependent() && isHiddenFromUI()) {
+            State state = getState();
+            state.addError(state.getField("independent"), HIDDEN_FROM_UI_VALIDATION_ERROR_MESSAGE);
+            state.addError(state.getField("hiddenFromUI"), HIDDEN_FROM_UI_VALIDATION_ERROR_MESSAGE);
+        }
     }
 }

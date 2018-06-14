@@ -1176,20 +1176,22 @@ define([
                 // Loop through all the individual sizes within the group
                 $.each(groupInfo.sizeInfos, function(sizeName, sizeInfo) {
 
-                    // Determine if we need to have a line break before this label.
-                    // addBreak will be undefined on the first loop so we will not add a break,
-                    // but on subsequent loops it will be true.
-                    if (addBreak) {
-                        groupLabel.append('<br/>');
-                    } else {
-                        addBreak = true;
+                    // Skip rendering of size if hiddenFromUi option is selected.
+                    if (!sizeInfo.hiddenFromUi) {
+                        // Determine if we need to have a line break before this label.
+                        // addBreak will be undefined on the first loop so we will not add a break,
+                        // but on subsequent loops it will be true.
+                        if (addBreak) {
+                            groupLabel.append('<br/>');
+                        } else {
+                            addBreak = true;
+                        }
+
+                        $('<span/>', {
+                            title: sizeInfo.description + ' (' + sizeInfo.width + ' x ' + sizeInfo.height + ')',
+                            html: sizeInfo.description
+                        }).appendTo(groupLabel);
                     }
-
-                    $('<span/>', {
-                        title: sizeInfo.description + ' (' + sizeInfo.width + ' x ' + sizeInfo.height + ')',
-                        html: sizeInfo.description
-                    }).appendTo(groupLabel);
-
                 });
 
                 // Create the preview image for the group
@@ -1355,7 +1357,7 @@ define([
             // From there we can get to the other information about the size.
             self.dom.$sizesTable.find('th').each(function(){
 
-                var group, independent, inputs, sizeAspectRatio, sizeAspectRatioApproximate,
+                var group, hiddenFromUi, independent, inputs, sizeAspectRatio, sizeAspectRatioApproximate,
                     sizeDescription, sizeHeight, sizeInfo, sizeName, sizeWidth, sizes, $source, $th, $tr;
 
                 $th = $(this);
@@ -1363,6 +1365,7 @@ define([
                 sizeName = $tr.attr('data-size-name');
                 sizeDescription = $th.text();
                 independent = $tr.attr('data-size-independent') === 'true';
+                hiddenFromUi = $tr.attr('data-size-hidden') === 'true';
                 sizeWidth = parseFloat($tr.attr('data-size-width'));
                 sizeHeight = parseFloat($tr.attr('data-size-height'));
                 sizeAspectRatio = sizeWidth / sizeHeight;
@@ -1423,6 +1426,7 @@ define([
                     description: sizeDescription,
                     inputs: inputs,
                     independent: independent,
+                    hiddenFromUi: hiddenFromUi,
                     width: sizeWidth,
                     height: sizeHeight,
                     aspectRatio: sizeAspectRatio,
