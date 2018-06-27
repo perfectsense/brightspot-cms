@@ -1440,7 +1440,11 @@ public class ToolPageContext extends WebPageContext {
                         writeHtml(" | ");
                     }
 
-                    writeHtml("CMS | ");
+                    String cmsName = localize(ToolUser.class, "title.cmsName");
+                    if (!StringUtils.isBlank(cmsName)) {
+                        writeHtml(cmsName);
+                        writeHtml(" | ");
+                    }
                     writeHtml(companyName);
                 writeEnd();
 
