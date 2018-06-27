@@ -248,7 +248,10 @@ define([ 'jquery', 'bsp-utils' ], function($, bsp_utils) {
         }, 5000);
       });
 
-      update();
+      $form.on('csrfReady', function() {
+        update();
+      });
+
     }
   });
 });

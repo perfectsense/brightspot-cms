@@ -11,7 +11,7 @@ define([ 'bsp-utils', 'js.cookie', 'jquery' ], function(bsp_utils, Cookies, $) {
         type: 'hidden',
         name: '_csrf',
         value: csrf
-      }))
+      })).trigger("csrfReady");
     }
   });
 
