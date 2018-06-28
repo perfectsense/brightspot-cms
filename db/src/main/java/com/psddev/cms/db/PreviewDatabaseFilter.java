@@ -47,7 +47,7 @@ public class PreviewDatabaseFilter extends AbstractFilter implements AbstractFil
 
             Date date = ObjectUtils.to(Date.class, request.getParameter("_date"));
 
-            if (currentSchedule != null || date != null) {
+            if (currentSchedule != null || date != null || PageFilter.Static.isPreview(request)) {
                 try {
                     PreviewDatabase pd = new PreviewDatabase();
 
@@ -62,11 +62,26 @@ public class PreviewDatabaseFilter extends AbstractFilter implements AbstractFil
 
                     Database.Static.overrideDefault(pd);
 
-                    State mainState = State.getInstance(pd.applyChanges(PageFilter.Static.getMainObject(request)));
+                    Object mainObject = PageFilter.Static.getMainObject(request);
+                    State mainState = State.getInstance(PageFilter.Static.getMainObject(request));
 
                     if (mainState != null) {
+                        Object originalObject = Query
+                                .fromAll()
+                                .where("_id = ?", mainState.getId())
+                                .resolveInvisible()
+                                .noCache()
+                                .first();
+
                         mainState.setDatabase(null);
-                        mainState.setValues(mainState.getSimpleValues());
+                        mainState.setResolveInvisible(true);
+
+                        if (originalObject != null) {
+                            mainState.setValues(State.getInstance(pd.applyChanges(originalObject)).getSimpleValues());
+
+                        } else {
+                            mainState.setValues(State.getInstance(pd.applyChanges(mainObject)).getSimpleValues());
+                        }
                     }
 
                     chain.doFilter(request, response);
