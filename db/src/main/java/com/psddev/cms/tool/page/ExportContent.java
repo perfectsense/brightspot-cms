@@ -1,6 +1,7 @@
 package com.psddev.cms.tool.page;
 
 import com.psddev.cms.db.Directory;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.SearchResultField;
 import com.psddev.cms.tool.SearchResultSelection;
@@ -372,6 +373,14 @@ public class ExportContent extends PageServlet {
                     }
                 }
 
+                for (ObjectField field : selectedType.getFields()) {
+                    if (Boolean.TRUE.equals(field.as(ToolUi.class).getDefaultSearchResult())) {
+                        writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
+                        writeCsvItem(field.getDisplayName());
+                        writeRaw(CSV_BOUNDARY);
+                    }
+                }
+
             } else {
                 for (String fieldName : fieldNames) {
                     Class<?> fieldNameClass = ObjectUtils.getClassByName(fieldName);
@@ -440,6 +449,14 @@ public class ExportContent extends PageServlet {
                     }
                 }
 
+                for (ObjectField field : selectedType.getFields()) {
+                    if (Boolean.TRUE.equals(field.as(ToolUi.class).getDefaultSearchResult())) {
+                        writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
+                        writeObjectFieldCsv(field, itemState);
+                        writeRaw(CSV_BOUNDARY);
+                    }
+                }
+
             } else {
                 for (String fieldName : fieldNames) {
                     Class<?> fieldNameClass = ObjectUtils.getClassByName(fieldName);
@@ -463,30 +480,7 @@ public class ExportContent extends PageServlet {
 
                         if (field != null) {
                             writeRaw(CSV_DELIMITER).writeRaw(CSV_BOUNDARY);
-                            if ("cms.directory.paths".equals(field.getInternalName())) {
-                                for (Iterator<Directory.Path> i = itemState.as(Directory.ObjectModification.class).getPaths().iterator(); i.hasNext();) {
-                                    Directory.Path p = i.next();
-                                    String path = p.getPath();
-
-                                    writeCsvItem(path);
-                                    writeHtml(" (");
-                                    writeCsvItem(p.getType());
-                                    writeHtml(")");
-
-                                    if (i.hasNext()) {
-                                        writeRaw(VALUE_DELIMITER);
-                                    }
-                                }
-
-                            } else {
-                                for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(field.getInternalName())).iterator(); i.hasNext();) {
-                                    Object value = i.next();
-                                    writeCsvItem(value);
-                                    if (i.hasNext()) {
-                                        writeRaw(VALUE_DELIMITER);
-                                    }
-                                }
-                            }
+                            writeObjectFieldCsv(field, itemState);
                             writeRaw(CSV_BOUNDARY);
                         }
                     }
@@ -494,6 +488,33 @@ public class ExportContent extends PageServlet {
             }
 
             writeRaw(CSV_LINE_TERMINATOR);
+        }
+
+        private void writeObjectFieldCsv(ObjectField field, State itemState) throws IOException {
+            if ("cms.directory.paths".equals(field.getInternalName())) {
+                for (Iterator<Directory.Path> i = itemState.as(Directory.ObjectModification.class).getPaths().iterator(); i.hasNext();) {
+                    Directory.Path p = i.next();
+                    String path = p.getPath();
+
+                    writeCsvItem(path);
+                    writeHtml(" (");
+                    writeCsvItem(p.getType());
+                    writeHtml(")");
+
+                    if (i.hasNext()) {
+                        writeRaw(VALUE_DELIMITER);
+                    }
+                }
+
+            } else {
+                for (Iterator<Object> i = CollectionUtils.recursiveIterable(itemState.getByPath(field.getInternalName())).iterator(); i.hasNext();) {
+                    Object value = i.next();
+                    writeCsvItem(value);
+                    if (i.hasNext()) {
+                        writeRaw(VALUE_DELIMITER);
+                    }
+                }
+            }
         }
 
         private void writeCsvItem(Object item) throws IOException {

@@ -10,6 +10,7 @@ import java.util.UUID;
 import javax.servlet.ServletException;
 
 import com.google.common.collect.ImmutableMap;
+import com.psddev.cms.db.ToolUi;
 import com.psddev.cms.db.ToolUser;
 import com.psddev.cms.tool.PageServlet;
 import com.psddev.cms.tool.SearchResultField;
@@ -161,7 +162,7 @@ public class SearchResultFields extends PageServlet {
             for (ObjectField field : type.getFields()) {
                 String fieldName = field.getInternalName();
 
-                if (fieldsNames.contains(fieldName)) {
+                if (fieldsNames.contains(fieldName) || Boolean.TRUE.equals(field.as(ToolUi.class).getDefaultSearchResult())) {
                     displayFields.add(field);
                 } else {
                     hiddenFields.add(field);
