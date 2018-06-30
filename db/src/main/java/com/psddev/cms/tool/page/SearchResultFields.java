@@ -56,7 +56,10 @@ public class SearchResultFields extends PageServlet {
             page.writeEnd();
 
             page.writeStart("script", "type", "text/javascript");
-                page.writeRaw("$('#" + page.getId() + "').popup('source').closest('.searchForm').find('.searchFiltersRest').submit();");
+                page.writeRaw("var $searchResultSortForm = $('#" + page.getId() + "').popup('source').closest('.searchForm').find('.searchResult-sorts form').first();");
+                page.writeRaw("var paginationPage = $searchResultSortForm !== undefined ? $searchResultSortForm.attr('data-page') : 0;");
+                page.writeRaw("if (paginationPage !== undefined && paginationPage !== '0') {$searchResultSortForm.append('<input type=\"hidden\" name=\"o\" value=\"' + paginationPage + '\">');}");
+                page.writeRaw("$('#" + page.getId() + "').popup('source').closest('.searchForm').find('.searchResult-sorts form').submit();");
                 page.writeRaw("$('#" + page.getId() + "').popup('close');");
             page.writeEnd();
             return;

@@ -142,6 +142,7 @@ public abstract class AbstractSearchResultView implements SearchResultView {
         page.writeStart("div", "class", "searchResult-sorts");
             page.writeStart("form",
                     "data-bsp-autosubmit", "",
+                    "data-page", page.pageParam(String.class, Search.OFFSET_PARAMETER, "0"),
                     "method", "get",
                     "action", page.url(null));
 
