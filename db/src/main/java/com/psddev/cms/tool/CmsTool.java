@@ -146,6 +146,9 @@ public class CmsTool extends Tool {
     @ToolUi.Tab("RTE")
     private boolean enableAnnotations;
 
+    @ToolUi.Tab("RTE")
+    private boolean disableCodeMirrorSearchDialog;
+
     @ToolUi.Tab("UI")
     private boolean disableContentLocking;
 
@@ -735,6 +738,14 @@ public class CmsTool extends Tool {
 
     public void setEnableAnnotations(boolean enableAnnotations) {
         this.enableAnnotations = enableAnnotations;
+    }
+
+    public boolean isDisableCodeMirrorSearchDialog() {
+        return disableCodeMirrorSearchDialog;
+    }
+
+    public void setDisableCodeMirrorSearchDialog(boolean disableCodeMirrorSearchDialog) {
+        this.disableCodeMirrorSearchDialog = disableCodeMirrorSearchDialog;
     }
 
     public boolean isDisableContentLocking() {

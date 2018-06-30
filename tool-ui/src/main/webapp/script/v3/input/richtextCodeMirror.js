@@ -6820,6 +6820,12 @@ define([
                 }
             });
 
+            //Cmd/Ctrl-F will bubble up to the browser as normal if this RTE option is checked in CmsTool
+            if (window.RTE_DISABLE_CODE_MIRROR_SEARCH) {
+                keymap['Cmd-F'] = false;
+                keymap['Ctrl-F'] = false;
+            }
+
             return keymap;
         },
 

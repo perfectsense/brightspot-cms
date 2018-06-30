@@ -2007,6 +2007,7 @@ public class ToolPageContext extends WebPageContext {
             write("var STANDARD_IMAGE_SIZES = ", ObjectUtils.toJson(standardImageSizes), ";");
             write("var RTE_LEGACY_HTML = ", getCmsTool().isLegacyHtml(), ';');
             write("var RTE_ENABLE_ANNOTATIONS = ", getCmsTool().isEnableAnnotations(), ';');
+            write("var RTE_DISABLE_CODE_MIRROR_SEARCH = ", getCmsTool().isDisableCodeMirrorSearchDialog(), ';');
             write("var DISABLE_TOOL_CHECKS = ", getCmsTool().isDisableToolChecks(), ';');
             write("var COMMON_TIMES = ", ObjectUtils.toJson(commonTimes), ';');
             write("var RICH_TEXT_TOOLBARS = ", ObjectUtils.toJson(richTextToolbars), ';');
