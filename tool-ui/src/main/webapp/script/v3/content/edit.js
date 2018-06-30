@@ -36,6 +36,9 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
             if (oldValueId) {
               compare(oldValueId, oldValue, newValue);
 
+            } else if ($.isArray(oldValue) && $.isArray(newValue)) {
+              compare(undefined, oldValue, newValue);
+
             } else if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
               var $container = $('[data-rtc-content-id="' + newValuesId + '"] .objectInputs[data-id="' + objectId + '"] > .inputContainer[data-field-name="' + fieldName + '"]');
               var $form = $container.closest('form');
