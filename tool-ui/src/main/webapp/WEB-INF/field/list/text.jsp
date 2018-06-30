@@ -1,5 +1,6 @@
 <%@ page session="false" import="
 
+com.psddev.cms.db.ToolUi,
 com.psddev.cms.tool.ToolPageContext,
 
 com.psddev.dari.db.ObjectField,
@@ -65,21 +66,100 @@ if ((Boolean) request.getAttribute("isFormPost")) {
 
 // --- Presentation ---
 
+ToolUi ui = field.as(ToolUi.class);
 %><% if (ObjectUtils.isBlank(validValues)) { %>
-    <div class="inputSmall repeatableText">
+    <div class="inputSmall repeatableText <%=ui.isRichText() ? "usingTextAreas" : ""%>">
         <ol>
-            <% if (fieldValue!= null) { %>
-                <% for (Object text : fieldValue) { %>
-                    <li>
-                        <input checked name="<%= wp.h(toggleName) %>" type="checkbox" value="true">
-                        <input class="expandable" name="<%= wp.h(textName) %>" type="text" value="<%= wp.h(text) %>">
-                    </li>
-                <% } %>
-            <% } %>
+            <% if (fieldValue!= null) {%>
+                <% if (!ui.isRichText()) { %>
+                    <% for (Object text : fieldValue) { %>
+                        <li>
+                            <input checked name="<%= wp.h(toggleName) %>" type="checkbox" value="true">
+                            <input class="expandable" name="<%= wp.h(textName) %>" type="text" value="<%= wp.h(text) %>">
+                        </li>
+                    <% } %>
+                <% } else {
+                    for (Object text : fieldValue) {
+                        wp.write("<li><div class=\"inputSmall inputSmall-text\">");
+
+                        if (validValues != null) {
+                            wp.write("<select id=\"", wp.getId(), "\" name=\"", wp.h(inputName), "\">");
+                            wp.write("<option value=\"\">");
+                            wp.write("</option>");
+                            for (ObjectField.Value value : validValues) {
+                                wp.write("<option");
+                                if (ObjectUtils.equals(value.getValue(), text)) {
+                                    wp.write(" selected");
+                                }
+                                wp.write(" value=\"", wp.h(value.getValue()), "\">");
+                                wp.write(wp.h(value.getLabel()));
+                                wp.write("</option>");
+                            }
+                            wp.write("</select>");
+
+                        } else if (ui.isColorPicker()) {
+                            wp.writeElement("input",
+                                    "type", "text",
+                                    "class", "color",
+                                    "name", wp.h(textName),
+                                    "value", text);
+
+                        } else if (ui.isSecret()) {
+                            wp.writeElement("input",
+                                    "type", "password",
+                                    "id", wp.getId(),
+                                    "name", wp.h(textName),
+                                    "value", text);
+
+                        } else {
+                            wp.writeStart("textarea",
+                                    "class", ui.isRichText() ? "richtext" : null,
+                                    "id", wp.getId(),
+                                    "name", wp.h(textName),
+                                    "data-dynamic-field-name", field.getInternalName(),
+                                    "data-code-type", ui.getCodeType(),
+                                    "data-inline", true,
+                                    "data-user", wp.getObjectLabel(wp.getUser()),
+                                    "data-user-id", wp.getUser() != null ? wp.getUser().getId() : null,
+                                    "data-first-draft", Boolean.TRUE.equals(request.getAttribute("firstDraft")),
+                                    "data-track-changes", !Boolean.TRUE.equals(request.getAttribute("finalDraft")));
+                            wp.writeHtml(text);
+                            wp.writeEnd();
+                        }
+
+                        wp.write("<input name=\"" + wp.h(toggleName) + "\" type=\"hidden\" value=\"true\">");
+                        wp.write("</div></li>");
+                    }
+                }
+            }
+            %>
             <script type="text/template">
-                <li>
-                    <input name="<%= wp.h(toggleName) %>" type="checkbox" value="true">
-                    <input class="expandable" name="<%= wp.h(textName) %>" type="text">
+                <li><%
+                    if (!ui.isRichText()) {
+                        %>
+                            <input name="<%= wp.h(toggleName) %>" type="checkbox" value="true">
+                            <input class="expandable" name="<%= wp.h(textName) %>" type="text">
+                        <%
+                    } else {
+                        %>
+                            <div class="inputSmall inputSmall-text">
+                                <input name="<%= wp.h(toggleName) %>" type="hidden" value="true">
+                                <%
+                                    wp.writeStart("textarea",
+                                        "class", "expandable " + (ui.isRichText() ? "richtext" : null),
+                                        "id", wp.getId(),
+                                        "name", wp.h(textName),
+                                        "data-dynamic-field-name", field.getInternalName(),
+                                        "data-code-type", ui.getCodeType(),
+                                        "data-inline", true,
+                                        "data-user", wp.getObjectLabel(wp.getUser()),
+                                        "data-user-id", wp.getUser() != null ? wp.getUser().getId() : null,
+                                        "data-first-draft", Boolean.TRUE.equals(request.getAttribute("firstDraft")),
+                                        "data-track-changes", !Boolean.TRUE.equals(request.getAttribute("finalDraft")));
+                                    wp.writeEnd();
+                                %>
+                            </div>
+                    <%}%>
                 </li>
             </script>
         </ol>

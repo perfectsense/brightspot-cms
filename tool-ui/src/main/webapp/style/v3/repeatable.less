@@ -1183,6 +1183,46 @@ body.loading {
       display: none;
     }
   }
+
+  &.usingTextAreas {
+    .inputSmall {
+      margin-left: 0px;
+    }
+
+    .addButtonContainer {
+      .rte2-wrapper {
+        display: none;
+      }
+
+      .addButton {
+        position: relative;
+        width: auto;
+        left: 4px;
+      }
+    }
+
+    .removeButton {
+      padding-left: 20px;
+      right: 0px;
+      top: 20px;
+    }
+
+    .toBeRemoved {
+      div.inputSmall {
+        opacity: 0.3;
+      }
+
+      textarea {
+        disabled: disabled;
+      }
+
+      a {
+        pointer-events: none;
+        cursor: default;
+      }
+    }
+  }
+
 }
 
 .inputContainer {

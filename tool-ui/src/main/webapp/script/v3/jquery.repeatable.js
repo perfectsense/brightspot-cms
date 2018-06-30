@@ -1315,7 +1315,7 @@ The HTML within the repeatable element must conform to these standards:
                 var $templateInputs;
                 
                 // For single input mode, don't add another item if the input is empty
-                if (self.modeIsSingle() && !self.dom.$singleInput.val()) {
+                if (self.modeIsSingle() && !self.dom.$singleInput.is("textarea") && !self.dom.$singleInput.val()) {
                     return false;
                 }
 
@@ -1388,7 +1388,11 @@ The HTML within the repeatable element must conform to these standards:
                     // we copy that value into the added item, then clear the value
                     // from the original input so the user can enter another value
                     if (self.modeIsSingle()) {
-                        $addedItem.find(':input:not([name$=".toggle"])').val( self.dom.$singleInput.val() );
+                        if (self.dom.$singleInput.is("textarea")) {
+                            $addedItem.find('textarea').val( self.dom.$singleInput.val() );
+                        } else {
+                            $addedItem.find(':input:not([name$=".toggle"])').val( self.dom.$singleInput.val() );
+                        }
                         self.dom.$singleInput.val('');
                     }
 
@@ -1880,6 +1884,10 @@ The HTML within the repeatable element must conform to these standards:
                 // We will also clone the $toggle input later
                 $toggle = self.dom.$templates.find(':input[name$=".toggle"]');
                 $input = self.dom.$templates.find(':input').not($toggle);
+
+                if (!$input) {
+                    $input = self.dom.$templates.find('textarea');
+                }
 
                 // Make a copy of the input
                 $singleInput = $input.clone();
