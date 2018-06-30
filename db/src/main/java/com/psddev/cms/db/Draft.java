@@ -1,5 +1,9 @@
 package com.psddev.cms.db;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -124,6 +128,15 @@ public class Draft extends Content {
                     changes.put(key, newValue);
                 }
             });
+
+            if (type != null) {
+                // Some fields, marked with @Draft.AlwaysUpdate, should always be included in the diff, even if they
+                // are unchanged from the current value. This allows a second scheduled event to return a field back
+                // to its current value after an earlier scheduled event changes it to something else.
+                type.getFields().stream().filter(field -> field.as(FieldData.class).isAlwaysUpdate()).forEach(field -> {
+                    changes.put(field.getInternalName(), newIdMap.get(field.getInternalName()));
+                });
+            }
 
             if (!changes.isEmpty()) {
                 differences.put(id, changes);
@@ -651,6 +664,39 @@ public class Draft extends Content {
 
         public void setIndex(Integer index) {
             this.index = index;
+        }
+    }
+
+    @FieldInternalNamePrefix("cms.draft.update.")
+    public static class FieldData extends Modification<ObjectField> {
+
+        private boolean always;
+
+        public boolean isAlwaysUpdate() {
+            return always;
+        }
+
+        public void setAlwaysUpdate(boolean always) {
+            this.always = always;
+        }
+    }
+
+    /**
+     * Specifies that a field should be explicitly included in the diff of every content update, even if it is
+     * unchanged. This is necessary when a field might be scheduled to change and then change back in two different
+     * future events.
+     */
+    @ObjectField.AnnotationProcessorClass(AlwaysUpdateProcessor.class)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public @interface AlwaysIncludeInUpdate {
+        boolean value() default true;
+    }
+
+    public static class AlwaysUpdateProcessor implements ObjectField.AnnotationProcessor<AlwaysIncludeInUpdate> {
+        @Override
+        public void process(ObjectType type, ObjectField field, AlwaysIncludeInUpdate annotation) {
+            field.as(FieldData.class).setAlwaysUpdate(annotation.value());
         }
     }
 }
