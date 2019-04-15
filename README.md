@@ -23,7 +23,7 @@ It enables the creation of complex data models. Using simple annotations and sta
 
 An example Brightspot content model:
 
-```
+```java
 public class MyClass extends Content {
    
 	private String textField;
@@ -42,7 +42,7 @@ A user interface for publishing data is built automatically. New fields instantl
 
 Brightspot can be used to build any type of Java application. The difference between a standard Java object and Brightspot is the extension of `Content`, a parent class that Brightspot provides:
 
-```
+```java
 public class MyClass extends Content {
    
 	private String textField;
@@ -56,11 +56,11 @@ By extending Content Brightspot knows to create a user interface with the Class,
 
 All Content in Brightspot extends the Dari Record class: `com.psddev.dari.db.Record`. Objects are not mapped to database tables, instead they are serialized into JSON and stored in the database as JSON. This frees developers from worrying about creating or altering database tables and allows for rapid evolution of data models.
 
-```
+```json
 {
   "textField" : "Create a user interface automatically",
   "dateWidget" : 1393688100000,
-  "textList"; : [ "Standard Java" ],
+  "textList" : [ "Standard Java" ],
 }
 ```
 
@@ -70,7 +70,7 @@ Developers are given complete control over how their data is stored, and they ca
 
 Here is an example data model of an Author content type:
 
-```
+```java
 public class Author extends Content {
     
     private String name;
