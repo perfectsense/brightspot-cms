@@ -1411,7 +1411,7 @@ wp.writeHeader(editingState.getType() != null ? editingState.getType().getLabel(
                 $(window).bind('beforeunload', function() {
                     var $form = $('.contentForm');
 
-                    return !$.data($form[0], 'submitting') && $form.find('.state-changed').length > 0 ?
+                    return !$.data($form[0], 'submitting') && $form.find('.state-changed.user-interacted').length > 0 ?
                             'Are you sure you want to leave this page? Unsaved changes will be lost.' :
                             undefined;
                 });

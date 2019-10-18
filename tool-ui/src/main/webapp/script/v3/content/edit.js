@@ -180,4 +180,20 @@ define([ 'jquery', 'bsp-utils', 'v3/rtc' ], function($, bsp_utils, rtc) {
       }
     });
   }));
+
+  //mark fields with user interactions, to help distinguish diffs caused by users vs automatically (e.g. beforeSave)
+  //when possible, distinguish changed state vs simple interaction
+  bsp_utils.onDomInsert(document, '.inputContainer', {
+    'insert': function (item) {
+      var $item = $(item);
+
+      function markUserInteraction() {
+        $item.addClass("user-interacted");
+      }
+
+      $item.on('input propertychange paste', markUserInteraction) //modified: textarea/input/select
+           .on('click', 'a, span, input[type="checkbox"]', markUserInteraction); //clicked on: dropdown, date, checkbox
+    }
+  });
+
 });
